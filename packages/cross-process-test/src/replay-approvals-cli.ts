@@ -18,7 +18,12 @@ const APPROVALS = "golden/replay-approvals.json";
 const SUFFIX = ".replay.json";
 
 const git = (...args: string[]): string =>
-  execFileSync("git", args, { cwd: ROOT, encoding: "utf8", stdio: ["ignore", "pipe", "pipe"] });
+  execFileSync("git", args, {
+    cwd: ROOT,
+    encoding: "utf8",
+    stdio: ["ignore", "pipe", "pipe"],
+    maxBuffer: 1 << 28,
+  });
 
 function baseOf(argv: readonly string[], gateBase: string): string {
   const index = argv.indexOf("--base");
