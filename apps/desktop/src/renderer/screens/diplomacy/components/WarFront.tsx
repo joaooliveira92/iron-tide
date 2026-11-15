@@ -9,6 +9,7 @@ import type { DiplomacyWarRow } from "../diplomacy-view-model.js";
 import { IncomingPeaceOffer } from "./IncomingPeaceOffer.js";
 import { InfoHover } from "./InfoHover.js";
 import { NationFlag } from "./NationFlag.js";
+import { PeaceRefusalNote } from "./PeaceRefusalNote.js";
 import { PeaceTermsDialog } from "./PeaceTermsDialog.js";
 
 export interface WarFrontProps {
@@ -123,6 +124,9 @@ export function WarFront({ rows, busy, onPeaceAction, onPeaceTerms }: WarFrontPr
                     size="sm"
                     disabled={busy}
                     onClick={() => onPeaceAction(war.warId)}
+                    aria-describedby={
+                      war.peaceRefusal === undefined ? undefined : `peace-refusal-${war.warId}`
+                    }
                   >
                     <Flag aria-hidden="true" className="size-3.5" />
                     Accept peace
@@ -137,6 +141,15 @@ export function WarFront({ rows, busy, onPeaceAction, onPeaceTerms }: WarFrontPr
                 enemyName={enemyName}
                 busy={busy}
                 onAccept={() => onPeaceAction(war.warId)}
+              />
+            )}
+
+            {active && war.peaceRefusal !== undefined && (
+              <PeaceRefusalNote
+                id={`peace-refusal-${war.warId}`}
+                refusal={war.peaceRefusal}
+                enemyName={enemyName}
+                enemyLead={split.enemy - split.yours}
               />
             )}
 

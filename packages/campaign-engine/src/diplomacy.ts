@@ -70,6 +70,11 @@ export interface DiplomacyRelationRow {
   readonly partnerName: string;
 }
 
+export interface DiplomacyPeaceRefusal {
+  readonly reasonCode: string;
+  readonly margin: number;
+}
+
 export interface DiplomacyWarRow {
   readonly warId: string;
   readonly attackerSideId: string;
@@ -86,6 +91,7 @@ export interface DiplomacyWarRow {
   readonly playerSide: "attacker" | "defender";
   readonly peaceOffer?: DiplomacyPeaceOffer;
   readonly incomingPeaceOffer?: DiplomacyIncomingPeaceOffer;
+  readonly peaceRefusal?: DiplomacyPeaceRefusal;
 }
 
 export interface DiplomacyBlockadeRow {

@@ -1,4 +1,5 @@
 import { decidePeaceResponse } from "@bluewave/ai";
+import type { CampaignSnapshot } from "@bluewave/campaign";
 import type { AcceptPeaceCommand, PeaceTerm, ProposePeaceCommand } from "@bluewave/commands";
 import { applyAcceptPeace, applyProposePeace, type PeaceTermSink } from "./diplomacy.js";
 import type { PhaseContext } from "./pipeline.js";
@@ -16,38 +17,54 @@ function sinkOf(ctx: PhaseContext): PeaceTermSink {
 
 const STATUS_QUO: PeaceTerm = { _tag: "StatusQuo" };
 
+export interface PeaceRefusal {
+  readonly responderId: string;
+  readonly reason: string;
+}
+
+export function peaceRefusal(
+  snapshot: CampaignSnapshot,
+  margin: number,
+  nationId: string,
+  warId: string,
+  term: PeaceTerm,
+): PeaceRefusal | undefined {
+  const war = snapshot.wars.wars.find((w) => w.id === warId);
+  if (
+    war === undefined ||
+    war.status !== "ACTIVE" ||
+    (war.attackerId !== nationId && war.defenderId !== nationId)
+  ) {
+    return undefined;
+  }
+  const responderId = war.attackerId === nationId ? war.defenderId : war.attackerId;
+  const decision = decidePeaceResponse(snapshot, warId, responderId, term, margin);
+  return decision.accept ? undefined : { responderId, reason: decision.reason };
+}
+
 function refusesPeace(
   ctx: PhaseContext,
   nationId: string,
   warId: string,
   term: PeaceTerm,
 ): boolean {
-  const snapshot = ctx.snapshot.current;
   const rules = ctx.engineOptions?.peaceBehaviour;
-  const war = snapshot.wars.wars.find((w) => w.id === warId);
-  if (
-    rules === undefined ||
-    ctx.playerNationId !== nationId ||
-    war === undefined ||
-    war.status !== "ACTIVE" ||
-    (war.attackerId !== nationId && war.defenderId !== nationId)
-  ) {
+  if (rules === undefined || ctx.playerNationId !== nationId) {
     return false;
   }
-  const responderId = war.attackerId === nationId ? war.defenderId : war.attackerId;
-  const decision = decidePeaceResponse(
-    snapshot,
-    warId,
-    responderId,
-    term,
+  const refusal = peaceRefusal(
+    ctx.snapshot.current,
     rules.acceptanceScoreMargin,
+    nationId,
+    warId,
+    term,
   );
-  if (decision.accept) {
+  if (refusal === undefined) {
     return false;
   }
   ctx.collector.addWarning(
     PEACE_REFUSED,
-    `${responderId} refused the peace term (${decision.reason})`,
+    `${refusal.responderId} refused the peace term (${refusal.reason})`,
     { stage: "command-collection", entityId: warId },
   );
   return true;
