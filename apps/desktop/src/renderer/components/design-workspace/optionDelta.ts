@@ -8,13 +8,14 @@ import {
 } from "@bluewave/ship-design";
 
 import type { PresentationFormat } from "../../lib/presentation-format/index.js";
-import { diffViews } from "./designFeedback.js";
+import { diffViews, type FeedbackTone } from "./designFeedback.js";
 
 export interface Delta {
   readonly id: string;
   readonly label: string;
   readonly text: string;
   readonly direction: "up" | "down" | "flat";
+  readonly tone?: FeedbackTone;
 }
 
 const LEGACY_ASPECTS = ["speed", "displacement", "cost", "stability"] as const;
