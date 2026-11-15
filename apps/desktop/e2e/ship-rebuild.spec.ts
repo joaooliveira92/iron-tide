@@ -14,11 +14,11 @@ const CORVETTE = "Corvette / colonial gunboat (KE)";
 
 test("a completed player-designed ship is rebuilt and leaves service after a month", async ({
   e2e,
-  campaignTemplate,
+  passiveCampaignTemplate,
 }) => {
   test.setTimeout(600_000);
   const page = e2e.page;
-  await openCampaign(e2e, campaignTemplate);
+  await openCampaign(e2e, passiveCampaignTemplate);
 
   await submitReferenceDesign(page, CORVETTE, CLASS_NAME);
 
