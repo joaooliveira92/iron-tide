@@ -22,9 +22,9 @@ describe("pinned baseline (ticket 09, SPM-R26 P1 gate)", () => {
   it("pins the coverage and data-quality inventory", () => {
     const expected = {
       designs: 98,
-      placements: 926,
+      placements: 928,
       gunPlacements: 267,
-      tubePlacements: 37,
+      tubePlacements: 39,
       fittingPlacements: 622,
     };
     expect(report.coverage.baseline).toEqual(expected);
@@ -83,7 +83,7 @@ describe("pinned baseline (ticket 09, SPM-R26 P1 gate)", () => {
     const pinned = [...TORPEDO_ROWS]
       .map((r) => [...r])
       .sort((a, b) => `${a[0]}:${a[1]}`.localeCompare(`${b[0]}:${b[1]}`));
-    expect(tubes).toHaveLength(37);
+    expect(tubes).toHaveLength(39);
     expect(tubes).toEqual(pinned);
   });
 });
