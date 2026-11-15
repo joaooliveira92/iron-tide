@@ -5,7 +5,11 @@ import { join } from "node:path";
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import { unifiedSnapshotHash } from "@bluewave/campaign";
 import type { ConstructionEvent } from "@bluewave/content-schema";
-import { fleetManagementFromRulesets, tensionDriftFromRulesets } from "@bluewave/content-compiler";
+import {
+  fleetManagementFromRulesets,
+  peaceBehaviourFromRulesets,
+  tensionDriftFromRulesets,
+} from "@bluewave/content-compiler";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
@@ -218,6 +222,16 @@ function productionTensionDrift() {
   return decoded.value;
 }
 
+function productionPeaceBehaviour() {
+  const decoded = peaceBehaviourFromRulesets(production().bundle.rulesets);
+  if (decoded === undefined) return undefined;
+  if (!decoded.ok)
+    throw new ReplayFileError({
+      message: `production peaceBehaviour section is invalid at '${decoded.field}'`,
+    });
+  return decoded.value;
+}
+
 function productionConstructionEvents(setup?: ReplaySetupId) {
   const rules =
     setup === "certain-construction-events"
@@ -229,10 +243,12 @@ function productionConstructionEvents(setup?: ReplaySetupId) {
 export function fleetManagementOptions(playerNationId?: string, setup?: ReplaySetupId) {
   const fleetManagement = productionFleetManagement();
   const tensionDrift = productionTensionDrift();
+  const peaceBehaviour = productionPeaceBehaviour();
   const constructionEvents = productionConstructionEvents(setup);
   return {
     ...(fleetManagement === undefined ? {} : { fleetManagement }),
     ...(tensionDrift === undefined ? {} : { tensionDrift }),
+    ...(peaceBehaviour === undefined ? {} : { peaceBehaviour }),
     ...(constructionEvents === undefined ? {} : { constructionEvents }),
     ...(playerNationId === undefined ? {} : { playerNationId }),
   };
