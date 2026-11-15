@@ -389,6 +389,110 @@ describe("S-5 07: foreign-station deployment", () => {
   });
 });
 
+describe("named foreign-station deployment", () => {
+  const named = (id: string, stationAreaId: string, over: Partial<Ship> = {}): Ship =>
+    fs(id, { stationAreaId, ...over });
+
+  it("sends each ship to its own station while Any station ships keep chasing the largest shortfall", () => {
+    let s = snapshot({
+      fleets: [fleet("f1", [named("a", "cape"), named("b", "india"), fs("c")])],
+      possessions: [
+        ["india", 1],
+        ["cape", 2],
+      ],
+    });
+    const path: string[][] = [];
+    for (let i = 0; i < 3; i += 1) {
+      s = run(s).result.finalSnapshot;
+      path.push(["a", "b", "c"].map((id) => shipAt(s, id)));
+    }
+    expect(path).toEqual([
+      ["mid", "mid", "mid"],
+      ["cape", "india", "cape"],
+      ["cape", "india", "cape"],
+    ]);
+  });
+
+  it("keeps two ships posted to two stations separate", () => {
+    const s = snapshot({
+      fleets: [fleet("f1", [named("a", "cape"), named("b", "india")])],
+      possessions: [
+        ["india", 1],
+        ["cape", 1],
+      ],
+    });
+    const twice = run(run(s).result.finalSnapshot).result.finalSnapshot;
+    expect([shipAt(twice, "a"), shipAt(twice, "b")]).toEqual(["cape", "india"]);
+  });
+
+  it("still sails to its station when the nation has no shortfall anywhere", () => {
+    let s = snapshot({
+      fleets: [
+        fleet("f1", [named("a", "cape")]),
+        fleet("f2", [ship("big", { designVersionId: "d-big", locationAreaId: "cape" })], "cape"),
+      ],
+      possessions: [["cape", 1]],
+    });
+    const path: string[] = [];
+    for (let i = 0; i < 3; i += 1) {
+      s = run(s).result.finalSnapshot;
+      path.push(shipAt(s, "a"));
+    }
+    expect(path).toEqual(["mid", "cape", "cape"]);
+  });
+
+  it("stays put and emits nothing once it holds a station with no shortfall", () => {
+    const s = snapshot({
+      fleets: [
+        fleet("f1", [named("a", "cape", { locationAreaId: "cape" })], "cape"),
+        fleet("f2", [ship("big", { designVersionId: "d-big", locationAreaId: "cape" })], "cape"),
+      ],
+      possessions: [["cape", 1]],
+    });
+    const r = run(s).result;
+    expect(shipAt(r.finalSnapshot, "a")).toBe("cape");
+    expect(kinds(r, "ForeignStationShipMoved")).toEqual([]);
+    expect(kinds(r, "ForeignStationNoRoute")).toEqual([]);
+  });
+
+  it("stays at its station even while another area is short", () => {
+    const s = snapshot({
+      fleets: [fleet("f1", [named("a", "cape", { locationAreaId: "cape" })], "cape")],
+      possessions: [
+        ["india", 3],
+        ["cape", 1],
+      ],
+    });
+    expect(shipAt(run(s).result.finalSnapshot, "a")).toBe("cape");
+  });
+
+  it("emits a typed no-route event naming the station when no sea path reaches it", () => {
+    const s = snapshot({
+      fleets: [fleet("f1", [named("a", "cape", { locationAreaId: "island" })], "island")],
+      possessions: [["cape", 1]],
+    });
+    const r = run(s).result;
+    expect(shipAt(r.finalSnapshot, "a")).toBe("island");
+    expect(kinds(r, "ForeignStationNoRoute")).toEqual([
+      expect.objectContaining({ shipId: "a", areaId: "island", targetAreaId: "cape" }),
+    ]);
+  });
+
+  it("deploys in ascending ship id order", () => {
+    const s = snapshot({
+      fleets: [fleet("f1", [named("z", "cape"), named("b", "india"), named("m", "cape")])],
+      possessions: [
+        ["india", 1],
+        ["cape", 1],
+      ],
+    });
+    const moved = kinds(run(s).result, "ForeignStationShipMoved").map(
+      (m) => (m as { shipId: string }).shipId,
+    );
+    expect(moved).toEqual(["b", "m", "z"]);
+  });
+});
+
 describe("S-5 07: MoveFleet on a fleet holding a foreign-station ship", () => {
   const stationed = snapshot({ fleets: [fleet("f1", [fs("fs1"), ship("b")])] });
   const move = (s: CampaignSnapshot): CommandEnvelope<CommandBody> => ({

@@ -335,12 +335,21 @@ export const submitStationAssignmentProgram: CommandHandler<"submitStationAssign
       transportRequestId: payload.transportRequestId,
       build: (record) => {
         const shipIds = [...payload.shipIds];
+        const stationAreaId = payload.intent === "assign" ? payload.stationAreaId : undefined;
         return {
           body:
             payload.intent === "assign"
-              ? { type: "AssignForeignStation" as const, nationId: record.playerSlotId, shipIds }
+              ? {
+                  type: "AssignForeignStation" as const,
+                  nationId: record.playerSlotId,
+                  shipIds,
+                  ...(stationAreaId === undefined ? {} : { stationAreaId }),
+                }
               : { type: "ClearForeignStation" as const, nationId: record.playerSlotId, shipIds },
-          discriminator: [...shipIds].sort().join("\u0000"),
+          discriminator: [
+            [...shipIds].sort().join("\u0000"),
+            ...(stationAreaId === undefined ? [] : [stationAreaId]),
+          ].join("\u0001"),
         };
       },
     }),
@@ -352,6 +361,9 @@ export const submitStationAssignmentProgram: CommandHandler<"submitStationAssign
               commandId: result.value.commandId,
               intent: payload.intent,
               shipCount: payload.shipIds.length,
+              ...(payload.intent === "assign" && payload.stationAreaId !== undefined
+                ? { stationAreaId: payload.stationAreaId }
+                : {}),
               appliedOnNextTurn: true,
             },
           }

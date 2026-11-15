@@ -121,6 +121,7 @@ export type StationAssignmentIntent = "assign" | "clear";
 export interface SubmitStationAssignmentPayload extends CommandEnvelope {
   readonly intent: StationAssignmentIntent;
   readonly shipIds: readonly string[];
+  readonly stationAreaId?: string;
 }
 
 export type CommandableReadiness = "ACTIVE" | "RESERVE" | "MOTHBALLED";
@@ -141,5 +142,6 @@ export interface StationAssignmentOutcome {
   readonly commandId: string;
   readonly intent: StationAssignmentIntent;
   readonly shipCount: number;
+  readonly stationAreaId?: string;
   readonly appliedOnNextTurn: true;
 }
