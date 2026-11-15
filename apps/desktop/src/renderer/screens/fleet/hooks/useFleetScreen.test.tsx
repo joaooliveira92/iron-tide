@@ -83,4 +83,21 @@ describe("useFleetScreen presence warnings", () => {
     await waitFor(() => expect(result.current.state.presenceWarnings).toHaveLength(1));
     expect(result.current.state.presenceWarnings[0]?.areaId).toBe("home");
   });
+
+  it("keeps the queued-order notice after the reload", async () => {
+    const queued = { current: false };
+    mocks.execute.mockImplementation((command: string) => respond(command, queued));
+    const { result } = renderHook(() => {
+      const load = useFleetInspectionCache("s");
+      return useFleetScreen("s", load);
+    });
+    await waitFor(() => expect(result.current.selectedDivisionId).toBe("f"));
+
+    await act(async () => {
+      result.current.submit();
+    });
+
+    await waitFor(() => expect(result.current.state.presenceWarnings).toHaveLength(1));
+    await waitFor(() => expect(result.current.state.notice).toContain("Order queued"));
+  });
 });

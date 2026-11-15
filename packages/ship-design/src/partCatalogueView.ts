@@ -45,9 +45,15 @@ export interface PartCatalogueEntry {
 
 type NationsByKey = ReadonlyMap<string, readonly string[]>;
 
+export interface NationAccessSource {
+  readonly nationId: string;
+  readonly componentAccess: Readonly<Record<string, { readonly status: string }>>;
+}
+
 interface NationsByPart {
   readonly gunFamily: NationsByKey;
   readonly torpedoPrototype: NationsByKey;
+  readonly access: readonly NationAccessSource[];
 }
 
 function sortedNationsBy(
@@ -66,7 +72,10 @@ function sortedNationsBy(
   return new Map([...sets].map(([key, set]) => [key, [...set].sort(compareCodePoints)]));
 }
 
-function nationsOf(parts: readonly FlattenedPart[]): NationsByPart {
+function nationsOf(
+  parts: readonly FlattenedPart[],
+  access: readonly NationAccessSource[],
+): NationsByPart {
   return {
     gunFamily: sortedNationsBy(parts, (part) =>
       part.family === "gun" ? part.spec.gunFamily : undefined,
@@ -74,17 +83,41 @@ function nationsOf(parts: readonly FlattenedPart[]): NationsByPart {
     torpedoPrototype: sortedNationsBy(parts, (part) =>
       part.family === "torpedo_launcher" ? part.origin.prototype?.id : undefined,
     ),
+    access,
   };
+}
+
+function accessNationsOf(
+  access: readonly NationAccessSource[],
+  familyId: string,
+): readonly string[] | undefined {
+  const accessible = new Set<string>();
+  const all = new Set<string>();
+  for (const profile of access) {
+    all.add(profile.nationId);
+    if (profile.componentAccess[familyId]?.status !== "UNAVAILABLE")
+      accessible.add(profile.nationId);
+  }
+  return accessible.size === all.size ? undefined : [...accessible].sort(compareCodePoints);
 }
 
 function nationIdsOf(part: FlattenedPart, nations: NationsByPart): readonly string[] | undefined {
   switch (part.family) {
-    case "gun":
-      return nations.gunFamily.get(part.spec.gunFamily ?? "");
+    case "gun": {
+      const familyId = part.spec.gunFamily ?? "";
+      return (
+        nations.gunFamily.get(familyId) ??
+        (part.id === `${STANDARD_GUN_PREFIX}${familyId}`
+          ? accessNationsOf(nations.access, familyId)
+          : undefined)
+      );
+    }
     case "torpedo_launcher":
       return part.origin.prototype === undefined
-        ? nations.torpedoPrototype.get(part.id)
+        ? (nations.torpedoPrototype.get(part.id) ?? accessNationsOf(nations.access, part.id))
         : undefined;
+    case "aa_weapon":
+      return accessNationsOf(nations.access, part.id);
     default:
       return undefined;
   }
@@ -197,9 +230,12 @@ function entryOfPart(part: FlattenedPart, nations: NationsByPart): PartCatalogue
 const byId = (a: PartCatalogueEntry, b: PartCatalogueEntry): number =>
   compareCodePoints(a.id, b.id);
 
-export function buildPartCatalogueView(model: CompiledPartModel): readonly PartCatalogueEntry[] {
+export function buildPartCatalogueView(
+  model: CompiledPartModel,
+  profiles: readonly NationAccessSource[] = [],
+): readonly PartCatalogueEntry[] {
   const parts = Object.values(model.partIndex.byId);
-  const nations = nationsOf(parts);
+  const nations = nationsOf(parts, profiles);
   return parts
     .filter(isFamilyLevelPart)
     .map((part) => entryOfPart(part, nations))
