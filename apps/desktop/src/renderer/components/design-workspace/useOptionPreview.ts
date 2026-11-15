@@ -28,12 +28,12 @@ export function useOptionPreview(editFor: (option: string) => DraftEdit | null):
       return env;
     };
   }, [content, month, nationId]);
-  const deltas = useMemo(() => {
-    if (active === null || state === null) return [];
-    const edit = editFor(active);
-    const env = environment();
-    if (edit === null || env === null) return [];
-    return feedbackDeltas(cache.feedbackFor(state.draft, env, state.view, edit, format));
-  }, [active, state, editFor, environment, cache, format]);
+  const edit = active === null ? null : editFor(active);
+  const env = environment();
+  const feedback =
+    edit === null || env === null || state === null
+      ? null
+      : cache.feedbackFor(state.draft, env, state.view, edit, format);
+  const deltas = useMemo(() => feedbackDeltas(feedback), [feedback]);
   return { active, setActive, deltas };
 }
