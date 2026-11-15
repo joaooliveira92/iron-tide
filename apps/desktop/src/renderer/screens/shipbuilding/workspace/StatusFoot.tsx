@@ -3,6 +3,7 @@ import { useCampaignReads } from "../../../shell/CampaignShellContext.js";
 import { DesignStatusChip } from "../components/DesignStatusChip.js";
 import { EngineeringStatusBar } from "../components/EngineeringStatusBar.js";
 import { FlawSlip } from "../components/FlawSlip.js";
+import { LastChangeSlot } from "./LastChangeSlot.js";
 import { useShipbuildingActions, useShipbuildingState } from "./WorkspaceContext.js";
 
 export function StatusFoot() {
@@ -11,6 +12,7 @@ export function StatusFoot() {
   const reads = useCampaignReads();
   return (
     <>
+      <LastChangeSlot />
       <FlawSlip
         flaws={flaws}
         onShow={(flaw) => showOnShip(flaw.finding)}
