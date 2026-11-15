@@ -1,7 +1,9 @@
 import { bp, kg, mm } from "@bluewave/ship-design";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import { useDesignActions, useDesignState } from "../DesignWorkspaceContext.js";
+import { DeltaPreview } from "../DeltaPreview.js";
 import { domesticDock } from "../domesticDock.js";
+import { useOptionPreview } from "../useOptionPreview.js";
 import { NumberField, SelectField } from "../fields.js";
 import { BuildStatesNotice } from "./BuildStatesNotice.js";
 import { Panel } from "./Panel.js";
@@ -12,6 +14,12 @@ export function HullPanel() {
   const format = usePresentationFormat();
   const h = draft.hull;
   const dock = domesticDock(ctx);
+  const formPreview = useOptionPreview((hullFormId) =>
+    hullFormId === h.hullFormId ? null : { kind: "set_hull", patch: { hullFormId } },
+  );
+  const materialPreview = useOptionPreview((materialId) =>
+    materialId === h.materialId ? null : { kind: "set_hull", patch: { materialId } },
+  );
   return (
     <Panel title="Hull and displacement">
       {dock !== null && (
@@ -28,6 +36,8 @@ export function HullPanel() {
         </p>
       )}
       <BuildStatesNotice kinds={["yard-too-small"]} />
+      <DeltaPreview deltas={formPreview.deltas} label="Effect of the highlighted hull form" />
+      <DeltaPreview deltas={materialPreview.deltas} label="Effect of the highlighted material" />
       <div className="@container">
         <div className="grid grid-cols-2 gap-x-3 gap-y-4 @xl:grid-cols-3">
           <SelectField
@@ -39,6 +49,7 @@ export function HullPanel() {
             }))}
             error={errorFor("set_hull:hullFormId")}
             onChange={(v) => edit({ kind: "set_hull", patch: { hullFormId: v } })}
+            onActiveValueChange={formPreview.setActive}
           />
           <SelectField
             label="Material"
@@ -49,6 +60,7 @@ export function HullPanel() {
               { value: "high_tensile", label: "High-tensile steel" },
             ]}
             error={errorFor("set_hull:materialId")}
+            onActiveValueChange={materialPreview.setActive}
             onChange={(v) =>
               edit({
                 kind: "set_hull",
