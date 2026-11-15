@@ -1,5 +1,7 @@
-import type {
-  PresenceMeasurementRules,
+import {
+  chargeablePresenceRows,
+  type CampaignSnapshot,
+  type PresenceMeasurementRules,
   PrestigeRule,
   StationPresenceRow,
 } from "@bluewave/campaign";
@@ -21,10 +23,50 @@ export function shortfallLossBp(
   return Math.min(total, rules.maxLossBp);
 }
 
+export interface PresencePenaltyScope {
+  readonly turnNumber: number;
+  readonly slots: CampaignSnapshot["slots"];
+  readonly sourceSnapshot: Pick<CampaignSnapshot, "nations">;
+  readonly snapshot: Pick<CampaignSnapshot, "nations" | "world" | "designs">;
+}
+
+function activeAtMonthStart(
+  source: Pick<CampaignSnapshot, "nations">,
+  nationId: string,
+): ReadonlySet<string> {
+  const ids = new Set<string>();
+  for (const fleet of source.nations.get(nationId)?.fleets ?? []) {
+    for (const ship of fleet.ships) if (ship.readiness === "ACTIVE") ids.add(ship.id);
+  }
+  return ids;
+}
+
+function chargedRows(
+  nationId: string,
+  rows: readonly StationPresenceRow[],
+  rules: PresenceMeasurementRules,
+  shortfall: NonNullable<PresenceMeasurementRules["shortfallPrestige"]>,
+  scope: PresencePenaltyScope,
+): readonly StationPresenceRow[] {
+  if (scope.turnNumber < (shortfall.openingGraceMonths ?? 0)) return [];
+  if (shortfall.surplusShipsOnly !== true) return rows;
+  if (!scope.slots.some((slot) => slot.nationId === nationId && slot.type === "playable")) {
+    return [];
+  }
+  return chargeablePresenceRows(
+    scope.snapshot,
+    nationId,
+    rows,
+    rules,
+    activeAtMonthStart(scope.sourceSnapshot, nationId),
+  );
+}
+
 export function applyPresenceShortfallPrestige(
   ctx: PrestigeApplicationContext,
   demand: readonly StationPresenceRow[],
   rules: PresenceMeasurementRules,
+  scope: PresencePenaltyScope,
 ): void {
   const shortfall = rules.shortfallPrestige;
   if (shortfall === undefined || rules.penaltyRequests !== true) return;
@@ -35,7 +77,8 @@ export function applyPresenceShortfallPrestige(
     else rows.push(row);
   }
   for (const nationId of [...byNation.keys()].sort()) {
-    const lossBp = shortfallLossBp(byNation.get(nationId) ?? [], shortfall);
+    const rows = chargedRows(nationId, byNation.get(nationId) ?? [], rules, shortfall, scope);
+    const lossBp = shortfallLossBp(rows, shortfall);
     if (lossBp === 0) continue;
     const rule: PrestigeRule = { kind: "PROPORTIONAL_LOSS", basisPoints: SafeInt(lossBp) };
     applyPrestigeChange(ctx, nationId, "PRESENCE_SHORTFALL", rule);

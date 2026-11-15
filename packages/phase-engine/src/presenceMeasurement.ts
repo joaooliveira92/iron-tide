@@ -65,7 +65,12 @@ export function runPresenceMeasurementPhase(ctx: PhaseContext): PhaseRunOutcome 
       );
     }
   }
-  applyPresenceShortfallPrestige(ctx, demand, rules);
+  applyPresenceShortfallPrestige(ctx, demand, rules, {
+    turnNumber: Number(ctx.turnNumber),
+    slots: ctx.slots,
+    sourceSnapshot: ctx.sourceSnapshot,
+    snapshot: ctx.snapshot.view(),
+  });
   return { status: "continue" };
 }
 

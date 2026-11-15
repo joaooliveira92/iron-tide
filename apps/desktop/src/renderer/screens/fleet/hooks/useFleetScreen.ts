@@ -69,7 +69,7 @@ export function useFleetScreen(sessionId: string, load: LoadFleetInspection): Us
     }),
     { refreshKey: campaignRevision },
   );
-  const { state, execute, loadScreen, loadError, request } = workflow;
+  const { state, execute, loadScreen, updateState, loadError, request } = workflow;
 
   const selectedDivision = useMemo(
     () => state.divisions.find((division) => division.divisionId === selectedDivisionId) ?? null,
@@ -111,14 +111,23 @@ export function useFleetScreen(sessionId: string, load: LoadFleetInspection): Us
 
   const executeThenReload = useCallback<typeof execute>(
     async (kind, send) => {
-      const outcome = await execute(kind, send);
+      let notice: string | null = null;
+      const outcome = await execute(kind, async (context) => {
+        const result = await send(context);
+        if (result.outcome === "success") notice = acceptMovementCommand(result.value).notice;
+        return result;
+      });
       if (outcome === "accepted") {
         freshNext.current = true;
         await loadScreen();
+        if (notice !== null) {
+          const kept = notice;
+          updateState((current) => ({ ...current, notice: kept }));
+        }
       }
       return outcome;
     },
-    [execute, loadScreen],
+    [execute, loadScreen, updateState],
   );
 
   const orders = useMovementOrders(sessionId, executeThenReload);
