@@ -72,7 +72,7 @@ export default list(RulesetManifestSchema, [
     },
     // The peace-behaviour section (#777, decisions 0054 and 0055). Every value is a PROVISIONAL Bluewave balance target:
     // the manual (p.66) describes peace but gives no acceptance rule or frequency. The margin is the 0055 placeholder
-    // carried over from #554 (acceptSurplus and cession costs stay unsourced, #708). Removing this section returns AI
+    // carried over from #554; the per-area cession costs are authored in areas.ts (#816). Removing this section returns AI
     // nations to never proposing peace and the player's peace terms to always succeeding.
     peaceBehaviour: {
       sectionVersion: 1,
@@ -90,8 +90,12 @@ export default list(RulesetManifestSchema, [
             page: "66",
             section: "Peace and possession choice",
           },
+          {
+            title: "Owner approval: peace placeholder values and per-area cession costs (#816)",
+            archiveOrUrl: "https://github.com/joaooliveira92/iron-tide/issues/816",
+          },
         ],
-        note: "PROVISIONAL. The margin of 20 war-score points is the unsourced decision 0055 placeholder; the monthly proposal chance of 30 percent once a side leads by the margin is a Bluewave balance target awaiting a sourcing pass (#708).",
+        note: "PROVISIONAL. The margin of 20 war-score points (decision 0055) and the monthly proposal chance of 30 percent once a side leads by the margin are Bluewave balance targets with no historical source (research: Discussion 815). Approved as BALANCE_TARGET / LOW placeholders by the coordinator on the owner's behalf under #816 (#708); a human should confirm.",
       },
     },
     // The battle-offer section (T-1, spec #109). Every value is a Bluewave balance decision recorded by ADR-0254 (decision
