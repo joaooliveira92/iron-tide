@@ -25,9 +25,22 @@ const editHull = () => {
 describe("last change strip in the design workspace", () => {
   it("offers an empty polite live region before any edit", () => {
     render(<ShipbuildingWorkspace />);
-    expect(region().getAttribute("role")).toBe("status");
-    expect(region().getAttribute("aria-live")).toBe("polite");
+    const live = within(region()).getByRole("status");
+    expect(live.getAttribute("aria-live")).toBe("polite");
+    expect(live.textContent).toBe("");
     expect(strip()).toBeNull();
+  });
+
+  it("announces only the summary, never the buttons the strip contains", () => {
+    render(<ShipbuildingWorkspace />);
+    editHull();
+    const live = within(region()).getByRole("status");
+    expect(live.getAttribute("aria-atomic")).toBe("true");
+    expect(within(live).queryAllByRole("button")).toHaveLength(0);
+    expect(live.contains(strip())).toBe(false);
+    expect(live.textContent).toContain(screen.getByTestId("last-change-label").textContent);
+    expect(live.textContent).toMatch(/Speed .*, (better|worse)/);
+    expect(live.textContent).not.toContain("Open ");
   });
 
   it("names the edit and lists toned deltas that carry an arrow icon and a word, not colour alone", () => {

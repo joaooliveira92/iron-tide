@@ -147,9 +147,27 @@ function Body({ change, onOpenSection, onDismiss }: LastChangeStripProps & { cha
   );
 }
 
+function announcement(change: LastChange): string {
+  const { aspects, findings } = change.feedback;
+  if (aspects.length === 0 && findings.length === 0)
+    return `${change.label}. No figure or finding moved.`;
+  const moved = aspects.map((a) => {
+    const word = TONE[a.tone].word;
+    return `${a.label} ${a.text}${word === "" ? "" : `, ${word}`}`;
+  });
+  const found = findings.map(
+    (f) =>
+      `${f.change === "new" ? "New" : "Resolved"} ${SEVERITY_STYLE[f.severity].label}: ${f.message}`,
+  );
+  return `${change.label}. ${[...moved, ...found].join("; ")}`;
+}
+
 export function LastChangeStrip(props: LastChangeStripProps) {
   return (
-    <div role="status" aria-live="polite" aria-atomic="true" data-testid="last-change-region">
+    <div data-testid="last-change-region">
+      <div role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+        {props.change === null ? "" : announcement(props.change)}
+      </div>
       {props.change !== null && <Body {...props} change={props.change} />}
     </div>
   );
