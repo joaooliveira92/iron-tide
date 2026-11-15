@@ -54,6 +54,10 @@ export function useDesignState(): DesignState {
   return state;
 }
 
+export function useOptionalDesignState(): DesignState | null {
+  return use(StateContext);
+}
+
 export function useDesignActions(): DesignActions {
   const actions = use(ActionsContext);
   if (actions === null) {
