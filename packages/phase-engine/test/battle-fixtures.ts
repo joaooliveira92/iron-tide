@@ -59,6 +59,7 @@ export interface FixtureShipOpts {
   crewQuality?: number;
   repairMonthsRemaining?: number;
   stationAssignment?: Ship["stationAssignment"];
+  stationAreaId?: Ship["stationAreaId"];
   colonialServiceFitted?: Ship["colonialServiceFitted"];
   overBase?: Ship["overBase"];
 }
@@ -89,6 +90,7 @@ export function makeShip(
     repairMonthsRemaining:
       opts.repairMonthsRemaining === undefined ? undefined : SafeInt(opts.repairMonthsRemaining),
     stationAssignment: opts.stationAssignment,
+    stationAreaId: opts.stationAreaId,
     colonialServiceFitted: opts.colonialServiceFitted,
     overBase: opts.overBase,
     inBattleId: opts.inBattleId,
