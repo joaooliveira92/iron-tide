@@ -1,3 +1,4 @@
+import { DOCK_EXPANSION_MESSAGES } from "./dock-expansion-messages.js";
 import { PRESTIGE_REASON_MESSAGES } from "./prestige-reason-messages.js";
 
 export const EN_US_MESSAGES = {
@@ -683,16 +684,7 @@ export const EN_US_MESSAGES = {
     "Your unsubmitted design was restored, with its edit history (last changed {savedAt}). Changes are saved as you work.",
 
   "construction.gauge.tonnageLimit": "Dock tonnage limit",
-  "construction.expansion.title": "Authorize dock expansion?",
-  "construction.expansion.description":
-    "This expansion is funded from the construction budget, and the dock limit rises once the work is complete.",
-  "construction.expansion.completion": "Earliest completion",
-  "construction.expansion.duration": "Duration",
-  "construction.expansion.nextStep": "Next step",
-  "construction.expansion.dockLimit": "Dock limit (now → after)",
-  "construction.dock_limit_after_expansion.summary": "Dock limit after expansion {value} kg",
-  "construction.dock_limit_after_expansion.current": "Current dock limit",
-  "construction.dock_limit_after_expansion.step": "Era expansion step",
+  ...DOCK_EXPANSION_MESSAGES,
   "construction.gauge.underConstruction": "Under construction",
   "construction.gauge.underConstructionAtOnce": "New tonnage under construction at once",
   "construction.gauge.exemptSmallCraft": "Exempt small craft",

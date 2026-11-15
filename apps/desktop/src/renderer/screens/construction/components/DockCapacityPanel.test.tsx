@@ -1,5 +1,11 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
-import { applyDockExpansionStep, dockLimitAfterExpansionExplanation } from "@bluewave/phase-engine";
+import {
+  applyDockExpansionStep,
+  dockExpansionInstalmentExplanation,
+  dockExpansionPriceExplanation,
+  dockExpansionProjectFor,
+  dockLimitAfterExpansionExplanation,
+} from "@bluewave/phase-engine";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 import { axeViolations } from "../../../lib/axe.js";
 import { DockCapacityPanel, type DockCapacityPanelProps } from "./DockCapacityPanel.js";
@@ -97,6 +103,39 @@ describe("DockCapacityPanel (SB3-R15/R16/R18/R19/R33)", () => {
     expect(screen.getByTestId("explanation-dock_limit_after_expansion").textContent).toContain(
       "Dock limit after expansion 14,000,000",
     );
+  });
+
+  it("shows the price and monthly instalment, each beside its explanation", () => {
+    const project = dockExpansionProjectFor({
+      projectId: "p",
+      possessionId: "pos-1",
+      authorizedMonth: "1880-01",
+      stepKg: 1_000_000,
+    });
+    render(
+      <DockCapacityPanel
+        {...props({
+          dockExpansionPriceExplanation: dockExpansionPriceExplanation(project),
+          dockExpansionInstalmentExplanation: dockExpansionInstalmentExplanation(project),
+        })}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Authorize dock expansion" }));
+    const price = screen.getByTestId("expansion-price").textContent;
+    const instalment = screen.getByTestId("expansion-instalment").textContent;
+    expect(price).toContain("1,200");
+    expect(instalment).toContain("100");
+    expect(screen.getByTestId("explanation-dock_expansion_price").textContent).toContain("1,200");
+    expect(screen.getByTestId("explanation-dock_expansion_instalment").textContent).toContain(
+      "100",
+    );
+  });
+
+  it("omits the price rows when no tree explains them", () => {
+    render(<DockCapacityPanel {...props()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Authorize dock expansion" }));
+    expect(screen.queryByTestId("expansion-price")).toBeNull();
+    expect(screen.queryByTestId("expansion-instalment")).toBeNull();
   });
 
   it("shows only the current limit when no tree explains an after figure", () => {
