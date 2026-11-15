@@ -11,6 +11,7 @@ interface FloatingPositionInput {
   sideOffset: number;
   viewportPadding: number;
   maxHeight: number;
+  minBelow: number;
 }
 
 export interface FloatingPositionResult {
@@ -28,6 +29,7 @@ export function useFloatingPosition({
   sideOffset,
   viewportPadding,
   maxHeight,
+  minBelow,
 }: FloatingPositionInput): FloatingPositionResult {
   const viewportRef = useRef<HTMLDivElement>(null);
   const animationFrameRef = useRef<number | null>(null);
@@ -57,7 +59,11 @@ export function useFloatingPosition({
     const preferredHeight = Math.min(measuredHeight, maxHeight);
 
     const placement: Placement =
-      availableBelow >= preferredHeight || availableBelow >= availableAbove ? "bottom" : "top";
+      availableBelow >= preferredHeight ||
+      availableBelow >= availableAbove ||
+      availableBelow >= minBelow
+        ? "bottom"
+        : "top";
 
     setPlacement(placement);
 
@@ -93,7 +99,7 @@ export function useFloatingPosition({
 
       return next;
     });
-  }, [setPlacement, triggerRef, maxHeight, sideOffset, viewportPadding]);
+  }, [setPlacement, triggerRef, maxHeight, minBelow, sideOffset, viewportPadding]);
 
   const schedulePositionUpdate = useCallback((): void => {
     if (animationFrameRef.current !== null) {
