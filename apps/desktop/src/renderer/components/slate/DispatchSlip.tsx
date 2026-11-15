@@ -24,7 +24,9 @@ export function DispatchSlip({ label, sealed, testId, children }: DispatchSlipPr
           sealed ? "bg-admiralty-accent" : "bg-admiralty-border",
         )}
       />
-      <div className="min-w-0 flex-1 space-y-3 px-4 py-3.5">{children}</div>
+      <div className="themed-scrollbar max-h-[calc(100vh-var(--chrome-top,0px)-var(--chrome-bottom,0px)-1.5rem)] min-w-0 flex-1 space-y-3 overflow-y-auto px-4 py-3.5">
+        {children}
+      </div>
     </Slate>
   );
 }
