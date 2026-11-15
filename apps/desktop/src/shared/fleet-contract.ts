@@ -6,6 +6,7 @@ import type {
   FleetPort,
   MovementCommand,
   PlayerProjectionPresence,
+  PresenceWarningView,
 } from "@bluewave/campaign-engine";
 import type { ExplanationTree } from "@bluewave/events";
 import type { CommandEnvelope } from "./bridge-contract.js";
@@ -19,6 +20,7 @@ export type {
   FleetShipView,
   PlayerProjectionPresence,
   PlayerProjectionStation,
+  PresenceWarningView,
   ShipCondition,
 } from "@bluewave/campaign-engine";
 
@@ -33,6 +35,7 @@ export interface FleetScreenProjection {
   readonly movementCommands: readonly MovementCommand[];
   readonly presence: PlayerProjectionPresence;
   readonly overBaseShips: readonly FleetOverBaseShip[];
+  readonly presenceWarnings?: readonly PresenceWarningView[];
   readonly training?: FleetTrainingProjection;
   readonly exercise?: FleetExerciseProjection;
 }
