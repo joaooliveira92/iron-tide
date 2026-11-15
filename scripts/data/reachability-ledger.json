@@ -428,6 +428,18 @@
       "decision": null
     },
     {
+      "id": "presence-queued-order-warning",
+      "player_verb": "Be warned that a queued order leaves a station short",
+      "status": "reachable",
+      "engine_package": "campaign-engine",
+      "engine_modules": [],
+      "engine_symbols": ["buildPresenceWarnings"],
+      "main_commands": ["inspectFleetScreen"],
+      "renderer_screen": "screens/fleet/components/PresenceWarnings.tsx",
+      "evidence_test": "apps/desktop/src/renderer/screens/fleet/components/PresenceWarnings.test.tsx",
+      "decision": null
+    },
+    {
       "id": "presence-revolt-pressure",
       "player_verb": "See revolts follow an uncovered station",
       "status": "dormant-by-decision",
