@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import type { MovementCommand } from "@bluewave/campaign-engine";
 import { useMovementOrders } from "../../../lib/movement-orders.js";
 import type {
@@ -46,6 +46,12 @@ export function useFleetScreen(sessionId: string, load: LoadFleetInspection): Us
   const [selectedDivisionId, setSelectedDivisionId] = useState<string | null>(null);
   const [destinationAreaId, setDestinationAreaId] = useState<string | null>(null);
   const campaignRevision = useCampaignRevision();
+  const freshNext = useRef(false);
+  const loadInspection = useCallback(() => {
+    const fresh = freshNext.current;
+    freshNext.current = false;
+    return load({ fresh });
+  }, [load]);
   const workflow = useCommandScreenWorkflow<
     FleetScreenState,
     FleetScreenProjection,
@@ -53,7 +59,7 @@ export function useFleetScreen(sessionId: string, load: LoadFleetInspection): Us
   >(
     requestLifecycleAdapter({
       initialState: initialFleetScreenState,
-      load,
+      load: loadInspection,
       project: projectFleetScreen,
       accept: acceptMovementCommand,
       onProjection: (projection) => {
@@ -103,7 +109,19 @@ export function useFleetScreen(sessionId: string, load: LoadFleetInspection): Us
     };
   }, [selectedDivision, effectiveDestinationAreaId]);
 
-  const orders = useMovementOrders(sessionId, execute);
+  const executeThenReload = useCallback<typeof execute>(
+    async (kind, send) => {
+      const outcome = await execute(kind, send);
+      if (outcome === "accepted") {
+        freshNext.current = true;
+        await loadScreen();
+      }
+      return outcome;
+    },
+    [execute, loadScreen],
+  );
+
+  const orders = useMovementOrders(sessionId, executeThenReload);
 
   const submit = useCallback(() => {
     if (routeTarget === null) return;

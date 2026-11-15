@@ -96,6 +96,7 @@ describe("fleet screen state", () => {
       ports: projection.ports,
       movementCommands: projection.movementCommands,
       presence: projection.presence,
+      presenceWarnings: [],
     });
   });
 

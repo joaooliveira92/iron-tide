@@ -94,6 +94,34 @@ describe("MonthlyReportView", () => {
     }
   });
 
+  it("shows the presence shortfalls and the prestige cost only when the month had them", () => {
+    const { rerender } = render(
+      <MonthlyReportView report={report(1)} previous={undefined} areaName={areaName} />,
+    );
+    expect(screen.queryByTestId("month-report-presence-prestige")).toBeNull();
+    expect(screen.queryByText("Foreign-station presence")).toBeNull();
+
+    rerender(
+      <MonthlyReportView
+        report={report(1, {
+          presence: {
+            shortfalls: [
+              { areaId: "malta", requiredTons: 1200, presentTons: 300, shortfallTons: 900 },
+            ],
+            prestigeDelta: -2,
+          },
+        })}
+        previous={undefined}
+        areaName={areaName}
+      />,
+    );
+    expect(screen.getByText("Foreign-station presence")).toBeTruthy();
+    expect(screen.getByTestId("month-report-presence-prestige").textContent).toContain("-2");
+    expect(
+      screen.getByText(/Malta: 300 t on station against 1200 t required, short 900 t/),
+    ).toBeTruthy();
+  });
+
   it("offers the previous month as a disclosure when one exists", () => {
     render(<MonthlyReportView report={report(2)} previous={report(1)} areaName={areaName} />);
 

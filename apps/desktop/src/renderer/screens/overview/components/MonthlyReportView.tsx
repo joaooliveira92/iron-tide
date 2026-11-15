@@ -1,6 +1,7 @@
 import type { MonthlyReportEntry } from "../../../../shared/reports-contract.js";
 import { monthLabel } from "../month-report-format.js";
 import { NarrativeMonthSummary } from "../NarrativeMonthSummary.js";
+import { MonthReportPresenceSection } from "./MonthReportPresenceSection.js";
 import { MonthReportTreasurySection } from "./MonthReportTreasurySection.js";
 
 export function MonthlyReportView({
@@ -15,6 +16,9 @@ export function MonthlyReportView({
   return (
     <div className="space-y-3" data-testid="monthly-report">
       <MonthReportTreasurySection treasury={report.treasury} />
+      {report.presence === undefined ? null : (
+        <MonthReportPresenceSection presence={report.presence} areaName={areaName} />
+      )}
       <NarrativeMonthSummary reports={[report]} areaName={areaName} />
       {previous !== undefined && (
         <details className="mt-4">

@@ -29,7 +29,7 @@
       "renderer_screen": "screens/strategic-map/StrategicMapScreen.tsx",
       "evidence_test": "apps/desktop/src/renderer/screens/strategic-map/StrategicMapScreen.test.tsx",
       "decision": null,
-      "note": "The map and the Fleet panel share useMovementOrders, so both build the same MoveFleet body."
+      "note": "The map and Fleet panel share useMovementOrders, so both build the same MoveFleet body."
     },
     {
       "id": "assign-station",
@@ -426,6 +426,18 @@
       "renderer_screen": null,
       "evidence_test": null,
       "decision": "#838"
+    },
+    {
+      "id": "presence-queued-order-warning",
+      "player_verb": "Be warned that a queued order leaves a station short",
+      "status": "reachable",
+      "engine_package": "campaign-engine",
+      "engine_modules": [],
+      "engine_symbols": ["buildPresenceWarnings"],
+      "main_commands": ["inspectFleetScreen"],
+      "renderer_screen": "screens/fleet/components/PresenceWarnings.tsx",
+      "evidence_test": "apps/desktop/src/renderer/screens/fleet/components/PresenceWarnings.test.tsx",
+      "decision": null
     },
     {
       "id": "presence-revolt-pressure",

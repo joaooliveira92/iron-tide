@@ -5,6 +5,7 @@ import type {
   FleetScreenProjection,
   MovementCommandOutcome,
   PlayerProjectionPresence,
+  PresenceWarningView,
 } from "../../../shared/fleet-contract.js";
 import type { RequestLifecycle } from "../../lib/command-screen-workflow.js";
 
@@ -17,6 +18,7 @@ export interface FleetScreenState extends RequestLifecycle {
   readonly ports: FleetScreenProjection["ports"];
   readonly movementCommands: readonly MovementCommand[];
   readonly presence: PlayerProjectionPresence | null;
+  readonly presenceWarnings: readonly PresenceWarningView[];
 }
 
 export function initialFleetScreenState(): FleetScreenState {
@@ -30,6 +32,7 @@ export function initialFleetScreenState(): FleetScreenState {
     ports: [],
     movementCommands: [],
     presence: null,
+    presenceWarnings: [],
     pendingRequest: null,
     requiresRefresh: false,
     notice: null,
@@ -46,6 +49,7 @@ export function projectFleetScreen(projection: FleetScreenProjection): Partial<F
     ports: projection.ports,
     movementCommands: projection.movementCommands,
     presence: projection.presence,
+    presenceWarnings: projection.presenceWarnings ?? [],
   };
 }
 

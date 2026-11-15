@@ -234,6 +234,50 @@ describe("fleet commands (Effect programs)", () => {
     expect(result.value.overBaseShips).toEqual([]);
   });
 
+  it("projects the presence shortfall a queued order would cause, and clears it when the order is cancelled", async () => {
+    registerProductionSession("session-uk-warn", resolve(saveRoot, "save-uk-w"), "uk");
+    const before = await inspectFleetScreen("session-uk-warn");
+    if (before.outcome !== "success") throw new Error(JSON.stringify(before));
+    expect(before.value.presenceWarnings).toBeUndefined();
+    const toAreaId = before.value.areaEdges.find(
+      (edge) => edge.fromAreaId === "med_malta",
+    )?.toAreaId;
+    expect(toAreaId).toBeDefined();
+    const queued = await submitMovementCommand({
+      sessionId: "session-uk-warn",
+      divisionId: "fleet_gbr_mediterranean",
+      fromAreaId: "med_malta",
+      toAreaId: toAreaId!,
+      expectedRevision: 0,
+      transportRequestId: "tx-warn",
+    });
+    if (queued.outcome !== "success") throw new Error(JSON.stringify(queued));
+    const commandId = queued.value.command.commandId;
+
+    const during = await inspectFleetScreen("session-uk-warn");
+    if (during.outcome !== "success") throw new Error(JSON.stringify(during));
+    expect(during.value.presenceWarnings).toHaveLength(1);
+    expect(during.value.presenceWarnings![0]).toMatchObject({
+      areaId: "med_malta",
+      requiredTons: 1200,
+      presentTonsBefore: 8540,
+      presentTonsAfter: 0,
+      shortfallAfter: 1200,
+      causeCommandIds: [commandId],
+    });
+
+    const cancelled = await cancelMovementCommand({
+      sessionId: "session-uk-warn",
+      commandId,
+      expectedRevision: 0,
+      transportRequestId: "tx-warn-cancel",
+    });
+    expect(cancelled.outcome).toBe("success");
+    const after = await inspectFleetScreen("session-uk-warn");
+    if (after.outcome !== "success") throw new Error(JSON.stringify(after));
+    expect(after.value.presenceWarnings).toBeUndefined();
+  });
+
   describe("station assignment (S-5 09)", () => {
     const base = { expectedRevision: 0 };
 

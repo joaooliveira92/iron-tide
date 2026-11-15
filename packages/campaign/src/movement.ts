@@ -1,6 +1,6 @@
 import { evaluateShipGates, type GateReasonTag, type ShipGateSubject } from "./eligibility.js";
 import { isSeaArea } from "./seaArea.js";
-import type { CampaignSnapshot } from "./state.js";
+import type { CampaignSnapshot, NationState } from "./state.js";
 
 export interface FleetMoveProblem {
   readonly code:
@@ -14,7 +14,7 @@ export interface FleetMoveProblem {
 }
 
 export function fleetMoveProblem(
-  snapshot: CampaignSnapshot,
+  snapshot: Pick<CampaignSnapshot, "nations" | "world">,
   nationId: string,
   fleetId: string,
   toAreaId: string,
@@ -61,6 +61,36 @@ export function fleetMoveProblem(
       message: `${target.name} is not directly connected to ${fleet.locationAreaId}`,
     };
   return null;
+}
+
+export function relocateFleet<S extends Pick<CampaignSnapshot, "nations">>(
+  snapshot: S,
+  nationId: string,
+  fleetId: string,
+  toAreaId: string,
+): S {
+  const nation = snapshot.nations.get(nationId);
+  const moved = nation?.fleets.find((f) => f.id === fleetId);
+  if (nation === undefined || moved === undefined) return snapshot;
+  const movedShipIds = new Set(moved.ships.map((s) => s.id));
+  const updatedNation: NationState = {
+    ...nation,
+    fleets: nation.fleets.map((fleet) =>
+      fleet.id === fleetId
+        ? {
+            ...fleet,
+            locationAreaId: toAreaId,
+            ships: fleet.ships.map((s) => ({ ...s, locationAreaId: toAreaId })),
+          }
+        : fleet,
+    ),
+    divisions: nation.divisions.map((d) =>
+      movedShipIds.has(d.flagshipShipId) ? { ...d, locationAreaId: toAreaId } : d,
+    ),
+  };
+  const updatedNations = new Map(snapshot.nations);
+  updatedNations.set(nationId, updatedNation);
+  return { ...snapshot, nations: updatedNations };
 }
 
 function hasSailGate(ship: ShipGateSubject, tag: GateReasonTag): boolean {

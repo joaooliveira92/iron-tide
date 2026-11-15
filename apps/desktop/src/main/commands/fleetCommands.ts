@@ -40,6 +40,7 @@ import { CommandFailed, CommandRejected, type CommandError } from "../runtime/co
 import type { CommandHandler } from "../runtime/commandProgram.js";
 import { ContentArtifact } from "../runtime/contentArtifact.js";
 import { CommandQueue, type PendingCommandEntry } from "../runtime/commandQueue.js";
+import { queuedPresenceWarnings } from "./fleetPresenceWarnings.js";
 import { currentRevision, submitPlayerCommand, verifyEnvelope } from "./playerCommandSupport.js";
 
 interface MovementRequest {
@@ -253,6 +254,8 @@ export const inspectFleetScreenProgram: CommandHandler<"inspectFleetScreen"> = (
                 }
               : {}),
           };
+    const queuedEntries = yield* queue.entries(record.sessionId);
+    const presenceWarnings = queuedPresenceWarnings(record, queuedEntries, shipBuilding.presence);
     const projection: FleetScreenProjection = {
       revision: Number(record.state.snapshot.turnNumber),
       month: record.month,
@@ -261,9 +264,10 @@ export const inspectFleetScreenProgram: CommandHandler<"inspectFleetScreen"> = (
       areas: view.areas,
       areaEdges: view.areaEdges,
       ports: view.ports,
-      movementCommands: queuedMovementCommands(record, yield* queue.entries(record.sessionId)),
+      movementCommands: queuedMovementCommands(record, queuedEntries),
       presence: view.presence,
       overBaseShips: view.overBaseShips,
+      ...(presenceWarnings.length === 0 ? {} : { presenceWarnings }),
       ...(training === undefined ? {} : { training }),
       ...(exercise === undefined ? {} : { exercise }),
     };

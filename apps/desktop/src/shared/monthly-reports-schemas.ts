@@ -113,6 +113,18 @@ const BattleOutcomeSchema = Schema.Struct({
   explanation: Schema.Array(Schema.String),
 });
 
+const MonthlyReportPresenceSchema = Schema.Struct({
+  shortfalls: Schema.Array(
+    Schema.Struct({
+      areaId: nonEmptyString,
+      requiredTons: nonNegativeInt,
+      presentTons: nonNegativeInt,
+      shortfallTons: nonNegativeInt,
+    }),
+  ),
+  prestigeDelta: Schema.optional(int),
+});
+
 const StrategicPrioritySchema = Schema.Struct({
   id: nonEmptyString,
   type: strategicPriorityTypeSchema,
@@ -137,6 +149,7 @@ const MonthlyReportEntrySchema = Schema.Struct({
   fleet: MonthlyReportFleetSchema,
   priorities: Schema.Array(StrategicPrioritySchema),
   battleOutcomes: Schema.Array(BattleOutcomeSchema),
+  presence: Schema.optional(MonthlyReportPresenceSchema),
 });
 
 export const MonthlyReportsSchema = Schema.Struct({

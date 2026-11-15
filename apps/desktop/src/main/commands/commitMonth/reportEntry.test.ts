@@ -7,6 +7,7 @@ import {
   constructionProgressFromEvents,
   discoveriesFromEvents,
   newlyActiveProjectIds,
+  presenceFromEvents,
   researchProgressFromEvents,
   type FleetSnapshot,
   type ProjectSnapshot,
@@ -133,6 +134,53 @@ describe("event derivations", () => {
 
   it("ignores event kinds that are not part of the section", () => {
     expect(constructionProgressFromEvents([research, discovery], "uk")).toEqual([]);
+  });
+});
+
+describe("presenceFromEvents", () => {
+  const shortfall = (nationId: string, areaId: string) =>
+    envelope({
+      kind: "PresenceShortfall",
+      nationId,
+      areaId,
+      requiredTons: SafeInt(1200),
+      presentTons: SafeInt(300),
+      shortfallTons: SafeInt(900),
+    });
+  const prestige = (nationId: string, reasonCode: string, delta: number) =>
+    envelope({
+      kind: "PrestigeChanged",
+      nationId,
+      reasonCode,
+      ruleKind: "FIXED_LOSS",
+      before: SafeInt(20),
+      after: SafeInt(20 + delta),
+      delta: SafeInt(delta),
+      rulesetVersion: "0.1.0",
+    });
+
+  it("is absent when the player had no shortfall", () => {
+    expect(presenceFromEvents([prestige("uk", "PRESENCE_SHORTFALL", -1)], "uk")).toBeUndefined();
+    expect(presenceFromEvents([shortfall("france", "med_malta")], "uk")).toBeUndefined();
+  });
+
+  it("carries the player's shortfalls and the presence prestige change only", () => {
+    expect(
+      presenceFromEvents(
+        [
+          shortfall("uk", "med_malta"),
+          shortfall("france", "med_malta"),
+          prestige("uk", "PRESENCE_SHORTFALL", -2),
+          prestige("uk", "BATTLE_LOST", -5),
+        ],
+        "uk",
+      ),
+    ).toEqual({
+      shortfalls: [
+        { areaId: "med_malta", requiredTons: 1200, presentTons: 300, shortfallTons: 900 },
+      ],
+      prestigeDelta: -2,
+    });
   });
 });
 
