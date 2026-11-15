@@ -8,6 +8,7 @@ import {
 import { SafeInt } from "@bluewave/contracts";
 import { presencePenaltyRequestEvent, presenceShortfallEvent } from "./events.js";
 import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
+import { applyPresenceShortfallPrestige } from "./presencePenalty.js";
 
 export type PresenceSnapshot = Pick<CampaignSnapshot, "nations" | "world" | "designs" | "wars">;
 
@@ -64,6 +65,7 @@ export function runPresenceMeasurementPhase(ctx: PhaseContext): PhaseRunOutcome 
       );
     }
   }
+  applyPresenceShortfallPrestige(ctx, demand, rules);
   return { status: "continue" };
 }
 
@@ -71,8 +73,8 @@ export const presenceMeasurementPhase: MonthPhase = {
   id: "presence_measurement",
   name: "Presence Measurement",
   permissions: {
-    reads: ["nations", "world", "designs", "wars"],
-    writes: [],
+    reads: ["nations", "world", "designs", "wars", "prestigeRules", "rulesetVersion"],
+    writes: ["nations"],
     rng: false,
   },
   run: runPresenceMeasurementPhase,

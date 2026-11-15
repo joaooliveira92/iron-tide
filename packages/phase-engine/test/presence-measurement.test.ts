@@ -358,4 +358,101 @@ describe("S-5 05: month-end presence step", () => {
       expect(measurePresence(from, FIXTURE_PRESENCE).some((r) => r.nationId === "GBR")).toBe(true);
     });
   });
+
+  describe("#576: presence shortfall costs prestige", () => {
+    const PENALTY = {
+      penaltyRequests: true as const,
+      shortfallPrestige: { lossBpPerWholeShortfall: 200, maxLossBp: 500 },
+    };
+
+    function rich(from: CampaignSnapshot, extra: NationState[] = []): CampaignSnapshot {
+      const nations = new Map(
+        [...from.nations.values(), ...extra].map((n) => [n.id, { ...n, prestige: SafeInt(100) }]),
+      );
+      return { ...from, nations };
+    }
+
+    const prestigeOf = (r: ReturnType<typeof run>, id: string) =>
+      Number(r.finalSnapshot.nations.get(id)?.prestige);
+
+    const changes = (r: ReturnType<typeof run>) =>
+      r.eventLedger.all
+        .filter((e) => e.body.kind === "PrestigeChanged")
+        .map((e) => e.body)
+        .map((b) => (b.kind === "PrestigeChanged" ? [b.nationId, b.reasonCode, b.delta] : []));
+
+    it("charges each short nation one proportional loss per month, ordered by nation, summed over areas", () => {
+      const result = run(rich(snapshot([])), true, PENALTY);
+      expect(changes(result)).toEqual([
+        ["FRA", "PRESENCE_SHORTFALL", -2],
+        ["GBR", "PRESENCE_SHORTFALL", -4],
+      ]);
+      expect(prestigeOf(result, "GBR")).toBe(96);
+      expect(prestigeOf(result, "FRA")).toBe(98);
+      expect(result.finalSnapshot.nations.get("GBR")?.prestigeLastChange).toMatchObject({
+        reasonCode: "PRESENCE_SHORTFALL",
+        appliedRule: { kind: "PROPORTIONAL_LOSS", basisPoints: 400 },
+      });
+    });
+
+    it("caps the monthly loss at the ruleset maximum", () => {
+      const capped = {
+        ...PENALTY,
+        shortfallPrestige: { lossBpPerWholeShortfall: 200, maxLossBp: 300 },
+      };
+      expect(prestigeOf(run(rich(snapshot([])), true, capped), "GBR")).toBe(97);
+    });
+
+    it("scales the loss with the shortfall fraction", () => {
+      const half = run(rich(snapshot([ship("a", { designVersionId: "d-small" })])), true, PENALTY);
+      expect(prestigeOf(half, "GBR")).toBe(97);
+    });
+
+    it("leaves a nation whose requirement is met unchanged", () => {
+      const covered = snapshot([ship("a"), ship("b", { locationAreaId: "cape" })]);
+      const result = run(rich(covered), true, PENALTY);
+      expect(prestigeOf(result, "GBR")).toBe(100);
+      expect(prestigeOf(result, "FRA")).toBe(98);
+    });
+
+    it("leaves a blockade-exempt nation unchanged", () => {
+      const result = run(rich(withWarAndBlockade(snapshot([]))), true, PENALTY);
+      expect(prestigeOf(result, "GBR")).toBe(100);
+      expect(prestigeOf(result, "FRA")).toBe(98);
+    });
+
+    it("covers AI nations", () => {
+      const base = snapshot([]);
+      const ai = { ...nation("DEU", []), isPlayable: false, isAI: true };
+      const from = rich(
+        {
+          ...base,
+          world: {
+            ...base.world,
+            possessions: [
+              ...(base.world.possessions ?? []),
+              { id: "p-deu-1", nationId: "DEU", areaId: "samoa" },
+            ],
+          },
+        },
+        [ai],
+      );
+      expect(prestigeOf(run(from, true, PENALTY), "DEU")).toBe(98);
+    });
+
+    it("does nothing unless the shortfall rule is authored and penalties are requested", () => {
+      const from = rich(snapshot([]));
+      const hash = (r: ReturnType<typeof run>) => sha256Hex(canonicalSerialize(r.finalSnapshot));
+      expect(hash(run(from, true, { penaltyRequests: true }))).toBe(hash(run(from, false)));
+      expect(hash(run(from, true, { shortfallPrestige: PENALTY.shortfallPrestige }))).toBe(
+        hash(run(from, false)),
+      );
+    });
+
+    it("is deterministic", () => {
+      const from = rich(snapshot([]));
+      const hash = (r: ReturnType<typeof run>) => sha256Hex(canonicalSerialize(r.eventLedger.all));
+      expect(hash(run(from, true, PENALTY))).toBe(hash(run(from, true, PENALTY)));
+    });
+  });
 });

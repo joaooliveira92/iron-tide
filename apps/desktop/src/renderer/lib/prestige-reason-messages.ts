@@ -3,6 +3,7 @@ export const PRESTIGE_REASON_MESSAGES = {
   "shell.prestige.reason.BATTLE_LOST": "battle lost",
   "shell.prestige.reason.BATTLE_WON": "battle won",
   "shell.prestige.reason.DECLINED_BATTLE": "repeated declined battles",
+  "shell.prestige.reason.PRESENCE_SHORTFALL": "stations left without enough ships",
   "shell.prestige.reason.ARSENAL_PROTECTED": "arsenal protected",
   "shell.prestige.reason.ARSENAL_SCANDAL_EXPOSED": "arsenal scandal exposed",
   "shell.prestige.reason.COALING_STATIONS_DECLINED": "coaling stations declined",
