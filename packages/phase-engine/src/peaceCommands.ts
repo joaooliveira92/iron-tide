@@ -1,5 +1,5 @@
 import { decidePeaceResponse } from "@bluewave/ai";
-import type { AcceptPeaceCommand, ProposePeaceCommand } from "@bluewave/commands";
+import type { AcceptPeaceCommand, PeaceTerm, ProposePeaceCommand } from "@bluewave/commands";
 import { applyAcceptPeace, applyProposePeace, type PeaceTermSink } from "./diplomacy.js";
 import type { PhaseContext } from "./pipeline.js";
 
@@ -14,35 +14,55 @@ function sinkOf(ctx: PhaseContext): PeaceTermSink {
   };
 }
 
-export function handleProposePeace(ctx: PhaseContext, body: ProposePeaceCommand): void {
+const STATUS_QUO: PeaceTerm = { _tag: "StatusQuo" };
+
+function refusesPeace(
+  ctx: PhaseContext,
+  nationId: string,
+  warId: string,
+  term: PeaceTerm,
+): boolean {
   const snapshot = ctx.snapshot.current;
   const rules = ctx.engineOptions?.peaceBehaviour;
-  const war = snapshot.wars.wars.find((w) => w.id === body.warId);
+  const war = snapshot.wars.wars.find((w) => w.id === warId);
   if (
-    rules !== undefined &&
-    ctx.playerNationId === body.nationId &&
-    war !== undefined &&
-    war.status === "ACTIVE" &&
-    (war.attackerId === body.nationId || war.defenderId === body.nationId)
+    rules === undefined ||
+    ctx.playerNationId !== nationId ||
+    war === undefined ||
+    war.status !== "ACTIVE" ||
+    (war.attackerId !== nationId && war.defenderId !== nationId)
   ) {
-    const responderId = war.attackerId === body.nationId ? war.defenderId : war.attackerId;
-    const decision = decidePeaceResponse(
-      snapshot,
-      body.warId,
-      responderId,
-      body.term,
-      rules.acceptanceScoreMargin,
-    );
-    if (!decision.accept) {
-      ctx.collector.addError(
-        PEACE_REFUSED,
-        `${responderId} refused the peace term (${decision.reason})`,
-        { stage: "command-collection", entityId: body.warId },
-      );
-      return;
-    }
+    return false;
   }
-  ctx.snapshot.current = applyProposePeace(snapshot, body, ctx.campaignMonth, sinkOf(ctx));
+  const responderId = war.attackerId === nationId ? war.defenderId : war.attackerId;
+  const decision = decidePeaceResponse(
+    snapshot,
+    warId,
+    responderId,
+    term,
+    rules.acceptanceScoreMargin,
+  );
+  if (decision.accept) {
+    return false;
+  }
+  ctx.collector.addError(
+    PEACE_REFUSED,
+    `${responderId} refused the peace term (${decision.reason})`,
+    { stage: "command-collection", entityId: warId },
+  );
+  return true;
+}
+
+export function handleProposePeace(ctx: PhaseContext, body: ProposePeaceCommand): void {
+  if (refusesPeace(ctx, body.nationId, body.warId, body.term)) {
+    return;
+  }
+  ctx.snapshot.current = applyProposePeace(
+    ctx.snapshot.current,
+    body,
+    ctx.campaignMonth,
+    sinkOf(ctx),
+  );
 }
 
 export function handleAcceptPeace(ctx: PhaseContext, body: AcceptPeaceCommand): void {
@@ -50,6 +70,9 @@ export function handleAcceptPeace(ctx: PhaseContext, body: AcceptPeaceCommand): 
   const offer = snapshot.wars.peaceOffers?.find(
     (o) => o.warId === body.warId && o.targetId === body.nationId,
   );
+  if (offer === undefined && refusesPeace(ctx, body.nationId, body.warId, STATUS_QUO)) {
+    return;
+  }
   if (offer === undefined || offer.term._tag === "StatusQuo") {
     ctx.snapshot.current = applyAcceptPeace(snapshot, body, ctx.campaignMonth);
     return;
