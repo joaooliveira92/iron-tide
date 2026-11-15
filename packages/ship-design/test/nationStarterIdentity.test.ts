@@ -5,8 +5,6 @@ import { nationalContext, shipBuildingContent } from "./helpers/earlyContext.js"
 const OPENING_MONTH = "1880-01";
 const REFERENCE_NATION = "uk";
 
-const PENDING_NATIONAL_IDENTITY: ReadonlySet<string> = new Set(["france", "germany", "usa"]);
-
 const openingStarters: readonly StarterDesign[] = shipBuildingContent.starterDesigns.filter(
   (s) => s.month === OPENING_MONTH,
 );
@@ -45,22 +43,11 @@ describe("national starter identity (release gate)", () => {
 
   for (const [category, starters] of byCategory) {
     it(`${category}: no identified nation shares its starter with another nation`, () => {
-      const shared = [...sharingNations(starters)]
-        .filter((n) => n !== REFERENCE_NATION && !PENDING_NATIONAL_IDENTITY.has(n))
-        .sort();
+      const shared = [...sharingNations(starters)].filter((n) => n !== REFERENCE_NATION).sort();
       expect(
         shared,
         `${category} starters compile identically to another nation's; give them the nation's own guns, speed or fittings`,
       ).toEqual([]);
     });
   }
-
-  it("the pending list names only nations that still share a starter", () => {
-    const sharing = new Set<string>();
-    for (const starters of byCategory.values()) {
-      for (const n of sharingNations(starters)) sharing.add(n);
-    }
-    const stale = [...PENDING_NATIONAL_IDENTITY].filter((n) => !sharing.has(n)).sort();
-    expect(stale, "remove these nations from PENDING_NATIONAL_IDENTITY").toEqual([]);
-  });
 });
