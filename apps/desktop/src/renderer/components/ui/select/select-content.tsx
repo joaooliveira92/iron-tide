@@ -23,6 +23,7 @@ export interface SelectContentProps {
   sideOffset?: number;
   viewportPadding?: number;
   maxHeight?: number;
+  minBelow?: number;
 }
 
 export function SelectContent({
@@ -32,6 +33,7 @@ export function SelectContent({
   sideOffset = DEFAULT_SIDE_OFFSET,
   viewportPadding = DEFAULT_VIEWPORT_PADDING,
   maxHeight = DEFAULT_MAX_HEIGHT,
+  minBelow = Infinity,
 }: SelectContentProps) {
   const { state, actions, meta } = useSelectContext("SelectContent");
 
@@ -50,6 +52,7 @@ export function SelectContent({
     sideOffset,
     viewportPadding,
     maxHeight,
+    minBelow,
   });
 
   useLayoutEffect(() => {

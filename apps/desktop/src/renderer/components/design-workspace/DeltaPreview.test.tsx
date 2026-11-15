@@ -52,3 +52,32 @@ describe("DeltaPreview", () => {
     expect(region.textContent).toMatch(/Cost.*up.*\+4%.*worse/);
   });
 });
+
+describe("DeltaPreview explanations", () => {
+  const explained: readonly Delta[] = [
+    {
+      id: "speed",
+      label: "Speed",
+      text: "+1.2 kn",
+      direction: "up",
+      tone: "better",
+      explanation: "Flat-out speed from the installed power.",
+    },
+    { id: "legacy", label: "Legacy", text: "from 1885-01", direction: "flat" },
+  ];
+
+  it("describes a delta by its explanation without reading it into the live announcement", () => {
+    render(<DeltaPreview deltas={explained} />);
+    const speed = screen.getByText("Speed").closest("li")!;
+    expect(speed.getAttribute("aria-description")).toBe("Flat-out speed from the installed power.");
+    expect(speed.getAttribute("title")).toBe("Flat-out speed from the installed power.");
+    expect(screen.getByRole("status").textContent).not.toContain("Flat-out speed");
+  });
+
+  it("adds no description to a delta without an explanation", () => {
+    render(<DeltaPreview deltas={explained} />);
+    const legacy = screen.getByText("Legacy").closest("li")!;
+    expect(legacy.hasAttribute("aria-description")).toBe(false);
+    expect(legacy.hasAttribute("title")).toBe(false);
+  });
+});

@@ -7,6 +7,12 @@
   stroke-width: 1.3px;
 }
 
+.an-ship .an-part[data-changed="preview"] .an-solid .an-edge {
+  stroke: var(--an-changed);
+  stroke-width: 1.8px;
+  stroke-dasharray: 5 2.5;
+}
+
 @media (prefers-reduced-motion: no-preference) {
   @keyframes an-changed-0 {
     0% {

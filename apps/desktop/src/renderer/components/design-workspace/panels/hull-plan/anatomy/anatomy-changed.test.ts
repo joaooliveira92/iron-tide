@@ -93,6 +93,13 @@ describe("AnatomyShipFigure changed parts", () => {
     expect(new Set(flagged)).toEqual(new Set(["armour"]));
   });
 
+  it("marks a previewed part with the static value, which no keyframe animates", () => {
+    const markup = render({ changed: { kinds, phase: "preview" } });
+    expect(markup).toMatch(/data-kind="armour" [^>]*data-changed="preview"/);
+    expect(staticCss).toMatch(/data-changed="preview"\][^{]*\{[^}]*stroke-dasharray/);
+    expect(motion).not.toContain('data-changed="preview"');
+  });
+
   it("is a pure function of its props", () => {
     expect(render({ changed: { kinds, phase: 0 } })).toBe(render({ changed: { kinds, phase: 0 } }));
   });

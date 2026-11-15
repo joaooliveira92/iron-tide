@@ -286,4 +286,12 @@ export const REPLAY_SCENARIOS: readonly CorpusScenario[] = [
       },
     ],
   },
+  {
+    id: "production-1880-10m-japan-event",
+    seed: "replay-corpus-events-a",
+    months: 10,
+    playerNationId: "japan",
+    purpose:
+      "Japan as the player: an event drawn in month 7 stays pending, then resolves by its default answer in month 10 with budget and tension effects.",
+  },
 ];

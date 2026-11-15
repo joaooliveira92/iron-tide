@@ -288,7 +288,7 @@
       "player_verb": "Accept peace",
       "status": "reachable",
       "engine_package": "phase-engine",
-      "engine_modules": [],
+      "engine_modules": ["peaceCommands"],
       "engine_symbols": ["applyAcceptPeace", "applyProposePeace"],
       "main_commands": ["submitDiplomacyCommand"],
       "renderer_screen": "screens/diplomacy/DiplomacyScreen.tsx",

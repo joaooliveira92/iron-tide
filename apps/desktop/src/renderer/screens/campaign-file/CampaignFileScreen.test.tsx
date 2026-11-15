@@ -103,6 +103,58 @@ describe("CampaignFileScreen recent campaigns", () => {
     expect(await screen.findByText(/Package not found/)).not.toBeNull();
   });
 
+  it("runs a package operation on a recent entry with its path, without the dialog", async () => {
+    const { execute } = renderScreen((command) => {
+      if (command === "listRecentCampaigns") return ok([entry("japan")]);
+      if (command === "verifyCampaign") return fail("VERIFY_FAILED");
+      throw new Error(`unexpected ${command}`);
+    });
+
+    fireEvent.click(await screen.findByLabelText("Verify japan"));
+
+    await waitFor(() =>
+      expect(execute).toHaveBeenCalledWith("verifyCampaign", { packagePath: "/saves/japan" }),
+    );
+    expect(execute).not.toHaveBeenCalledWith("verifyCampaign", undefined);
+  });
+
+  it("targets the recent entry for replay and recover", async () => {
+    const { execute } = renderScreen((command) => {
+      if (command === "listRecentCampaigns") return ok([entry("japan"), entry("france")]);
+      return fail("X");
+    });
+
+    fireEvent.click(await screen.findByLabelText("Replay france"));
+    await waitFor(() =>
+      expect(execute).toHaveBeenCalledWith("replayCampaign", { packagePath: "/saves/france" }),
+    );
+    fireEvent.click(await screen.findByLabelText("Recover japan"));
+    await waitFor(() =>
+      expect(execute).toHaveBeenCalledWith("recoverCampaign", { packagePath: "/saves/japan" }),
+    );
+  });
+
+  it("offers no package operations for an unavailable entry", async () => {
+    renderScreen((command) => {
+      if (command === "listRecentCampaigns") return ok([entry("gone", false)]);
+      throw new Error(`unexpected ${command}`);
+    });
+
+    await screen.findByText(/Package not found/);
+    expect(screen.queryByLabelText("Verify gone")).toBeNull();
+  });
+
+  it("keeps the dialog path for the global operation buttons", async () => {
+    const { execute } = renderScreen((command) => {
+      if (command === "listRecentCampaigns") return ok([entry("japan")]);
+      return fail("X");
+    });
+
+    await screen.findByText("japan");
+    fireEvent.click(screen.getByText("Verify"));
+    await waitFor(() => expect(execute).toHaveBeenCalledWith("verifyCampaign", undefined));
+  });
+
   it("removes an entry through the main process", async () => {
     const { execute } = renderScreen((command) => {
       if (command === "listRecentCampaigns") return ok([entry("japan")]);

@@ -116,6 +116,8 @@ export function NumberField({
   );
 }
 
+const PREVIEW_MIN_BELOW = 160;
+
 export function SelectField({
   label,
   shortLabel,
@@ -173,7 +175,9 @@ export function SelectField({
         >
           <SelectValue placeholder="Select" className="min-w-0 flex-1 truncate text-left" />
         </SelectTrigger>
-        <SelectContent>
+        <SelectContent
+          {...(onActiveValueChange === undefined ? {} : { minBelow: PREVIEW_MIN_BELOW })}
+        >
           {options.map((o) => (
             <SelectItem
               key={o.value}

@@ -45,6 +45,7 @@ export function CampaignFileScreen({ onOpenCampaign, onStartNewGame }: CampaignF
         disabled={pendingLabel !== null}
         onOpen={openRecentCampaign}
         onRemove={removeRecentCampaign}
+        onRunOperation={runPackageOperation}
       />
       <PackageOperations pendingOperation={pendingOperation} onRun={runPackageOperation} />
       <OperationStatus pendingLabel={pendingLabel} result={result} onDismiss={dismissResult} />

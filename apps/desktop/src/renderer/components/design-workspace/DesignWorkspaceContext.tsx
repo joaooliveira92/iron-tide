@@ -1,8 +1,9 @@
-import { createContext, type ReactNode, use, useMemo } from "react";
+import { createContext, type ReactNode, use, useMemo, useState } from "react";
 import { BluewaveError } from "@bluewave/contracts";
 import type { DesignDraft, ShipContext, WorkshopView } from "@bluewave/ship-design";
 import type { DrawingBoardContent } from "./content.js";
 import type { Edit } from "./panels/types.js";
+import { createPreviewMarks, PreviewMarksContext } from "./previewMarks.js";
 
 export interface DesignState {
   readonly draft: DesignDraft;
@@ -39,10 +40,13 @@ export function DesignWorkspaceProvider({
     [draft, view, content, ctx, month],
   );
   const actions = useMemo(() => ({ edit, errorFor }), [edit, errorFor]);
+  const [marks] = useState(createPreviewMarks);
   return (
-    <ActionsContext.Provider value={actions}>
-      <StateContext.Provider value={state}>{children}</StateContext.Provider>
-    </ActionsContext.Provider>
+    <PreviewMarksContext.Provider value={marks}>
+      <ActionsContext.Provider value={actions}>
+        <StateContext.Provider value={state}>{children}</StateContext.Provider>
+      </ActionsContext.Provider>
+    </PreviewMarksContext.Provider>
   );
 }
 

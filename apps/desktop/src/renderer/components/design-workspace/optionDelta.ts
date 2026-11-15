@@ -8,6 +8,7 @@ import {
 } from "@bluewave/ship-design";
 
 import type { PresentationFormat } from "../../lib/presentation-format/index.js";
+import { aspectExplanation } from "./aspectExplanation.js";
 import { diffViews, type FeedbackTone } from "./designFeedback.js";
 
 export interface Delta {
@@ -16,6 +17,7 @@ export interface Delta {
   readonly text: string;
   readonly direction: "up" | "down" | "flat";
   readonly tone?: FeedbackTone;
+  readonly explanation?: string;
 }
 
 const LEGACY_ASPECTS = ["speed", "displacement", "cost", "stability"] as const;
@@ -30,7 +32,13 @@ export function viewDeltas(
   for (const id of LEGACY_ASPECTS) {
     const aspect = aspects.find((a) => a.aspect === id);
     if (aspect !== undefined)
-      out.push({ id, label: aspect.label, text: aspect.text, direction: aspect.direction });
+      out.push({
+        id,
+        label: aspect.label,
+        text: aspect.text,
+        direction: aspect.direction,
+        explanation: aspectExplanation(aspect),
+      });
   }
   return out;
 }
