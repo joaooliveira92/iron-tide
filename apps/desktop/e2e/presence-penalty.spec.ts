@@ -1,5 +1,22 @@
 import { test, expect, openCampaign } from "./fixtures.js";
-import { navigateTo } from "./flows.js";
+import { advanceMonths, expandStatusStrip, navigateTo } from "./flows.js";
+
+test("an idle ship left off a short station costs prestige after the opening and the status strip names why", async ({
+  e2e,
+  campaignTemplate,
+}) => {
+  const page = e2e.page;
+  await openCampaign(e2e, campaignTemplate);
+  await advanceMonths(page, 4);
+
+  await test.step("reachable:presence-shortfall-prestige", async () => {
+    const strip = await expandStatusStrip(page);
+    await strip.locator('[data-row="prestige"]').click();
+    await expect(
+      page.getByText(/Last change: -\d+ \(stations left without enough ships, \d{4}-\d{2}\)\./),
+    ).toBeVisible();
+  });
+});
 
 test("a queued sailing order that would leave a station short warns before the month ends", async ({
   e2e,
