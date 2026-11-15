@@ -2,13 +2,9 @@ import type { Map as MapLibreMap } from "maplibre-gl";
 import { AREAS, AREAS_BY_ID } from "../world-map/map-geometry.js";
 import type { CameraProjection } from "./camera-contract.js";
 import type { OverlayStore } from "./overlay-store.js";
-import {
-  TileCache,
-  isOverscaled,
-  selectTiles,
-  sourceLevelForDisplay,
-  type TileHierarchy,
-} from "./tile-hierarchy.js";
+import { TileCache } from "./tile-cache.js";
+import type { TileHierarchy } from "./tile-hierarchy.js";
+import { isOverscaled, selectTiles, sourceLevelForDisplay } from "./tile-selection.js";
 
 export type AdapterBridge = NonNullable<Window["__globeAdapter"]>;
 

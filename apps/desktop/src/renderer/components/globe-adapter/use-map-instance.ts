@@ -20,13 +20,13 @@ import { adapterFailureRequested, type AdapterLandMode } from "./globe-adapter-f
 import { attachMapPointer, mapHealth } from "./map-pointer.js";
 import { buildStyle, overlayCollections } from "./map-style.js";
 import { OverlayStore } from "./overlay-store.js";
+import { TileCache } from "./tile-cache.js";
 import {
   NATURAL_EARTH_HIERARCHY,
-  TileCache,
   hierarchyForManifest,
-  selectTiles,
   type TileHierarchy,
 } from "./tile-hierarchy.js";
+import { selectTiles } from "./tile-selection.js";
 import { registerBakedProtocol } from "./tile-protocol.js";
 import type { GlobeAdapterProps } from "./GlobeAdapter.js";
 
