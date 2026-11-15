@@ -45,7 +45,9 @@ export function ArmourSchemeSelector({
   const [picked, setPicked] = useState<SchemeChoice["id"] | null>(null);
   const preview = useOptionPreview((id) => {
     const scheme = model.schemes.find((s) => s.id === id);
-    return scheme === undefined || scheme.active || scheme.locked ? null : schemeEdit(model, id);
+    return scheme === undefined || scheme.active || scheme.locked
+      ? null
+      : schemeEdit(model, scheme.id);
   });
   const shown = model.schemes.find((s) => s.id === picked) ?? model.schemes.find((s) => s.active);
   const apply = () => {
