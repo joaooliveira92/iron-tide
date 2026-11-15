@@ -12,7 +12,7 @@ and `.scratch` references do not resolve in this checkout.
   deterministic test drives it from a compiled campaign month and observes its effect
   on authoritative state. Code that merely exists does not count.
 - **Standing gate:** `pnpm preflight`, `pnpm test:scripts`, `pnpm check` green on the
-  exact commit; goldens re-pinned only per `docs/agents/golden-repinning.md`.
+  exact commit; goldens re-pinned only per `docs/agents/replay-corpus.md`.
 - **Unknown values:** the manual states rules and some numbers, not full tables.
   Anything it does not give is published as a `Research` discussion or raised as a
   decision request. Never fabricate (AGENTS.md stop conditions).
@@ -140,7 +140,7 @@ from authoritative state, and the output is reviewed. It is a new baseline, not 
 | W-2 | Submarines and mines, campaign level | M    | W-1           | Policies, ASW rating, operational mining, neutral anger. Wires built `combat` modules.                                                                    |
 | W-3 | Intelligence                         | M    | S-4           | Levels with ramp-up, detection raises tension, restricted enemy data.                                                                                     |
 | W-4 | Treaties and alliances               | L    | S-4, W-3      | Arms limitation, scrapping, cheating by non-liberal nations, tech sale, revocation.                                                                       |
-| W-5 | Invasions, surprise attack, fuel     | M    | W-1, T-1      | Invasion range and escort battle, era-specific surprise attack, fuel shortage; blitzkrieg gate (1935) kept inert within the 1939 horizon unless coherent. |
+| W-5 | Invasions, surprise attack, fuel     | M    | W-1, T-1      | Invasion range and escort battle, era-specific surprise attack, fuel shortage; blitzkrieg gate (1935) kept inert unless coherent (authored horizon 1970). |
 | W-6 | Peace and officers                   | M    | W-4           | Possession selection by value points; officer reveal, traits, promotion, academy.                                                                         |
 
 ### Phase 6 — Frontend surfaces
@@ -272,7 +272,7 @@ Owner decisions outstanding: **0004** (mine inventory; W-2's W-1 dependency is u
 
 - **DR-001** sole 1880 start. **DR-002** canonical internal values; presentation-only
   units and currency. **DR-003** Options screen and preferences architecture.
-  **DR-004** 1960 and 1970 out of scope; no empty scenario IDs selectable.
+  **DR-004** 1960 and 1970 are not selectable scenario starts (the authored horizon is 1970, RULES.md); no empty scenario IDs selectable.
   **DR-005** nine playable nations; five AI-only behind a per-nation readiness gate (superseded by ADR-0214: ten playable).
 - **DR-006** standardized currency is **Naval Credits (NC)**: a comparison unit, not a
   historical currency; labels and formatting only; no exchange-rate tables.
