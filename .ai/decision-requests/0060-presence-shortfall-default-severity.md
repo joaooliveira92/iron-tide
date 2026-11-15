@@ -2,7 +2,7 @@
 
 ## Status
 
-Blocked pending owner decision. The #576 code is complete and left as written; PR #827 stays draft.
+Blocked pending owner decision. The #576 code is complete and merged (PR #827, #834) and is live on `dev`. #833 investigated the data-only calibration and found no data-only lever that clears the opening; see [Calibration finding (#833)](#calibration-finding-833). The choice is between Option C (about 42 seeded station ships) and a new engine rule (Option B or the surplus-ship variant); Option E is the interim that removes the drain.
 
 ## Trigger
 
@@ -66,6 +66,26 @@ A start-of-campaign grace (the #576 recommendation, deferred to #826 because it 
 ## Recommendation
 
 Option E for 1880 now, with Option B (zero-presence areas free, scaled by the cap) or Option C chosen together with the #826 grace decision. Option A is acceptable only if the owner wants presence to be a standing cost from month 1. Do not implement the disputed behaviour before approval.
+
+## Calibration finding (#833)
+
+Measured with `measurePresence` on the compiled production start (no commands, month 1). Source rows: manual p.46 and p.62 and Research #450 rows 1, 2, 17 to 19 supply structure only, so no sourced magnitude exists for required tons or the loss.
+
+Why required tons cannot be calibrated away:
+
+- `shortfallLossBp` charges `floor(shortfallTons * 10000 / requiredTons)` per area, a fraction. An empty area is 10000 bp at any tonnage, so lowering `requiredTonsPerPossessionWeight` (300 to 1500 t per area already) changes nothing; only 0 (Option E) does.
+- `ceilDivBasisPoints` makes any loss from 1 to 500 bp equal to 1 prestige at prestige 20. One uncovered area costs the same as thirteen, so `lossBpPerWholeShortfall` and `maxLossBp` are also inert at low prestige.
+- The only other data lever is `noPortValueWeight: 0`, which zeroes the requirement in areas where the nation has no port. Of 48 uncovered station areas at the start only 6 have no port (`france` senegal, reunion, tahiti; `netherlands` suriname; `spain` puertorico; `uk` mauritius). It clears 6 and leaves about 42 charged, and it would hand #573 rows with `requiredTons` 0.
+
+Why seeding starter ships (Option C) is large: 48 areas are uncovered, so about 42 small station ships plus ACTIVE cover for `qing` and `usa` (both start with no ACTIVE ship, only a WORKING_UP one that does not count). The 1880 catalogue has no sloop, gunboat or cruiser hull types, `fleets.ts` leaves stations empty on purpose (`fleet_gbr_cape` note), and inventing 14 nations of historical station ships is fabrication at scale. It does not conflict with #831 (starters touch loadouts and reference designs, not `fleets.ts` or `designs.ts`).
+
+Per-nation start (uncovered of total station areas, ACTIVE ships): `austria_hungary` 1 of 2 (1), `brazil` 1 of 2 (1), `france` 8 of 9 (1), `germany` 1 of 2 (1), `italy` 1 of 2 (1), `japan` 2 of 3 (1), `netherlands` 1 of 3 (2), `ottoman_empire` 3 of 4 (1), `portugal` 4 of 5 (1), `qing` 4 of 4 (0), `russia` 2 of 3 (1), `spain` 4 of 5 (1), `uk` 13 of 15 (3), `usa` 3 of 3 (0).
+
+Not measured: how many months `qing` and `usa` take to turn WORKING_UP into ACTIVE, and whether AI nations ever station ships. If they do not, any rule that bites on neglect drains AI prestige too.
+
+Rejected for #833 without owner approval: data-only retune (no-op), `noPortValueWeight: 0` (clears 6 of 48), Option B first form (empty areas free, inverts manual p.46), Option C (fabrication at scale), a calendar grace (only delays, belongs to #826), and a surplus-ship rule that charges only areas a nation could cover by moving an idle ship (new gameplay rule, still charges `uk` at the start, AI never moves ships).
+
+Recommendation (unchanged, now evidenced): apply Option E to the 1880 ruleset as the interim, and decide Option C versus a new rule together with #826. Test to write once chosen: a no-command production run shows no `PRESENCE_SHORTFALL` for months 1 to N for every nation, paired with a run where a covering ship leaves a charged area and the next month fires. Reversal of E: restore `presence.shortfallPrestige` (`lossBpPerWholeShortfall` 200, `maxLossBp` 500) and re-pin the content lock.
 
 ## Work safely completed while blocked
 
