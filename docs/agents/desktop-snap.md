@@ -49,6 +49,15 @@ Read `aria.txt` first. The default window is 1280x800 and screenshots are writte
 - Every action, `--shot` included, is followed by the `--wait` and quiet settle, so the next
   action starts on a settled screen.
 
+## Recipe: Open design menu and dialog
+
+```
+pnpm snap --make-save DIR --out OUT --freeze --strict --advance 24 \
+  --click "Ship design" --click "More design actions" --click "Open design"
+```
+
+`aria.txt` lists the completed ship in "Open a design"; `--advance 12` shows "Under construction".
+
 ## Output directory and `steps.json`
 
 Before running, `snap` deletes only files it owns: `screenshot.png`, `aria.txt`, `text.txt`,
