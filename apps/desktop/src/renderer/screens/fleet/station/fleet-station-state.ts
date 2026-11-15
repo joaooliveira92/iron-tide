@@ -46,7 +46,10 @@ const READINESS_CODE: Readonly<Record<string, "AF" | "RF" | "MB" | "WU">> = {
   WORKING_UP: "WU",
 };
 
-function statusOf(ship: FleetShipView): { code: string; label: string } {
+function statusOf(
+  ship: FleetShipView,
+  areaName: (areaId: string) => string,
+): { code: string; label: string } {
   if (ship.readiness === "REPAIR" && ship.repairMonthsRemaining !== undefined) {
     const n = ship.repairMonthsRemaining;
     return {
@@ -54,7 +57,15 @@ function statusOf(ship: FleetShipView): { code: string; label: string } {
       label: format(n === 1 ? "fleet.status.repair.one" : "fleet.status.repair.many", { n }),
     };
   }
-  if (ship.stationCode === "FS") return { code: "FS", label: format("fleet.status.FS") };
+  if (ship.stationCode === "FS") {
+    return {
+      code: "FS",
+      label:
+        ship.stationAreaId === undefined
+          ? format("fleet.status.FS")
+          : format("fleet.status.FS.named", { station: areaName(ship.stationAreaId) }),
+    };
+  }
   if (ship.stationCode === "EX") return { code: "EX", label: format("fleet.status.EX") };
   const code = READINESS_CODE[ship.readiness] ?? "AF";
   return { code, label: format(`fleet.status.${code}`) };
@@ -81,7 +92,7 @@ export function stationRows(
 ): StationRow[] {
   return divisions.flatMap((division) =>
     division.ships.map((ship) => {
-      const status = statusOf(ship);
+      const status = statusOf(ship, areaName);
       return {
         shipId: ship.shipId,
         name: ship.name,
@@ -179,6 +190,19 @@ export type PresenceReadoutView =
     };
 
 const tons = (n: number) => format("fleet.presence.tons", { n });
+
+export interface StationOption {
+  readonly areaId: string;
+  readonly name: string;
+}
+
+export function stationOptions(
+  presence: PlayerProjectionPresence,
+  areaName: (areaId: string) => string,
+): StationOption[] {
+  if (!presence.configured) return [];
+  return presence.areas.map((row) => ({ areaId: row.areaId, name: areaName(row.areaId) }));
+}
 
 export function presenceReadout(
   presence: PlayerProjectionPresence,

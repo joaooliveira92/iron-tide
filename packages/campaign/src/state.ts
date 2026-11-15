@@ -41,6 +41,7 @@ export interface Ship {
   crewQuality: SafeInt;
   repairMonthsRemaining?: SafeInt;
   stationAssignment?: StationAssignment;
+  stationAreaId?: string;
   colonialServiceFitted?: true;
   overBase?: OverBaseFlag;
   inBattleId?: string;

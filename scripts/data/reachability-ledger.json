@@ -33,7 +33,7 @@
     },
     {
       "id": "assign-station",
-      "player_verb": "Assign a fleet to a foreign station",
+      "player_verb": "Post ships to a named foreign station",
       "status": "reachable",
       "engine_package": "phase-engine",
       "engine_modules": [],
@@ -240,7 +240,7 @@
       "player_verb": "Authorize a dock expansion",
       "status": "reachable",
       "engine_package": "phase-engine",
-      "engine_modules": ["dockExpansion"],
+      "engine_modules": ["dockExpansion", "dockExpansionExplanation"],
       "engine_symbols": ["applyAuthorizeDockExpansion", "applyDockExpansionStep"],
       "main_commands": ["authorizeDockExpansionCommand"],
       "renderer_screen": "screens/construction/ConstructionScreen.tsx",
@@ -414,6 +414,31 @@
       "evidence_test": "apps/desktop/src/renderer/shell/PrestigeCardEvent.test.tsx",
       "decision": null,
       "note": "An answered event moves prestige; the status strip names the last change. Explanation tree and sacking end state: brief slice 3."
+    },
+    {
+      "id": "presence-shortfall-prestige",
+      "player_verb": "Lose prestige for uncovered stations",
+      "status": "reachable",
+      "engine_package": "phase-engine",
+      "engine_modules": [],
+      "engine_symbols": ["applyPresenceShortfallPrestige"],
+      "main_commands": ["resolveTurn"],
+      "renderer_screen": "shell/status-strip/cards/PrestigeCard.tsx",
+      "evidence_test": "apps/desktop/src/renderer/shell/PrestigePresenceShortfall.test.tsx",
+      "decision": null
+    },
+    {
+      "id": "presence-revolt-pressure",
+      "player_verb": "See revolts follow an uncovered station",
+      "status": "dormant-by-decision",
+      "engine_package": "phase-engine",
+      "engine_modules": [],
+      "engine_symbols": [],
+      "main_commands": [],
+      "renderer_screen": null,
+      "evidence_test": null,
+      "decision": "#826",
+      "note": "No unrest state in NationState yet."
     },
     {
       "id": "division-battle-experience",

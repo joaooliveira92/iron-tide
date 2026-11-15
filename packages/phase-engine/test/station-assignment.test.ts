@@ -58,6 +58,12 @@ function makeNation(ships: Ship[]): NationState {
   };
 }
 
+const POSSESSIONS = [
+  { id: "p-1", nationId: "GBR", areaId: "bombay" },
+  { id: "p-2", nationId: "GBR", areaId: "cape" },
+  { id: "p-3", nationId: "FRA", areaId: "dakar" },
+];
+
 function makeSnapshot(ships: Ship[]): CampaignSnapshot {
   return {
     prestigeRules: FIXTURE_PRESTIGE_RULES,
@@ -68,7 +74,7 @@ function makeSnapshot(ships: Ship[]): CampaignSnapshot {
     startMonth: 1,
     strategicWeather: [],
     slots: [{ nationId: "GBR", type: "playable" }],
-    world: { areas: [], routes: [], ports: [] },
+    world: { areas: [], routes: [], ports: [], possessions: POSSESSIONS },
     nations: new Map([["GBR", makeNation(ships)]]),
     wars: {
       wars: [],
@@ -189,6 +195,56 @@ describe("S-5 03: foreign-station assign and clear commands", () => {
     ];
     const hash = (r: ReturnType<typeof run>) => sha256Hex(canonicalSerialize(r.finalSnapshot));
     expect(hash(run(from, cmds))).toBe(hash(run(from, cmds)));
+  });
+});
+
+describe("named foreign-station posting", () => {
+  const assign = (shipIds: string[], stationAreaId?: string): CommandBody => ({
+    type: "AssignForeignStation",
+    nationId: "GBR",
+    shipIds,
+    ...(stationAreaId === undefined ? {} : { stationAreaId }),
+  });
+
+  it("stores the station on each posted ship and keeps Any station free of the field", () => {
+    const from = makeSnapshot([makeShip("a"), makeShip("b"), makeShip("c")]);
+    const result = run(from, [
+      envelope(assign(["a", "b"], "bombay"), from),
+      envelope(assign(["c"]), from),
+    ]);
+    const [a, b, c] = shipsOf(result.finalSnapshot);
+    expect([a!.stationAssignment, a!.stationAreaId]).toEqual(["FOREIGN_STATION", "bombay"]);
+    expect([b!.stationAssignment, b!.stationAreaId]).toEqual(["FOREIGN_STATION", "bombay"]);
+    expect([c!.stationAssignment, "stationAreaId" in c!]).toEqual(["FOREIGN_STATION", false]);
+  });
+
+  it("rejects a station the nation has no presence requirement in, changing nothing", () => {
+    const from = makeSnapshot([makeShip("a")]);
+    for (const area of ["dakar", "nowhere"]) {
+      const result = run(from, [envelope(assign(["a"], area), from)]);
+      expect(shipsOf(result.finalSnapshot)[0]!.stationAssignment).toBeUndefined();
+      const rejected = result.commandLedger.all.find((o) => o.type === "rejected");
+      expect(rejected?.type === "rejected" && rejected.diagnostic.message).toContain(
+        "<batch>=UNKNOWN_STATION",
+      );
+    }
+  });
+
+  it("re-targets a posted ship and clearing removes the station", () => {
+    const from = makeSnapshot([
+      makeShip("a", { stationAssignment: "FOREIGN_STATION", stationAreaId: "bombay" }),
+    ]);
+    const moved = run(from, [envelope(assign(["a"], "cape"), from)]);
+    expect(shipsOf(moved.finalSnapshot)[0]!.stationAreaId).toBe("cape");
+    const events = moved.eventLedger.all.filter(
+      (e) => e.body.kind === "ShipStationAssignmentChanged",
+    );
+    expect(events.map((e) => (e.body as { reason: string }).reason)).toEqual(["RETARGETED"]);
+
+    const cleared = run(from, [
+      envelope({ type: "ClearForeignStation", nationId: "GBR", shipIds: ["a"] }, from),
+    ]);
+    expect("stationAreaId" in shipsOf(cleared.finalSnapshot)[0]!).toBe(false);
   });
 });
 

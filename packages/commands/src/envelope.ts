@@ -244,6 +244,7 @@ export interface AssignForeignStationCommand {
   type: "AssignForeignStation";
   nationId: string;
   shipIds: string[];
+  stationAreaId?: string;
 }
 export interface SetShipReadinessCommand {
   type: "SetShipReadiness";

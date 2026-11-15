@@ -10,6 +10,7 @@ export const PRESTIGE_REASON_CODES = [
   "BATTLE_LOST",
   "BATTLE_WON",
   "DECLINED_BATTLE",
+  "PRESENCE_SHORTFALL",
 ] as const;
 export type PrestigeReasonCode = (typeof PRESTIGE_REASON_CODES)[number];
 
@@ -20,7 +21,7 @@ export const REQUIRED_PRESTIGE_REASON_CODES = [
 ] as const;
 export type RequiredPrestigeReasonCode = (typeof REQUIRED_PRESTIGE_REASON_CODES)[number];
 
-export const OPTIONAL_PRESTIGE_REASON_CODES = ["DECLINED_BATTLE"] as const;
+export const OPTIONAL_PRESTIGE_REASON_CODES = ["DECLINED_BATTLE", "PRESENCE_SHORTFALL"] as const;
 export type OptionalPrestigeReasonCode = (typeof OPTIONAL_PRESTIGE_REASON_CODES)[number];
 
 export const CAREER_END_REASONS = ["SACKED", "CAMPAIGN_END"] as const;

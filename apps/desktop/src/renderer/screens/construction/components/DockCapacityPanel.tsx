@@ -27,6 +27,8 @@ export interface DockCapacityPanelProps {
   readonly dockExpansionNextStepKg: number | null;
   readonly dockExpansionReadyMonth: string | null;
   readonly dockLimitAfterExpansionExplanation?: ExplanationTree | undefined;
+  readonly dockExpansionPriceExplanation?: ExplanationTree | undefined;
+  readonly dockExpansionInstalmentExplanation?: ExplanationTree | undefined;
   readonly dockPossessions: readonly { readonly id: string; readonly name: string }[];
   readonly pending: boolean;
   readonly onAuthorizeDockExpansion: (possessionId: string) => void;
@@ -60,6 +62,8 @@ export const DockCapacityPanel = memo(function DockCapacityPanel({
   dockExpansionNextStepKg,
   dockExpansionReadyMonth,
   dockLimitAfterExpansionExplanation,
+  dockExpansionPriceExplanation,
+  dockExpansionInstalmentExplanation,
   dockPossessions,
   pending,
   onAuthorizeDockExpansion,
@@ -174,6 +178,26 @@ export const DockCapacityPanel = memo(function DockCapacityPanel({
               </AlertDialogDescription>
             </AlertDialogHeader>
             <dl className="grid grid-cols-[auto_1fr] gap-x-4 gap-y-2 text-sm">
+              {dockExpansionPriceExplanation !== undefined && (
+                <>
+                  <dt className="text-muted-foreground">
+                    {translate("construction.expansion.price")}
+                  </dt>
+                  <dd className="font-mono tabular-nums" data-testid="expansion-price">
+                    {format.money(Number(dockExpansionPriceExplanation.result))}
+                  </dd>
+                </>
+              )}
+              {dockExpansionInstalmentExplanation !== undefined && (
+                <>
+                  <dt className="text-muted-foreground">
+                    {translate("construction.expansion.instalment")}
+                  </dt>
+                  <dd className="font-mono tabular-nums" data-testid="expansion-instalment">
+                    {format.money(Number(dockExpansionInstalmentExplanation.result))}
+                  </dd>
+                </>
+              )}
               <dt className="text-muted-foreground">
                 {translate("construction.expansion.completion")}
               </dt>
@@ -199,6 +223,22 @@ export const DockCapacityPanel = memo(function DockCapacityPanel({
                 {dockLimitText}
               </dd>
             </dl>
+            {dockExpansionPriceExplanation !== undefined && (
+              <ExplanationDisclosure
+                tree={dockExpansionPriceExplanation}
+                area="construction"
+                summaryKey="construction.dock_expansion_price.summary"
+                format={format}
+              />
+            )}
+            {dockExpansionInstalmentExplanation !== undefined && (
+              <ExplanationDisclosure
+                tree={dockExpansionInstalmentExplanation}
+                area="construction"
+                summaryKey="construction.dock_expansion_instalment.summary"
+                format={format}
+              />
+            )}
             {dockLimitAfterExpansionExplanation !== undefined && (
               <ExplanationDisclosure
                 tree={dockLimitAfterExpansionExplanation}

@@ -5,6 +5,7 @@ import {
   STATION_ASSIGNMENT_REASONS,
   setShipReadiness,
   stationAssignmentProblems,
+  withStationAssignment,
 } from "../src/stationAssignment.js";
 
 function ship(id: string, over: Partial<Ship> = {}): Ship {
@@ -93,6 +94,7 @@ describe("stationAssignmentProblems", () => {
         "NOT_OPERATIONAL",
         "NOT_OWNED",
         "UNDER_CONSTRUCTION",
+        "UNKNOWN_STATION",
       ].sort(),
     );
   });
@@ -115,5 +117,67 @@ describe("setShipReadiness", () => {
     expect(kept.ship.stationAssignment).toBe("FOREIGN_STATION");
     const none = setShipReadiness(ship("b"), "RESERVE");
     expect(none.clearedAssignment).toBe(false);
+  });
+});
+
+describe("named foreign station", () => {
+  const stations = ["bombay", "cape"];
+  const n = nation([
+    ship("ok"),
+    ship("any", { stationAssignment: "FOREIGN_STATION" }),
+    ship("at-cape", { stationAssignment: "FOREIGN_STATION", stationAreaId: "cape" }),
+    ship("exercise", { stationAssignment: "EXERCISE" }),
+  ]);
+  const named = (stationAreaId: string) => ({ stationAreaId, knownStationAreaIds: stations });
+
+  it("accepts a known station and rejects an unknown one for the whole batch", () => {
+    expect(stationAssignmentProblems(n, "uk", ["ok"], "assign", named("bombay"))).toEqual([]);
+    expect(stationAssignmentProblems(n, "uk", ["ok"], "assign", named("lon"))).toEqual([
+      { shipId: "", reason: "UNKNOWN_STATION" },
+    ]);
+  });
+
+  it("treats an absent station as Any station and never checks the station list", () => {
+    expect(
+      stationAssignmentProblems(n, "uk", ["ok"], "assign", { knownStationAreaIds: [] }),
+    ).toEqual([]);
+    expect(stationAssignmentProblems(n, "uk", ["ok"], "assign")).toEqual([]);
+  });
+
+  it("lets a posted ship be re-targeted but not re-posted to the same target", () => {
+    expect(stationAssignmentProblems(n, "uk", ["any"], "assign", named("bombay"))).toEqual([]);
+    expect(stationAssignmentProblems(n, "uk", ["at-cape"], "assign", named("bombay"))).toEqual([]);
+    expect(
+      stationAssignmentProblems(n, "uk", ["at-cape"], "assign", { knownStationAreaIds: stations }),
+    ).toEqual([]);
+    expect(stationAssignmentProblems(n, "uk", ["at-cape"], "assign", named("cape"))).toEqual([
+      { shipId: "at-cape", reason: "ALREADY_ASSIGNED" },
+    ]);
+    expect(stationAssignmentProblems(n, "uk", ["any"], "assign")).toEqual([
+      { shipId: "any", reason: "ALREADY_ASSIGNED" },
+    ]);
+    expect(stationAssignmentProblems(n, "uk", ["exercise"], "assign", named("cape"))).toEqual([
+      { shipId: "exercise", reason: "ALREADY_ASSIGNED" },
+    ]);
+  });
+
+  it("writes the station on assign, drops it on Any station and on clear", () => {
+    const posted = withStationAssignment(ship("a"), "assign", "cape");
+    expect(posted.stationAssignment).toBe("FOREIGN_STATION");
+    expect(posted.stationAreaId).toBe("cape");
+    const any = withStationAssignment(posted, "assign");
+    expect(any.stationAssignment).toBe("FOREIGN_STATION");
+    expect("stationAreaId" in any).toBe(false);
+    const cleared = withStationAssignment(posted, "clear");
+    expect("stationAssignment" in cleared).toBe(false);
+    expect("stationAreaId" in cleared).toBe(false);
+  });
+
+  it("drops the station when readiness leaves ACTIVE", () => {
+    const out = setShipReadiness(
+      ship("a", { stationAssignment: "FOREIGN_STATION", stationAreaId: "cape" }),
+      "RESERVE",
+    );
+    expect("stationAreaId" in out.ship).toBe(false);
   });
 });
