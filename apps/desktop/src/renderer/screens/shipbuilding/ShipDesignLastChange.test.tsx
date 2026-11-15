@@ -39,12 +39,17 @@ describe("last change strip in the design workspace", () => {
     );
     const items = last.querySelectorAll<HTMLElement>("li[data-aspect]");
     expect(items.length).toBeGreaterThan(0);
+    const toned = [...items].filter((item) => item.dataset["tone"] !== "neutral");
+    expect(toned.length).toBeGreaterThan(0);
     for (const item of items) {
       const button = within(item).getByRole("button");
       expect(button.getAttribute("aria-label")).toMatch(/\. Open \w+/);
       expect(button.querySelector("svg[aria-hidden='true']")).not.toBeNull();
-      if (item.dataset["tone"] !== "neutral")
-        expect(button.textContent).toContain(item.dataset["tone"]);
+    }
+    for (const item of toned) {
+      const button = within(item).getByRole("button");
+      expect(button.textContent).toContain(item.dataset["tone"]);
+      expect(button.getAttribute("aria-label")).toContain(`, ${item.dataset["tone"]}.`);
     }
   });
 
