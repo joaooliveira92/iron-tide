@@ -1,6 +1,6 @@
-import { AreaSchema, list, type Provenance } from "@bluewave/content-authoring";
+import { AreaSchema, list, type ProvenanceSchema } from "@bluewave/content-authoring";
 
-const CESSION_PROVENANCE: Provenance = {
+const CESSION_PROVENANCE: typeof ProvenanceSchema.Type = {
   sourceStatus: "BALANCE_TARGET",
   confidence: "LOW",
   kind: "balance_adjustment",
