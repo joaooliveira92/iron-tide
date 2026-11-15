@@ -25,6 +25,7 @@ import {
   type ArmamentEntry,
   type ArmamentMount,
 } from "../../armament.js";
+import { replaceEdit } from "../../armament-edits.js";
 
 export interface ArmamentEditingState {
   readonly entries: readonly ArmamentEntry[];
@@ -175,22 +176,7 @@ export function ArmamentEditingProvider({
   const remove = (mount: ArmamentMount) =>
     edit({ kind: "remove_placement", instanceId: mount.instanceId });
   const replace = (mount: ArmamentMount, componentId: string) =>
-    edit({
-      kind: "batch",
-      edits: [
-        { kind: "remove_placement", instanceId: mount.instanceId },
-        {
-          kind: "add_placement",
-          placement: {
-            instanceId: mount.instanceId,
-            componentId,
-            zoneId: mount.zoneId as ZoneId,
-            stationPermille: mount.stationPermille,
-            side: mount.side,
-          },
-        },
-      ],
-    });
+    edit(replaceEdit(mount, componentId));
   const select = (mount: ArmamentMount) => {
     setPicked(mount.instanceId);
     setReplaceTo("");
