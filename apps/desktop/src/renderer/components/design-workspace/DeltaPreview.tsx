@@ -28,7 +28,14 @@ export function DeltaPreview({
         {deltas.map((d) => {
           const tone = d.tone ?? "neutral";
           return (
-            <li key={d.id} data-delta={d.id} data-tone={tone} className="flex items-baseline gap-1">
+            <li
+              key={d.id}
+              data-delta={d.id}
+              data-tone={tone}
+              title={d.explanation}
+              aria-description={d.explanation}
+              className="flex items-baseline gap-1"
+            >
               <span>{d.label}</span>
               <span className={cn("tabular-nums", TONE_CLASS[tone])}>
                 <span aria-hidden="true">{ARROW[d.direction]} </span>

@@ -1,5 +1,16 @@
-import { ArrowDown, ArrowRight, ArrowUp, Check, Plus, X, type LucideIcon } from "lucide-react";
+import {
+  ArrowDown,
+  ArrowRight,
+  ArrowUp,
+  Check,
+  Info,
+  Plus,
+  X,
+  type LucideIcon,
+} from "lucide-react";
 import { Button } from "../../../components/ui/button.js";
+import { Popover, PopoverContent, PopoverTrigger } from "../../../components/ui/popover.js";
+import { aspectExplanation } from "../../../components/design-workspace/aspectExplanation.js";
 import { Slate } from "../../../components/slate/Slate.js";
 import { SEVERITY_STYLE } from "../../../components/design-workspace/validation/severity.js";
 import type {
@@ -55,7 +66,7 @@ function AspectItem({
   const target = SECTIONS[aspect.section].label;
   const spoken = `${aspect.label} ${aspect.text}${tone.word === "" ? "" : `, ${tone.word}`}. Open ${target}`;
   return (
-    <li data-aspect={aspect.aspect} data-tone={aspect.tone}>
+    <li data-aspect={aspect.aspect} data-tone={aspect.tone} className="flex items-stretch gap-0.5">
       <button
         type="button"
         aria-label={spoken}
@@ -71,6 +82,16 @@ function AspectItem({
         <span className="font-medium tabular-nums">{aspect.text}</span>
         {tone.word !== "" && <span className={cn("font-medium", tone.text)}>{tone.word}</span>}
       </button>
+      <Popover>
+        <PopoverTrigger
+          aria-label={`Explain ${aspect.label}`}
+          title={`Explain ${aspect.label}`}
+          className="flex items-center rounded-sm px-1 text-admiralty-ink-muted outline-none hover:bg-admiralty-surface focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Info aria-hidden="true" className="size-3.5" />
+        </PopoverTrigger>
+        <PopoverContent className="w-72 p-3 text-xs">{aspectExplanation(aspect)}</PopoverContent>
+      </Popover>
     </li>
   );
 }

@@ -1,5 +1,6 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
+import { METRIC_NOTES } from "../../components/design-workspace/metricNotes.js";
 import { ShipbuildingWorkspace } from "./ShipbuildingWorkspace.js";
 
 afterEach(cleanup);
@@ -55,15 +56,41 @@ describe("last change strip in the design workspace", () => {
     const toned = [...items].filter((item) => item.dataset["tone"] !== "neutral");
     expect(toned.length).toBeGreaterThan(0);
     for (const item of items) {
-      const button = within(item).getByRole("button");
-      expect(button.getAttribute("aria-label")).toMatch(/\. Open \w+/);
+      const button = within(item).getByRole("button", { name: /\. Open \w+/ });
       expect(button.querySelector("svg[aria-hidden='true']")).not.toBeNull();
     }
     for (const item of toned) {
-      const button = within(item).getByRole("button");
+      const button = within(item).getByRole("button", { name: /\. Open \w+/ });
       expect(button.textContent).toContain(item.dataset["tone"]);
       expect(button.getAttribute("aria-label")).toContain(`, ${item.dataset["tone"]}.`);
     }
+  });
+
+  it("gives every moved figure a keyboard-reachable explain control that opens its explanation", async () => {
+    render(<ShipbuildingWorkspace />);
+    editHull();
+    const items = region().querySelectorAll<HTMLElement>("li[data-aspect]");
+    for (const item of items) {
+      const label = item.dataset["aspect"]!;
+      const explain = within(item).getByRole("button", { name: /^Explain / });
+      expect(explain.tagName).toBe("BUTTON");
+      expect(explain.getAttribute("tabindex")).not.toBe("-1");
+      expect(explain.getAttribute("aria-expanded"), label).toBe("false");
+    }
+    const speed = region().querySelector<HTMLElement>("li[data-aspect='speed']")!;
+    fireEvent.click(within(speed).getByRole("button", { name: "Explain Speed" }));
+    const popup = await screen.findByText(METRIC_NOTES["speed"]!);
+    expect(popup).toBeTruthy();
+    expect(
+      within(speed).getByRole("button", { name: "Explain Speed" }).getAttribute("aria-expanded"),
+    ).toBe("true");
+  });
+
+  it("keeps the explain control out of the live announcement", () => {
+    render(<ShipbuildingWorkspace />);
+    editHull();
+    const live = within(region()).getByRole("status");
+    expect(live.textContent).not.toContain("Explain");
   });
 
   it("shows the reversal on undo and replaces it on the next edit", () => {
