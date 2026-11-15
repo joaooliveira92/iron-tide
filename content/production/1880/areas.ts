@@ -1,4 +1,23 @@
-import { AreaSchema, list } from "@bluewave/content-authoring";
+import { AreaSchema, list, type Provenance } from "@bluewave/content-authoring";
+
+const CESSION_PROVENANCE: Provenance = {
+  sourceStatus: "BALANCE_TARGET",
+  confidence: "LOW",
+  kind: "balance_adjustment",
+  sources: [
+    {
+      title: "Peace placeholder values and per-area cession costs (research for #708)",
+      archiveOrUrl: "https://github.com/joaooliveira92/iron-tide/discussions/815",
+    },
+    {
+      title: "Owner approval: peace placeholder values and per-area cession costs (#816)",
+      archiveOrUrl: "https://github.com/joaooliveira92/iron-tide/issues/816",
+    },
+  ],
+  note: "PROVISIONAL placeholder tier of 30, 50 or 70 war-score points, below the surrender threshold of 80; no historical source maps a settlement to war-score points. Approved as BALANCE_TARGET / LOW by the coordinator on the owner's behalf (#816); a human should confirm. Home areas carry no cost and cannot be ceded.",
+};
+
+const cession = (cessionCost: 30 | 50 | 70) => ({ cessionCost, provenance: CESSION_PROVENANCE });
 
 export default list(AreaSchema, [
   {
@@ -12,90 +31,105 @@ export default list(AreaSchema, [
     name: "Gibraltar",
     type: "coastal",
     controller: "uk",
+    ...cession(50),
   },
   {
     id: "med_malta",
     name: "Malta",
     type: "coastal",
     controller: "uk",
+    ...cession(50),
   },
   {
     id: "med_cyprus",
     name: "Cyprus",
     type: "coastal",
     controller: "uk",
+    ...cession(30),
   },
   {
     id: "india_west_coast",
     name: "West India",
     type: "coastal",
     controller: "uk",
+    ...cession(50),
   },
   {
     id: "india_east_coast",
     name: "East India",
     type: "coastal",
     controller: "uk",
+    ...cession(30),
   },
   {
     id: "indian_ceylon",
     name: "Ceylon",
     type: "coastal",
     controller: "uk",
+    ...cession(50),
   },
   {
     id: "sea_singapore",
     name: "Singapore / Straits",
     type: "coastal",
     controller: "uk",
+    ...cession(50),
   },
   {
     id: "sea_hong_kong",
     name: "Hong Kong",
     type: "coastal",
     controller: "uk",
+    ...cession(50),
   },
   {
     id: "africa_cape",
     name: "Cape of Good Hope",
     type: "coastal",
     controller: "uk",
+    ...cession(70),
   },
   {
     id: "atlantic_bermuda",
     name: "Bermuda",
     type: "coastal",
     controller: "uk",
+    ...cession(50),
   },
   {
     id: "americas_halifax",
     name: "Halifax / N. America",
     type: "coastal",
     controller: "uk",
+    ...cession(30),
   },
   {
     id: "pacific_australia",
     name: "Australia / NZ",
     type: "coastal",
     controller: "uk",
+    ...cession(70),
   },
   {
     id: "indian_adden",
     name: "Aden",
     type: "coastal",
     controller: "uk",
+    ...cession(50),
   },
   {
     id: "sea_mauritius",
     name: "Mauritius",
     type: "coastal",
     controller: "uk",
+    ...cession(30),
   },
   {
     id: "fra_med_coast",
     name: "French Mediterranean Coast",
     type: "coastal",
     controller: "france",
+    ...cession(50),
   },
   {
     id: "fra_chan_coast",
@@ -108,42 +142,49 @@ export default list(AreaSchema, [
     name: "Algeria",
     type: "coastal",
     controller: "france",
+    ...cession(70),
   },
   {
     id: "africa_senegal",
     name: "Senegal",
     type: "coastal",
     controller: "france",
+    ...cession(30),
   },
   {
     id: "indochina_cochinchina",
     name: "Cochinchina (Saigon)",
     type: "coastal",
     controller: "france",
+    ...cession(30),
   },
   {
     id: "pacific_newcaledonia",
     name: "New Caledonia",
     type: "coastal",
     controller: "france",
+    ...cession(30),
   },
   {
     id: "pacific_tahiti",
     name: "French Polynesia",
     type: "coastal",
     controller: "france",
+    ...cession(30),
   },
   {
     id: "americas_martinique",
     name: "Martinique / Guadeloupe",
     type: "coastal",
     controller: "france",
+    ...cession(30),
   },
   {
     id: "indian_reunion",
     name: "Réunion / Indian Ocean",
     type: "coastal",
     controller: "france",
+    ...cession(30),
   },
   {
     id: "ger_baltic_coast",
@@ -156,6 +197,7 @@ export default list(AreaSchema, [
     name: "German North Sea Coast",
     type: "coastal",
     controller: "germany",
+    ...cession(50),
   },
   {
     id: "rus_baltic_coast",
@@ -168,12 +210,14 @@ export default list(AreaSchema, [
     name: "Russian Black Sea Coast",
     type: "coastal",
     controller: "russia",
+    ...cession(50),
   },
   {
     id: "rus_pacific_coast",
     name: "Russian Pacific Coast (Vladivostok)",
     type: "coastal",
     controller: "russia",
+    ...cession(30),
   },
   {
     id: "auh_adriatic_coast",
@@ -186,6 +230,7 @@ export default list(AreaSchema, [
     name: "Dalmatia",
     type: "coastal",
     controller: "austria_hungary",
+    ...cession(30),
   },
   {
     id: "ita_tyrrhenian_coast",
@@ -198,6 +243,7 @@ export default list(AreaSchema, [
     name: "Adriatic / Ionian Coast",
     type: "coastal",
     controller: "italy",
+    ...cession(50),
   },
   {
     id: "usa_atlantic_coast",
@@ -210,12 +256,14 @@ export default list(AreaSchema, [
     name: "US Pacific Coast",
     type: "coastal",
     controller: "usa",
+    ...cession(30),
   },
   {
     id: "usa_gulf_coast",
     name: "US Gulf Coast",
     type: "coastal",
     controller: "usa",
+    ...cession(30),
   },
   {
     id: "jpn_home_coast",
@@ -228,12 +276,14 @@ export default list(AreaSchema, [
     name: "Japan Inland Sea (Kure)",
     type: "coastal",
     controller: "japan",
+    ...cession(30),
   },
   {
     id: "jpn_kyushu_coast",
     name: "Kyushu (Sasebo/Nagasaki)",
     type: "coastal",
     controller: "japan",
+    ...cession(30),
   },
   {
     id: "ott_marmara_coast",
@@ -246,18 +296,21 @@ export default list(AreaSchema, [
     name: "Ottoman Aegean Coast",
     type: "coastal",
     controller: "ottoman_empire",
+    ...cession(30),
   },
   {
     id: "ott_blacksea_coast",
     name: "Ottoman Black Sea Coast",
     type: "coastal",
     controller: "ottoman_empire",
+    ...cession(30),
   },
   {
     id: "ott_eg_coast",
     name: "Ottoman Egypt (Alexandria/Suez)",
     type: "coastal",
     controller: "ottoman_empire",
+    ...cession(50),
   },
   {
     id: "spa_med_coast",
@@ -270,24 +323,28 @@ export default list(AreaSchema, [
     name: "Spanish Atlantic Coast",
     type: "coastal",
     controller: "spain",
+    ...cession(30),
   },
   {
     id: "americas_cuba",
     name: "Cuba",
     type: "coastal",
     controller: "spain",
+    ...cession(30),
   },
   {
     id: "americas_puertorico",
     name: "Puerto Rico",
     type: "coastal",
     controller: "spain",
+    ...cession(30),
   },
   {
     id: "philippines_luzon",
     name: "Luzon (Manila)",
     type: "coastal",
     controller: "spain",
+    ...cession(70),
   },
   {
     id: "ned_home_coast",
@@ -300,12 +357,14 @@ export default list(AreaSchema, [
     name: "Java (Batavia/Surabaya)",
     type: "coastal",
     controller: "netherlands",
+    ...cession(70),
   },
   {
     id: "americas_suriname",
     name: "Suriname / Antilles",
     type: "coastal",
     controller: "netherlands",
+    ...cession(30),
   },
   {
     id: "por_home_coast",
@@ -318,24 +377,28 @@ export default list(AreaSchema, [
     name: "Angola",
     type: "coastal",
     controller: "portugal",
+    ...cession(30),
   },
   {
     id: "africa_mozambique",
     name: "Mozambique",
     type: "coastal",
     controller: "portugal",
+    ...cession(30),
   },
   {
     id: "asia_macau",
     name: "Macau",
     type: "coastal",
     controller: "portugal",
+    ...cession(30),
   },
   {
     id: "asia_goa",
     name: "Goa / Portuguese India",
     type: "coastal",
     controller: "portugal",
+    ...cession(30),
   },
   {
     id: "chi_north_coast",
@@ -348,18 +411,21 @@ export default list(AreaSchema, [
     name: "Weihaiwei / Shandong",
     type: "coastal",
     controller: "qing",
+    ...cession(30),
   },
   {
     id: "chi_south_coast",
     name: "South China Coast",
     type: "coastal",
     controller: "qing",
+    ...cession(30),
   },
   {
     id: "chi_yangtze",
     name: "Yangtze Estuary (Shanghai)",
     type: "coastal",
     controller: "qing",
+    ...cession(30),
   },
   {
     id: "bra_rio_coast",
@@ -372,6 +438,7 @@ export default list(AreaSchema, [
     name: "NE Brazil (Bahia/Recife)",
     type: "coastal",
     controller: "brazil",
+    ...cession(30),
   },
   {
     id: "sea_english_channel",
