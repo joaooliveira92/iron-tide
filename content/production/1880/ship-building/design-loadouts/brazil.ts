@@ -191,7 +191,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
       },
       machinery: {
         foulingBp: 0,
-        fuelCapacityKg: 900000,
+        fuelCapacityKg: 855000,
         fuelStationPermille: 480,
         fuelZoneId: "CENTRAL_MACHINERY",
         rooms: [
@@ -309,7 +309,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
         {
           mountCount: 1,
           params: {
-            installedKw: 2600,
+            installedKw: 2560,
           },
           part: "compound_cylindrical",
           slot: "central_machinery.propulsion_plant",
@@ -341,7 +341,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
       },
       machinery: {
         foulingBp: 0,
-        fuelCapacityKg: 700000,
+        fuelCapacityKg: 665000,
         fuelStationPermille: 450,
         fuelZoneId: "CENTRAL_MACHINERY",
         rooms: [
@@ -386,14 +386,14 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
                 params: {
                   rounds: 100,
                 },
-                part: "standard_gun_rml_10in_18ton",
+                part: "standard_gun_rml_229mm_whitworth",
               },
             ],
           },
           id: "main_fwd",
           magazineEntry: "mag_fwd",
           mountCount: 1,
-          part: "gun_rml_10in_18ton_barbette",
+          part: "gun_rml_229mm_whitworth_casemate",
           slot: "forecastle.gun_mount",
           stationPermille: 40,
         },
@@ -405,14 +405,14 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
                 params: {
                   rounds: 100,
                 },
-                part: "standard_gun_rml_10in_18ton",
+                part: "standard_gun_rml_229mm_whitworth",
               },
             ],
           },
           id: "main_aft",
           magazineEntry: "mag_aft",
           mountCount: 1,
-          part: "gun_rml_10in_18ton_barbette",
+          part: "gun_rml_229mm_whitworth_casemate",
           slot: "quarterdeck.gun_mount",
           stationPermille: 940,
         },
@@ -576,7 +576,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
       },
       machinery: {
         foulingBp: 0,
-        fuelCapacityKg: 780000,
+        fuelCapacityKg: 741000,
         fuelStationPermille: 450,
         fuelZoneId: "CENTRAL_MACHINERY",
         rooms: [
@@ -694,7 +694,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
         {
           mountCount: 1,
           params: {
-            installedKw: 6200,
+            installedKw: 6150,
           },
           part: "compound_cylindrical",
           slot: "central_machinery.propulsion_plant",
@@ -737,7 +737,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
       },
       machinery: {
         foulingBp: 0,
-        fuelCapacityKg: 250000,
+        fuelCapacityKg: 237500,
         fuelStationPermille: 450,
         fuelZoneId: "CENTRAL_MACHINERY",
         rooms: [
@@ -867,7 +867,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
         {
           mountCount: 1,
           params: {
-            installedKw: 3500,
+            installedKw: 3450,
           },
           part: "compound_cylindrical",
           slot: "central_machinery.propulsion_plant",
@@ -899,7 +899,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
       },
       machinery: {
         foulingBp: 0,
-        fuelCapacityKg: 130000,
+        fuelCapacityKg: 123500,
         fuelStationPermille: 510,
         fuelZoneId: "CENTRAL_MACHINERY",
         rooms: [
@@ -1017,7 +1017,7 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
         {
           mountCount: 1,
           params: {
-            installedKw: 700,
+            installedKw: 690,
           },
           part: "compound_cylindrical",
           slot: "central_machinery.propulsion_plant",

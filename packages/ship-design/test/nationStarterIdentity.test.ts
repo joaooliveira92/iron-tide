@@ -5,15 +5,7 @@ import { nationalContext, shipBuildingContent } from "./helpers/earlyContext.js"
 const OPENING_MONTH = "1880-01";
 const REFERENCE_NATION = "uk";
 
-const PENDING_NATIONAL_IDENTITY: ReadonlySet<string> = new Set([
-  "brazil",
-  "france",
-  "germany",
-  "italy",
-  "ottoman_empire",
-  "spain",
-  "usa",
-]);
+const PENDING_NATIONAL_IDENTITY: ReadonlySet<string> = new Set(["france", "germany", "usa"]);
 
 const openingStarters: readonly StarterDesign[] = shipBuildingContent.starterDesigns.filter(
   (s) => s.month === OPENING_MONTH,
