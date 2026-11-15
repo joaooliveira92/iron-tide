@@ -336,12 +336,6 @@ export default list(RulesetManifestSchema, [
       noPortValueWeight: 2,
       crampedOrShortRangeCountBp: 5000,
       penaltyRequests: true,
-      // #576 (PROVISIONAL): each month a nation is short, prestige falls by a proportional loss (manual p.62). A wholly
-      // uncovered area costs 2 percent of current prestige; the losses of a nation's short areas add up to at most 5 percent.
-      shortfallPrestige: {
-        lossBpPerWholeShortfall: 200,
-        maxLossBp: 500,
-      },
       baseLimits: {
         limitByBaseLevel: [2, 4, 6, 8, 10, 12, 14, 16, 18, 20],
         noBaseLimit: 2,

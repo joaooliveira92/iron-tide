@@ -33,7 +33,7 @@
     },
     {
       "id": "assign-station",
-      "player_verb": "Post ships to a named foreign station",
+      "player_verb": "Post ships to a named station",
       "status": "reachable",
       "engine_package": "phase-engine",
       "engine_modules": [],
@@ -418,14 +418,14 @@
     {
       "id": "presence-shortfall-prestige",
       "player_verb": "Lose prestige for an uncovered station",
-      "status": "reachable",
+      "status": "dormant-by-decision",
       "engine_package": "phase-engine",
       "engine_modules": [],
       "engine_symbols": ["applyPresenceShortfallPrestige"],
-      "main_commands": ["resolveTurn"],
-      "renderer_screen": "shell/status-strip/cards/PrestigeCard.tsx",
-      "evidence_test": "apps/desktop/src/renderer/shell/PrestigePresenceShortfall.test.tsx",
-      "decision": null
+      "main_commands": [],
+      "renderer_screen": null,
+      "evidence_test": null,
+      "decision": "#838"
     },
     {
       "id": "presence-queued-order-warning",
