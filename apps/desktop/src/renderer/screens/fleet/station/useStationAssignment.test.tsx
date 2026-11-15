@@ -112,6 +112,66 @@ describe("useStationAssignment", () => {
     expect(result.current.state.notice).toContain("queued for 1 ship(s)");
   });
 
+  it("offers the stations from the projection, sends the chosen one and names it in the notice", async () => {
+    const configured = {
+      ...projection,
+      areas: [
+        { id: "home", name: "Home Waters" },
+        { id: "bombay", name: "Bombay" },
+      ],
+      presence: {
+        configured: true,
+        exempt: false,
+        areas: [{ areaId: "bombay", requiredTons: 100, presentTons: 0, shortfallTons: 100 }],
+      },
+    };
+    mocks.execute.mockImplementation((command: string) =>
+      command === "inspectFleetScreen"
+        ? Promise.resolve({ outcome: "success", value: configured, diagnostics: [] })
+        : Promise.resolve({
+            outcome: "success",
+            value: {
+              commandId: "c",
+              intent: "assign",
+              shipCount: 1,
+              stationAreaId: "bombay",
+              appliedOnNextTurn: true,
+            },
+            diagnostics: [],
+          }),
+    );
+    const { result } = renderHook(() => useStationAssignment("s"));
+    await waitFor(() => expect(result.current.stations).toHaveLength(1));
+    expect(result.current.stations).toEqual([{ areaId: "bombay", name: "Bombay" }]);
+    expect(result.current.station).toBe("");
+    act(() => result.current.setStation("bombay"));
+    act(() => result.current.toggle("a"));
+    await act(async () => {
+      await result.current.send("assign");
+    });
+    expect(mocks.execute).toHaveBeenCalledWith(
+      "submitStationAssignment",
+      expect.objectContaining({ intent: "assign", shipIds: ["a"], stationAreaId: "bombay" }),
+    );
+    expect(result.current.state.notice).toContain("Posting to Bombay queued for 1 ship(s)");
+  });
+
+  it("omits the station when Any station is chosen", async () => {
+    mocks.execute.mockImplementation((command: string) =>
+      command === "inspectFleetScreen"
+        ? Promise.resolve({ outcome: "success", value: projection, diagnostics: [] })
+        : Promise.resolve({ outcome: "rejected", reason: "X", diagnostics: [] }),
+    );
+    const { result } = renderHook(() => useStationAssignment("s"));
+    await waitFor(() => expect(result.current.rows).toHaveLength(2));
+    act(() => result.current.toggle("a"));
+    await act(async () => {
+      await result.current.send("assign");
+    });
+    const call = mocks.execute.mock.calls.find(([name]) => name === "submitStationAssignment");
+    expect(call?.[1]).not.toHaveProperty("stationAreaId");
+  });
+
   it("words the readiness refusals per ship and sends the readiness command", async () => {
     mocks.execute.mockImplementation((command: string) =>
       command === "inspectFleetScreen"

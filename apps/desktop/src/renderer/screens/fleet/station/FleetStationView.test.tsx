@@ -64,6 +64,9 @@ function make(
     busy: false,
     outcomeUnknown: false,
     onToggle: vi.fn(),
+    stations: [],
+    station: "",
+    onStationChange: vi.fn(),
     onSend: vi.fn(() => Promise.resolve("accepted" as CommandOutcome)),
     onSendReadiness: vi.fn(() => Promise.resolve("accepted" as CommandOutcome)),
     onRetry: vi.fn(),
@@ -87,6 +90,44 @@ describe("FleetStationView (S-5 09)", () => {
     expect(dread.getByText("Short range", { exact: false })).toBeTruthy();
     const rep = within(screen.getByTestId("fleet-station-row-rep"));
     expect(rep.getByText("In repair for 2 more months")).toBeTruthy();
+  });
+
+  it("lists only the given stations with Any station first, and reports the choice", () => {
+    const onStationChange = vi.fn();
+    render(
+      <FleetStationView
+        {...make(
+          {},
+          {
+            stations: [
+              { areaId: "bombay", name: "Bombay" },
+              { areaId: "cape", name: "Cape" },
+            ],
+            onStationChange,
+          },
+        )}
+      />,
+    );
+    const picker = screen.getByRole("combobox", { name: /Station/ });
+    expect(
+      within(picker)
+        .getAllByRole("option")
+        .map((o) => o.textContent),
+    ).toEqual(["Any station (fill the largest shortfall)", "Bombay", "Cape"]);
+    fireEvent.change(picker, { target: { value: "cape" } });
+    expect(onStationChange).toHaveBeenCalledWith("cape");
+  });
+
+  it("names the station a ship is posted to in its status", () => {
+    const named = ships.map((s) =>
+      s.shipId === "alex" ? { ...s, stationAreaId: "home" as const } : s,
+    );
+    const state: Partial<FleetStationState> = {
+      divisions: [{ divisionId: "f", fleetName: "Home", areaId: "home", ships: named }],
+    };
+    render(<FleetStationView {...make(state)} />);
+    const alex = within(screen.getByTestId("fleet-station-row-alex"));
+    expect(alex.getByText("On foreign station at Home Waters")).toBeTruthy();
   });
 
   it("shows a ship's derived conditions as text beside its status", () => {

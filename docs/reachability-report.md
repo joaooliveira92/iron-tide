@@ -14,7 +14,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | --- | --- | --- | --- |
 | set-research-priority | Set a research priority for a technology field | `screens/research/ResearchScreen.tsx` | `apps/desktop/src/renderer/screens/research/ResearchScreen.test.tsx` |
 | move-fleet | Order a fleet along a route, one hop a month | `screens/strategic-map/StrategicMapScreen.tsx` | `apps/desktop/src/renderer/screens/strategic-map/StrategicMapScreen.test.tsx` |
-| assign-station | Assign a fleet to a foreign station | `screens/fleet/station/FleetStationSection.tsx` | `apps/desktop/src/renderer/screens/fleet/station/useStationAssignment.test.tsx` |
+| assign-station | Post ships to a named foreign station | `screens/fleet/station/FleetStationSection.tsx` | `apps/desktop/src/renderer/screens/fleet/station/useStationAssignment.test.tsx` |
 | set-ship-readiness | Set a ship to active, reserve or mothballed | `screens/fleet/station/FleetStationSection.tsx` | `apps/desktop/src/renderer/screens/fleet/station/useStationAssignment.test.tsx` |
 | fund-special-training | Fund up to two special-training subjects | `screens/fleet/training/FleetTrainingSection.tsx` | `apps/desktop/src/renderer/screens/fleet/training/FleetTrainingView.test.tsx` |
 | hold-fleet-exercise | Hold the annual fleet exercise with chosen ships | `screens/fleet/exercise/FleetExerciseSection.tsx` | `apps/desktop/src/renderer/screens/fleet/exercise/FleetExerciseView.test.tsx` |

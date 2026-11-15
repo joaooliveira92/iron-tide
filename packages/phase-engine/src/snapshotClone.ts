@@ -126,8 +126,7 @@ function recordClone<T extends object>(
   const out: Record<string, unknown> = {};
   for (const field of fields) {
     const key = field as string;
-    if (UNSAFE_KEYS.has(key)) continue;
-    if (!Object.prototype.hasOwnProperty.call(source, field)) continue;
+    if (UNSAFE_KEYS.has(key) || !Object.prototype.hasOwnProperty.call(source, field)) continue;
     const value = (source as Record<string, unknown>)[key];
     const cloner = (special as Record<string, ValueClone>)[key];
     out[key] = cloner ? cloner(value, seen) : cloneValue(value, seen);
@@ -163,6 +162,7 @@ const F = {
     "crewQuality",
     "repairMonthsRemaining",
     "stationAssignment",
+    "stationAreaId",
     "colonialServiceFitted",
     "overBase",
     "inBattleId",

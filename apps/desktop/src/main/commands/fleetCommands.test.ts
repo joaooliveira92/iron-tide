@@ -295,6 +295,39 @@ describe("fleet commands (Effect programs)", () => {
       expect(result.diagnostics.join(" ")).toContain("nope=NOT_OWNED");
     });
 
+    it("queues a posting to a station the nation holds and rejects any other area whole", async () => {
+      const state = registerProductionSession(
+        "session-station4",
+        resolve(saveRoot, "save-station4"),
+        "uk",
+      );
+      const station = state.snapshot.world.possessions?.find((p) => p.nationId === "uk")?.areaId;
+      expect(station).toBeDefined();
+      const named = await submitStationAssignment({
+        ...base,
+        sessionId: "session-station4",
+        transportRequestId: "tx-named",
+        intent: "assign",
+        shipIds: ["gbr_dreadnought"],
+        stationAreaId: station!,
+      });
+      expect(named).toMatchObject({
+        outcome: "success",
+        value: { intent: "assign", shipCount: 1, stationAreaId: station },
+      });
+      const unknown = await submitStationAssignment({
+        ...base,
+        sessionId: "session-station4",
+        transportRequestId: "tx-unknown",
+        intent: "assign",
+        shipIds: ["gbr_dreadnought"],
+        stationAreaId: "nowhere",
+      });
+      expect(unknown).toMatchObject({ outcome: "rejected", reason: "STATION_ASSIGNMENT_REJECTED" });
+      if (unknown.outcome !== "rejected") return;
+      expect(unknown.diagnostics.join(" ")).toContain("<batch>=UNKNOWN_STATION");
+    });
+
     it("rejects an empty or malformed selection at the schema boundary", async () => {
       const result = await runProgram(submitStationAssignmentProgram, {
         sessionId: "s",

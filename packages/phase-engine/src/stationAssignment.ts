@@ -4,9 +4,11 @@ import {
   STATION_ASSIGNED_REASON,
   STATION_CLEARED_BY_COMMAND_REASON,
   STATION_CLEARED_BY_READINESS_REASON,
+  STATION_RETARGETED_REASON,
   readinessCommandProblems,
   setShipReadiness,
   stationAssignmentProblems,
+  stationTargetFor,
   withStationAssignment,
 } from "@bluewave/campaign";
 import type {
@@ -98,11 +100,14 @@ export function applyStationAssignmentCommand(ctx: PhaseContext, body: CommandBo
     });
     return true;
   }
+  const stationAreaId =
+    command["type"] === "AssignForeignStation" ? command.stationAreaId : undefined;
   const problems = stationAssignmentProblems(
     nation,
     command["nationId"],
     command["shipIds"],
     intent,
+    stationTargetFor(ctx.snapshot.current.world, command["nationId"], stationAreaId),
   );
   if (problems.length > 0) {
     ctx.collector.addError(
@@ -114,12 +119,21 @@ export function applyStationAssignmentCommand(ctx: PhaseContext, body: CommandBo
     );
     return true;
   }
-  const from = intent === "assign" ? NO_ASSIGNMENT : "FOREIGN_STATION";
+  const posted = new Set(
+    nation["fleets"]
+      .flatMap((fleet) => fleet["ships"])
+      .filter((ship) => ship["stationAssignment"] === "FOREIGN_STATION")
+      .map((ship) => ship["id"]),
+  );
   const to = intent === "assign" ? "FOREIGN_STATION" : NO_ASSIGNMENT;
-  const reason = intent === "assign" ? STATION_ASSIGNED_REASON : STATION_CLEARED_BY_COMMAND_REASON;
   for (const shipId of [...command["shipIds"]].sort()) {
+    const retarget = intent === "assign" && posted.has(shipId);
+    const from = intent === "clear" || retarget ? "FOREIGN_STATION" : NO_ASSIGNMENT;
+    let reason: string = STATION_CLEARED_BY_COMMAND_REASON;
+    if (intent === "assign")
+      reason = retarget ? STATION_RETARGETED_REASON : STATION_ASSIGNED_REASON;
     ctx.snapshot.current = mapShip(ctx.snapshot.current, command["nationId"], shipId, (ship) =>
-      withStationAssignment(ship, intent),
+      withStationAssignment(ship, intent, stationAreaId),
     );
     ctx.eventLedger.append(
       shipStationAssignmentChangedEvent(

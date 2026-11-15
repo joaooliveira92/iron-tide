@@ -40,6 +40,7 @@ export interface FleetShipView {
   readonly conditions?: readonly ShipCondition[];
   readonly stationAssignment?: "FOREIGN_STATION" | "EXERCISE";
   readonly stationCode?: "FS" | "EX";
+  readonly stationAreaId?: string;
   readonly colonialServiceFitted?: true;
   readonly colonialCode?: "c";
   readonly repairMonthsRemaining?: number;
@@ -140,6 +141,7 @@ export function buildFleetScreenView(
         : {
             stationAssignment: ship.stationAssignment,
             stationCode: ship.stationAssignment === "EXERCISE" ? ("EX" as const) : ("FS" as const),
+            ...(ship.stationAreaId === undefined ? {} : { stationAreaId: ship.stationAreaId }),
           }),
       ...(ship.readiness === "REPAIR" && ship.repairMonthsRemaining !== undefined
         ? { repairMonthsRemaining: Number(ship.repairMonthsRemaining) }
