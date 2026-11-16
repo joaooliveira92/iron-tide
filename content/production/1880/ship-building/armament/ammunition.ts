@@ -241,4 +241,26 @@ export default collection("ammunition", AmmunitionPatternSchema, [
       ],
     },
   },
+  {
+    id: "uk_ap_6in_50",
+    shellType: "AP",
+    nationId: "uk",
+    compatibleGunFamilies: ["gun_qf_6in_50_twin"],
+    shellMassG: 58900,
+    introductionMonth: "1959-01",
+    retirementMonth: null,
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      note: "issue #869. 58.9 kg AP shell (129.75 lb) and 15.6 kg propellant over it (2,649 bp, DERIVED) from navweaps.com, SINGLE-SOURCE. No penetration bias, filler or cost is authored: none is sourced. The charge and rate live on the component and part.",
+      sources: [
+        {
+          title: "navweaps.com UK 6-inch/50 (15.2 cm) QF Mark N5",
+          archiveOrUrl: "https://www.navweaps.com/Weapons/WNBR_6-50_mkN5.php",
+          section: "Research discussion #871 section 3",
+        },
+      ],
+    },
+  },
 ]);

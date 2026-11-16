@@ -128,6 +128,24 @@ export default collection("platforms", PlatformSchema, [
     ],
   },
   {
+    hullForm: "postwar_light_cruiser_form",
+    id: "postwar_light_cruiser_form",
+    slotTemplates: [
+      "compatibility_accommodation",
+      "compatibility_armour_material",
+      "compatibility_damage_control",
+      "compatibility_electrical_plant",
+      "compatibility_funnel",
+      "compatibility_gun_mount",
+      "compatibility_magazine",
+      "compatibility_missile_launcher",
+      "compatibility_propulsion_plant",
+      "compatibility_sensor",
+      "compatibility_torpedo_launcher",
+      "compatibility_ventilation",
+    ],
+  },
+  {
     hullForm: "pre_dreadnought_form",
     id: "pre_dreadnought_form",
     slotTemplates: [

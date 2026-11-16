@@ -442,4 +442,45 @@ export default defineShipComponentCatalogue([
     fcClass: "light",
     maintenanceMonthlyBp: 20,
   }),
+  defineShipComponent({
+    id: "gun_qf_6in_50_twin",
+    displayName: "6-inch/50 QF Mark N5 gun in Mark XXVI twin turret",
+    category: "MAIN_GUN",
+    introduction: { fromMonth: "1959-01", obsoleteMonth: null },
+    constants: {
+      gun_kg: 6960,
+      mount_per_barrel_kg: 72290,
+      mount_fixed_kg: 0,
+      cost_per_kg_micro: 197000,
+      mount_cost_micro: 14268000000,
+    },
+    parameters: { barrels: { min: 2, max: 2, step: 1 }, rounds: { min: 200, max: 1000, step: 50 } },
+    formulas: (v) => ({
+      weightKg: v.gun_kg.plus(v.mount_per_barrel_kg).times(v.barrels).plus(v.mount_fixed_kg),
+      volumeLitre: number(237750).times(v.barrels),
+      costMicro: v.gun_kg
+        .times(v.barrels)
+        .times(v.cost_per_kg_micro)
+        .plus(v.mount_cost_micro.times(v.barrels)),
+      crew: number(11).times(v.barrels),
+      powerKw: number(1).times(v.barrels),
+      deckFootprintMm2: number(37250000).times(v.barrels),
+      heightMm: number(3200),
+      zCgMm: number(6500),
+    }),
+    attributes: () => ({
+      caliberUm: number(152000),
+      shellMassG: number(58900),
+      chargeBp: number(2649),
+      roundVolumeMl: number(37250),
+      rofBaseX100: number(1700),
+      beamArcDeg: number(150),
+      maxFeedPermille: number(300),
+    }),
+    requires: ["gun_auto_loading_turret"],
+    upgradePath: [],
+    tags: ["gun", "medium"],
+    fcClass: "medium",
+    maintenanceMonthlyBp: 20,
+  }),
 ]);
