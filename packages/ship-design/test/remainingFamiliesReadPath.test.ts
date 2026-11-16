@@ -198,11 +198,11 @@ function designLoadout(design: Design): { platform: string; entries: LoadoutEntr
 }
 
 describe("fittings and sensors through the read path (ship-part-model 05)", () => {
-  it("covers the 631 non-gun, non-tube placements; with 269 guns and 41 tubes that is all 941", () => {
+  it("covers the 639 non-gun, non-tube placements; with 271 guns and 41 tubes that is all 951", () => {
     const all = designs.flatMap((d) => d.draft.placements);
-    expect(all.length).toBe(941);
-    expect(fittingRows.length).toBe(631);
-    expect(gunPlacements.length + 41 + fittingRows.length).toBe(941);
+    expect(all.length).toBe(951);
+    expect(fittingRows.length).toBe(639);
+    expect(gunPlacements.length + 41 + fittingRows.length).toBe(951);
     expect(fittingModel.unread).toEqual([]);
   });
 
@@ -1013,7 +1013,7 @@ describe("armour materials out of the balance tables (ship-part-model 05)", () =
 });
 
 describe("ammunition patterns as parts (ship-part-model 05)", () => {
-  it("reads the seven patterns as national ammunition parts", () => {
+  it("reads the eight patterns as national ammunition parts", () => {
     expect(ammunitionModel.unread).toEqual([]);
     expect(
       ammunitionModel.records.map((r) => [r.part.id, r.part.nation, r.part.spec.shellType]),
@@ -1022,13 +1022,13 @@ describe("ammunition patterns as parts (ship-part-model 05)", () => {
       ["de_he_common", "germany", "HE"],
       ["fr_apc", "france", "APC"],
       ["fr_melinite_he", "france", "MELINITE"],
+      ["uk_ap_6in_50", "uk", "AP"],
       ["uk_ap_palliser", "uk", "AP"],
       ["uk_cpc", "uk", "CPC"],
       ["uk_he_45in_45", "uk", "HE"],
     ]);
-    for (const { part } of ammunitionModel.records) {
+    for (const { part } of ammunitionModel.records)
       expect(decodeStrict(FlattenedPartSchema, part), part.id).toEqual(part);
-    }
   });
 
   it("each part reads back to exactly the resolver's ammunition pattern", () => {

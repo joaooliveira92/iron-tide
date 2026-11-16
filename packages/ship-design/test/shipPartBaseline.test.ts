@@ -21,11 +21,11 @@ const entriesOf = (r: EquivalenceReport) =>
 describe("pinned baseline (ticket 09, SPM-R26 P1 gate)", () => {
   it("pins the coverage and data-quality inventory", () => {
     const expected = {
-      designs: 99,
-      placements: 941,
-      gunPlacements: 269,
+      designs: 100,
+      placements: 951,
+      gunPlacements: 271,
       tubePlacements: 41,
-      fittingPlacements: 631,
+      fittingPlacements: 639,
     };
     expect(report.coverage.baseline).toEqual(expected);
     expect(report.coverage.candidate).toEqual(expected);

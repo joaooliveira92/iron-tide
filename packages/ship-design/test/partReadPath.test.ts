@@ -56,9 +56,9 @@ function legacyComponentValue(row: GunPlacement, field: "weightKg" | "costMicro"
 const FIRST_CLASS = ["france", "germany", "uk"];
 
 describe("gun read path over today's content (ship-part-model 03)", () => {
-  it("covers all 99 reference designs and all 269 gun placements", () => {
-    expect(designs.length).toBe(99);
-    expect(gunPlacements.length).toBe(269);
+  it("covers all 100 reference designs and all 271 gun placements", () => {
+    expect(designs.length).toBe(100);
+    expect(gunPlacements.length).toBe(271);
     expect(gunPartModel.unread).toEqual([]);
   });
 
@@ -297,7 +297,7 @@ describe("gun read path over today's content (ship-part-model 03)", () => {
         mountType: gotCompiled.mountType,
       });
     }
-    expect(resolved).toBe(71);
+    expect(resolved).toBe(73);
     expect(reclassified).toBe(6);
   });
 
@@ -369,7 +369,7 @@ describe("gun read path over today's content (ship-part-model 03)", () => {
 
     it("every non-resolving placement carries a reason and its parts", () => {
       expect(unresolved.length).toBe(198);
-      expect(unresolved.length + 71).toBe(gunPlacements.length);
+      expect(unresolved.length + 73).toBe(gunPlacements.length);
       expect(new Set(unresolved.map((u) => u.code))).toEqual(
         new Set(["PART_READ_PATH_NO_FIRST_CLASS_ARMAMENT"]),
       );

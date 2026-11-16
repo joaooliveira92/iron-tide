@@ -1637,7 +1637,7 @@ export default collection("designs", ReferenceDesignSchema, [
         category: "CL",
         requiredSpeedMilliKnots: 31500,
         cruiseSpeedMilliKnots: 16000,
-        requiredRangeNm: 8000,
+        requiredRangeNm: 7466,
         designThreatId: "qf_6in",
         modernizationExpectation: "NONE",
         crewQualityBp: 10000,
