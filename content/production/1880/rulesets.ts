@@ -342,11 +342,11 @@ export default list(RulesetManifestSchema, [
       penaltyRequests: true,
       // #576, #838 (PROVISIONAL): a short nation loses prestige in proportion to the shortfall (manual p.62), but only for
       // areas a surplus ship could cover: an ACTIVE, unposted ship that is not needed to hold the area it sits in and is big
-      // enough for the gap. Nothing is charged for the first 3 months, nor to a nation held by an AI slot, which cannot post ships.
+      // enough for the gap. Nothing is charged for the first 12 months (#860), nor to a nation held by an AI slot, which cannot post ships.
       shortfallPrestige: {
         lossBpPerWholeShortfall: 200,
         maxLossBp: 500,
-        openingGraceMonths: 3,
+        openingGraceMonths: 12,
         surplusShipsOnly: true,
       },
       baseLimits: {

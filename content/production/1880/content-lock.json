@@ -2,5 +2,5 @@
   "comment": "Committed content lock (ADR-0145): the compiled 1880 content artifact's semantic version and SHA-256 body hash. `pnpm content:verify` rebuilds in memory and fails on drift or tamper. Refresh deliberately on a content change.",
   "contentVersion": "0.5.0",
   "algorithm": "sha256",
-  "bodyHash": "99d880ff026a573011b13bfc561954fe3fae7badd95c835722d2fe03d58e802e"
+  "bodyHash": "691150277f651c64f00d18fbb9d04afb9858ee7106b5e1a8aa3ea010dda7caf3"
 }
