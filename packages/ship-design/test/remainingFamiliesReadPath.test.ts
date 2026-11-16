@@ -1013,20 +1013,14 @@ describe("armour materials out of the balance tables (ship-part-model 05)", () =
 });
 
 describe("ammunition patterns as parts (ship-part-model 05)", () => {
-  it("reads the eight patterns as national ammunition parts", () => {
+  it("reads the sixteen patterns as national ammunition parts", () => {
     expect(ammunitionModel.unread).toEqual([]);
-    expect(
-      ammunitionModel.records.map((r) => [r.part.id, r.part.nation, r.part.spec.shellType]),
-    ).toEqual([
-      ["de_ap_krupp", "germany", "AP"],
-      ["de_he_common", "germany", "HE"],
-      ["fr_apc", "france", "APC"],
-      ["fr_melinite_he", "france", "MELINITE"],
-      ["uk_ap_6in_50", "uk", "AP"],
-      ["uk_ap_palliser", "uk", "AP"],
-      ["uk_cpc", "uk", "CPC"],
-      ["uk_he_45in_45", "uk", "HE"],
-    ]);
+    const read = ammunitionModel.records.map(
+      (r) => `${r.part.id}:${r.part.nation}:${r.part.spec.shellType}`,
+    );
+    expect(read.join(" ")).toBe(
+      "de_ap_krupp:germany:AP de_he_common:germany:HE fr_apc:france:APC fr_melinite_he:france:MELINITE ru_ap_steel:russia:AP ru_he_130mm_50:russia:HE uk_ap_6in_50:uk:AP uk_ap_palliser:uk:AP uk_cpc:uk:CPC uk_he_45in_45:uk:HE us_ap_16in_50:usa:AP us_ap_6in_47:usa:AP us_ap_8in_55:usa:AP us_common_shell:usa:AP us_he_5in_38:usa:HE us_he_5in_54:usa:HE",
+    );
     for (const { part } of ammunitionModel.records)
       expect(decodeStrict(FlattenedPartSchema, part), part.id).toEqual(part);
   });

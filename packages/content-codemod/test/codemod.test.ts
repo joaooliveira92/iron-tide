@@ -38,7 +38,7 @@ const categoryOf = (id: string) => components.find((c) => c.id === id)?.category
 
 describe("content codemod planner (ticket 11c)", () => {
   it("migrates the whole catalogue and every design", () => {
-    expect(planned.manifest.records.parts).toBe(339);
+    expect(planned.manifest.records.parts).toBe(347);
     expect(planned.manifest.records.designs).toBe(101);
     expect(planned.manifest.records.placements).toBe(965);
     expect(planned.manifest.records.gunPlacements).toBe(274);
@@ -48,7 +48,7 @@ describe("content codemod planner (ticket 11c)", () => {
       (a, b) => a + b,
       0,
     );
-    expect(familyTotal).toBe(339);
+    expect(familyTotal).toBe(347);
     expect(planned.manifest.records.partsByFamily.torpedo).toBe(8);
     expect(planned.designs).toHaveLength(101);
   });
@@ -76,7 +76,7 @@ describe("content codemod planner (ticket 11c)", () => {
 
   it("records the three independent data-quality counts, unmixed", () => {
     const dq = planned.manifest.dataQuality;
-    expect(dq.unresolvedArmamentPlacements).toBe(201);
+    expect(dq.unresolvedArmamentPlacements).toBe(138);
     expect(dq.unresolvedMagazineRelationships).toBe(0);
     expect(dq.waivers).toBe(0);
     expect(dq.centralBatteryPlacements).toBe(15);

@@ -50,5 +50,5 @@
   "packages/ship-design/src/refit.ts": { "lines": 777 },
   "packages/ship-design/test/partFit.test.ts": { "lines": 970 },
   "packages/ship-design/test/partFitProduction.test.ts": { "lines": 630 },
-  "packages/ship-design/test/remainingFamiliesReadPath.test.ts": { "lines": 1110 }
+  "packages/ship-design/test/remainingFamiliesReadPath.test.ts": { "lines": 1104 }
 }
