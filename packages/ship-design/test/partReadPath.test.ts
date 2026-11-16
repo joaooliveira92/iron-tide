@@ -53,7 +53,7 @@ function legacyComponentValue(row: GunPlacement, field: "weightKg" | "costMicro"
   return num(def[field], { ...def.constants, ...params });
 }
 
-const FIRST_CLASS = ["france", "germany", "uk"];
+const FIRST_CLASS = ["france", "germany", "russia", "uk", "usa"];
 
 describe("gun read path over today's content (ship-part-model 03)", () => {
   it("covers all 100 reference designs and all 271 gun placements", () => {
@@ -297,8 +297,8 @@ describe("gun read path over today's content (ship-part-model 03)", () => {
         mountType: gotCompiled.mountType,
       });
     }
-    expect(resolved).toBe(73);
-    expect(reclassified).toBe(6);
+    expect(resolved).toBe(136);
+    expect(reclassified).toBe(12);
   });
 
   describe("D17 central-battery reclassification", () => {
@@ -368,8 +368,8 @@ describe("gun read path over today's content (ship-part-model 03)", () => {
     const unresolved = results.flatMap(({ got }) => (got.unresolved ? [got.unresolved] : []));
 
     it("every non-resolving placement carries a reason and its parts", () => {
-      expect(unresolved.length).toBe(198);
-      expect(unresolved.length + 73).toBe(gunPlacements.length);
+      expect(unresolved.length).toBe(135);
+      expect(unresolved.length + 136).toBe(gunPlacements.length);
       expect(new Set(unresolved.map((u) => u.code))).toEqual(
         new Set(["PART_READ_PATH_NO_FIRST_CLASS_ARMAMENT"]),
       );
@@ -383,9 +383,7 @@ describe("gun read path over today's content (ship-part-model 03)", () => {
         "ottoman_empire",
         "portugal",
         "qing",
-        "russia",
         "spain",
-        "usa",
       ]);
       for (const nation of nations) {
         expect(nationHasArmamentContent(armamentContent, nation)).toBe(false);

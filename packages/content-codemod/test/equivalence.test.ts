@@ -24,7 +24,7 @@ describe("equivalence totals are unchanged by the codemod (ticket 11c)", () => {
   });
 
   it("keeps the independent armament, magazine and waiver counts separate", () => {
-    expect(report.dataQuality.unresolvedGunPlacements).toHaveLength(198);
+    expect(report.dataQuality.unresolvedGunPlacements).toHaveLength(135);
     expect(
       report.dataQuality.unresolvedGunPlacements.every(
         (u) => u.code === "PART_READ_PATH_NO_FIRST_CLASS_ARMAMENT",

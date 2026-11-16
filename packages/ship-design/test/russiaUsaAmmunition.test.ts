@@ -1,0 +1,117 @@
+import { describe, it, expect } from "vite-plus/test";
+import { compileDesign, nationHasArmamentContent } from "../src/index.js";
+import { armamentAmmunitionFor } from "../src/armamentAmmunition.js";
+import { armamentContent } from "./helpers/armamentContext.js";
+import { components, earlyContext } from "./helpers/earlyContext.js";
+import { designs, gunPlacements, resolveRow, where } from "./helpers/gunReadPath.js";
+import { renderExplanation } from "./helpers/explanation.js";
+
+const EXPECTED: Readonly<Record<string, Readonly<Record<string, string>>>> = {
+  russia: {
+    gun_rml_12in_25ton: "ru_ap_steel",
+    gun_rml_10in_18ton: "ru_ap_steel",
+    gun_rml_64pdr_71cwt: "ru_ap_steel",
+    gun_nordenfelt_1in: "ru_ap_steel",
+    gun_130mm_50_twin: "ru_he_130mm_50",
+  },
+  usa: {
+    gun_rml_11in_25ton: "us_common_shell",
+    gun_rml_7in_7ton: "us_common_shell",
+    gun_rml_64pdr_71cwt: "us_common_shell",
+    gun_nordenfelt_1in: "us_common_shell",
+    gun_sb_15in_dahlgren: "us_common_shell",
+    gun_dp_5in_38_twin: "us_he_5in_38",
+    gun_dp_6in_47_twin: "us_ap_6in_47",
+    gun_ap_8in_55_triple: "us_ap_8in_55",
+    gun_ap_16in_50_triple: "us_ap_16in_50",
+    gun_dp_5in_54_single: "us_he_5in_54",
+  },
+};
+
+const NATIONS = ["russia", "usa"] as const;
+
+describe("Russian and US per-era ammunition patterns (issue #867, builds on #856)", () => {
+  for (const nation of NATIONS) {
+    describe(nation, () => {
+      const rows = gunPlacements.filter((r) => r.design.draft.nationId === nation);
+      const expected = EXPECTED[nation] ?? {};
+
+      it("has first-class armament content", () => {
+        expect(nationHasArmamentContent(armamentContent, nation)).toBe(true);
+      });
+
+      it("resolves every starter gun family to its own era pattern at the starter month", () => {
+        expect(rows.length).toBeGreaterThan(0);
+        for (const row of rows) {
+          const pattern = armamentAmmunitionFor(
+            armamentContent,
+            nation,
+            row.familyId,
+            row.design.month,
+          );
+          expect(String(pattern?.id), where(row)).toBe(expected[row.familyId]);
+        }
+      });
+
+      it("authors a pattern for every gun family its starters place", () => {
+        const placed = new Set(rows.map((r) => r.familyId));
+        expect([...placed].sort()).toEqual(Object.keys(expected).sort());
+      });
+
+      it("reads no starter placement on the legacy compatibility path", () => {
+        for (const row of rows) {
+          const got = resolveRow(row);
+          expect(got.unresolved?.code, where(row)).not.toBe(
+            "PART_READ_PATH_NO_FIRST_CLASS_ARMAMENT",
+          );
+          expect(got.unresolved?.code, where(row)).not.toBe("PART_READ_PATH_NO_AMMUNITION");
+        }
+      });
+
+      it("compiles every starter with no blocking finding", () => {
+        for (const d of designs.filter((x) => x.draft.nationId === nation)) {
+          const r = compileDesign(d.draft, earlyContext(d.month));
+          const blocking = r.findings.filter(
+            (f) => f.severity === "BLOCKING" || f.severity === "CRITICAL",
+          );
+          expect(
+            blocking.map((f) => `${f.id}: ${renderExplanation(f.what)}`),
+            d.id,
+          ).toEqual([]);
+        }
+      });
+    });
+  }
+
+  it("carries the navweaps shell masses that agree with the placed components", () => {
+    const masses: Readonly<Record<string, number>> = {
+      us_he_5in_38: 25000,
+      us_ap_6in_47: 59000,
+      us_ap_8in_55: 152000,
+      us_ap_16in_50: 1225000,
+      us_he_5in_54: 31450,
+    };
+    for (const [id, grams] of Object.entries(masses)) {
+      const pattern = armamentContent.ammunition.find((a) => a.id === id);
+      expect(pattern?.shellMassG, id).toBe(grams);
+      expect(pattern?.compatibleGunFamilies?.length, id).toBe(1);
+      const family = pattern?.compatibleGunFamilies?.[0];
+      expect(
+        components.some((c) => c.id === family),
+        id,
+      ).toBe(true);
+    }
+  });
+
+  it("leaves the 130 mm shell mass to the part until the 53.6 kg figure is reconciled", () => {
+    const pattern = armamentContent.ammunition.find((a) => a.id === "ru_he_130mm_50");
+    expect(pattern?.shellMassG).toBeUndefined();
+  });
+
+  it("keeps the 1880 Russian and US patterns on the profile values they were promoted from", () => {
+    const ru = armamentContent.ammunition.find((a) => a.id === "ru_ap_steel");
+    const us = armamentContent.ammunition.find((a) => a.id === "us_common_shell");
+    expect([ru?.shellType, ru?.penetrationBiasBp]).toEqual(["AP", 6500]);
+    expect([us?.shellType, us?.penetrationBiasBp]).toEqual(["AP", 5000]);
+  });
+});

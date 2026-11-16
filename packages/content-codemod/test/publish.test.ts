@@ -55,7 +55,7 @@ describe("content codemod publisher (ticket 11c)", () => {
     const read = readStagedSource(stagingDir);
     expect(read.ok).toBe(true);
     if (!read.ok) return;
-    expect(read.value.parts).toHaveLength(335);
+    expect(read.value.parts).toHaveLength(343);
     expect(read.value.designs).toHaveLength(100);
     for (const file of listFiles(stagingDir).filter((f) => f.startsWith("parts/"))) {
       const raw = fromStagedJson(readFileSync(join(stagingDir, file), "utf8"));
