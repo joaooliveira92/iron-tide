@@ -74,7 +74,7 @@ describe("the 1942 Italian Soldati-class destroyer, Mitragliere group (issue #24
         (f) =>
           f.severity === "BLOCKING" ||
           f.severity === "CRITICAL" ||
-          String(f.code).startsWith("ARMAMENT_AMMUNITION"),
+          f.id.startsWith("ARMAMENT_AMMUNITION"),
       );
       expect(bad.map((f) => `${d.id} ${f.id}`)).toEqual([]);
       const guns = d.draft.placements.map((p) => p.componentId);
