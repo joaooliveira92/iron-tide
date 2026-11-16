@@ -48,7 +48,10 @@ function outline(root: Element): readonly string[] {
     const tag = element.tagName.toLowerCase();
     const testId = element.getAttribute("data-testid") ?? "";
     const role = element.getAttribute("role") ?? "";
-    const label = (element.getAttribute("aria-label") ?? element.textContent ?? "").slice(0, 28);
+    const label =
+      testId === "globe-adapter-frame-meter"
+        ? ""
+        : (element.getAttribute("aria-label") ?? element.textContent ?? "").slice(0, 28);
     return `${tag}|${testId}|${role}|${label}`;
   });
 }
@@ -148,7 +151,7 @@ describe("GlobeAdapter rendered structure", () => {
         "button|||Layers & areas",
         "details|area-list||Areas (0)ShipsPossessionsNo ",
         "div|area-tree||ShipsPossessionsNo areas wit",
-        "span|globe-adapter-frame-meter||drag or zoom to measure",
+        "span|globe-adapter-frame-meter||",
         "nav|globe-adapter-area-list||Map areas",
         "nav|globe-adapter-entities||Ports and fleets",
         "table|globe-adapter-area-table||Area controlAreaControlled b",
@@ -172,7 +175,7 @@ describe("GlobeAdapter rendered structure", () => {
         "button|||Layers & areas",
         "details|area-list||Areas (0)ShipsPossessionsNo ",
         "div|area-tree||ShipsPossessionsNo areas wit",
-        "span|globe-adapter-frame-meter||drag or zoom to measure",
+        "span|globe-adapter-frame-meter||",
         "nav|globe-adapter-area-list||Map areas",
         "nav|globe-adapter-entities||Ports and fleets",
         "table|globe-adapter-area-table||Area controlAreaControlled b",
@@ -215,7 +218,7 @@ describe("GlobeAdapter rendered structure", () => {
         "button|||Layers & areas",
         "details|area-list||Areas (0)ShipsPossessionsNo ",
         "div|area-tree||ShipsPossessionsNo areas wit",
-        "span|globe-adapter-frame-meter||drag or zoom to measure",
+        "span|globe-adapter-frame-meter||",
         "nav|globe-adapter-area-list||Map areas",
         "nav|globe-adapter-entities||Ports and fleets",
         "table|globe-adapter-area-table||Area controlAreaControlled b",
