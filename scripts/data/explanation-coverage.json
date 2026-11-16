@@ -119,7 +119,8 @@
       "covered": {},
       "exempt": {
         "revision": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
-        "projectedSurplusDeficit": "Not yet explained; #300 covers this area and re-exempts any field it does not explain."
+        "projectedSurplusDeficit": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "unrest": "Not yet explained; the strip note names the sources (#826) but no tree lists each change. #300 covers this area."
       }
     },
     {

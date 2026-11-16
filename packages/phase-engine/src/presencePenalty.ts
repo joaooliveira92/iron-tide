@@ -1,4 +1,5 @@
 import {
+  applyUnrestDelta,
   chargeablePresenceRows,
   type CampaignSnapshot,
   type PresenceMeasurementRules,
@@ -78,9 +79,29 @@ export function applyPresenceShortfallPrestige(
   }
   for (const nationId of [...byNation.keys()].sort()) {
     const rows = chargedRows(nationId, byNation.get(nationId) ?? [], rules, shortfall, scope);
+    if (rows.length === 0) continue;
     const lossBp = shortfallLossBp(rows, shortfall);
-    if (lossBp === 0) continue;
-    const rule: PrestigeRule = { kind: "PROPORTIONAL_LOSS", basisPoints: SafeInt(lossBp) };
-    applyPrestigeChange(ctx, nationId, "PRESENCE_SHORTFALL", rule);
+    if (lossBp > 0) {
+      const rule: PrestigeRule = { kind: "PROPORTIONAL_LOSS", basisPoints: SafeInt(lossBp) };
+      applyPrestigeChange(ctx, nationId, "PRESENCE_SHORTFALL", rule);
+    }
+    if (rules.shortfallUnrest !== undefined) {
+      applyShortfallUnrest(ctx, nationId, rules.shortfallUnrest.unrestPerShortMonth);
+    }
   }
+}
+
+export function applyShortfallUnrest(
+  ctx: PrestigeApplicationContext,
+  nationId: string,
+  unrestPerShortMonth: number,
+): void {
+  const nations = ctx.snapshot.read("nations");
+  const nation = nations.get(nationId);
+  if (nation === undefined) return;
+  const unrest = applyUnrestDelta(nation.unrest, unrestPerShortMonth);
+  if (unrest === (nation.unrest ?? 0) && nation.unrest !== undefined) return;
+  const updated = new Map(nations);
+  updated.set(nationId, { ...nation, unrest });
+  ctx.snapshot.write("nations", updated);
 }

@@ -163,6 +163,7 @@ export interface PlayerProjection {
   readonly projectedSurplusDeficit: number;
   readonly economy: PlayerProjectionEconomy;
   readonly prestige: PlayerProjectionPrestige;
+  readonly unrest?: number;
   readonly career?: PlayerProjectionCareer;
   readonly fleet: readonly PlayerProjectionFleet[];
   readonly ports: readonly PlayerProjectionPort[];
@@ -329,6 +330,7 @@ export function buildPlayerProjection(
       ),
     },
     prestige: buildPrestige(snapshot.prestigeRules.sackingThreshold, nation),
+    ...(nation.unrest === undefined ? {} : { unrest: nation.unrest }),
     ...(snapshot.careerResult === undefined
       ? {}
       : {

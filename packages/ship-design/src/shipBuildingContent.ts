@@ -86,6 +86,7 @@ export interface PresenceRuleValues {
     readonly lossBpPerWholeShortfall: number;
     readonly maxLossBp: number;
   };
+  readonly shortfallUnrest?: { readonly unrestPerShortMonth: number };
   readonly baseLimits?: {
     readonly limitByBaseLevel: readonly number[];
     readonly noBaseLimit: number;
