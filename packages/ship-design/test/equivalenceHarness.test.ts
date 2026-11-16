@@ -46,7 +46,7 @@ const codes = (r: EquivalenceReport) =>
     .map((f) => f.code);
 
 describe("equivalence harness over current content (ticket 08)", () => {
-  it("covers 97/97 designs and 909/909 placements, and the pinned slices", () => {
+  it("covers 100/100 designs and 951/951 placements, and the pinned slices", () => {
     expect(report.schema).toBe(EQUIVALENCE_REPORT_SCHEMA);
     expect(report.coverage.baseline).toEqual(PINNED_COVERAGE);
     expect(report.coverage.candidate).toEqual(PINNED_COVERAGE);

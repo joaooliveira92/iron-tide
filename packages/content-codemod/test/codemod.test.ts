@@ -38,19 +38,19 @@ const categoryOf = (id: string) => components.find((c) => c.id === id)?.category
 
 describe("content codemod planner (ticket 11c)", () => {
   it("migrates the whole catalogue and every design", () => {
-    expect(planned.manifest.records.parts).toBe(332);
-    expect(planned.manifest.records.designs).toBe(99);
-    expect(planned.manifest.records.placements).toBe(941);
-    expect(planned.manifest.records.gunPlacements).toBe(269);
+    expect(planned.manifest.records.parts).toBe(335);
+    expect(planned.manifest.records.designs).toBe(100);
+    expect(planned.manifest.records.placements).toBe(951);
+    expect(planned.manifest.records.gunPlacements).toBe(271);
     expect(planned.manifest.records.tubePlacements).toBe(41);
-    expect(planned.manifest.records.fittingPlacements).toBe(631);
+    expect(planned.manifest.records.fittingPlacements).toBe(639);
     const familyTotal = Object.values(planned.manifest.records.partsByFamily).reduce(
       (a, b) => a + b,
       0,
     );
-    expect(familyTotal).toBe(332);
+    expect(familyTotal).toBe(335);
     expect(planned.manifest.records.partsByFamily.torpedo).toBe(8);
-    expect(planned.designs).toHaveLength(99);
+    expect(planned.designs).toHaveLength(100);
   });
 
   it("generates the eight torpedo parts, including the 1884 Whitehead revision", () => {
@@ -255,6 +255,6 @@ describe("content codemod planner (ticket 11c)", () => {
         WEAPON_GUN.has(categoryOf(placement.componentId) ?? ""),
       ),
     );
-    expect(gunPlacements.length).toBe(269);
+    expect(gunPlacements.length).toBe(271);
   });
 });

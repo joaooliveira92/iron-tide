@@ -11,13 +11,13 @@ import { runEquivalence } from "../../ship-design/test/helpers/equivalenceRun.js
 const report = runEquivalence();
 
 describe("equivalence totals are unchanged by the codemod (ticket 11c)", () => {
-  it("covers 99/99 designs and 941/941 placements", () => {
+  it("covers 100/100 designs and 951/951 placements", () => {
     expect(report.coverage.baseline).toEqual({
-      designs: 99,
-      placements: 941,
-      gunPlacements: 269,
+      designs: 100,
+      placements: 951,
+      gunPlacements: 271,
       tubePlacements: 41,
-      fittingPlacements: 631,
+      fittingPlacements: 639,
     });
     expect(report.summary.rows.changed).toBe(0);
     expect(report.summary.rows.orderingOnly).toBe(0);
