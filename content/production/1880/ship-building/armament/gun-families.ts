@@ -858,4 +858,42 @@ export default collection("gunFamilies", GunFamilySchema, [
       ],
     },
   },
+  {
+    id: "gun_120mm_50_twin",
+    designation: "Italian 120 mm/50 Ansaldo 1926 gun in 1937 twin mount",
+    category: "SECONDARY_GUN",
+    defaultMountType: "TURRET",
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      note: "issue #249. Navweaps data of Research discussion #876; the component carries the derivations.",
+      sources: [
+        {
+          title: "navweaps.com Italian 120 mm/50 (4.7-inch) Models 1926, 1936 and 1937",
+          archiveOrUrl: "http://www.navweaps.com/Weapons/WNIT_47-50_m1926.php",
+          section: "Research discussion #876",
+        },
+      ],
+    },
+  },
+  {
+    id: "gun_120mm_50_single",
+    designation: "Italian 120 mm/50 Ansaldo 1926 gun in 1940 single mount",
+    category: "SECONDARY_GUN",
+    defaultMountType: "TURRET",
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      note: "issue #249. Navweaps data of Research discussion #876; the component carries the derivations.",
+      sources: [
+        {
+          title: "navweaps.com Italian 120 mm/50 (4.7-inch) Models 1926, 1936 and 1937",
+          archiveOrUrl: "http://www.navweaps.com/Weapons/WNIT_47-50_m1926.php",
+          section: "Research discussion #876",
+        },
+      ],
+    },
+  },
 ]);

@@ -12186,4 +12186,208 @@ export default collection("parts", PartSchema, [
       weaponCategory: "MAIN_GUN",
     },
   },
+  {
+    family: "gun",
+    id: "standard_gun_120mm_50_twin",
+    lifecycle: {
+      availableFrom: "1937-01",
+      availableUntil: null,
+      requires: [],
+    },
+    metadata: {
+      displayName: "120 mm/50 Ansaldo 1926 gun in 1937 twin mount",
+      tags: ["gun", "medium"],
+    },
+    name: "Italian 120 mm/50 Ansaldo 1926 gun in 1937 twin mount",
+    origin: {
+      sourceFile: "ship-building/components/guns/italian.ts",
+    },
+    capabilities: [
+      {
+        kind: "ammunition_feed",
+        maxFeedPermille: 300,
+      },
+      {
+        class: "medium",
+        kind: "fire_control_class",
+      },
+    ],
+    engineering: {
+      maintenance: {
+        monthlyBpOfCost: 20,
+      },
+      physical: {
+        centreOfGravity: {
+          datum: "PART_BASE",
+          zMm: 6000,
+        },
+        envelopeHeightMm: 2200,
+      },
+      power: {
+        consumption: [
+          {
+            basis: "PER_PART_UNIT",
+            id: "power",
+            kind: "powerKw",
+            value: 1,
+          },
+        ],
+      },
+    },
+    entryUnits: {
+      max: 2,
+      min: 2,
+      step: 1,
+    },
+    parameters: {
+      rounds: {
+        max: 800,
+        min: 100,
+        step: 50,
+      },
+    },
+    provenance: {
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      note: "issue #249, Research discussion #876. 120 mm bore, 23.245 kg HE shell (the metric figure; the page's 51.8 lb disagrees), 5,552 kg gun (the page's 5.1 tons disagrees), 9.7 kg charge over the shell (4,173 bp, DERIVED) and 6-7 rounds per minute (600, the lower bound) are SINGLE-SOURCE (navweaps.com). Gun cost is 197,000 micro per kg like the other 1950s gun parts and the round volume follows the 0.64 mL per gram of the US 5-inch/38: BALANCE TARGET.",
+      sourceStatus: "BALANCE_TARGET",
+      sources: [
+        {
+          archiveOrUrl: "http://www.navweaps.com/Weapons/WNIT_47-50_m1926.php",
+          section: "Research discussion #876",
+          title: "navweaps.com Italian 120 mm/50 (4.7-inch) Models 1926, 1936 and 1937",
+        },
+      ],
+    },
+    provides: "gun",
+    quantities: [
+      {
+        basis: "PER_PART_UNIT",
+        id: "gun_mass",
+        kind: "massKg",
+        value: 5552,
+      },
+      {
+        basis: "PER_PART_UNIT",
+        id: "gun_cost",
+        kind: "costMicro",
+        value: 1093744000,
+      },
+    ],
+    revisions: [],
+    spec: {
+      beamArcDeg: 150,
+      calibreUm: 120000,
+      gunFamily: "gun_120mm_50_twin",
+      gunMassKg: 5552,
+      mechanicalRateOfFireRoundsPerMinuteX100: 600,
+      propellantChargeBp: 4173,
+      roundVolumeMl: 14900,
+      shellMassG: 23245,
+      supportedMountTypes: ["TURRET"],
+      weaponCategory: "SECONDARY_GUN",
+    },
+  },
+  {
+    family: "gun",
+    id: "standard_gun_120mm_50_single",
+    lifecycle: {
+      availableFrom: "1940-01",
+      availableUntil: null,
+      requires: [],
+    },
+    metadata: {
+      displayName: "120 mm/50 Ansaldo 1926 gun in 1940 single mount",
+      tags: ["gun", "medium"],
+    },
+    name: "Italian 120 mm/50 Ansaldo 1926 gun in 1940 single mount",
+    origin: {
+      sourceFile: "ship-building/components/guns/italian.ts",
+    },
+    capabilities: [
+      {
+        kind: "ammunition_feed",
+        maxFeedPermille: 300,
+      },
+      {
+        class: "medium",
+        kind: "fire_control_class",
+      },
+    ],
+    engineering: {
+      maintenance: {
+        monthlyBpOfCost: 20,
+      },
+      physical: {
+        centreOfGravity: {
+          datum: "PART_BASE",
+          zMm: 6000,
+        },
+        envelopeHeightMm: 2200,
+      },
+      power: {
+        consumption: [
+          {
+            basis: "PER_PART_UNIT",
+            id: "power",
+            kind: "powerKw",
+            value: 1,
+          },
+        ],
+      },
+    },
+    entryUnits: {
+      max: 1,
+      min: 1,
+      step: 1,
+    },
+    parameters: {
+      rounds: {
+        max: 800,
+        min: 100,
+        step: 50,
+      },
+    },
+    provenance: {
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      note: "issue #249, Research discussion #876. Same gun and shell as standard_gun_120mm_50_twin: 5,552 kg gun, 23.245 kg HE shell, 9.7 kg charge (4,173 bp, DERIVED), 6-7 rounds per minute, all SINGLE-SOURCE (navweaps.com). The single mount date (1940) is the Model 1940 year of navweaps and Campbell 1985. Gun cost and round volume are BALANCE TARGET conventions as for the twin.",
+      sourceStatus: "BALANCE_TARGET",
+      sources: [
+        {
+          archiveOrUrl: "http://www.navweaps.com/Weapons/WNIT_47-50_m1926.php",
+          section: "Research discussion #876",
+          title: "navweaps.com Italian 120 mm/50 (4.7-inch) Models 1926, 1936 and 1937",
+        },
+      ],
+    },
+    provides: "gun",
+    quantities: [
+      {
+        basis: "PER_PART_UNIT",
+        id: "gun_mass",
+        kind: "massKg",
+        value: 5552,
+      },
+      {
+        basis: "PER_PART_UNIT",
+        id: "gun_cost",
+        kind: "costMicro",
+        value: 1093744000,
+      },
+    ],
+    revisions: [],
+    spec: {
+      beamArcDeg: 150,
+      calibreUm: 120000,
+      gunFamily: "gun_120mm_50_single",
+      gunMassKg: 5552,
+      mechanicalRateOfFireRoundsPerMinuteX100: 600,
+      propellantChargeBp: 4173,
+      roundVolumeMl: 14900,
+      shellMassG: 23245,
+      supportedMountTypes: ["TURRET"],
+      weaponCategory: "SECONDARY_GUN",
+    },
+  },
 ]);
