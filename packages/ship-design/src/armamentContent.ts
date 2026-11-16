@@ -1,5 +1,4 @@
 import {
-  ammunitionId,
   armamentNationId,
   armamentTechnologyId,
   gunFamilyId,
@@ -16,7 +15,6 @@ import {
   type ArmamentFindingSeverity,
   type ArmamentMountType,
   type ArmamentParameterValue,
-  type ArmamentProvenance,
   type ArmamentResolutionFinding,
   type ArmamentResolutionResult,
   type GunFamily,
@@ -24,6 +22,11 @@ import {
   type GunMountDef as ArmamentGunMountDef,
   type ResolvedArmament,
 } from "@bluewave/armament";
+import {
+  ammunitionToDomain,
+  armamentAmmunitionFor,
+  toArmamentProvenance,
+} from "./armamentAmmunition.js";
 import type { ComponentDef } from "./component.js";
 import type { GunModelDef, NationNavalProfile, Provenance } from "./nationProfile.js";
 
@@ -109,15 +112,6 @@ export interface AuthoredArmamentContent {
   readonly ammunition: readonly AuthoredAmmunition[];
 }
 
-const toArmamentProvenance = (p: Provenance): ArmamentProvenance => ({
-  sourceStatus: p.sourceStatus,
-  confidence: p.confidence,
-  kind: p.kind,
-  sources: p.sources.map((s) => ({ ...s })),
-  ...(p.derivation !== undefined ? { derivation: { ...p.derivation } } : {}),
-  ...(p.note !== undefined ? { note: p.note } : {}),
-});
-
 function familyToDomain(f: AuthoredGunFamily): GunFamily {
   return {
     id: gunFamilyId(f.id),
@@ -192,35 +186,6 @@ function mountToDomain(m: AuthoredGunMount): ArmamentGunMountDef {
     retirementMonth: m.retirementMonth ?? null,
     requiredTechnologyIds: m.requiredTechnologyIds.map(armamentTechnologyId),
     provenance: toArmamentProvenance(m.provenance),
-  };
-}
-
-function ammunitionToDomain(a: AuthoredAmmunition): ArmamentAmmunitionPattern {
-  return {
-    id: ammunitionId(a.id),
-    shellType: a.shellType,
-    ...(a.compatibleGunFamilies !== undefined
-      ? { compatibleGunFamilies: a.compatibleGunFamilies.map(gunFamilyId) }
-      : {}),
-    ...(a.compatibleGunModelIds !== undefined
-      ? { compatibleGunModelIds: a.compatibleGunModelIds.map(gunModelId) }
-      : {}),
-    ...(a.shellMassG !== undefined ? { shellMassG: a.shellMassG } : {}),
-    ...(a.propellantInteractionBp !== undefined
-      ? { propellantInteractionBp: a.propellantInteractionBp }
-      : {}),
-    ...(a.penetrationBiasBp !== undefined ? { penetrationBiasBp: a.penetrationBiasBp } : {}),
-    ...(a.explosiveFillerG !== undefined ? { explosiveFillerG: a.explosiveFillerG } : {}),
-    ...(a.burstingEffectBp !== undefined ? { burstingEffectBp: a.burstingEffectBp } : {}),
-    ...(a.fireEffectBp !== undefined ? { fireEffectBp: a.fireEffectBp } : {}),
-    ...(a.storageHazard !== undefined ? { storageHazard: a.storageHazard } : {}),
-    ...(a.ammunitionCostMicro !== undefined ? { ammunitionCostMicro: a.ammunitionCostMicro } : {}),
-    ...(a.rateOfFireModifierBp !== undefined
-      ? { rateOfFireModifierBp: a.rateOfFireModifierBp }
-      : {}),
-    ...(a.introductionMonth !== undefined ? { introductionMonth: a.introductionMonth } : {}),
-    retirementMonth: a.retirementMonth ?? null,
-    provenance: toArmamentProvenance(a.provenance),
   };
 }
 
@@ -363,16 +328,6 @@ export function armamentMountFor(
   return { ...base, gunCount };
 }
 
-export function armamentAmmunitionFor(
-  content: AuthoredArmamentContent,
-  nationId: string,
-  familyId: string,
-): ArmamentAmmunitionPattern | null {
-  const own = content.ammunition.filter((a) => a.nationId === nationId);
-  const preferred = own.find((a) => (a.compatibleGunFamilies ?? []).includes(familyId)) ?? own[0];
-  return preferred === undefined ? null : ammunitionToDomain(preferred);
-}
-
 function unlockedTechs(
   technologies: readonly { readonly id: string; readonly year: number }[],
   month: string,
@@ -422,7 +377,12 @@ export function buildArmamentUsageManifest(input: ArmamentCoverageInput): readon
         weapon.gunCount,
       );
       if (mount === null) continue;
-      const ammunition = armamentAmmunitionFor(input.content, starter.nationId, weapon.componentId);
+      const ammunition = armamentAmmunitionFor(
+        input.content,
+        starter.nationId,
+        weapon.componentId,
+        starter.month,
+      );
       if (ammunition === null) continue;
       const access: Record<string, ArmamentAccessStatus> = {};
       const profile = input.profiles.find((p) => p.nationId === starter.nationId);
@@ -535,7 +495,12 @@ export function resolveInstalledWeapon(
       ],
     };
   }
-  const ammunition = armamentAmmunitionFor(input.content, input.nationId, input.familyId);
+  const ammunition = armamentAmmunitionFor(
+    input.content,
+    input.nationId,
+    input.familyId,
+    input.month,
+  );
   if (ammunition === null) {
     return {
       resolved: null,
