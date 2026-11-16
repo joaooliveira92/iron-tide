@@ -10,8 +10,13 @@ export interface ShortfallPrestigeRules {
   readonly surplusShipsOnly?: true;
 }
 
+export interface ShortfallUnrestRules {
+  readonly unrestPerShortMonth: number;
+}
+
 export interface PresenceMeasurementRules {
   readonly shortfallPrestige?: ShortfallPrestigeRules;
+  readonly shortfallUnrest?: ShortfallUnrestRules;
   readonly requiredTonsPerPossessionWeight: number;
   readonly noPortValueWeight: number;
   readonly crampedOrShortRangeCountBp: number;

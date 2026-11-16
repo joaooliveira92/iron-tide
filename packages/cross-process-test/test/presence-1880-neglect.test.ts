@@ -12,6 +12,7 @@ const GRACE_MONTHS = 12;
 interface Run {
   readonly shortfallEvents: number;
   readonly lossMonthsByNation: ReadonlyMap<string, readonly number[]>;
+  readonly unrestByNation: ReadonlyMap<string, number | undefined>;
 }
 
 function postUkDreadnought(snapshot: CampaignSnapshot): CampaignSnapshot {
@@ -60,7 +61,10 @@ function runPassive(post: boolean): Run {
     }
     snapshot = { ...result.finalSnapshot, turnNumber: SafeInt(Number(snapshot.turnNumber) + 1) };
   }
-  return { shortfallEvents, lossMonthsByNation };
+  const unrestByNation = new Map(
+    [...snapshot.nations].map(([id, nation]) => [id, nation.unrest] as const),
+  );
+  return { shortfallEvents, lossMonthsByNation, unrestByNation };
 }
 
 describe("1880 presence prestige charge bites on neglect, not on the opening (#838, decision request 0060)", () => {
@@ -94,5 +98,22 @@ describe("1880 presence prestige charge bites on neglect, not on the opening (#8
   it("charges the same nation nothing once its surplus ship is posted to a station", () => {
     const posted = runPassive(true);
     expect(posted.lossMonthsByNation.size).toBe(0);
+    expect([...posted.unrestByNation.values()].filter((unrest) => unrest !== undefined)).toEqual(
+      [],
+    );
+  });
+
+  it("ships the PROVISIONAL unrest nudge of 1 a charged month (#826)", () => {
+    const { bundle } = compileProductionCampaign();
+    expect(presenceFromRulesets(bundle.rulesets)?.shortfallUnrest).toEqual({
+      unrestPerShortMonth: 1,
+    });
+  });
+
+  it("raises unrest only for the charged nation, until the meter's ceiling of 10", () => {
+    const passive = runPassive(false);
+    const raised = [...passive.unrestByNation].filter(([, unrest]) => unrest !== undefined);
+    expect(passive.lossMonthsByNation.get("uk")).toHaveLength(12);
+    expect(raised).toEqual([["uk", 10]]);
   });
 });

@@ -349,6 +349,8 @@ export default list(RulesetManifestSchema, [
         openingGraceMonths: 12,
         surplusShipsOnly: true,
       },
+      // #826 (PROVISIONAL): each month that charges the shortfall above also raises the national unrest meter (0-10), under the same grace, surplus-ship and blockade gates. Manual p.46 says a shortfall "might even lead to revolts"; no magnitude is sourced.
+      shortfallUnrest: { unrestPerShortMonth: 1 },
       baseLimits: {
         limitByBaseLevel: [2, 4, 6, 8, 10, 12, 14, 16, 18, 20],
         noBaseLimit: 2,

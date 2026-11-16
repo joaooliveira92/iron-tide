@@ -176,7 +176,6 @@ describe("buildStatusStrip", () => {
     expect(deferredNation).toEqual([
       "fleet-morale",
       "dock-size",
-      "unrest",
       "build-requirement",
       "treaty-limits",
     ]);

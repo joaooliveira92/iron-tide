@@ -16,6 +16,11 @@ test("an idle ship left off a short station costs prestige after the opening and
       page.getByText(/Last change: -\d+ \(stations left without enough ships, \d{4}-\d{2}\)\./),
     ).toBeVisible();
   });
+
+  await test.step("reachable:presence-revolt-pressure", async () => {
+    const strip = await expandStatusStrip(page);
+    await expect(strip.locator('[data-row="unrest"]')).toContainText(/[1-9] \/ 10/);
+  });
 });
 
 test("a queued sailing order that would leave a station short warns before the month ends", async ({

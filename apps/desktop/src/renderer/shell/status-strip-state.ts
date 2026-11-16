@@ -480,7 +480,12 @@ export function buildStatusStrip(input: StatusStripInput): StatusStripModel {
       String(economy.shipyardCapacity),
       "Sum of your ports' levels, a stand-in for RTW3 shipyard capacity.",
     ),
-    deferred("unrest", "Unrest level", "There is no domestic-politics model."),
+    real(
+      "unrest",
+      "Unrest level",
+      `${projection.unrest ?? 0} / 10`,
+      "National unrest, 0 to 10. A presence shortfall that costs prestige also raises it, and answers to events move it. No revolt follows yet.",
+    ),
     deferred("build-requirement", "Build requirement", "No required building programme exists."),
     deferred("treaty-limits", "Treaty limits", "Naval treaties are not wired into the campaign."),
   ];
