@@ -38,19 +38,19 @@ const categoryOf = (id: string) => components.find((c) => c.id === id)?.category
 
 describe("content codemod planner (ticket 11c)", () => {
   it("migrates the whole catalogue and every design", () => {
-    expect(planned.manifest.records.parts).toBe(330);
-    expect(planned.manifest.records.designs).toBe(98);
-    expect(planned.manifest.records.placements).toBe(928);
-    expect(planned.manifest.records.gunPlacements).toBe(267);
-    expect(planned.manifest.records.tubePlacements).toBe(39);
-    expect(planned.manifest.records.fittingPlacements).toBe(622);
+    expect(planned.manifest.records.parts).toBe(332);
+    expect(planned.manifest.records.designs).toBe(99);
+    expect(planned.manifest.records.placements).toBe(941);
+    expect(planned.manifest.records.gunPlacements).toBe(269);
+    expect(planned.manifest.records.tubePlacements).toBe(41);
+    expect(planned.manifest.records.fittingPlacements).toBe(631);
     const familyTotal = Object.values(planned.manifest.records.partsByFamily).reduce(
       (a, b) => a + b,
       0,
     );
-    expect(familyTotal).toBe(330);
+    expect(familyTotal).toBe(332);
     expect(planned.manifest.records.partsByFamily.torpedo).toBe(8);
-    expect(planned.designs).toHaveLength(98);
+    expect(planned.designs).toHaveLength(99);
   });
 
   it("generates the eight torpedo parts, including the 1884 Whitehead revision", () => {
@@ -76,7 +76,7 @@ describe("content codemod planner (ticket 11c)", () => {
 
   it("records the three independent data-quality counts, unmixed", () => {
     const dq = planned.manifest.dataQuality;
-    expect(dq.unresolvedArmamentPlacements).toBe(196);
+    expect(dq.unresolvedArmamentPlacements).toBe(198);
     expect(dq.unresolvedMagazineRelationships).toBe(0);
     expect(dq.waivers).toBe(0);
     expect(dq.centralBatteryPlacements).toBe(15);
@@ -231,7 +231,7 @@ describe("content codemod planner (ticket 11c)", () => {
     }
   });
 
-  it("keeps torpedo mountCount equal to the legacy tubes for the 39 tube placements", () => {
+  it("keeps torpedo mountCount equal to the legacy tubes for the 41 tube placements", () => {
     const source = new Map(
       legacySource.designs.flatMap((d) =>
         d.draft.placements.map((p) => [`${d.id}:${p.instanceId}`, p] as const),
@@ -242,7 +242,7 @@ describe("content codemod planner (ticket 11c)", () => {
         .filter((e) => partsById.get(e.part)?.family === "torpedo_launcher")
         .map((e) => ({ designId: d.id, entry: e })),
     );
-    expect(tubes).toHaveLength(39);
+    expect(tubes).toHaveLength(41);
     for (const { designId, entry } of tubes) {
       const placement = source.get(`${designId}:${entry.id}`);
       expect(entry.mountCount).toBe(placement?.params?.["tubes"] ?? 1);
@@ -255,6 +255,6 @@ describe("content codemod planner (ticket 11c)", () => {
         WEAPON_GUN.has(categoryOf(placement.componentId) ?? ""),
       ),
     );
-    expect(gunPlacements.length).toBe(267);
+    expect(gunPlacements.length).toBe(269);
   });
 });

@@ -11977,4 +11977,111 @@ export default collection("parts", PartSchema, [
       weaponCategory: "SECONDARY_GUN",
     },
   },
+  {
+    family: "gun",
+    id: "standard_gun_130mm_50_twin",
+    lifecycle: {
+      availableFrom: "1954-01",
+      availableUntil: null,
+      requires: ["gun_dp_rapid_5in"],
+    },
+    metadata: {
+      displayName: "130 mm/50 M-1954 gun in SM-2-1 twin mount",
+      tags: ["gun", "medium"],
+    },
+    name: "Soviet 130 mm/50 M-1954 gun in SM-2-1 twin mount",
+    origin: {
+      sourceFile: "ship-building/components/guns/soviet.ts",
+    },
+    capabilities: [
+      {
+        kind: "ammunition_feed",
+        maxFeedPermille: 300,
+      },
+      {
+        class: "medium",
+        kind: "fire_control_class",
+      },
+    ],
+    engineering: {
+      maintenance: {
+        monthlyBpOfCost: 20,
+      },
+      physical: {
+        centreOfGravity: {
+          datum: "PART_BASE",
+          zMm: 6000,
+        },
+        envelopeHeightMm: 2200,
+      },
+      power: {
+        consumption: [
+          {
+            basis: "PER_PART_UNIT",
+            id: "power",
+            kind: "powerKw",
+            value: 1,
+          },
+        ],
+      },
+    },
+    entryUnits: {
+      max: 2,
+      min: 2,
+      step: 1,
+    },
+    parameters: {
+      rounds: {
+        max: 600,
+        min: 200,
+        step: 50,
+      },
+    },
+    provenance: {
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      note: "issue #851. 130 mm bore, 53.6 kg HE-Frag shell, about 4,000 kg gun, 13 rounds per minute and the 15.4 kg charge (2,870 bp, DERIVED) are SINGLE-SOURCE (Research discussion #440 section 3); gun cost is 197,000 micro per kg like the other 1950s gun parts, a BALANCE TARGET.",
+      sourceStatus: "BALANCE_TARGET",
+      sources: [
+        {
+          archiveOrUrl: "https://www.navypedia.org/ships/russia/rus_dd_kotlin.htm",
+          section: "Research discussion #440 section 3",
+          title: "navypedia.org Kotlin class destroyers",
+        },
+        {
+          archiveOrUrl: "http://www.navweaps.com/Weapons/WNRussian_5-50_m1946.php",
+          section: "Research discussion #440 section 3",
+          title: "navweaps.com Russian 130 mm/50 (5.1-inch) M1946",
+        },
+      ],
+    },
+    provides: "gun",
+    quantities: [
+      {
+        basis: "PER_PART_UNIT",
+        id: "gun_mass",
+        kind: "massKg",
+        value: 4000,
+      },
+      {
+        basis: "PER_PART_UNIT",
+        id: "gun_cost",
+        kind: "costMicro",
+        value: 788000000,
+      },
+    ],
+    revisions: [],
+    spec: {
+      beamArcDeg: 150,
+      calibreUm: 130000,
+      gunFamily: "gun_130mm_50_twin",
+      gunMassKg: 4000,
+      mechanicalRateOfFireRoundsPerMinuteX100: 1300,
+      propellantChargeBp: 2870,
+      roundVolumeMl: 34500,
+      shellMassG: 53600,
+      supportedMountTypes: ["TURRET"],
+      weaponCategory: "SECONDARY_GUN",
+    },
+  },
 ]);

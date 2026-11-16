@@ -63,5 +63,7 @@ export const TORPEDO_ROWS: readonly (readonly [string, string, string, number, n
   ["starter_dd_usa_1955", "tubes", "tube_21in_above_water", 4, 4],
   ["daring_class_dd_1952", "tubes_a", "tube_21in_above_water", 5, 5],
   ["daring_class_dd_1952", "tubes_b", "tube_21in_above_water", 5, 5],
+  ["kotlin_class_dd_1954", "tubes_a", "tube_21in_above_water", 5, 5],
+  ["kotlin_class_dd_1954", "tubes_b", "tube_21in_above_water", 5, 5],
   ["tb2_1879", "tubes", "tube_14in_above_water", 1, 1],
 ];
