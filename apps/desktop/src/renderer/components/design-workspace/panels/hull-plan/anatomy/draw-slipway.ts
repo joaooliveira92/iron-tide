@@ -1,4 +1,4 @@
-import { extrude, iso, lineOf, pathOf, roundedPlan } from "./iso.js";
+import { circle, extrude, iso, lineOf, pathOf, roundedPlan } from "./iso.js";
 import type { Point3, Tone } from "./iso.js";
 import { solid } from "./anatomy-helpers.js";
 import type { PartDraft } from "./anatomy-types.js";
@@ -39,6 +39,20 @@ export function drawSlipway(scene: AnatomyShipScene): void {
     tone: "faint",
   });
   const top = wayBase + 0.075 * D;
+  for (const fx of [0.022 * L, way.w - 0.022 * L]) {
+    for (const fy of [0.022 * L, way.d - 0.022 * L]) {
+      const [px, py] = iso([way.x + fx, way.y + fy, top], P);
+      part.dots.push({ x: px, y: py, r: 0.9, tone: "lo" });
+      part.lines.push({
+        d: lineOf(
+          circle(way.x + fx, way.y + fy, 0.008 * L, 14).map(([x, y]) => [x, y, top] as Point3),
+          P,
+          true,
+        ),
+        tone: "faint",
+      });
+    }
+  }
   part.inks.push({
     d: lineOf(
       ring(0.92, () => top).map(([x, y, z]): Point3 => [x + 0.012 * L, y - near * 0.05 * B, z]),
@@ -47,32 +61,99 @@ export function drawSlipway(scene: AnatomyShipScene): void {
     ),
     tone: "shadow",
   });
-  for (const t of [0.13, 0.3, 0.5, 0.7, 0.87]) {
-    const bw = 0.052 * L;
-    const bd = 0.15 * B;
-    const bx = t * L;
-    const blockZ = Math.min(keelZ(t) - 0.004 * D, top + 0.11 * D);
+  const railY = 0.3 * B;
+  const sleeperH = 0.014 * D;
+  const railH = 0.012 * D;
+  const railTop = top + sleeperH + railH;
+  const sleeperTs = [0.13, 0.3, 0.5, 0.7, 0.87];
+  for (const t of sleeperTs) {
+    const sw = 0.07 * L;
+    const sleeper = {
+      x: t * L - sw / 2,
+      y: -railY - 0.05 * B,
+      w: sw,
+      d: 2 * railY + 0.1 * B,
+      r: 0.004 * L,
+    };
     part.solids.push(
-      solid(
-        extrude(
-          roundedPlan({ x: bx - bw / 2, y: -bd / 2, w: bw, d: bd, r: 0.008 * L }, 3),
-          top,
-          Math.max(0.01, blockZ - top),
-          P,
-        ),
-        "mid",
-      ),
+      solid(extrude(roundedPlan(sleeper, 3), top, sleeperH, P), "mid", { crease: "faint" }),
+    );
+    for (const side of [-1, 1]) {
+      const [px, py] = iso([t * L, side * (railY + 0.025 * B), top + sleeperH], P);
+      part.dots.push({ x: px, y: py, r: 0.6, tone: "mid" });
+    }
+  }
+  for (const side of [-1, 1]) {
+    const rail = {
+      x: 0.08 * L,
+      y: side * railY - 0.02 * B,
+      w: 0.84 * L,
+      d: 0.04 * B,
+      r: 0.003 * L,
+    };
+    part.solids.push(
+      solid(extrude(roundedPlan(rail, 3), top + sleeperH, railH, P), "hi", { crease: "mid" }),
     );
     part.lines.push({
       d: lineOf(
         [
-          [bx - bw * 0.4, -bd * 0.4, blockZ],
-          [bx + bw * 0.4, bd * 0.4, blockZ],
+          [rail.x + 0.01 * L, side * railY, railTop],
+          [rail.x + rail.w - 0.01 * L, side * railY, railTop],
         ],
         P,
       ),
       tone: "faint",
     });
+  }
+  for (const t of sleeperTs) {
+    const bw = 0.052 * L;
+    const bd = 0.15 * B;
+    const bx = t * L;
+    const capH = 0.012 * D;
+    const blockZ = Math.min(keelZ(t) - 0.004 * D, railTop + 0.11 * D);
+    const blockTop = Math.max(railTop + 0.02, blockZ - capH);
+    part.solids.push(
+      solid(
+        extrude(
+          roundedPlan({ x: bx - bw / 2, y: -bd / 2, w: bw, d: bd, r: 0.008 * L }, 3),
+          railTop,
+          Math.max(0.01, blockTop - railTop),
+          P,
+        ),
+        "mid",
+      ),
+    );
+    const capW = bw * 1.2;
+    const capD = bd * 1.18;
+    part.solids.push(
+      solid(
+        extrude(
+          roundedPlan({ x: bx - capW / 2, y: -capD / 2, w: capW, d: capD, r: 0.006 * L }, 3),
+          blockTop,
+          capH,
+          P,
+        ),
+        "hi",
+        { crease: "faint" },
+      ),
+    );
+    const capTop = blockTop + capH;
+    part.lines.push({
+      d: lineOf(
+        [
+          [bx - capW * 0.36, -capD * 0.3, capTop],
+          [bx + capW * 0.36, capD * 0.3, capTop],
+        ],
+        P,
+      ),
+      tone: "faint",
+    });
+    for (const sx of [-0.36, 0.36]) {
+      for (const sy of [-0.38, 0.38]) {
+        const [px, py] = iso([bx + capW * sx, capD * sy, capTop], P);
+        part.dots.push({ x: px, y: py, r: 0.55, tone: "mid" });
+      }
+    }
   }
   for (const t of [0.32, 0.68]) {
     const sx = t * L;
@@ -84,11 +165,40 @@ export function drawSlipway(scene: AnatomyShipScene): void {
       d: 0.024 * B,
       r: 0.004 * L,
     };
+    const foot = {
+      x: sx - 0.022 * L,
+      y: sy - 0.03 * B,
+      w: 0.044 * L,
+      d: 0.06 * B,
+      r: 0.005 * L,
+    };
     part.solids.push(
-      solid(extrude(roundedPlan(shore, 3), top, Math.max(0.01, 0.48 * D - top), P), "mid"),
+      solid(extrude(roundedPlan(foot, 3), top, 0.012 * D, P), "lo", { crease: "faint" }),
     );
-    const [shoreX, shoreY] = iso([sx, sy, 0.48 * D], P);
-    part.dots.push({ x: shoreX, y: shoreY, r: 0.8, tone: "lo" });
+    part.solids.push(
+      solid(
+        extrude(
+          roundedPlan(shore, 3),
+          top + 0.012 * D,
+          Math.max(0.01, 0.48 * D - top - 0.012 * D),
+          P,
+        ),
+        "mid",
+      ),
+    );
+    const brace: Point3[] = [
+      [sx - 0.018 * L, sy, top + 0.012 * D],
+      [sx, sy, 0.3 * D],
+    ];
+    part.lines.push({ d: lineOf(brace, P), tone: "lo", heavy: true });
+    for (const [bx, by, bz] of [
+      [brace[0]![0], brace[0]![1], brace[0]![2]],
+      [brace[1]![0], brace[1]![1], brace[1]![2]],
+      [sx, sy, 0.48 * D],
+    ] as Point3[]) {
+      const [px, py] = iso([bx, by, bz], P);
+      part.dots.push({ x: px, y: py, r: 0.8, tone: "lo" });
+    }
   }
   const strip = {
     x: 0.06 * L,
