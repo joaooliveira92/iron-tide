@@ -23,6 +23,13 @@ describe("buildAnatomyShip", () => {
     expect(hull.solids.length).toBeGreaterThanOrEqual(4);
   });
 
+  it("builds the slipway as a cradle: sleepers, rails, capped blocks, braced shores and screws", () => {
+    const slipway = ship().parts.find((part) => part.id === "slipway")!;
+    expect(slipway.solids.length).toBeGreaterThanOrEqual(24);
+    expect(slipway.dots.length).toBeGreaterThanOrEqual(40);
+    expect(slipway.lines.length).toBeGreaterThanOrEqual(19);
+  });
+
   it("draws a part and an anchor for every placed fitting, including funnels", () => {
     const plate = ship();
     for (const placement of reference.draft.placements) {

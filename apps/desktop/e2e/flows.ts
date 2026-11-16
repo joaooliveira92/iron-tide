@@ -19,8 +19,14 @@ export async function reachFleetMethodScreen(
 ): Promise<void> {
   const { nation = "United Kingdom", archetype = "Shipyard Baron" } = opts;
   await click(page, "New Campaign");
-  await page.getByRole("option", { name: nation }).click();
-  await page.getByRole("listbox", { name: "Playable nations" }).press("Enter");
+  const nations = page.getByRole("listbox", { name: "Playable nations" });
+  const chosen = nations.getByRole("option", { name: nation });
+  for (let step = 0; step < 16; step++) {
+    if ((await chosen.getAttribute("aria-selected")) === "true") break;
+    await nations.press("ArrowRight");
+  }
+  await expect(chosen).toHaveAttribute("aria-selected", "true");
+  await nations.press("Enter");
   if (opts.seed !== undefined) await page.getByLabel("Campaign Seed").fill(opts.seed);
   await click(page, "Next: Choose Archetype");
   const deck = page.getByRole("listbox", { name: "Archetype presets" });

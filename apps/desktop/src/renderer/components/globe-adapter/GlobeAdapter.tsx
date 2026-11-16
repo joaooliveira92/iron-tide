@@ -1,17 +1,15 @@
 import { Map as MapLibreMap } from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { MAP_CONTAINER_STYLE } from "../globe-spike/map-container.js";
 import { useLandPlan } from "../globe-spike/use-land-plan.js";
-import type { WorldMapChartProps } from "../world-map/WorldMapChart.js";
 import { MAP_VARIANT_LAYOUT } from "../world-map/map-variant-layout.js";
 import { homeFocusPoint } from "../world-map/campaign-map-join.js";
 import { nationFocusPoint } from "../world-map/useInitialFocusArea.js";
 import { adapterLandMode, type AdapterLandMode } from "./globe-adapter-flag.js";
 import { fitWorldCamera, type AppCameraState, type CameraProjection } from "./camera-contract.js";
 import { GLOBE_ASSET_ROOT } from "./map-style.js";
-import { projectOverlay } from "./overlay-projection.js";
 import { OverlayStore } from "./overlay-store.js";
 import { adapterProjectionFromApp, appProjectionFromAdapter } from "./adapter-layer-state.js";
 import { deriveAdapterModel } from "./adapter-derivations.js";
@@ -24,8 +22,11 @@ import { useLayerSet } from "./use-layer-set.js";
 import { useMapInstance } from "./use-map-instance.js";
 import { fleetIdFromMarker, routeAnnouncement } from "./adapter-interaction.js";
 import { buildEntityRows } from "./entity-rows.js";
+import { useMapActions } from "./use-map-actions.js";
 import { useMapKeyboard } from "./use-map-keyboard.js";
-import { NATURAL_EARTH_HIERARCHY, TileCache, type TileHierarchy } from "./tile-hierarchy.js";
+import { useOverlayProjection } from "./use-overlay-projection.js";
+import { TileCache } from "./tile-cache.js";
+import { NATURAL_EARTH_HIERARCHY, type TileHierarchy } from "./tile-hierarchy.js";
 
 export { GLOBE_ASSET_ROOT };
 export type { GlobeAdapterProps, AdapterDiagnostics } from "./globe-adapter-types.js";
@@ -118,23 +119,7 @@ export function GlobeAdapter({
 
   const entityRows = useMemo(() => buildEntityRows(overlay), [overlay.fleets, overlay.ports]);
 
-  const applyProjection = useCallback(() => {
-    const map = mapRef.current;
-    const store = storeRef.current;
-    if (map === null || store === null || !ready) return;
-    const projected = projectOverlay({
-      overlay,
-      state,
-      route,
-      orders,
-      selectedAreaId: state.selected,
-    });
-    store.replace(projected.features);
-  }, [orders, overlay, ready, route, state]);
-
-  useEffect(() => {
-    applyProjection();
-  }, [applyProjection]);
+  useOverlayProjection({ mapRef, storeRef, ready, overlay, state, route, orders });
 
   useLayerSet({
     mapRef,
@@ -203,17 +188,14 @@ export function GlobeAdapter({
     onRuler,
   });
 
-  const resetView = useCallback(() => {
-    const map = mapRef.current;
-    if (map === null) return;
-    const next = fitWorldCamera(projectionRef.current);
-    map.jumpTo({
-      center: [state.centre, next.centre[1]],
-      zoom: next.zoom,
-      bearing: 0,
-      pitch: 0,
-    });
-  }, [state.centre]);
+  const { resetView, handleSetProjection, recentre } = useMapActions({
+    mapRef,
+    projectionRef,
+    centre: state.centre,
+    setProjection,
+    onSetProjection,
+    onSetCentre,
+  });
 
   const onKeyDown = useMapKeyboard({
     mapRef,
@@ -223,30 +205,6 @@ export function GlobeAdapter({
     setSelectedFleet,
     setLiveMessage,
   });
-
-  const setProjectionMode = useCallback((next: CameraProjection) => {
-    const map = mapRef.current;
-    if (map === null) return;
-    map.setProjection({ type: next });
-    setProjection(next);
-    projectionRef.current = next;
-  }, []);
-
-  const handleSetProjection = useCallback(
-    (next: NonNullable<WorldMapChartProps["state"]["projection"]>) => {
-      onSetProjection(next);
-      setProjectionMode(adapterProjectionFromApp(next));
-    },
-    [onSetProjection, setProjectionMode],
-  );
-
-  const recentre = useCallback(
-    (lon: number, lat: number) => {
-      mapRef.current?.jumpTo({ center: [lon, lat] });
-      onSetCentre(lon);
-    },
-    [onSetCentre],
-  );
 
   const hierarchy: TileHierarchy = NATURAL_EARTH_HIERARCHY;
   const statusLabel = errorText === null ? status : `error ${errorText}`;
