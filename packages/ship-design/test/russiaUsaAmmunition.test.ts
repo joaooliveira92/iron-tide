@@ -1,5 +1,7 @@
 import { describe, it, expect } from "vite-plus/test";
 import { compileDesign, nationHasArmamentContent } from "../src/index.js";
+import { resolvableWeaponFamilies } from "../src/armamentCompile.js";
+import { shipBuildingContent } from "./helpers/earlyContext.js";
 import { armamentAmmunitionFor } from "../src/armamentAmmunition.js";
 import { armamentContent } from "./helpers/armamentContext.js";
 import { components, earlyContext } from "./helpers/earlyContext.js";
@@ -82,6 +84,32 @@ describe("Russian and US per-era ammunition patterns (issue #867, builds on #856
       });
     });
   }
+
+  it.each(NATIONS)(
+    "%s: every domestic or licence-built gun family in service resolves, so the legacy path is not the only way to place it",
+    (nation) => {
+      const unresolved: string[] = [];
+      for (let year = 1880; year <= 1990; year++) {
+        const month = `${String(year)}-01`;
+        const ctx = shipBuildingContent.environmentFor(month, nation).ctx;
+        const resolvable = resolvableWeaponFamilies(ctx, nation);
+        expect(resolvable, `${nation} ${month}`).not.toBeNull();
+        for (const [familyId, entry] of Object.entries(ctx.navalProfile?.componentAccess ?? {})) {
+          if (entry.status !== "DOMESTIC" && entry.status !== "LICENSE_BUILT") continue;
+          const component = ctx.catalogue.find((c) => c.id === familyId);
+          if (
+            component === undefined ||
+            !armamentContent.gunFamilies.some((f) => f.id === familyId) ||
+            component.introduction.fromMonth > month ||
+            !component.requires.every((t) => ctx.unlockedTechs.has(t))
+          )
+            continue;
+          if (!resolvable!.has(familyId)) unresolved.push(`${month} ${familyId}`);
+        }
+      }
+      expect([...new Set(unresolved.map((u) => u.split(" ")[1]))].sort()).toEqual([]);
+    },
+  );
 
   it("carries the navweaps shell masses that agree with the placed components", () => {
     const masses: Readonly<Record<string, number>> = {

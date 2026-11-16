@@ -269,9 +269,16 @@ export default collection("ammunition", AmmunitionPatternSchema, [
     nationId: "russia",
     compatibleGunFamilies: [
       "gun_rml_12in_25ton",
+      "gun_rml_11in_25ton",
       "gun_rml_10in_18ton",
+      "gun_rml_10in_18ton_broadside",
+      "gun_rml_8in_9ton",
       "gun_rml_64pdr_71cwt",
       "gun_nordenfelt_1in",
+      "gun_bl_12in_25",
+      "gun_bl_92in_315",
+      "gun_bl_6in_26",
+      "gun_qf_12pdr",
     ],
     penetrationBiasBp: 6500,
     introductionMonth: "1880-01",
@@ -280,7 +287,7 @@ export default collection("ammunition", AmmunitionPatternSchema, [
       sourceStatus: "ESTIMATE",
       confidence: "LOW",
       kind: "balance_adjustment",
-      note: "issue #867. Promoted unchanged from the Russia profile pattern of the same id (AP, bias 6500). No Russian 1880 shell type or mass is sourced (Research discussion #875 section 2), so no mass or filler is authored.",
+      note: "issue #867. Promoted unchanged from the Russia profile pattern of the same id (AP, bias 6500); the family list is widened to every domestic or licence-built gun family the Russian profile grants, so none falls out of first-class resolution. No Russian 1880 shell type or mass is sourced (Research discussion #875 section 2), so no mass or filler is authored.",
       sources: [
         {
           title: "National naval profile research note — Russia",
@@ -324,7 +331,11 @@ export default collection("ammunition", AmmunitionPatternSchema, [
     shellType: "AP",
     nationId: "usa",
     compatibleGunFamilies: [
+      "gun_rml_16in_80ton",
       "gun_rml_11in_25ton",
+      "gun_rml_10in_18ton",
+      "gun_rml_10in_18ton_broadside",
+      "gun_rml_8in_9ton",
       "gun_rml_7in_7ton",
       "gun_rml_64pdr_71cwt",
       "gun_nordenfelt_1in",
@@ -337,7 +348,7 @@ export default collection("ammunition", AmmunitionPatternSchema, [
       sourceStatus: "ESTIMATE",
       confidence: "LOW",
       kind: "balance_adjustment",
-      note: "issue #867. Promoted unchanged from the United States profile pattern of the same id (AP, bias 5000). navweaps has no 1880 US muzzle-loader page and the XV-inch shell conflicts (330 lb repo, 352 lb Wikipedia), so no mass is authored (Research discussion #875 section 3).",
+      note: "issue #867. Promoted unchanged from the United States profile pattern of the same id (AP, bias 5000); the family list is widened to every domestic gun family the United States profile grants, so none falls out of first-class resolution. navweaps has no 1880 US muzzle-loader page and the XV-inch shell conflicts (330 lb repo, 352 lb Wikipedia), so no mass is authored (Research discussion #875 section 3).",
       sources: [
         {
           title: "National naval profile research note — United States",
