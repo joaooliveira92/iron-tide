@@ -7,7 +7,7 @@ test("an idle ship left off a short station costs prestige after the opening and
 }) => {
   const page = e2e.page;
   await openCampaign(e2e, campaignTemplate);
-  await advanceMonths(page, 4);
+  await advanceMonths(page, 13);
 
   await test.step("reachable:presence-shortfall-prestige", async () => {
     const strip = await expandStatusStrip(page);

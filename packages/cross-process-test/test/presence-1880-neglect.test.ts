@@ -6,7 +6,8 @@ import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { MonthExecutor } from "@bluewave/phase-engine";
 import { compileProductionCampaign } from "../src/production-pack.js";
 
-const MONTHS = 12;
+const MONTHS = 24;
+const GRACE_MONTHS = 12;
 
 interface Run {
   readonly shortfallEvents: number;
@@ -63,12 +64,12 @@ function runPassive(post: boolean): Run {
 }
 
 describe("1880 presence prestige charge bites on neglect, not on the opening (#838, decision request 0060)", () => {
-  it("ships the PROVISIONAL charge with a 3 month opening grace and the surplus-ship rule", () => {
+  it("ships the PROVISIONAL charge with a 12 month opening grace and the surplus-ship rule", () => {
     const { bundle } = compileProductionCampaign();
     expect(presenceFromRulesets(bundle.rulesets)?.shortfallPrestige).toEqual({
       lossBpPerWholeShortfall: 200,
       maxLossBp: 500,
-      openingGraceMonths: 3,
+      openingGraceMonths: GRACE_MONTHS,
       surplusShipsOnly: true,
     });
   });
@@ -76,14 +77,18 @@ describe("1880 presence prestige charge bites on neglect, not on the opening (#8
   it("charges no nation during the opening although every nation starts short", () => {
     const passive = runPassive(false);
     expect(passive.shortfallEvents).toBeGreaterThan(0);
-    const early = [...passive.lossMonthsByNation.values()].flat().filter((month) => month <= 3);
+    const early = [...passive.lossMonthsByNation.values()]
+      .flat()
+      .filter((month) => month <= GRACE_MONTHS);
     expect(early).toEqual([]);
   });
 
   it("then charges only the nation that leaves a surplus ship idle, from the first month after the grace", () => {
     const passive = runPassive(false);
     expect([...passive.lossMonthsByNation.keys()]).toEqual(["uk"]);
-    expect(passive.lossMonthsByNation.get("uk")).toEqual([4, 5, 6, 7, 8, 9, 10, 11, 12]);
+    expect(passive.lossMonthsByNation.get("uk")).toEqual([
+      13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24,
+    ]);
   });
 
   it("charges the same nation nothing once its surplus ship is posted to a station", () => {

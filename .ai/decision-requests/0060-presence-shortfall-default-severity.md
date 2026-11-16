@@ -2,9 +2,35 @@
 
 ## Status
 
-Resolved provisionally by PR #843 (#838): a surplus-ship rule plus a 3 month opening grace replaces the Option E interim, and `rules.presence.shortfallPrestige` is back in the 1880 ruleset (`lossBpPerWholeShortfall` 200, `maxLossBp` 500, `openingGraceMonths` 3, `surplusShipsOnly` true). A nation is charged only for short areas an idle surplus ship could cover (ACTIVE, unposted, ACTIVE at month start, not needed to hold its area, tons at least the shortfall); AI-slot nations are exempt because the AI never posts ships. The grace is counted from the turn number, so no per-nation state and no compat bump. Option C is rejected (fabrication at scale), and Option B stays rejected. All values are PROVISIONAL and owner-revisable. Measured over 60 passive months: only `uk` is charged from month 4 (prestige 20 to 0 by month 24 unless it posts its idle ship), `austria_hungary` once at month 28, AI nations never. Reversal: delete `openingGraceMonths` and `surplusShipsOnly` (or the whole `shortfallPrestige` block) and re-pin the content lock. Superseded history: Option E (PR #837, #833) switched the charge off as the interim.
+Grace lengthened from 3 to 12 months by #860 (see [Severity calibration (#860)](#severity-calibration-860)). Resolved provisionally by PR #843 (#838): a surplus-ship rule plus a 3 month opening grace replaces the Option E interim, and `rules.presence.shortfallPrestige` is back in the 1880 ruleset (`lossBpPerWholeShortfall` 200, `maxLossBp` 500, `openingGraceMonths` 3, `surplusShipsOnly` true). A nation is charged only for short areas an idle surplus ship could cover (ACTIVE, unposted, ACTIVE at month start, not needed to hold its area, tons at least the shortfall); AI-slot nations are exempt because the AI never posts ships. The grace is counted from the turn number, so no per-nation state and no compat bump. Option C is rejected (fabrication at scale), and Option B stays rejected. All values are PROVISIONAL and owner-revisable. Measured over 60 passive months: only `uk` is charged from month 4 (prestige 20 to 0 by month 24 unless it posts its idle ship), `austria_hungary` once at month 28, AI nations never. Reversal: delete `openingGraceMonths` and `surplusShipsOnly` (or the whole `shortfallPrestige` block) and re-pin the content lock. Superseded history: Option E (PR #837, #833) switched the charge off as the interim.
 
 The #576 code is complete and merged (PR #827, #834). #833 measured that no data-only lever clears the opening; see [Calibration finding (#833)](#calibration-finding-833).
+
+## Severity calibration (#860)
+
+Resolved provisionally: `openingGraceMonths` 3 to 12, nothing else. All values stay PROVISIONAL and owner-revisable.
+
+Problem. Under the #843 charge a passive `uk` (the default new-campaign nation) is charged from month 4, reaches prestige 16 (`sackingThreshold`, sack-eligible at 16 or below, manual p.62) at month 7, and is then sacked with 10% a month. Manual p.46 says only that prestige "may suffer"; p.62 gives no presence magnitude and Research #450 rows 17 to 19 are structure only, so repository authority supplies no severity. The chosen bar is a defensible reading of "may suffer": neglect costs prestige steadily, but a player is never sacked for it before one full campaign year, and a player who answers the #573 warnings is never charged.
+
+Research: Discussion #864 (manual pp.46 and 62 quotes and the table below). Measurement (`packages/cross-process-test/src/presence-severity.ts`, test `presence-severity.test.ts`). Production 1880 pack, each of the 10 human-playable nations run as the player, two postures: orders ignored, and the idle surplus ship posted every month.
+
+| nation            | grace 3 first charge / sack-eligible                   | grace 12 first charge / sack-eligible | posts the idle ship        |
+| ----------------- | ------------------------------------------------------ | ------------------------------------- | -------------------------- |
+| `uk`              | month 4 / month 7 (sacked month 7 in the sampled seed) | month 13 / month 16                   | never charged in 40 months |
+| `austria_hungary` | month 28 / month 31                                    | month 28 / month 31                   | never charged in 40 months |
+| the other 8       | never charged in 40 months                             | never charged in 40 months            | never charged              |
+
+Alternatives measured and rejected:
+
+- Lower `maxLossBp` (100) or `lossBpPerWholeShortfall` (10): every row identical to the baseline. `ceilDivBasisPoints` makes any loss from 1 to 500 bp equal to 1 prestige at prestige 20 or below, and the monthly loss per nation is already 1, so a per-nation monthly cap is also inert. Only removing the block changes it.
+- Protect the first N months of sack eligibility: changes `isSackingEligible` for every prestige cause (`UNPAID_FUNDS`, `BATTLE_LOST`) and adds a field to the prestige value set. Wider than presence; rejected.
+- Grace 9: the minimum that keeps `uk` ineligible through month 12 (eligible month 13), with no margin against other prestige losses. Grace 12 gives one whole year plus 4 charged months, leaving prestige 20 at month 12 and sack-eligibility at month 16.
+
+Why the earlier "a calendar grace only delays a permanent shortfall" no longer holds: under the surplus-ship rule the shortfall is curable by posting the idle ship, so the grace is the window to react to the #573 warnings, not a deferral of an unavoidable tax.
+
+Sustained neglect still bites: a passive `uk` loses 1 prestige a month from month 13 and is sack-eligible from month 16, expected sacked about 10 months after that. The sack roll is one seeded draw; the sampled seed sacks `uk` at month 19.
+
+Compatibility: ruleset value only. The grace is read from the turn number, so no per-nation state, no compat bump, no schema change. Content lock `bodyHash` moves `99d880ff...802e` to `69115027...caf3`; reverting `openingGraceMonths` to 3 reproduces the old hash exactly, so the only cause is this value. Reversal: set `openingGraceMonths` back and re-pin the content lock.
 
 ## Trigger
 
