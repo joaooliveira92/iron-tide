@@ -96,10 +96,8 @@ describe("GlobeAdapter rendered structure", () => {
   });
   afterEach(cleanup);
 
-  it("reports a forced failure when the demo failure hash is active, without any prop", async () => {
-    window.location.hash = "#globe-adapter-demo-fail";
-    const onUnavailable = vi.fn();
-    render(
+  function renderAdapter(onUnavailable: () => void, forceFailure?: boolean) {
+    return render(
       <GlobeAdapter
         state={{ ...initialMapPrototypeState, projection: "equirectangular" }}
         route={null}
@@ -110,9 +108,32 @@ describe("GlobeAdapter rendered structure", () => {
         onSetProjection={() => undefined}
         onSetCentre={() => undefined}
         onUnavailable={onUnavailable}
+        {...(forceFailure === undefined ? {} : { forceFailure })}
       />,
     );
+  }
+
+  it("reports a forced failure when the forceFailure prop is set", async () => {
+    const onUnavailable = vi.fn();
+    renderAdapter(onUnavailable, true);
     await waitFor(() => expect(onUnavailable).toHaveBeenCalledWith("forced adapter failure"));
+    expect(fake.instance).toBeNull();
+  });
+
+  it("reports a forced failure when the adapter failure hash is active", async () => {
+    window.location.hash = "#globe-adapter-fail";
+    const onUnavailable = vi.fn();
+    renderAdapter(onUnavailable);
+    await waitFor(() => expect(onUnavailable).toHaveBeenCalledWith("forced adapter failure"));
+    window.location.hash = "";
+  });
+
+  it("does not fail on the demo failure hash alone, which only the demo host acts on", async () => {
+    window.location.hash = "#globe-adapter-demo-fail";
+    const onUnavailable = vi.fn();
+    renderAdapter(onUnavailable);
+    await waitFor(() => expect(fake.instance).not.toBeNull());
+    expect(onUnavailable).not.toHaveBeenCalled();
     window.location.hash = "";
   });
 

@@ -1,7 +1,6 @@
 import { describe, expect, it } from "vite-plus/test";
 
 import {
-  GLOBE_ADAPTER_DEMO_FAIL_HASH,
   GLOBE_ADAPTER_ENABLED,
   GLOBE_ADAPTER_FAIL_HASH,
   GLOBE_ADAPTER_HASH,
@@ -34,8 +33,8 @@ describe("globe adapter flag", () => {
     expect(adapterFailureRequested(GLOBE_ADAPTER_HASH)).toBe(false);
   });
 
-  it("treats the demo failure hash as a requested failure", () => {
-    expect(adapterFailureRequested(GLOBE_ADAPTER_DEMO_FAIL_HASH)).toBe(true);
+  it("leaves the demo failure hash to the demo host, not the overview adapter", () => {
+    expect(adapterFailureRequested("#globe-adapter-demo-fail")).toBe(false);
     expect(adapterFailureRequested("#globe-adapter-demo")).toBe(false);
   });
 });

@@ -10,7 +10,6 @@ import { GLOBE_ASSET_ROOT } from "./map-style.js";
 import { OverlayStore } from "./overlay-store.js";
 import { adapterProjectionFromApp, appProjectionFromAdapter } from "./adapter-layer-state.js";
 import { deriveAdapterModel } from "./adapter-derivations.js";
-import { useAdapterFailureRequested } from "./use-failure-request.js";
 import { useCameraSync } from "./use-camera-sync.js";
 import { useHoverTooltip } from "./use-hover-tooltip.js";
 import { useLayerSet } from "./use-layer-set.js";
@@ -39,6 +38,7 @@ export function GlobeProvider({
   onSetProjection,
   onSetCentre,
   onUnavailable,
+  forceFailure = false,
   landMode,
   variant = "full",
   initialFocusAreaId = null,
@@ -53,7 +53,6 @@ export function GlobeProvider({
   const hash = window.location.hash;
   const mode: AdapterLandMode = landMode ?? adapterLandMode(hash);
   const plan = useLandPlan(mode, GLOBE_ASSET_ROOT);
-  const failureRequested = useAdapterFailureRequested();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const storeRef = useRef<OverlayStore | null>(null);
@@ -177,7 +176,7 @@ export function GlobeProvider({
     mode,
     variant,
     initialCamera,
-    failureRequested,
+    forceFailure,
     onUnavailable,
     onSelect,
     onRuler,

@@ -26,10 +26,8 @@ export function adapterLandMode(hash: string): AdapterLandMode {
   return "baked";
 }
 
-export const GLOBE_ADAPTER_DEMO_FAIL_HASH = "#globe-adapter-demo-fail";
-
 export function adapterFailureRequested(hash: string): boolean {
-  return hash === GLOBE_ADAPTER_FAIL_HASH || hash === GLOBE_ADAPTER_DEMO_FAIL_HASH;
+  return hash === GLOBE_ADAPTER_FAIL_HASH;
 }
 
 export interface RendererPreferenceSources {
