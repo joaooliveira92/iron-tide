@@ -16,7 +16,6 @@ export interface GlobeAdapterProps {
   readonly onSetProjection: WorldMapChartProps["onSetProjection"];
   readonly onSetCentre: WorldMapChartProps["onSetCentre"];
   readonly onUnavailable: (reason: string) => void;
-  readonly forceFailure?: boolean;
   readonly landMode?: AdapterLandMode;
   readonly variant?: MapVariant;
   readonly showMinimap?: boolean;

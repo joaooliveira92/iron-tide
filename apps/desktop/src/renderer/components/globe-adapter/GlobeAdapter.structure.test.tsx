@@ -96,6 +96,26 @@ describe("GlobeAdapter rendered structure", () => {
   });
   afterEach(cleanup);
 
+  it("reports a forced failure when the demo failure hash is active, without any prop", async () => {
+    window.location.hash = "#globe-adapter-demo-fail";
+    const onUnavailable = vi.fn();
+    render(
+      <GlobeAdapter
+        state={{ ...initialMapPrototypeState, projection: "equirectangular" }}
+        route={null}
+        overlay={overlay}
+        onSelect={() => undefined}
+        onRuler={() => undefined}
+        onToggleLayer={() => undefined}
+        onSetProjection={() => undefined}
+        onSetCentre={() => undefined}
+        onUnavailable={onUnavailable}
+      />,
+    );
+    await waitFor(() => expect(onUnavailable).toHaveBeenCalledWith("forced adapter failure"));
+    window.location.hash = "";
+  });
+
   it("keeps the full variant order with the minimap", async () => {
     const view = await mounted("full", {});
     expect(hasMinimap(view.container)).toBe(true);

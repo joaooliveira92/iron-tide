@@ -16,6 +16,7 @@ import { deriveAdapterModel } from "./adapter-derivations.js";
 import { GlobeAdapterChrome } from "./GlobeAdapterChrome.js";
 import { GlobeAdapterStatusStrip } from "./GlobeAdapterStatusStrip.js";
 import { GlobeAdapterScreenReader } from "./GlobeAdapterScreenReader.js";
+import { useAdapterFailureRequested } from "./use-failure-request.js";
 import { useCameraSync } from "./use-camera-sync.js";
 import { useHoverTooltip } from "./use-hover-tooltip.js";
 import { useLayerSet } from "./use-layer-set.js";
@@ -44,7 +45,6 @@ export function GlobeAdapter({
   onSetProjection,
   onSetCentre,
   onUnavailable,
-  forceFailure = false,
   landMode,
   variant = "full",
   showMinimap = true,
@@ -59,6 +59,7 @@ export function GlobeAdapter({
   const hash = window.location.hash;
   const mode: AdapterLandMode = landMode ?? adapterLandMode(hash);
   const plan = useLandPlan(mode, GLOBE_ASSET_ROOT);
+  const failureRequested = useAdapterFailureRequested();
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<MapLibreMap | null>(null);
   const storeRef = useRef<OverlayStore | null>(null);
@@ -182,7 +183,7 @@ export function GlobeAdapter({
     mode,
     variant,
     initialCamera,
-    forceFailure,
+    failureRequested,
     onUnavailable,
     onSelect,
     onRuler,

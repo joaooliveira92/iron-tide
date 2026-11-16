@@ -11,10 +11,10 @@ import {
   type MapPrototypeState,
 } from "../world-map/map-state.js";
 import type { MapOrders } from "../world-map/map-orders.js";
-import { GLOBE_ADAPTER_ENABLED } from "./globe-adapter-flag.js";
+import { GLOBE_ADAPTER_DEMO_FAIL_HASH, GLOBE_ADAPTER_ENABLED } from "./globe-adapter-flag.js";
 
+export { GLOBE_ADAPTER_DEMO_FAIL_HASH };
 export const GLOBE_ADAPTER_DEMO_HASH = "#globe-adapter-demo";
-export const GLOBE_ADAPTER_DEMO_FAIL_HASH = "#globe-adapter-demo-fail";
 export const GLOBE_ADAPTER_DEMO_MISSING_HASH = "#globe-adapter-demo-missing";
 export const GLOBE_ADAPTER_DEMO_CORRUPT_HASH = "#globe-adapter-demo-corrupt";
 
@@ -183,7 +183,6 @@ export function GlobeAdapterHost() {
           onSetCentre={onSetCentre}
           variant="full"
           landMode={demoMode(hash)}
-          forceFailure={hash === GLOBE_ADAPTER_DEMO_FAIL_HASH}
           onUnavailable={onUnavailable}
         />
       </Suspense>

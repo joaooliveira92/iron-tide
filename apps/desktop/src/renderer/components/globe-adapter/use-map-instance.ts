@@ -16,7 +16,7 @@ import {
 } from "./camera-contract.js";
 import { DisposalRegistry } from "./disposal.js";
 import { FLEET_GLYPH_ID, buildFleetGlyph } from "./fleet-glyph.js";
-import { adapterFailureRequested, type AdapterLandMode } from "./globe-adapter-flag.js";
+import type { AdapterLandMode } from "./globe-adapter-flag.js";
 import { attachMapPointer, mapHealth } from "./map-pointer.js";
 import { buildStyle, overlayCollections } from "./map-style.js";
 import { OverlayStore } from "./overlay-store.js";
@@ -83,7 +83,7 @@ export interface MapInstanceInput {
   readonly mode: AdapterLandMode;
   readonly variant: MapVariant;
   readonly initialCamera: AppCameraState;
-  readonly forceFailure: boolean;
+  readonly failureRequested: boolean;
   readonly onUnavailable: (reason: string) => void;
   readonly onSelect: (area: string | null) => void;
   readonly onRuler: (area: string) => void;
@@ -96,7 +96,7 @@ export function useMapInstance({
   mode,
   variant,
   initialCamera,
-  forceFailure,
+  failureRequested,
   onUnavailable,
   onSelect,
   onRuler,
@@ -117,7 +117,7 @@ export function useMapInstance({
       onUnavailable("map container has no renderable size");
       return;
     }
-    if (forceFailure || adapterFailureRequested(window.location.hash)) {
+    if (failureRequested) {
       onUnavailable("forced adapter failure");
       return;
     }
@@ -286,5 +286,5 @@ export function useMapInstance({
     });
 
     return () => disposal.dispose();
-  }, [forceFailure, mode, onRuler, onSelect, onUnavailable, plan]);
+  }, [failureRequested, mode, onRuler, onSelect, onUnavailable, plan]);
 }
