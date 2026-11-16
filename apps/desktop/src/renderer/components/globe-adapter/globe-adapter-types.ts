@@ -18,7 +18,6 @@ export interface GlobeAdapterProps {
   readonly onUnavailable: (reason: string) => void;
   readonly landMode?: AdapterLandMode;
   readonly variant?: MapVariant;
-  readonly showMinimap?: boolean;
   readonly initialFocusAreaId?: string | null;
   readonly initialFocusNationId?: string | null;
   readonly camera?: AppCameraState | null;

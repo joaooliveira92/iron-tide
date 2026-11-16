@@ -1,6 +1,6 @@
 import { cleanup, render, waitFor } from "@testing-library/react";
 import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
-import { GlobeAdapter } from "./GlobeAdapter.js";
+import { GlobeAdapter, GlobeAdapterWithoutMinimap } from "./GlobeAdapter.js";
 import { initialMapPrototypeState } from "../world-map/map-state.js";
 import { EMPTY_LIVE_OVERLAY } from "../world-map/campaign-map-join.js";
 import type { MapVariant } from "../world-map/map-variant-layout.js";
@@ -54,8 +54,9 @@ function outline(root: Element): readonly string[] {
 }
 
 async function mounted(variant: MapVariant, extra: { readonly showMinimap?: boolean }) {
+  const Adapter = extra.showMinimap === false ? GlobeAdapterWithoutMinimap : GlobeAdapter;
   const view = render(
-    <GlobeAdapter
+    <Adapter
       state={{ ...initialMapPrototypeState, projection: "equirectangular" }}
       route={null}
       overlay={overlay}
@@ -66,7 +67,6 @@ async function mounted(variant: MapVariant, extra: { readonly showMinimap?: bool
       onSetCentre={() => undefined}
       onUnavailable={() => undefined}
       variant={variant}
-      {...extra}
     />,
   );
   await waitFor(() => {

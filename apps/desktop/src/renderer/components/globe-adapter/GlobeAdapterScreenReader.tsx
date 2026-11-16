@@ -1,12 +1,6 @@
 import type { AppCameraState } from "./camera-contract.js";
+import type { EntityRow } from "./entity-rows.js";
 import type { TileHierarchy } from "./tile-hierarchy.js";
-
-export interface EntityRow {
-  readonly id: string;
-  readonly name: string;
-  readonly kind: "port" | "fleet";
-  readonly areaId: string;
-}
 
 export interface GlobeAdapterScreenReaderProps {
   readonly liveMessage: string;
