@@ -6,7 +6,7 @@ import type { LayerId, MapPrototypeState, RouteReading } from "../world-map/map-
 import type { ProjectionId } from "../world-map/projection.js";
 import type { AdapterDerivedModel } from "./adapter-derivations.js";
 import type { AppCameraState, CameraProjection } from "./camera-contract.js";
-import type { EntityRow } from "./entity-rows.js";
+import type { EntityRow, EntitySelection } from "./entity-rows.js";
 import type { TileHierarchy } from "./tile-hierarchy.js";
 
 export interface GlobeSelection {
@@ -36,7 +36,7 @@ export interface GlobeActions {
   readonly faceNorth: () => void;
   readonly recentre: (lon: number, lat: number) => void;
   readonly select: (area: string | null) => void;
-  readonly selectEntity: (entity: EntityRow) => void;
+  readonly selectEntity: (entity: EntitySelection) => void;
   readonly toggleLayer: (layer: LayerId) => void;
   readonly setCentre: (centre: number) => void;
   readonly onKeyDown: (event: KeyboardEvent<HTMLDivElement>) => void;

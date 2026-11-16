@@ -22,6 +22,7 @@ const overlay = {
       area: "area_north_sea",
       nation: "united_kingdom",
       anchor: [1, 51] as const,
+      level: 1,
     },
   ],
 };

@@ -12,6 +12,8 @@ export interface EntityRow {
   readonly areaId: string;
 }
 
+export type EntitySelection = Pick<EntityRow, "id" | "name" | "areaId">;
+
 export function buildEntityRows(overlay: Pick<Overlay, "ports" | "fleets">): EntityRow[] {
   const ports = [...overlay.ports].sort(byId).map((port) => ({
     id: `port:${port.id}`,

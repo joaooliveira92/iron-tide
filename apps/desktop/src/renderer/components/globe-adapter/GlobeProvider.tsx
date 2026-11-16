@@ -15,7 +15,7 @@ import { useHoverTooltip } from "./use-hover-tooltip.js";
 import { useLayerSet } from "./use-layer-set.js";
 import { useMapInstance } from "./use-map-instance.js";
 import { fleetIdFromMarker, routeAnnouncement } from "./adapter-interaction.js";
-import { buildEntityRows, type EntityRow } from "./entity-rows.js";
+import { buildEntityRows, type EntitySelection } from "./entity-rows.js";
 import { useMapActions } from "./use-map-actions.js";
 import { useMapKeyboard } from "./use-map-keyboard.js";
 import { useOverlayProjection } from "./use-overlay-projection.js";
@@ -227,7 +227,7 @@ export function GlobeProvider({
         onSelect(area);
         setLiveMessage(area === null ? "Selection cleared" : derived.describeAreaFor(area));
       },
-      selectEntity: (entity: EntityRow) => {
+      selectEntity: (entity: EntitySelection) => {
         const fleetId = fleetIdFromMarker(entity.id);
         if (fleetId !== null) {
           orders?.onSelectFleet(fleetId);

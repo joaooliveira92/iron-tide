@@ -2,7 +2,7 @@ import type { MapVariant } from "../world-map/map-variant-layout.js";
 import { AreaInspector } from "../world-map/AreaInspector.js";
 import type { AreaOwnershipRow } from "../world-map/map-a11y.js";
 import type { AreaSummary } from "../world-map/map-state.js";
-import type { EntityRow } from "./entity-rows.js";
+import type { EntityRow, EntitySelection } from "./entity-rows.js";
 
 export interface GlobeAdapterChromeProps {
   readonly variant: MapVariant;
@@ -11,7 +11,7 @@ export interface GlobeAdapterChromeProps {
   readonly nameFor: (nation: string | null) => string;
   readonly onSelect: (area: string | null) => void;
   readonly entityRows?: readonly EntityRow[];
-  readonly onSelectEntity?: (entity: EntityRow) => void;
+  readonly onSelectEntity?: (entity: EntitySelection) => void;
 }
 
 export function GlobeAdapterChrome({

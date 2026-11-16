@@ -15,7 +15,7 @@ import type { AreaTreeRow } from "../world-map/area-tree.js";
 import type { LayerId, MapPrototypeState } from "../world-map/map-state.js";
 import type { ProjectionId } from "../world-map/projection.js";
 import { GlobeFrameMeter } from "./GlobeAdapterWidgets.js";
-import type { EntityRow } from "./entity-rows.js";
+import type { EntityRow, EntitySelection } from "./entity-rows.js";
 
 export interface GlobeAdapterLayersProps {
   readonly state: MapPrototypeState;
@@ -28,7 +28,7 @@ export interface GlobeAdapterLayersProps {
   readonly onSetCentre: (centre: number) => void;
   readonly onReset: () => void;
   readonly entityRows?: readonly EntityRow[];
-  readonly onSelectEntity?: (entity: EntityRow) => void;
+  readonly onSelectEntity?: (entity: EntitySelection) => void;
   readonly defaultControlsOpen?: boolean;
 }
 

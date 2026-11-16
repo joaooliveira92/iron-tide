@@ -1,7 +1,7 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { Map as MapLibreMap } from "maplibre-gl";
 import type { MutableRefObject } from "react";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vite-plus/test";
+import { afterEach, beforeEach, describe, expect, it, vi, type Mock } from "vite-plus/test";
 import type { MapOrders } from "../world-map/map-orders.js";
 import { useMapKeyboard } from "./use-map-keyboard.js";
 
@@ -40,18 +40,18 @@ function orders(selectedFleetId: string | null, onSelectFleet: (id: string) => v
 }
 
 interface Spies {
-  readonly onSelect: ReturnType<typeof vi.fn>;
-  readonly onResetView: ReturnType<typeof vi.fn>;
-  readonly setSelectedFleet: ReturnType<typeof vi.fn>;
-  readonly setLiveMessage: ReturnType<typeof vi.fn>;
+  readonly onSelect: Mock<(area: string | null) => void>;
+  readonly onResetView: Mock<() => void>;
+  readonly setSelectedFleet: Mock<(fleetId: string | null) => void>;
+  readonly setLiveMessage: Mock<(message: string) => void>;
 }
 
 function mountKeyboard(map: MapLibreMap | null, mapOrders: MapOrders | undefined): Spies {
   const spies: Spies = {
-    onSelect: vi.fn(),
-    onResetView: vi.fn(),
-    setSelectedFleet: vi.fn(),
-    setLiveMessage: vi.fn(),
+    onSelect: vi.fn<(area: string | null) => void>(),
+    onResetView: vi.fn<() => void>(),
+    setSelectedFleet: vi.fn<(fleetId: string | null) => void>(),
+    setLiveMessage: vi.fn<(message: string) => void>(),
   };
   const mapRef: MutableRefObject<MapLibreMap | null> = { current: map };
   function Harness() {
