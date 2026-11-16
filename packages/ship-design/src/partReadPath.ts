@@ -15,7 +15,8 @@ import {
 } from "@bluewave/armament";
 import type { LoadoutEntryData } from "@bluewave/content-schema";
 import { compareCodePoints } from "@bluewave/deterministic";
-import { armamentAmmunitionFor, type AuthoredArmamentContent } from "./armamentContent.js";
+import { armamentAmmunitionFor } from "./armamentAmmunition.js";
+import type { AuthoredArmamentContent } from "./armamentContent.js";
 import type { ComponentDef } from "./component.js";
 import type { PlacementSpec } from "./compileShared.js";
 import {
@@ -310,7 +311,12 @@ export function resolveGunPlacementThroughParts(
         "the legacy compile resolves this placement on the compatibility path.",
     );
   }
-  const ammunition = armamentAmmunitionFor(input.content, input.nationId, input.familyId);
+  const ammunition = armamentAmmunitionFor(
+    input.content,
+    input.nationId,
+    input.familyId,
+    input.month,
+  );
   if (ammunition === null) {
     return unresolvedResult(
       translation,
