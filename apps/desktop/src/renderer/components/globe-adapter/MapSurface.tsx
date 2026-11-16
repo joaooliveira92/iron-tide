@@ -12,8 +12,17 @@ import type { AppCameraState } from "./camera-contract.js";
 import { recordRendererDiagnostic } from "./renderer-diagnostics.js";
 import { detectGraphicsSupport, type GraphicsSupport } from "./webgl-support.js";
 
-const GlobeAdapter = GLOBE_ADAPTER_ENABLED
-  ? lazy(() => import("./GlobeAdapter.js").then((module) => ({ default: module.GlobeAdapter })))
+const GlobeAdapters = GLOBE_ADAPTER_ENABLED
+  ? {
+      withMinimap: lazy(() =>
+        import("./GlobeAdapter.js").then((module) => ({ default: module.GlobeAdapter })),
+      ),
+      withoutMinimap: lazy(() =>
+        import("./GlobeAdapter.js").then((module) => ({
+          default: module.GlobeAdapterWithoutMinimap,
+        })),
+      ),
+    }
   : null;
 
 export type MapSurfaceProps = WorldMapChartProps & {
@@ -74,7 +83,7 @@ export function MapSurface({
     GLOBE_ADAPTER_ENABLED &&
     requested === "globe" &&
     fallbackReason === null &&
-    GlobeAdapter !== null;
+    GlobeAdapters !== null;
   const activeRenderer: OverviewRenderer = adapterActive ? "globe" : "legacy";
 
   useEffect(() => {
@@ -101,6 +110,8 @@ export function MapSurface({
   );
 
   if (adapterActive) {
+    const GlobeAdapter =
+      props.showMinimap === false ? GlobeAdapters.withoutMinimap : GlobeAdapters.withMinimap;
     return (
       <div className={`relative ${props.className ?? ""}`}>
         <Suspense fallback={<div className="h-full w-full animate-pulse bg-muted" />}>
@@ -117,7 +128,6 @@ export function MapSurface({
             onSetCentre={props.onSetCentre}
             onUnavailable={setFailure}
             variant={props.variant}
-            showMinimap={props.showMinimap}
             initialFocusAreaId={props.initialFocusAreaId}
             initialFocusNationId={props.initialFocusNationId}
             camera={camera}

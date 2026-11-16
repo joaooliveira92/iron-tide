@@ -32,6 +32,11 @@ describe("globe adapter flag", () => {
     expect(adapterFailureRequested(GLOBE_ADAPTER_FAIL_HASH)).toBe(true);
     expect(adapterFailureRequested(GLOBE_ADAPTER_HASH)).toBe(false);
   });
+
+  it("leaves the demo failure hash to the demo host, not the overview adapter", () => {
+    expect(adapterFailureRequested("#globe-adapter-demo-fail")).toBe(false);
+    expect(adapterFailureRequested("#globe-adapter-demo")).toBe(false);
+  });
 });
 
 describe("overview renderer preference", () => {

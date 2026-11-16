@@ -1,6 +1,9 @@
 import { cleanup, fireEvent, render, screen, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 import { GlobeAdapterChrome } from "./GlobeAdapterChrome.js";
+import { GlobeAdapterLayers } from "./GlobeAdapterLayers.js";
+import { GlobeAdapterLegend } from "./GlobeAdapterLegend.js";
+import { GlobeMinimap } from "./GlobeAdapterWidgets.js";
 import { deriveAdapterModel } from "./adapter-derivations.js";
 import { EMPTY_LIVE_OVERLAY } from "../world-map/campaign-map-join.js";
 import { initialMapPrototypeState } from "../world-map/map-state.js";
@@ -34,9 +37,27 @@ const route: RouteReading = {
   months: 0.1,
 };
 
-function renderChrome(overrides: Partial<React.ComponentProps<typeof GlobeAdapterChrome>> = {}) {
+type PartsProps = React.ComponentProps<typeof GlobeAdapterLayers> &
+  React.ComponentProps<typeof GlobeAdapterChrome> &
+  Omit<React.ComponentProps<typeof GlobeAdapterLegend>, "children"> & {
+    readonly onRecentre: (lon: number, lat: number) => void;
+  };
+
+function Parts(props: PartsProps) {
+  return (
+    <>
+      <GlobeAdapterLayers {...props} />
+      <GlobeAdapterChrome {...props} />
+      <GlobeAdapterLegend {...props}>
+        <GlobeMinimap viewport={props.viewport} onRecentre={props.onRecentre} />
+      </GlobeAdapterLegend>
+    </>
+  );
+}
+
+function renderChrome(overrides: Partial<PartsProps> = {}) {
   const model = deriveAdapterModel(overlay(), "area_north_sea");
-  const props: React.ComponentProps<typeof GlobeAdapterChrome> = {
+  const props: PartsProps = {
     state: initialMapPrototypeState,
     route: null,
     viewport: { centre: [0, 30], zoom: 2, bearing: 0, pitch: 0 },
@@ -53,7 +74,7 @@ function renderChrome(overrides: Partial<React.ComponentProps<typeof GlobeAdapte
     onRecentre: noop,
     ...overrides,
   };
-  return render(<GlobeAdapterChrome {...props} />);
+  return render(<Parts {...props} />);
 }
 
 describe("GlobeAdapterChrome", () => {
@@ -96,7 +117,7 @@ describe("GlobeAdapterChrome", () => {
     const { rerender } = renderChrome();
     expect(screen.queryByText(/Shift-click two areas/)).toBeNull();
     rerender(
-      <GlobeAdapterChrome
+      <Parts
         state={initialMapPrototypeState}
         route={route}
         viewport={{ centre: [0, 30], zoom: 2, bearing: 0, pitch: 0 }}
