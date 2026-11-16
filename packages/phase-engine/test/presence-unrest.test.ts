@@ -2,6 +2,7 @@ import type {
   CampaignSnapshot,
   CompiledDesignVersion,
   NationState,
+  PresenceMeasurementRules,
   Ship,
 } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
@@ -168,7 +169,7 @@ function snapshot(s: Scenario): CampaignSnapshot {
   };
 }
 
-function after(s: Scenario, presence: object = RULES): NationState | undefined {
+function after(s: Scenario, presence: PresenceMeasurementRules = RULES): NationState | undefined {
   const result = new MonthExecutor().execute(
     snapshot(s),
     [],
