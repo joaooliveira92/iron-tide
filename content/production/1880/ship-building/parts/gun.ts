@@ -12084,4 +12084,106 @@ export default collection("parts", PartSchema, [
       weaponCategory: "SECONDARY_GUN",
     },
   },
+  {
+    family: "gun",
+    id: "standard_gun_qf_6in_50_twin",
+    lifecycle: {
+      availableFrom: "1959-01",
+      availableUntil: null,
+      requires: ["gun_auto_loading_turret"],
+    },
+    metadata: {
+      displayName: "6-inch/50 QF Mark N5 gun in Mark XXVI twin turret",
+      tags: ["gun", "medium"],
+    },
+    name: "UK 6-inch/50 QF Mark N5 gun in Mark XXVI twin turret",
+    origin: {
+      sourceFile: "ship-building/components/guns/british-quick-firing.ts",
+    },
+    capabilities: [
+      {
+        kind: "ammunition_feed",
+        maxFeedPermille: 300,
+      },
+      {
+        class: "medium",
+        kind: "fire_control_class",
+      },
+    ],
+    engineering: {
+      maintenance: {
+        monthlyBpOfCost: 20,
+      },
+      physical: {
+        centreOfGravity: {
+          datum: "PART_BASE",
+          zMm: 6500,
+        },
+        envelopeHeightMm: 3200,
+      },
+      power: {
+        consumption: [
+          {
+            basis: "PER_PART_UNIT",
+            id: "power",
+            kind: "powerKw",
+            value: 1,
+          },
+        ],
+      },
+    },
+    entryUnits: {
+      max: 2,
+      min: 2,
+      step: 1,
+    },
+    parameters: {
+      rounds: {
+        max: 1000,
+        min: 200,
+        step: 50,
+      },
+    },
+    provenance: {
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      note: "issue #869. 152 mm bore, 58.9 kg AP shell, 6,960 kg gun, 17 rounds per minute (the page's reliable 15-17 rpm) and the 15.6 kg propellant over the shell (2,649 bp, DERIVED) are SINGLE-SOURCE (navweaps.com, Research discussion #871 section 3); gun cost is 197,000 micro per kg like the other 1950s gun parts, a BALANCE TARGET.",
+      sourceStatus: "BALANCE_TARGET",
+      sources: [
+        {
+          archiveOrUrl: "https://www.navweaps.com/Weapons/WNBR_6-50_mkN5.php",
+          section: "Research discussion #871 section 3",
+          title: "navweaps.com UK 6-inch/50 (15.2 cm) QF Mark N5",
+        },
+      ],
+    },
+    provides: "gun",
+    quantities: [
+      {
+        basis: "PER_PART_UNIT",
+        id: "gun_mass",
+        kind: "massKg",
+        value: 6960,
+      },
+      {
+        basis: "PER_PART_UNIT",
+        id: "gun_cost",
+        kind: "costMicro",
+        value: 1371120000,
+      },
+    ],
+    revisions: [],
+    spec: {
+      beamArcDeg: 150,
+      calibreUm: 152000,
+      gunFamily: "gun_qf_6in_50_twin",
+      gunMassKg: 6960,
+      mechanicalRateOfFireRoundsPerMinuteX100: 1700,
+      propellantChargeBp: 2649,
+      roundVolumeMl: 37250,
+      shellMassG: 58900,
+      supportedMountTypes: ["TURRET"],
+      weaponCategory: "MAIN_GUN",
+    },
+  },
 ]);

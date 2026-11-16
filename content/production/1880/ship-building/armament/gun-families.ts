@@ -839,4 +839,23 @@ export default collection("gunFamilies", GunFamilySchema, [
       ],
     },
   },
+  {
+    id: "gun_qf_6in_50_twin",
+    designation: "UK 6-inch/50 QF Mark N5 gun in Mark XXVI twin turret",
+    category: "MAIN_GUN",
+    defaultMountType: "TURRET",
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      note: "issue #869. Navweaps data of Research discussion #871 section 3; the component carries the derivations.",
+      sources: [
+        {
+          title: "navweaps.com UK 6-inch/50 (15.2 cm) QF Mark N5",
+          archiveOrUrl: "https://www.navweaps.com/Weapons/WNBR_6-50_mkN5.php",
+          section: "Research discussion #871 section 3",
+        },
+      ],
+    },
+  },
 ]);

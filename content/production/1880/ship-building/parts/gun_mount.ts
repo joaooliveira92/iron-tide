@@ -12951,4 +12951,85 @@ export default collection("parts", PartSchema, [
       mountType: "TURRET",
     },
   },
+  {
+    family: "gun_mount",
+    id: "gun_qf_6in_50_twin_turret_x2",
+    lifecycle: {
+      availableFrom: "1959-01",
+      availableUntil: null,
+    },
+    name: "gun_qf_6in_50_twin_turret_x2",
+    origin: {
+      sourceFile: "ship-building/components/guns/british-quick-firing.ts",
+    },
+    provenance: {
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      note: "issue #869. The Mark XXVI twin turret of 156 tons (158.5 t, guns included) is SINGLE-SOURCE (navweaps.com, Research discussion #871 section 3); its split into 72,290 kg per barrel (158,500 = 2 x (6,960 + 72,290)) and no fixed mass, the 11 crew per barrel (the US 6-inch/47 convention; the page states none), and the volume, footprint and cost conventions (3 L and 470 mm2 per kg, 197,368 micro per kg) are BALANCE TARGET.",
+      sourceStatus: "BALANCE_TARGET",
+      sources: [
+        {
+          archiveOrUrl: "https://www.navweaps.com/Weapons/WNBR_6-50_mkN5.php",
+          section: "Research discussion #871 section 3",
+          title: "navweaps.com UK 6-inch/50 (15.2 cm) QF Mark N5",
+        },
+      ],
+    },
+    provides: "gun_mount",
+    quantities: [
+      {
+        basis: "PER_LOADOUT_ENTRY",
+        id: "installation_fixed",
+        kind: "massKg",
+        value: 0,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "installation_per_gun",
+        kind: "massKg",
+        value: 72290,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "mount_cost_per_gun",
+        kind: "costMicro",
+        value: 14268000000,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "crew_per_gun",
+        kind: "crew",
+        value: 11,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "volume_per_gun",
+        kind: "volumeLitre",
+        value: 237750,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "deck_footprint_per_gun",
+        kind: "deckFootprintMm2",
+        value: 37250000,
+      },
+    ],
+    revisions: [],
+    slots: [
+      {
+        accepts: ["gun"],
+        id: "guns",
+        mountCount: {
+          max: 2,
+          min: 2,
+        },
+      },
+    ],
+    spec: {
+      compatibleGunFamilies: ["gun_qf_6in_50_twin"],
+      firingArcDeg: 150,
+      gunsPerMount: 2,
+      mountType: "TURRET",
+    },
+  },
 ]);

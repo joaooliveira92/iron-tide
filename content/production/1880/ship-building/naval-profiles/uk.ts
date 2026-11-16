@@ -22,6 +22,7 @@ export default collection("navalProfiles", NationNavalProfileSchema, [
         "coast_defence_form",
         "pre_dreadnought_form",
         "postwar_destroyer_form",
+        "postwar_light_cruiser_form",
         "merchant_liner_form",
       ],
       domesticPlants: [
