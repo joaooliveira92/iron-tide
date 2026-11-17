@@ -176,11 +176,47 @@ describe("buildStatusStrip", () => {
     const deferredNation = strip.nation.filter((r) => r.deferred).map((r) => r.id);
     expect(deferredNation).toEqual(["dock-size", "build-requirement", "treaty-limits"]);
     const deferredBudget = strip.budget.filter((r) => r.deferred).map((r) => r.id);
-    expect(deferredBudget).toEqual(["naval-aircraft", "extra-training", "intelligence"]);
+    expect(deferredBudget).toEqual(["naval-aircraft", "intelligence"]);
     for (const row of [...strip.nation, ...strip.budget].filter((r) => r.deferred)) {
       expect(row.value).toBe("Not yet modelled");
       expect(row.note.length).toBeGreaterThan(10);
     }
+  });
+
+  it("reads extra training as a live row, none funded when the programme is empty or absent", () => {
+    for (const training of [undefined, { subjects: [], maintenanceAdderBp: 0 }]) {
+      const strip = buildStrip({
+        projection: projection(training === undefined ? {} : { training }),
+        areas,
+        alertsCount: null,
+      });
+      const row = strip.budget.find((r) => r.id === "extra-training");
+      expect(row?.deferred).toBe(false);
+      expect(row?.value).toBe("None funded");
+    }
+  });
+
+  it("names each funded training subject with its progress and the upkeep adder", () => {
+    const strip = buildStrip({
+      projection: projection({
+        training: {
+          subjects: [
+            { subject: "GUNNERY", fundedMonths: 3 },
+            { subject: "NIGHT_FIGHTING", fundedMonths: 0 },
+          ],
+          maintenanceAdderBp: 250,
+        },
+      }),
+      areas,
+      alertsCount: null,
+    });
+    const row = strip.budget.find((r) => r.id === "extra-training");
+    expect(row?.deferred).toBe(false);
+    expect(row?.value).toBe("2 funded, +2.5% upkeep");
+    expect(row?.note).toContain("Gunnery (3 months)");
+    expect(row?.note).toContain("Night fighting (0 months)");
+    expect(row?.note).toContain("Fleet");
+    expect(strip.deferredRows.map((r) => r.id)).not.toContain("extra-training");
   });
 
   it("summarises balance, treasury and alerts for the compact one-liner", () => {
