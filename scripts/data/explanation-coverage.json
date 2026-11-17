@@ -182,6 +182,52 @@
       }
     },
     {
+      "file": "apps/desktop/src/shared/fleet-contract.ts",
+      "type": "FleetExerciseTensionPreview",
+      "area": "fleet",
+      "issue": "#586",
+      "covered": {
+        "explanation": "fleet_exercise_tension"
+      },
+      "exempt": {
+        "minShips": "Content constant (fleetManagement.exercise.tension.minShips); there is no engine calculation to decompose.",
+        "increase": "Content constant (fleetManagement.exercise.tension.increase); there is no engine calculation to decompose.",
+        "ceiling": "Content constant (fleetManagement.exercise.tension.ceiling); there is no engine calculation to decompose."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/fleet-contract.ts",
+      "type": "FleetExerciseTensionRow",
+      "area": "fleet",
+      "issue": "#586",
+      "covered": {},
+      "exempt": {
+        "before": "Current relation tension read from the campaign state; explained by FleetExerciseTensionPreview.explanation.",
+        "after": "Predicted tension; explained by FleetExerciseTensionPreview.explanation."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/reports-contract.ts",
+      "type": "MonthlyReportExerciseTension",
+      "area": "fleet",
+      "issue": "#586",
+      "covered": {},
+      "exempt": {
+        "before": "Event fact recorded by ExerciseTensionRaised; the exercise card carries the explanation tree.",
+        "after": "Event fact recorded by ExerciseTensionRaised; the exercise card carries the explanation tree."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/reports-contract.ts",
+      "type": "MonthlyReportFleetExercise",
+      "area": "fleet",
+      "issue": "#586",
+      "covered": {},
+      "exempt": {
+        "completed.experienceGained": "Event fact recorded by FleetExerciseCompleted; the gain is explained on the exercise card by fleet_exercise_gain."
+      }
+    },
+    {
       "file": "packages/campaign-engine/src/division-screen.ts",
       "type": "DivisionCommanderView",
       "area": "fleet",
