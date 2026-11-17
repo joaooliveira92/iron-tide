@@ -14,10 +14,19 @@ export function orderFleets(
     mapAreaId: fixtureAreaId(fleet.areaId),
     areaName: areaNames.get(fleet.areaId) ?? fleet.areaId,
     shipCount: fleet.shipCount,
+    ships: fleet.ships,
+    enRoute:
+      fleet.destinationAreaId === null
+        ? null
+        : {
+            destinationName: areaNames.get(fleet.destinationAreaId) ?? fleet.destinationAreaId,
+            months: fleet.remainingHops,
+          },
     legalDestinations: fleet.legalDestinations.flatMap((areaId) => {
       const mapAreaId = fixtureAreaId(areaId);
       if (mapAreaId === null) return [];
-      return [{ areaId, mapAreaId, name: areaNames.get(areaId) ?? areaId }];
+      const months = fleet.routeHops.find((hop) => hop.areaId === areaId)?.hops ?? 1;
+      return [{ areaId, mapAreaId, name: areaNames.get(areaId) ?? areaId, months }];
     }),
     blockedReason: fleet.blockedReason,
   }));

@@ -26,7 +26,14 @@ const strategic: StrategicMapView = {
       fleetName: "Home Fleet",
       areaId: "sea_north_sea",
       shipCount: 12,
+      ships: [
+        { id: "s1", name: "HMS One" },
+        { id: "s2", name: "HMS Two" },
+      ],
       legalDestinations: ["sea_english_channel"],
+      routeHops: [{ areaId: "sea_english_channel", hops: 2 }],
+      destinationAreaId: "sea_english_channel",
+      remainingHops: 1,
       blockedReason: null,
     },
   ],
@@ -59,11 +66,17 @@ describe("orderFleets", () => {
         mapAreaId: "area_north_sea",
         areaName: "North Sea",
         shipCount: 12,
+        ships: [
+          { id: "s1", name: "HMS One" },
+          { id: "s2", name: "HMS Two" },
+        ],
+        enRoute: { destinationName: "Western Approaches", months: 1 },
         legalDestinations: [
           {
             areaId: "sea_english_channel",
             mapAreaId: "area_western_approaches",
             name: "Western Approaches",
+            months: 2,
           },
         ],
         blockedReason: null,

@@ -13,6 +13,7 @@ const CAMPAIGN_SRC = resolve(
 );
 
 const SOURCE_FILE_BY_TYPE: Readonly<Record<string, string>> = {
+  FleetState: "fleetState.ts",
   PermanentDivision: "division.ts",
   Officer: "officers.ts",
   DeclinedBattleRecord: "declineRecords.ts",

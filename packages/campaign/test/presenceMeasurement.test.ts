@@ -256,3 +256,35 @@ describe("measurePresence", () => {
     expect(measurePresence(snapshot([ship("a")], { possessions: [] }), FIXTURE_RULES)).toEqual([]);
   });
 });
+
+describe("measurePresence for a fleet on a standing route", () => {
+  const sea = (id: string) => ({ id, name: id, type: "sea" as const });
+  const at = (locationAreaId: string, destinationAreaId?: string) => {
+    const base = snapshot([ship("a", { locationAreaId })]);
+    const fleet: FleetState = {
+      id: "f",
+      nationId: "uk",
+      name: "f",
+      ships: [ship("a", { locationAreaId })],
+      locationAreaId,
+      ...(destinationAreaId === undefined ? {} : { destinationAreaId }),
+    };
+    return {
+      ...base,
+      nations: new Map([...base.nations, ["uk", nation("uk", [fleet])]]),
+      world: {
+        ...base.world,
+        areas: [sea("sea-1"), sea("sea-2"), sea("india")],
+        routes: [
+          { id: "r1", from: "sea-1", to: "sea-2", type: "sea" as const, distance: 1 as never },
+          { id: "r2", from: "sea-2", to: "india", type: "sea" as const, distance: 1 as never },
+        ],
+      },
+    };
+  };
+  it("counts moving ships in the next area of the route, not the one they leave", () => {
+    expect(row(at("sea-2", "india")).presentTons).toBe(2000);
+    expect(row(at("sea-1", "india")).presentTons).toBe(0);
+    expect(row(at("india")).presentTons).toBe(2000);
+  });
+});

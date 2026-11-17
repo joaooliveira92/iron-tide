@@ -1,16 +1,73 @@
 import { evaluateShipGates, type GateReasonTag, type ShipGateSubject } from "./eligibility.js";
 import { isSeaArea } from "./seaArea.js";
-import type { CampaignSnapshot, NationState } from "./state.js";
+import { seaRoute } from "./seaRoute.js";
+import type { CampaignSnapshot, NationState, Ship } from "./state.js";
 
-export interface FleetMoveProblem {
-  readonly code:
-    | "INVALID_NATION_ID"
-    | "INVALID_COMMAND_PAYLOAD"
-    | "INVALID_ROUTE"
-    | "SHIP_NOT_OPERATIONAL"
-    | "SHIP_UNAVAILABLE"
-    | "FOREIGN_STATION_ASSIGNED";
-  readonly message: string;
+export function orderedShips(
+  ships: readonly Ship[],
+  shipIds: readonly string[] | undefined,
+): Ship[] {
+  if (shipIds === undefined || shipIds.length === 0) return [...ships];
+  const ids = new Set(shipIds);
+  return ships.filter((s) => ids.has(s.id));
+}
+
+export type FleetMoveProblem =
+  | {
+      readonly _tag: "UnknownNation";
+      readonly code: "INVALID_NATION_ID";
+      readonly nationId: string;
+    }
+  | {
+      readonly _tag: "FleetNotOwned";
+      readonly code: "INVALID_COMMAND_PAYLOAD";
+      readonly nationId: string;
+      readonly fleetId: string;
+    }
+  | {
+      readonly _tag: "ShipNotInFleet";
+      readonly code: "INVALID_COMMAND_PAYLOAD";
+      readonly fleetId: string;
+      readonly shipId: string;
+    }
+  | {
+      readonly _tag: "ForeignStationPosted";
+      readonly code: "FOREIGN_STATION_ASSIGNED";
+      readonly fleetId: string;
+      readonly shipId: string;
+    }
+  | {
+      readonly _tag: "NoCommissionedShip";
+      readonly code: "SHIP_NOT_OPERATIONAL";
+      readonly fleetId: string;
+    }
+  | {
+      readonly _tag: "ShipUnderRebuild";
+      readonly code: "SHIP_UNAVAILABLE";
+      readonly fleetId: string;
+      readonly shipId: string;
+    }
+  | { readonly _tag: "UnknownArea"; readonly code: "INVALID_ROUTE"; readonly areaId: string }
+  | { readonly _tag: "LandArea"; readonly code: "INVALID_ROUTE"; readonly areaId: string }
+  | {
+      readonly _tag: "AlreadyThere";
+      readonly code: "INVALID_ROUTE";
+      readonly fleetId: string;
+      readonly areaId: string;
+    }
+  | {
+      readonly _tag: "NoSeaRoute";
+      readonly code: "INVALID_ROUTE";
+      readonly fromAreaId: string;
+      readonly toAreaId: string;
+    };
+
+export function describeFleetMoveProblem(problem: FleetMoveProblem): string {
+  const { _tag, code: _code, ...fields } = problem;
+  const detail = Object.entries(fields)
+    .map(([key, value]) => `${key}=${String(value)}`)
+    .join(" ");
+  return detail === "" ? _tag : `${_tag} ${detail}`;
 }
 
 export function fleetMoveProblem(
@@ -18,47 +75,45 @@ export function fleetMoveProblem(
   nationId: string,
   fleetId: string,
   toAreaId: string,
+  shipIds?: readonly string[],
 ): FleetMoveProblem | null {
   const nation = snapshot.nations.get(nationId);
-  if (!nation) return { code: "INVALID_NATION_ID", message: `Nation ${nationId} not found` };
+  if (!nation) return { _tag: "UnknownNation", code: "INVALID_NATION_ID", nationId };
   const fleet = nation.fleets.find((f) => f.id === fleetId);
-  if (!fleet)
-    return { code: "INVALID_COMMAND_PAYLOAD", message: `Fleet ${fleetId} is not ${nationId}'s` };
-  const stationed = fleet.ships.find((s) => hasSailGate(s, "AssignmentForbidsUse"));
+  if (!fleet) return { _tag: "FleetNotOwned", code: "INVALID_COMMAND_PAYLOAD", nationId, fleetId };
+  const ordered = orderedShips(fleet.ships, shipIds);
+  const missing = (shipIds ?? []).find((id) => !fleet.ships.some((s) => s.id === id));
+  if (missing !== undefined)
+    return { _tag: "ShipNotInFleet", code: "INVALID_COMMAND_PAYLOAD", fleetId, shipId: missing };
+  const stationed = ordered.find((s) => hasSailGate(s, "AssignmentForbidsUse"));
   if (stationed !== undefined)
     return {
+      _tag: "ForeignStationPosted",
       code: "FOREIGN_STATION_ASSIGNED",
-      message: `${stationed.name} is on foreign station and is routed by the month; clear its assignment before ordering fleet ${fleet.name} to move`,
+      fleetId,
+      shipId: stationed.id,
     };
-  if (
-    !fleet.ships.some((s) => !hasSailGate(s, "UnderConstruction") && !hasSailGate(s, "Unavailable"))
-  )
-    return {
-      code: "SHIP_NOT_OPERATIONAL",
-      message: `Fleet ${fleet.name} has no commissioned ship`,
-    };
-  const unavailable = fleet.ships.find((s) => hasSailGate(s, "Unavailable"));
+  if (!ordered.some((s) => !hasSailGate(s, "UnderConstruction") && !hasSailGate(s, "Unavailable")))
+    return { _tag: "NoCommissionedShip", code: "SHIP_NOT_OPERATIONAL", fleetId };
+  const unavailable = ordered.find((s) => hasSailGate(s, "Unavailable"));
   if (unavailable !== undefined)
     return {
+      _tag: "ShipUnderRebuild",
       code: "SHIP_UNAVAILABLE",
-      message: `${unavailable.name} is under rebuild and cannot sail; fleet ${fleet.name} cannot move with it`,
+      fleetId,
+      shipId: unavailable.id,
     };
   const target = snapshot.world.areas.find((a) => a.id === toAreaId);
-  if (!target) return { code: "INVALID_ROUTE", message: `Unknown destination area ${toAreaId}` };
-  if (!isSeaArea(target))
-    return { code: "INVALID_ROUTE", message: `${target.name} is land; a fleet cannot sail there` };
+  if (!target) return { _tag: "UnknownArea", code: "INVALID_ROUTE", areaId: toAreaId };
+  if (!isSeaArea(target)) return { _tag: "LandArea", code: "INVALID_ROUTE", areaId: toAreaId };
   if (fleet.locationAreaId === toAreaId)
-    return { code: "INVALID_ROUTE", message: `${fleet.name} is already in ${target.name}` };
-  const connected = snapshot.world.routes.some(
-    (r) =>
-      r.type === "sea" &&
-      ((r.from === fleet.locationAreaId && r.to === toAreaId) ||
-        (r.to === fleet.locationAreaId && r.from === toAreaId)),
-  );
-  if (!connected)
+    return { _tag: "AlreadyThere", code: "INVALID_ROUTE", fleetId, areaId: toAreaId };
+  if (seaRoute(snapshot.world, fleet.locationAreaId, toAreaId) === null)
     return {
+      _tag: "NoSeaRoute",
       code: "INVALID_ROUTE",
-      message: `${target.name} is not directly connected to ${fleet.locationAreaId}`,
+      fromAreaId: fleet.locationAreaId,
+      toAreaId,
     };
   return null;
 }

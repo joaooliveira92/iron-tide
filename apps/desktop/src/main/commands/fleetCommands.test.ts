@@ -482,7 +482,7 @@ describe("fleet commands (Effect programs)", () => {
 
     it("rejects an illegal destination with the engine's code and queues nothing", async () => {
       registerProductionSession("mv", resolve(saveRoot, "mv"), "uk");
-      const result = await submit({ toAreaId: "sea_baltic" });
+      const result = await submit({ toAreaId: "sea_nowhere" });
       expect(result).toMatchObject({ outcome: "rejected", reason: "INVALID_ROUTE" });
       expect(await listed()).toEqual([]);
     });

@@ -26,6 +26,7 @@ export interface MovementCommand {
   readonly divisionId: string;
   readonly fromAreaId: string;
   readonly toAreaId: string;
+  readonly shipIds?: readonly string[];
   readonly status: MovementCommandStatus;
   readonly submittedAtRevision: number;
 }

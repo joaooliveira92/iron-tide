@@ -114,6 +114,7 @@ const MoveFleetBody = Schema.Struct({
   nationId: Id,
   fleetId: Id,
   toAreaId: Id,
+  shipIds: Schema.optional(Schema.Array(Id)),
 });
 
 export const ReplayCommandBodySchema = Schema.Union([

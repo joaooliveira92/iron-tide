@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type {
   MapOrderDestination,
   MapOrderFleet,
@@ -20,7 +21,7 @@ export interface MapDispatchProps {
   readonly notice: string | null;
   readonly noticeKind: "status" | "alert";
   readonly onSelectFleet: (fleetId: string) => void;
-  readonly onOrder: (fleetId: string, areaId: string) => void;
+  readonly onOrder: (fleetId: string, areaId: string, shipIds?: readonly string[]) => void;
   readonly onChoose: (areaId: string) => void;
   readonly onCancelChoice: () => void;
   readonly onCancelOrder: (commandId: string) => void;
@@ -30,6 +31,12 @@ function shipCount(count: number): string {
   return count === 1
     ? translate("map.orders.ship")
     : translate("map.orders.ships", { count: String(count) });
+}
+
+function duration(months: number): string {
+  return months === 1
+    ? translate("map.orders.month")
+    : translate("map.orders.months", { count: String(months) });
 }
 
 export function MapDispatch({
@@ -45,10 +52,34 @@ export function MapDispatch({
   onCancelChoice,
   onCancelOrder,
 }: MapDispatchProps) {
+  const [picked, setPicked] = useState<{ fleetId: string; shipIds: readonly string[] }>({
+    fleetId: "",
+    shipIds: [],
+  });
   const pendingOrder =
     selectedFleet === null
       ? undefined
       : pending.find((order) => order.fleetId === selectedFleet.fleetId);
+  const fleetShips = selectedFleet?.ships ?? [];
+  const pickedShips =
+    selectedFleet !== null && picked.fleetId === selectedFleet.fleetId ? picked.shipIds : [];
+  const partialShips =
+    selectedFleet !== null && pickedShips.length > 0 && pickedShips.length < fleetShips.length
+      ? pickedShips
+      : undefined;
+  const toggleShip = (fleetId: string, shipId: string) => {
+    const current = picked.fleetId === fleetId ? picked.shipIds : [];
+    setPicked({
+      fleetId,
+      shipIds: current.includes(shipId)
+        ? current.filter((id) => id !== shipId)
+        : [...current, shipId],
+    });
+  };
+  const pendingMonths =
+    selectedFleet === null || pendingOrder === undefined
+      ? undefined
+      : selectedFleet.legalDestinations.find((d) => d.areaId === pendingOrder.toAreaId)?.months;
 
   return (
     <DispatchSlip
@@ -86,6 +117,17 @@ export function MapDispatch({
                   <span className="block text-sm leading-snug text-admiralty-ink-muted">
                     {translate("map.orders.from", { area: fleet.areaName })}
                   </span>
+                  {fleet.enRoute == null ? null : (
+                    <span
+                      data-testid="map-fleet-en-route"
+                      className="block text-sm leading-snug text-admiralty-accent"
+                    >
+                      {translate("map.orders.enRoute", {
+                        area: fleet.enRoute.destinationName,
+                        duration: duration(fleet.enRoute.months),
+                      })}
+                    </span>
+                  )}
                 </button>
               </li>
             );
@@ -101,7 +143,9 @@ export function MapDispatch({
         <div className="space-y-2 border-t border-admiralty-border pt-3">
           {selectedFleet.blockedReason === null ? null : (
             <p role="status" className="text-sm font-medium text-admiralty-accent">
-              {selectedFleet.blockedReason.message}
+              {translate(`fleet.move.blocked.${selectedFleet.blockedReason.code}`, {
+                fleet: selectedFleet.fleetName,
+              })}
             </p>
           )}
           {choices.length > 0 ? (
@@ -138,13 +182,35 @@ export function MapDispatch({
               {selectedFleet.legalDestinations.map((destination) => (
                 <CourseChip
                   key={destination.areaId}
-                  label={destination.name}
+                  label={translate("map.orders.destination", {
+                    area: destination.name,
+                    duration: duration(destination.months ?? 1),
+                  })}
                   pressed={pendingOrder?.destinationName === destination.name}
-                  onClick={() => onOrder(selectedFleet.fleetId, destination.areaId)}
+                  onClick={() => onOrder(selectedFleet.fleetId, destination.areaId, partialShips)}
                 />
               ))}
             </div>
           )}
+          {fleetShips.length > 1 && choices.length === 0 ? (
+            <fieldset className="m-0 space-y-1 border-0 p-0">
+              <legend className="text-sm font-medium text-admiralty-ink-muted">
+                {translate("map.orders.shipsOnly")}
+              </legend>
+              <div className="flex flex-wrap gap-x-4 gap-y-1">
+                {fleetShips.map((ship) => (
+                  <label key={ship.id} className="flex items-center gap-1.5 text-sm">
+                    <input
+                      type="checkbox"
+                      checked={pickedShips.includes(ship.id)}
+                      onChange={() => toggleShip(selectedFleet.fleetId, ship.id)}
+                    />
+                    {ship.name}
+                  </label>
+                ))}
+              </div>
+            </fieldset>
+          ) : null}
         </div>
       )}
 
@@ -157,7 +223,12 @@ export function MapDispatch({
             </SlipButton>
           }
         >
-          {translate("map.orders.pending", { area: pendingOrder.destinationName })}
+          {pendingMonths === undefined
+            ? translate("map.orders.pending", { area: pendingOrder.destinationName })
+            : translate("map.orders.pendingRoute", {
+                area: pendingOrder.destinationName,
+                duration: duration(pendingMonths),
+              })}
         </SealedLine>
       )}
 

@@ -33,7 +33,12 @@ export function presenceOrderFromCommand(
   switch (body.type) {
     case "MoveFleet":
       return body.nationId === nationId
-        ? { type: "MOVE_FLEET", fleetId: body.fleetId, toAreaId: body.toAreaId }
+        ? {
+            type: "MOVE_FLEET",
+            fleetId: body.fleetId,
+            toAreaId: body.toAreaId,
+            ...(body.shipIds === undefined ? {} : { shipIds: body.shipIds }),
+          }
         : undefined;
     case "SetShipReadiness":
       return body.nationId === nationId

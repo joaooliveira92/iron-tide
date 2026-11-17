@@ -1,7 +1,8 @@
 import { SafeInt } from "@bluewave/contracts";
 import type { BaseLimitRules } from "./baseLimits.js";
 import { stationAreaIds } from "./presence.js";
-import { isShipOperational, type CampaignSnapshot, type Ship } from "./state.js";
+import { nextHopToward, seaAdjacency, type SeaAdjacency } from "./seaRoute.js";
+import { isShipOperational, type CampaignSnapshot, type FleetState, type Ship } from "./state.js";
 
 export interface ShortfallPrestigeRules {
   readonly lossBpPerWholeShortfall: number;
@@ -79,24 +80,35 @@ export function requiredTonsInArea(
 
 const byId = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 
+function presenceAreaOf(fleet: FleetState, ship: Ship, adjacency: SeaAdjacency): string {
+  const destination = fleet.destinationAreaId;
+  if (destination === undefined || ship.locationAreaId !== fleet.locationAreaId) {
+    return ship.locationAreaId;
+  }
+  return nextHopToward(ship.locationAreaId, destination, adjacency) ?? ship.locationAreaId;
+}
+
 export function measurePresence(
   snapshot: Pick<CampaignSnapshot, "nations" | "world" | "designs">,
   rules: PresenceMeasurementRules,
 ): StationPresenceRow[] {
   const rows: StationPresenceRow[] = [];
+  const adjacency = seaAdjacency(snapshot.world);
   const possessions = snapshot.world.possessions ?? [];
   for (const nationId of [...snapshot.nations.keys()].sort(byId)) {
     const nation = snapshot.nations.get(nationId)!;
     const areas = stationAreaIds(possessions, nationId);
     if (areas.length === 0) continue;
-    const ships = nation.fleets
-      .flatMap((fleet) => fleet.ships)
-      .filter((ship) => ship.nationId === nationId && contributesToPresence(ship))
-      .sort((a, b) => byId(a.id, b.id));
+    const placed = nation.fleets
+      .flatMap((fleet) =>
+        fleet.ships.map((ship) => ({ ship, areaId: presenceAreaOf(fleet, ship, adjacency) })),
+      )
+      .filter(({ ship }) => ship.nationId === nationId && contributesToPresence(ship))
+      .sort((a, b) => byId(a.ship.id, b.ship.id));
     for (const areaId of areas) {
       let countedKg = SafeInt.ZERO;
-      for (const ship of ships) {
-        if (ship.locationAreaId !== areaId) continue;
+      for (const { ship, areaId: shipAreaId } of placed) {
+        if (shipAreaId !== areaId) continue;
         const design = snapshot.designs.get(ship.designVersionId);
         if (design === undefined) continue;
         countedKg = SafeInt.add(

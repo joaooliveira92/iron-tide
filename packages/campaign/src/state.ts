@@ -5,6 +5,9 @@ import type { PrestigeLastChange } from "./prestigeLastChange.js";
 import type { CompiledArmamentMount, CompiledTorpedo } from "@bluewave/armament";
 import type { CanonicalEnvelope } from "@bluewave/deterministic";
 import type { BattleAbsence } from "./battleAbsence.js";
+import type { FleetState } from "./fleetState.js";
+
+export type { FleetState };
 import type { BudgetModifier, NationEventHistory } from "./eventState.js";
 import type { FleetExerciseRecord } from "./fleetExercise.js";
 import type { FleetMoraleLastChange } from "./fleetMorale.js";
@@ -53,14 +56,6 @@ export function isShipOperational(
   ship: Pick<Ship, "isUnderConstruction" | "availability">,
 ): boolean {
   return !ship.isUnderConstruction && ship.availability !== "UNAVAILABLE";
-}
-
-export interface FleetState {
-  id: string;
-  nationId: string;
-  name: string;
-  ships: Ship[];
-  locationAreaId: string;
 }
 
 export interface TechnologyProgress {

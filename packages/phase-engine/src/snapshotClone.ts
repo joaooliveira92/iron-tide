@@ -43,6 +43,7 @@ import type {
   TechnologyDefinitionData,
 } from "@bluewave/campaign";
 import type { SafeInt } from "@bluewave/contracts";
+import { fields, FLEET_STATE_FIELDS } from "./cloneFields.js";
 import { PhaseEngineError } from "./errors.js";
 import { cloneBudgetModifiers, cloneEventHistory } from "./eventStateClone.js";
 import { WAR_RECORD_FIELDS, cloneDeclineCounters, clonePeaceOffers } from "./warRecordsClone.js";
@@ -134,14 +135,6 @@ function recordClone<T extends object>(
   return out as T;
 }
 
-function fields<T>() {
-  return <U extends readonly (keyof T)[]>(
-    ...keys: U &
-      (Exclude<keyof T, U[number]> extends never ? unknown : never) &
-      (Exclude<U[number], keyof T> extends never ? unknown : never)
-  ): U => keys;
-}
-
 const F = {
   Ship: fields<Ship>()(
     "id",
@@ -169,7 +162,7 @@ const F = {
     "availability",
     "availabilityProjectId",
   ),
-  FleetState: fields<FleetState>()("id", "nationId", "name", "ships", "locationAreaId"),
+  FleetState: FLEET_STATE_FIELDS,
   TechnologyProgress: fields<TechnologyProgress>()("techId", "investedPoints", "completed"),
   ResearchState: fields<ResearchState>()(
     "nationId",

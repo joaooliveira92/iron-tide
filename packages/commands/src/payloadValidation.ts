@@ -6,7 +6,6 @@ import {
   RESEARCH_BUDGET_MIN,
   canTransitionConstructionProject,
   constructionAccelerationAllowed,
-  fleetMoveProblem,
   isTerminalConstructionProjectStatus,
   isShipOperational,
   monthlyRevenue,
@@ -42,6 +41,7 @@ import {
 import type { BudgetProjectCommand, CommandBody, CommandEnvelope } from "./envelope.js";
 import { validateShipReadinessCommand } from "./readinessCommandValidation.js";
 import { validateFleetExercise } from "./fleetExerciseValidation.js";
+import { validateMoveFleet } from "./moveFleetValidation.js";
 import { validateSpecialTraining } from "./specialTrainingValidation.js";
 import { validateStationAssignment } from "./stationAssignmentValidation.js";
 import type { LifecycleStepResult } from "./types.js";
@@ -60,13 +60,7 @@ export function validatePayloadRules(
   if (envelope.body.type === "SubmitDesign") return validateSubmitDesign(envelope, snapshot);
   if (envelope.body.type === "ReviseProject") return validateReviseProject(envelope, snapshot);
   if (envelope.body.type === "StartRebuild") return validateStartRebuild(envelope, snapshot);
-  if (envelope.body.type === "MoveFleet") {
-    const move = envelope.body;
-    const problem = fleetMoveProblem(snapshot, move.nationId, move.fleetId, move.toAreaId);
-    return problem === null
-      ? { ok: true }
-      : rejectValidation(envelope, snapshot, problem.code, problem.message);
-  }
+  if (envelope.body.type === "MoveFleet") return validateMoveFleet(envelope, snapshot);
   if (envelope.body.type === "DeclareWar") return validateDeclareWar(envelope, snapshot);
   if (envelope.body.type === "AcceptPeace") return validateAcceptPeace(envelope, snapshot);
   if (envelope.body.type === "ProposePeace") return validateProposePeace(envelope, snapshot);

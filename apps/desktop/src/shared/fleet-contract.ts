@@ -124,6 +124,7 @@ export interface SubmitMovementCommandPayload extends CommandEnvelope {
   readonly divisionId: string;
   readonly fromAreaId: string;
   readonly toAreaId: string;
+  readonly shipIds?: readonly string[];
 }
 
 export interface ReplaceMovementCommandPayload extends SubmitMovementCommandPayload {

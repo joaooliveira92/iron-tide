@@ -1,5 +1,6 @@
 import { exerciseProblems } from "./fleetExercise.js";
-import { fleetMoveProblem, relocateFleet } from "./movement.js";
+import { advanceFleetRoute, orderFleetRoute } from "./fleetRoute.js";
+import { fleetMoveProblem } from "./movement.js";
 import {
   isPresenceExempt,
   measurePresence,
@@ -17,7 +18,12 @@ import {
 import type { CampaignSnapshot, NationState, Ship } from "./state.js";
 
 export type PresenceOrder =
-  | { readonly type: "MOVE_FLEET"; readonly fleetId: string; readonly toAreaId: string }
+  | {
+      readonly type: "MOVE_FLEET";
+      readonly fleetId: string;
+      readonly toAreaId: string;
+      readonly shipIds?: readonly string[];
+    }
   | {
       readonly type: "SET_READINESS";
       readonly shipIds: readonly string[];
@@ -82,10 +88,19 @@ export function applyPresenceOrder(
   if (nation === undefined) return snapshot;
   switch (order.type) {
     case "MOVE_FLEET": {
-      if (fleetMoveProblem(snapshot, nationId, order.fleetId, order.toAreaId) !== null) {
+      if (
+        fleetMoveProblem(snapshot, nationId, order.fleetId, order.toAreaId, order.shipIds) !== null
+      ) {
         return snapshot;
       }
-      return relocateFleet(snapshot, nationId, order.fleetId, order.toAreaId);
+      const routed = orderFleetRoute(
+        snapshot,
+        nationId,
+        order.fleetId,
+        order.toAreaId,
+        order.shipIds,
+      );
+      return advanceFleetRoute(routed.snapshot, nationId, routed.routedFleetId);
     }
     case "SET_READINESS": {
       if (readinessCommandProblems(nation, nationId, order.shipIds, order.readiness).length > 0) {

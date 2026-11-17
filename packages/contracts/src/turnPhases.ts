@@ -3,6 +3,7 @@ export const TURN_PHASES = [
   "weather_generation",
   "monthly_revenue",
   "command_collection",
+  "fleet_movement",
   "ai_planning",
   "ai_procurement",
   "appropriation",

@@ -51,6 +51,7 @@ interface MovementRequest {
   readonly transportRequestId: string;
   readonly divisionId: string;
   readonly toAreaId: string;
+  readonly shipIds?: readonly string[];
 }
 
 function queuedMovementCommands(
@@ -70,6 +71,7 @@ function queuedMovementCommands(
       divisionId: body.fleetId,
       fromAreaId: fleet?.locationAreaId ?? "",
       toAreaId: body.toAreaId,
+      ...(body.shipIds === undefined ? {} : { shipIds: body.shipIds }),
       status: "submitted",
       submittedAtRevision: currentRevision(record),
     });
@@ -115,6 +117,7 @@ function submitMovement(
           nationId: sessionRecord.playerSlotId,
           fleetId: request.divisionId,
           toAreaId: request.toAreaId,
+          ...(request.shipIds === undefined ? {} : { shipIds: request.shipIds }),
         },
         discriminator: request.divisionId,
       }),

@@ -116,20 +116,13 @@ const ship = (n: number, designVersionId: string, over: Record<string, unknown> 
   }) as never;
 const withFleet = (base: CampaignSnapshot, ships: unknown[], projects: unknown[] = []) => {
   const nation = base.nations.get(ATTACKER_NATION)!;
-  return {
-    ...base,
-    nations: new Map([
-      ...base.nations,
-      [
-        ATTACKER_NATION,
-        {
-          ...nation,
-          fleets: [{ id: "f", nationId: ATTACKER_NATION, name: "f", ships, locationAreaId: "a-1" }],
-          constructionProjects: projects,
-        },
-      ],
-    ]),
-  } as unknown as CampaignSnapshot;
+  const nations = new Map(base.nations);
+  nations.set(ATTACKER_NATION, {
+    ...nation,
+    fleets: [{ id: "f", nationId: ATTACKER_NATION, name: "f", ships, locationAreaId: "a-1" }],
+    constructionProjects: projects,
+  } as never);
+  return { ...base, nations } as unknown as CampaignSnapshot;
 };
 const amcProject = (n: number, status = "ACTIVE") => ({
   id: `con_amc_${n}`,

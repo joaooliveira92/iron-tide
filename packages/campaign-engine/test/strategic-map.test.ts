@@ -158,7 +158,7 @@ describe("buildStrategicMapView visibility (DR-0037 Option B)", () => {
 });
 
 describe("buildStrategicMapView legal destinations", () => {
-  it("lists the areas one sea hop away that the engine's own rule accepts, in area-id order", () => {
+  it("lists every reachable sea area with its hop count, in area-id order", () => {
     const fleet = makeFleet(
       "fleet_gbr_home",
       "Home Fleet",
@@ -172,13 +172,21 @@ describe("buildStrategicMapView legal destinations", () => {
         fleetName: "Home Fleet",
         areaId: "eng_home_coast",
         shipCount: 1,
-        legalDestinations: ["fra_med_coast", "sea_english_channel"],
+        ships: [{ id: "gbr_dreadnought", name: "HMS Dreadnought" }],
+        legalDestinations: ["fra_med_coast", "sea_english_channel", "sea_north_sea"],
+        routeHops: [
+          { areaId: "fra_med_coast", hops: 1 },
+          { areaId: "sea_english_channel", hops: 1 },
+          { areaId: "sea_north_sea", hops: 2 },
+        ],
+        destinationAreaId: null,
+        remainingHops: 0,
         blockedReason: null,
       },
     ]);
   });
 
-  it("stops at one hop: a two-route journey is not offered", () => {
+  it("offers multi-hop destinations from a mid-route area", () => {
     const fleet = makeFleet(
       "fleet_chn",
       "Channel Squadron",
@@ -186,7 +194,11 @@ describe("buildStrategicMapView legal destinations", () => {
       "sea_english_channel",
     );
     const view = buildStrategicMapView(twoNationSnapshot([fleet], []), "uk");
-    expect(view.playerFleets[0]?.legalDestinations).toEqual(["eng_home_coast", "sea_north_sea"]);
+    expect(view.playerFleets[0]?.legalDestinations).toEqual([
+      "eng_home_coast",
+      "fra_med_coast",
+      "sea_north_sea",
+    ]);
   });
 
   it("reports a healthy fleet with no sea routes as unblocked with no destinations", () => {
@@ -200,7 +212,7 @@ describe("buildStrategicMapView legal destinations", () => {
     expect(view.playerFleets[0]).toMatchObject({ legalDestinations: [], blockedReason: null });
   });
 
-  it("reproduces the engine's FOREIGN_STATION_ASSIGNED code and message verbatim", () => {
+  it("reproduces the engine's FOREIGN_STATION_ASSIGNED code and problem detail verbatim", () => {
     const fleet = makeFleet(
       "fleet_gbr_home",
       "Home Fleet",
@@ -213,8 +225,7 @@ describe("buildStrategicMapView legal destinations", () => {
     const view = buildStrategicMapView(twoNationSnapshot([fleet], []), "uk");
     expect(view.playerFleets[0]?.blockedReason).toEqual({
       code: "FOREIGN_STATION_ASSIGNED",
-      message:
-        "HMS Dreadnought is on foreign station and is routed by the month; clear its assignment before ordering fleet Home Fleet to move",
+      message: "ForeignStationPosted fleetId=fleet_gbr_home shipId=gbr_dreadnought",
     });
     expect(view.playerFleets[0]?.legalDestinations).toEqual([]);
   });
@@ -229,7 +240,7 @@ describe("buildStrategicMapView legal destinations", () => {
     const view = buildStrategicMapView(twoNationSnapshot([fleet], []), "uk");
     expect(view.playerFleets[0]?.blockedReason).toEqual({
       code: "SHIP_NOT_OPERATIONAL",
-      message: "Fleet Home Fleet has no commissioned ship",
+      message: "NoCommissionedShip fleetId=fleet_gbr_home",
     });
   });
 
@@ -246,7 +257,7 @@ describe("buildStrategicMapView legal destinations", () => {
     const view = buildStrategicMapView(twoNationSnapshot([fleet], []), "uk");
     expect(view.playerFleets[0]?.blockedReason).toEqual({
       code: "SHIP_UNAVAILABLE",
-      message: "HMS Rebuild is under rebuild and cannot sail; fleet Home Fleet cannot move with it",
+      message: "ShipUnderRebuild fleetId=fleet_gbr_home shipId=gbr_rebuild",
     });
   });
 });

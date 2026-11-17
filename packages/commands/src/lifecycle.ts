@@ -239,7 +239,12 @@ export class CommandLifecycle {
         type: "success",
         commandId: envelope.commandId,
         snapshotHash,
-        result: { nationId: body.nationId, fleetId: body.fleetId, toAreaId: body.toAreaId },
+        result: {
+          nationId: body.nationId,
+          fleetId: body.fleetId,
+          toAreaId: body.toAreaId,
+          ...(body.shipIds === undefined ? {} : { shipIds: body.shipIds }),
+        },
       };
     if (body.type === "HaltConstruction" || body.type === "ResumeConstruction")
       return {
