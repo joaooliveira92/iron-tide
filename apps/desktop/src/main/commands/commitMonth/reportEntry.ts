@@ -144,16 +144,15 @@ export function fleetExerciseFromEvents(
   let completed: MonthlyReportFleetExercise["completed"];
   const tension: MonthlyReportExerciseTension[] = [];
   for (const { body } of events) {
-    if (body.nationId !== nationId) continue;
-    if (body.kind === "FleetExerciseScheduled") {
+    if (body.kind === "FleetExerciseScheduled" && body.nationId === nationId) {
       scheduled = { month: body.month, shipIds: [...body.shipIds] };
-    } else if (body.kind === "FleetExerciseCompleted") {
+    } else if (body.kind === "FleetExerciseCompleted" && body.nationId === nationId) {
       completed = {
         month: body.month,
         shipIds: [...body.shipIds],
         experienceGained: Number(body.experienceGained),
       };
-    } else if (body.kind === "ExerciseTensionRaised") {
+    } else if (body.kind === "ExerciseTensionRaised" && body.nationId === nationId) {
       tension.push({
         otherNationId: body.otherNationId,
         before: Number(body.before),

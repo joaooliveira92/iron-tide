@@ -161,7 +161,7 @@ describe("fleet exercise commands", () => {
     expect(rows.length).toBeGreaterThan(0);
     for (const row of rows) expect(row.after).toBe(Math.min(TENSION.ceiling, row.before + 1));
     expect(rows.map((row) => row.otherNationId)).toEqual(
-      [...rows.map((row) => row.otherNationId)].sort(),
+      rows.map((row) => row.otherNationId).sort(),
     );
     expect(preview?.explanation.formulaId).toBe("fleet_exercise_tension");
     expect(Number(preview?.explanation.result)).toBe(rows.length);
