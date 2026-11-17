@@ -25,7 +25,7 @@ export function parseArguments(argv) {
     args: argv,
     options: {
       log: { type: "string" },
-      base: { type: "string", default: "dev" },
+      base: { type: "string", default: "origin/dev" },
       "no-pr": { type: "boolean", default: false },
     },
     strict: true,

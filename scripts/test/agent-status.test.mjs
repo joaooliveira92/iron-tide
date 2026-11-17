@@ -46,7 +46,7 @@ const capture = (argv, overrides) => {
 
 void describe("parseArguments", () => {
   void test("defaults and flags", () => {
-    assert.deepEqual(parseArguments([]), { log: null, base: "dev", pr: true });
+    assert.deepEqual(parseArguments([]), { log: null, base: "origin/dev", pr: true });
     assert.deepEqual(parseArguments(["--log", "/tmp/a.log", "--no-pr", "--base", "main"]), {
       log: "/tmp/a.log",
       base: "main",
