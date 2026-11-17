@@ -34,12 +34,12 @@ const gunPlacements = (d: DesignDraft) =>
   d.placements.filter((p) => GUN_CATEGORIES.has(byId.get(p.componentId)?.category ?? ""));
 
 describe("Step 3 armament cut-over: opening reference designs", () => {
-  it("verifies the first-class armament catalogue scale (44/30/36/16)", () => {
+  it("verifies the first-class armament catalogue scale (44/30/36/22)", () => {
     const catalogue = buildArmamentCatalogue(armamentContent);
     expect(catalogue.families).toHaveLength(44);
     expect(catalogue.models).toHaveLength(30);
     expect(catalogue.mounts).toHaveLength(36);
-    expect(catalogue.ammunition).toHaveLength(16);
+    expect(catalogue.ammunition).toHaveLength(22);
   });
 
   it("has 18 opening starters, six per nation, using 43 gun combinations", () => {
