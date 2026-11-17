@@ -178,6 +178,9 @@ function checkAgents(root, failures) {
       if (!new RegExp(`^${field}:\\s*\\S`, "mu").test(text))
         failures.push(`${path} lacks ${field}:`);
     }
+    if (!/^maxTurns:\s*[1-9]\d*\s*$/mu.test(text)) {
+      failures.push(`${path} lacks a positive maxTurns: (caps a runaway subagent)`);
+    }
   }
   const ignore = readText(root, ".gitignore") ?? "";
   for (const line of [".claude/*", "!.claude/settings.json", "!.claude/agents/"]) {

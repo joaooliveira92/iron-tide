@@ -71,6 +71,14 @@ void describe("checkRepo", () => {
     execFileSync("git", ["rm", "-q", "-f", ".claude/agents/runner.md"], { cwd: dir });
     assert.match(checkRepo(dir).join("\n"), /runner\.md must exist and be tracked/u);
   });
+  void test("fails when an agent has no positive maxTurns", () => {
+    const dir = copyTree();
+    mutate(dir, ".claude/agents/search.md", (t) => t.replace(/^maxTurns:.*$/mu, ""));
+    mutate(dir, ".claude/agents/grep.md", (t) => t.replace(/^maxTurns:.*$/mu, "maxTurns: 0"));
+    const text = checkRepo(dir).join("\n");
+    assert.match(text, /search\.md lacks a positive maxTurns/u);
+    assert.match(text, /grep\.md lacks a positive maxTurns/u);
+  });
   void test("fails when .claude is ignored again", () => {
     const dir = copyTree();
     mutate(dir, ".gitignore", (t) => t.replace("!.claude/agents/\n", ""));
