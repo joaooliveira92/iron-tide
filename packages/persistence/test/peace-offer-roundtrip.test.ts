@@ -104,7 +104,7 @@ describe("pending peace offer save/load parity", () => {
     expect(loaded.warnings).toEqual([]);
     expect(loaded.state.rawHash).toBe(saved.rawHash);
     expect("peaceOffers" in loaded.state.snapshot.wars).toBe(false);
-    expect(CURRENT_COMPATIBILITY_VERSION).toBe("5.2.0");
+    expect(CURRENT_COMPATIBILITY_VERSION).toBe("5.3.0");
   });
 
   it("refuses, rather than silently loading, a save whose offers a reader without them would drop (R15)", () => {

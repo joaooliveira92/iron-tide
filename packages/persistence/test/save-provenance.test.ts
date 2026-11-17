@@ -66,8 +66,8 @@ describe("save provenance metadata", () => {
     expect(listing.saves[0]?.campaignSeed).toBe(PROVENANCE.campaignSeed);
   });
 
-  it("lists the seed, ruleset and data-pack version of the released 5.2.0 corpus save", () => {
-    const corpus = join(import.meta.dirname, "fixtures", "save-corpus", "5.2.0");
+  it("lists the seed, ruleset and data-pack version of the released 5.3.0 corpus save", () => {
+    const corpus = join(import.meta.dirname, "fixtures", "save-corpus", "5.3.0");
     const [released] = store.list(corpus);
 
     expect(released?.campaignSeed).toBe(PROVENANCE.campaignSeed);
