@@ -194,8 +194,12 @@ test("dragging a fleet marker onto a legal area queues the same order", async ({
   await useLegacyChart(page);
 
   await dragFleet(page, ["area_western_approaches"]);
+  await panel
+    .getByRole("group", { name: "Choose a destination" })
+    .getByRole("button", { name: "English Channel", exact: true })
+    .click();
 
-  await expect(panel.getByText(/Ordered: sails for/)).toBeVisible();
+  await expect(panel.getByText(/Ordered: sails for English Channel/)).toBeVisible();
 });
 
 test("dropping a fleet on an illegal area queues nothing", async ({ e2e, campaignTemplate }) => {
