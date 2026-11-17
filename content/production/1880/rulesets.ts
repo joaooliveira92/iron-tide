@@ -230,6 +230,14 @@ export default list(RulesetManifestSchema, [
       exercise: {
         maintenanceMultiple: 2,
         maxPerCalendarYear: 1,
+        // PROVISIONAL Bluewave balance target (see the section provenance note): the manual (p.53) says large fleet
+        // exercises can raise tensions and (p.60) puts peacetime tension on a low scale, but gives no numbers. Four or
+        // more exercising ships count as large; each neutral rival's tension rises one step, capped at the drift ceiling.
+        tension: {
+          minShips: 4,
+          increase: 1,
+          ceiling: 5,
+        },
       },
       provenance: {
         sourceStatus: "BALANCE_TARGET",
@@ -240,12 +248,12 @@ export default list(RulesetManifestSchema, [
             title: "Rule the Waves 3 manual",
             author: "Naval War Simulations / Matrix Games",
             year: 2023,
-            page: "51, 53, 55",
+            page: "51, 53, 55, 60",
             section:
-              "Special training takes twelve months, at most two subjects, with maintenance surcharges; an annual fleet exercise costs twice the active maintenance; division experience has a slight impact on crew quality in battle",
+              "Special training takes twelve months, at most two subjects, with maintenance surcharges; an annual fleet exercise costs twice the active maintenance (p.53) and large exercises can raise tensions (pp.53, 60); division experience has a slight impact on crew quality in battle",
           },
         ],
-        note: "ADR-0283. The manual gives the twelve-month proficiency, the limit of two subjects, the training maintenance percentages and the doubled exercise cost; the cohesion and experience rates, the reorganisation penalties and the effect sizes of the unsourced subjects are Bluewave balance targets adopted by the owner's delegation (Research discussion #442). ADR-0303: the manual (p.53) says Japan pays less for training and gives no figure; nationCostMultiplierBp is generic nation-keyed data, bounded to 5000-10000, and the japan entry of 8000 (a fifth off the added maintenance only) is a conservative balance target with LOW confidence.",
+        note: "ADR-0283. The manual gives the twelve-month proficiency, the limit of two subjects, the training maintenance percentages and the doubled exercise cost; the cohesion and experience rates, the reorganisation penalties and the effect sizes of the unsourced subjects are Bluewave balance targets adopted by the owner's delegation (Research discussion #442). ADR-0303: the manual (p.53) says Japan pays less for training and gives no figure; nationCostMultiplierBp is generic nation-keyed data, bounded to 5000-10000, and the japan entry of 8000 (a fifth off the added maintenance only) is a conservative balance target with LOW confidence. Exercise tension (#586): the manual says only that large exercises can raise tensions (pp.53, 60) with no threshold or size, so minShips 4, increase 1 and ceiling 5 (the tension-drift ceiling) are PROVISIONAL Bluewave balance targets with LOW confidence.",
       },
     },
     // The gunnery radar section (#292). The manual (pp.121, 127) grounds fire-control radar, blind fire from level 3, and the
