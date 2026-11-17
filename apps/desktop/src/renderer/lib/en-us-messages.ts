@@ -1,5 +1,5 @@
 import { DOCK_EXPANSION_MESSAGES } from "./dock-expansion-messages.js";
-import { PRESTIGE_REASON_MESSAGES } from "./prestige-reason-messages.js";
+import { STATUS_STRIP_MESSAGES } from "./strip-messages.js";
 
 export const EN_US_MESSAGES = {
   "settings.title": "Options",
@@ -260,7 +260,7 @@ export const EN_US_MESSAGES = {
     "Your standing as Grand Admiral. Defeats, unpaid funds and stations left short of ships lower it, victories raise it; at {threshold} or below you risk dismissal.",
   "shell.prestige.lastChange": "Last change: {delta} ({reason}, {month}).",
   "shell.prestige.riskNote": "At or below {threshold} there is a monthly chance of being sacked.",
-  ...PRESTIGE_REASON_MESSAGES,
+  ...STATUS_STRIP_MESSAGES,
   "shell.career.label": "Career result",
   "shell.career.note":
     "Final score {score} (the prestige you held), ended {month} {year}: {reason}.",

@@ -1,5 +1,6 @@
 import { cn } from "../../../lib/utils.js";
 import type { StatusStripModel, StripRow } from "../../status-strip-state.js";
+import { FleetMoraleCard } from "../cards/FleetMoraleCard.js";
 import { PrestigeCard } from "../cards/PrestigeCard.js";
 import { ShipyardCard } from "../cards/ShipyardCard.js";
 import { StationsCard } from "../cards/StationsCard.js";
@@ -44,6 +45,45 @@ function PrestigeTile({ model }: { readonly model: StatusStripModel }) {
           fraction={prestige.fraction}
           mark={prestige.thresholdFraction}
           fill={prestige.atRisk ? "bg-destructive" : "bg-admiralty-accent"}
+        />
+      </span>
+    </StripCard>
+  );
+}
+
+function FleetMoraleTile({
+  row,
+  model,
+}: {
+  readonly row: StripRow;
+  readonly model: StatusStripModel;
+}) {
+  const { fleetMorale } = model;
+  return (
+    <StripCard
+      row={row}
+      detail={
+        <FleetMoraleCard
+          gauge={fleetMorale}
+          note={row.note}
+          explanation={model.fleetMoraleExplanation}
+        />
+      }
+    >
+      <span className={FIELD_LABEL}>{row.label}</span>
+      <span className="flex items-center gap-2">
+        <span
+          className={cn(
+            "font-display text-base leading-5 font-semibold tabular-nums",
+            fleetMorale.lowered && "text-destructive",
+          )}
+        >
+          {row.value}
+        </span>
+        <StripGlyph
+          variant="meter"
+          fraction={fleetMorale.fraction}
+          fill={fleetMorale.lowered ? "bg-destructive" : "bg-admiralty-accent"}
         />
       </span>
     </StripCard>
@@ -114,6 +154,9 @@ export function NationPanel() {
       <div className="grid grid-cols-2 content-start gap-1">
         <PrestigeTile model={model} />
         {rows.map((row) => {
+          if (row.id === "fleet-morale") {
+            return <FleetMoraleTile key={row.id} row={row} model={model} />;
+          }
           if (row.id === "foreign-stations") {
             return <StationsTile key={row.id} row={row} model={model} />;
           }

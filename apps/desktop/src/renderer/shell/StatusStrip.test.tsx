@@ -25,6 +25,7 @@ const FORMAT = createPresentationFormat({
 function projectionFor(balance: number): PlayerProjection {
   return {
     prestige: { current: 20, sackingThreshold: 16, dismissalRisk: false },
+    fleetMorale: { current: 100, max: 100 },
     campaignIdentity: "campaign_1",
     snapshotHash: "hash_abc",
     revision: 4,
@@ -110,17 +111,25 @@ describe("StatusStripView", () => {
     expect(within(region).getByText("Committed expenses")).toBeTruthy();
   });
 
+  it("shows fleet morale as a modelled NationPanel tile, not a deferred row", async () => {
+    await renderStrip();
+    const region = screen.getByRole("region", { name: "Status strip" });
+    const morale = within(region).getByText("Fleet morale").closest("[data-row]") as HTMLElement;
+    expect(morale.getAttribute("data-deferred")).toBe("false");
+    expect(within(morale).getByText("100 / 100")).toBeTruthy();
+  });
+
   it("keeps the remaining deferred rows in one popover with their reasons", async () => {
     await renderStrip();
     const trigger = screen.getByRole("button", { name: /Not yet modelled \(\d+\)/ });
     expect(trigger.getAttribute("aria-expanded")).toBe("false");
-    expect(screen.queryByText("Fleet morale")).toBeNull();
+    expect(screen.queryByText("Dock size")).toBeNull();
     fireEvent.click(trigger);
     expect(trigger.getAttribute("aria-expanded")).toBe("true");
-    const morale = screen.getByText("Fleet morale").closest("[data-row]") as HTMLElement;
-    expect(morale.getAttribute("data-deferred")).toBe("true");
+    const dock = screen.getByText("Dock size").closest("[data-row]") as HTMLElement;
+    expect(dock.getAttribute("data-deferred")).toBe("true");
     fireEvent.click(trigger);
-    expect(screen.queryByText("Fleet morale")).toBeNull();
+    expect(screen.queryByText("Dock size")).toBeNull();
   });
 
   it("states a deficit in words, not colour alone", async () => {

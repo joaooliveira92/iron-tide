@@ -442,14 +442,14 @@
     {
       "id": "fleet-morale",
       "player_verb": "See fleet morale fall",
-      "status": "dormant-by-decision",
+      "status": "reachable",
       "engine_package": "phase-engine",
       "engine_modules": [],
       "engine_symbols": ["applyFleetMorale"],
-      "main_commands": [],
-      "renderer_screen": null,
-      "evidence_test": null,
-      "decision": "#884"
+      "main_commands": ["resolveTurn"],
+      "renderer_screen": "shell/status-strip/panels/NationPanel.tsx",
+      "evidence_test": "apps/desktop/src/renderer/shell/StatusStrip.test.tsx",
+      "decision": null
     },
     {
       "id": "presence-revolt-pressure",

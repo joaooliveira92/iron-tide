@@ -28,6 +28,7 @@ function projection(overrides: Partial<PlayerProjection> = {}): PlayerProjection
     nationName: "Britain",
     projectedSurplusDeficit: 1200,
     prestige: { current: 20, sackingThreshold: 16, dismissalRisk: false },
+    fleetMorale: { current: 100, max: 100 },
     economy: {
       treasury: 50000,
       monthlyAppropriation: 5000,
@@ -173,12 +174,7 @@ describe("buildStatusStrip", () => {
   it("lists every deferred readout as Not yet modelled with a reason, never a number", () => {
     const strip = buildStrip({ projection: projection(), areas, alertsCount: null });
     const deferredNation = strip.nation.filter((r) => r.deferred).map((r) => r.id);
-    expect(deferredNation).toEqual([
-      "fleet-morale",
-      "dock-size",
-      "build-requirement",
-      "treaty-limits",
-    ]);
+    expect(deferredNation).toEqual(["dock-size", "build-requirement", "treaty-limits"]);
     const deferredBudget = strip.budget.filter((r) => r.deferred).map((r) => r.id);
     expect(deferredBudget).toEqual(["naval-aircraft", "extra-training", "intelligence"]);
     for (const row of [...strip.nation, ...strip.budget].filter((r) => r.deferred)) {
@@ -208,7 +204,45 @@ describe("buildStatusStrip", () => {
     expect(strip.deferredRows.length).toBe(
       [...strip.nation, ...strip.budget].filter((r) => r.deferred).length,
     );
-    expect(strip.deferredRows[0]?.id).toBe("fleet-morale");
+    expect(strip.deferredRows[0]?.id).toBe("dock-size");
+  });
+
+  it("shows a full fleet morale as a modelled row that states it is separate and has no effect yet", () => {
+    const strip = buildStrip({ projection: projection(), areas, alertsCount: 0 });
+    const row = strip.nation.find((r) => r.id === "fleet-morale");
+    expect(row).toMatchObject({ label: "Fleet morale", value: "100 / 100", deferred: false });
+    expect(row?.tone).toBe("normal");
+    expect(row?.note).toContain("separate from unrest and from cohesion");
+    expect(row?.note).toContain("no effect yet");
+    expect(strip.fleetMorale).toEqual({ current: 100, max: 100, fraction: 1, lowered: false });
+    expect(strip.fleetMoraleExplanation).toBeUndefined();
+  });
+
+  it("reports the last fleet morale change with its reasons and flags a lowered meter", () => {
+    const strip = buildStrip({
+      projection: projection({
+        fleetMorale: {
+          current: 87,
+          max: 100,
+          lastChange: {
+            reasonCodes: ["UNPAID_FUNDS", "BLOCKADE_CRAMPED"],
+            before: 100,
+            after: 87,
+            delta: -13,
+            month: "1880-03",
+          },
+        },
+      }),
+      areas,
+      alertsCount: 0,
+    });
+    const row = strip.nation.find((r) => r.id === "fleet-morale");
+    expect(row?.value).toBe("87 / 100");
+    expect(row?.tone).toBe("alert");
+    expect(row?.note).toContain(
+      "Last change: -13 (unpaid funds, blockade on cramped ships, 1880-03).",
+    );
+    expect(strip.fleetMorale).toEqual({ current: 87, max: 100, fraction: 0.87, lowered: true });
   });
 
   it("splits the appropriation into committed lines with their share of it", () => {

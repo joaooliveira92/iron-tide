@@ -12,6 +12,7 @@ import type { CampaignReads } from "./campaign-reads.js";
 
 const projection: PlayerProjection = {
   prestige: { current: 20, sackingThreshold: 16, dismissalRisk: false },
+  fleetMorale: { current: 100, max: 100 },
   campaignIdentity: "campaign_1",
   snapshotHash: "hash_abc",
   revision: 4,
