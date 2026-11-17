@@ -14,7 +14,7 @@ const sail = async (page: Page, destination: string) => {
   const fleet = panel.getByRole("button", { name: /Home Fleet/ });
   if ((await fleet.getAttribute("aria-pressed")) !== "true") await fleet.click();
   await expect(fleet).toHaveAttribute("aria-pressed", "true");
-  await panel.getByRole("button", { name: destination, exact: true }).click();
+  await panel.getByRole("button", { name: new RegExp(`^${destination}( ·|$)`) }).click();
   await expect(panel.getByText(new RegExp(`Ordered: sails for ${destination}`))).toBeVisible();
 };
 
