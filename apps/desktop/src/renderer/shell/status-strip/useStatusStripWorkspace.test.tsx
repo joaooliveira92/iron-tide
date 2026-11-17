@@ -28,6 +28,7 @@ const MODEL: StatusStripModel = {
     thresholdFraction: 0.4,
     atRisk: false,
   },
+  fleetMorale: { current: 100, max: 100, fraction: 1, lowered: false },
   outlook: {
     appropriation: "100 NC",
     steps: [],

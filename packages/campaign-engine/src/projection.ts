@@ -24,8 +24,10 @@ import {
   explainEconomyRunway,
 } from "./economy-explanations.js";
 import { explainPresenceShortfall } from "./fleet-explanations.js";
+import { buildFleetMorale, type PlayerProjectionFleetMorale } from "./fleet-morale-projection.js";
 import { explainPrestigeChange } from "./prestige-explanations.js";
 
+export type { PlayerProjectionFleetMorale } from "./fleet-morale-projection.js";
 export type { EconomyStatus, ResearchUnfundedReason } from "@bluewave/campaign";
 
 function appropriationAdjustments(
@@ -164,6 +166,7 @@ export interface PlayerProjection {
   readonly economy: PlayerProjectionEconomy;
   readonly prestige: PlayerProjectionPrestige;
   readonly unrest?: number;
+  readonly fleetMorale: PlayerProjectionFleetMorale;
   readonly career?: PlayerProjectionCareer;
   readonly fleet: readonly PlayerProjectionFleet[];
   readonly ports: readonly PlayerProjectionPort[];
@@ -331,6 +334,7 @@ export function buildPlayerProjection(
     },
     prestige: buildPrestige(snapshot.prestigeRules.sackingThreshold, nation),
     ...(nation.unrest === undefined ? {} : { unrest: nation.unrest }),
+    fleetMorale: buildFleetMorale(nation),
     ...(snapshot.careerResult === undefined
       ? {}
       : {

@@ -26,6 +26,7 @@ const PROJECTION: PlayerProjection = {
       month: "1880-02",
     },
   },
+  fleetMorale: { current: 100, max: 100 },
   campaignIdentity: "campaign_1",
   snapshotHash: "hash_abc",
   revision: 4,

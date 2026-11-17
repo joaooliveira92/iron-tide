@@ -322,6 +322,8 @@ const F = {
     "traits",
     "eventHistory",
     "unrest",
+    "fleetMorale",
+    "fleetMoraleLastChange",
     "budgetModifiers",
     "treasury",
     "income",
@@ -704,12 +706,10 @@ const cloneForeignContractImpoundment = (
 ): ForeignContractImpoundmentRecord => recordClone(r, F.ForeignContractImpoundmentRecord);
 const cloneNation = (n: NationState): NationState =>
   recordClone(n, F.NationState, {
-    traits: (v) => (v === undefined ? undefined : [...(v as NonNullable<NationState["traits"]>)]),
     eventHistory: (v) => cloneEventHistory(v as NationState["eventHistory"]),
     budgetModifiers: (v) => cloneBudgetModifiers(v as NationState["budgetModifiers"]),
     fleets: (v) => (v as FleetState[]).map(cloneFleet),
     divisions: (v) => (v as PermanentDivision[]).map(cloneDivision),
-    officers: (v) => (v === undefined ? undefined : (v as Officer[]).map((o) => ({ ...o }))),
     research: (v) => cloneResearch(v as ResearchState),
     constructionProjects: (v) => (v as ConstructionProject[]).map(cloneConstructionProject),
     designStudies: (v) =>
