@@ -31,6 +31,17 @@ describe("tactical pacer", () => {
     expect(onStep).toHaveBeenCalledTimes(1);
   });
 
+  it("re-arms after every step even when busy never turns true", async () => {
+    const onStep = vi.fn();
+    renderHook(() => useTacticalPacer({ ...idle, scale: 8, onStep }));
+    for (let step = 1; step <= 4; step += 1) {
+      await act(async () => {
+        vi.advanceTimersByTime(stepIntervalMs(8));
+      });
+      expect(onStep).toHaveBeenCalledTimes(step);
+    }
+  });
+
   it("requests no step while paused, busy or ended", async () => {
     for (const patch of [{ running: false }, { busy: true }, { ended: true }]) {
       const onStep = vi.fn();

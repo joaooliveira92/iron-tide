@@ -198,11 +198,11 @@ function designLoadout(design: Design): { platform: string; entries: LoadoutEntr
 }
 
 describe("fittings and sensors through the read path (ship-part-model 05)", () => {
-  it("covers the 631 non-gun, non-tube placements; with 269 guns and 41 tubes that is all 941", () => {
+  it("covers the 648 non-gun, non-tube placements; with 274 guns and 43 tubes that is all 965", () => {
     const all = designs.flatMap((d) => d.draft.placements);
-    expect(all.length).toBe(941);
-    expect(fittingRows.length).toBe(631);
-    expect(gunPlacements.length + 41 + fittingRows.length).toBe(941);
+    expect(all.length).toBe(965);
+    expect(fittingRows.length).toBe(648);
+    expect(gunPlacements.length + 43 + fittingRows.length).toBe(965);
     expect(fittingModel.unread).toEqual([]);
   });
 
@@ -689,7 +689,7 @@ describe("gun and launcher crew, volume and footprint (ship-part-model 05 over 0
         .filter((p) => categoryOf(p.componentId) === "TORPEDO_TUBE")
         .map((placement) => ({ design, placement })),
     );
-    expect(tubeRows.length).toBe(41);
+    expect(tubeRows.length).toBe(43);
     for (const { design, placement } of tubeRows) {
       const profile = present(
         navalProfiles.find((p) => p.nationId === design.draft.nationId),
@@ -1013,22 +1013,16 @@ describe("armour materials out of the balance tables (ship-part-model 05)", () =
 });
 
 describe("ammunition patterns as parts (ship-part-model 05)", () => {
-  it("reads the seven patterns as national ammunition parts", () => {
+  it("reads the sixteen patterns as national ammunition parts", () => {
     expect(ammunitionModel.unread).toEqual([]);
-    expect(
-      ammunitionModel.records.map((r) => [r.part.id, r.part.nation, r.part.spec.shellType]),
-    ).toEqual([
-      ["de_ap_krupp", "germany", "AP"],
-      ["de_he_common", "germany", "HE"],
-      ["fr_apc", "france", "APC"],
-      ["fr_melinite_he", "france", "MELINITE"],
-      ["uk_ap_palliser", "uk", "AP"],
-      ["uk_cpc", "uk", "CPC"],
-      ["uk_he_45in_45", "uk", "HE"],
-    ]);
-    for (const { part } of ammunitionModel.records) {
+    const read = ammunitionModel.records.map(
+      (r) => `${r.part.id}:${r.part.nation}:${r.part.spec.shellType}`,
+    );
+    expect(read.join(" ")).toBe(
+      "de_ap_krupp:germany:AP de_he_common:germany:HE fr_apc:france:APC fr_melinite_he:france:MELINITE ru_ap_steel:russia:AP ru_he_130mm_50:russia:HE uk_ap_6in_50:uk:AP uk_ap_palliser:uk:AP uk_cpc:uk:CPC uk_he_45in_45:uk:HE us_ap_16in_50:usa:AP us_ap_6in_47:usa:AP us_ap_8in_55:usa:AP us_common_shell:usa:AP us_he_5in_38:usa:HE us_he_5in_54:usa:HE",
+    );
+    for (const { part } of ammunitionModel.records)
       expect(decodeStrict(FlattenedPartSchema, part), part.id).toEqual(part);
-    }
   });
 
   it("each part reads back to exactly the resolver's ammunition pattern", () => {

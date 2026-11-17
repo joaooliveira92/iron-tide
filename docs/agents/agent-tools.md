@@ -1,20 +1,20 @@
 # Agent tools
 
-Three commands shorten the discovery and validation loop. They are deterministic, bounded, and safe to run from any subdirectory of the repository.
-
-Use `agent:map` to find owners and tests before reading, `verify:affected` before committing, and `sprint:show` for the sprint plan.
+Deterministic, bounded commands, safe from any subdirectory. `agent:map` before reading, `verify:affected` before committing.
 
 ## `pnpm agent:map <symbol-or-path>`
 
-Reports the owning workspace, the root and scoped `AGENTS.md`, public exports, the file's exported symbols, definition sites, bounded call sites, candidate tests, validation commands, current change state, and golden guidance. `--json` emits the same report as a stable object; `--limit` bounds lists (default 8). JSON fields: `formatVersion`, `query`, `kind`, `owner`, `path`, `instructions`, `manifest`, `exports`, `fileSymbols`, `definitions`, `references`, `referenceCount`, `tests`, `validation`, `change`, `goldens`.
+Reports the owning workspace, the root and scoped `AGENTS.md`, public exports, the file's exported symbols, definition sites, bounded call sites, candidate tests, validation commands, current change state, and golden guidance. `--json` emits the same report as a stable object; `--limit` bounds lists (default 8).
 
-Exit codes: `0` found, `2` usage, `3` ambiguous (candidates are listed), `4` not found. It never picks one of several definitions.
+Exit codes: `0` found, `2` usage, `3` ambiguous (candidates listed), `4` not found. It replaces a chain of `ls`, `sed`, `rg` and `git log` turns.
 
-Use it before reading a package: it replaces a chain of `ls`, `sed`, `rg` and `git log` turns.
+## `pnpm agent:status [--log <path>] [--base <ref>] [--no-pr]`
+
+One block: branch, head, ahead/behind `dev`, dirty paths, the branch's PR with failed and pending checks, and with `--log` the last 40 lines of a gate log. Read-only; missing data is skipped. Use it instead of separate `git`, `gh` and `tail` turns. The Bash hook denies the fourth consecutive `tail`/`date`/`ps`/`sleep` poll on a log (`pollChainDenyAt`), subagents included.
 
 ## `pnpm verify:affected [--base <ref>] [--dry-run] [--verbose]`
 
-Reads `pnpm change-scope --base <ref>` (default `dev`), maps changed paths to workspaces, adds reverse dependencies, and runs build, typecheck, tests and lint for each affected unit. Shared configuration, unowned paths and goldens widen the plan; docs, scripts and content changes map to their own units. Work is serialised through the `heavy` lock, full logs land in `node_modules/.cache/bluewave-verify/`, and stdout is one line per unit. `--dry-run` prints the plan.
+Reads `pnpm change-scope --base <ref>` (default `dev`), maps changed paths to workspaces, adds reverse dependencies, and runs build, typecheck, tests and lint for each affected unit. Shared configuration, unowned paths and goldens widen the plan. Work is serialised through the `heavy` lock, logs land in `node_modules/.cache/bluewave-verify/`, stdout is one line per unit. `--dry-run` prints the plan.
 
 Exit codes: `0` clean, `1` failure, `2` usage or unknown base, `130` cancelled. It does not replace `pnpm check`.
 

@@ -41,7 +41,7 @@
   "packages/phase-engine/test/foreign-construction.test.ts": { "lines": 1027 },
   "packages/phase-engine/test/integration.test.ts": { "lines": 951 },
   "packages/phase-engine/test/snapshot-clone.test.ts": { "lines": 658 },
-  "packages/ship-design/src/armamentContent.ts": { "lines": 766 },
+  "packages/ship-design/src/armamentContent.ts": { "lines": 734 },
   "packages/ship-design/src/compile/stages.ts": { "lines": 643 },
   "packages/ship-design/src/loadoutResolution.ts": { "lines": 673 },
   "packages/ship-design/src/nationProfile.ts": { "lines": 601 },
@@ -50,5 +50,5 @@
   "packages/ship-design/src/refit.ts": { "lines": 777 },
   "packages/ship-design/test/partFit.test.ts": { "lines": 970 },
   "packages/ship-design/test/partFitProduction.test.ts": { "lines": 630 },
-  "packages/ship-design/test/remainingFamiliesReadPath.test.ts": { "lines": 1110 }
+  "packages/ship-design/test/remainingFamiliesReadPath.test.ts": { "lines": 1104 }
 }

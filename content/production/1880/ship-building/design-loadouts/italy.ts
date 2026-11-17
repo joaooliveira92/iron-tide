@@ -1098,4 +1098,224 @@ export default collection("designs", ReferenceDesignLoadoutSchema, [
     name: "Colonial corvette (starter, KE) — Italy",
     starterFor: "KE",
   },
+  {
+    header: {
+      hull: {
+        beam: 10200,
+        blockCoeffBp: 6600,
+        depthToMainDeck: 7500,
+        designMarginBp: 550,
+        draught: 3500,
+        growthReserveBp: 0,
+        hullFormId: "destroyer_form",
+        lengthWl: 101600,
+        limitDisplacementKg: null,
+        materialId: "mild_steel",
+        structuralSchemeId: "mixed",
+        subdivisionGrade: 2,
+        targetDisplacementKg: 2460000,
+      },
+      machinery: {
+        foulingBp: 0,
+        fuelCapacityKg: 517000,
+        fuelStationPermille: 500,
+        fuelZoneId: "CENTRAL_MACHINERY",
+        rooms: [
+          {
+            shareBp: 4200,
+            stationPermille: 450,
+            zoneId: "CENTRAL_MACHINERY",
+          },
+          {
+            shareBp: 2900,
+            stationPermille: 230,
+            zoneId: "FWD_SERVICE",
+          },
+          {
+            shareBp: 2900,
+            stationPermille: 680,
+            zoneId: "AFT_SERVICE",
+          },
+        ],
+      },
+      nation: "italy",
+      protection: {
+        bunkerProtectionBp: 0,
+        citadelLengthMm: 0,
+        torpedoWarheadKg: 0,
+      },
+      requirement: {
+        accommodationStandard: "SPARTAN",
+        category: "DD",
+        crewQualityBp: 10000,
+        cruiseSpeedMilliKnots: 20000,
+        designThreatId: "qf_6in",
+        modernizationExpectation: "NONE",
+        protectionGoal: "NONE",
+        requiredRangeNm: 2200,
+        requiredSpeedMilliKnots: 34000,
+      },
+    },
+    id: "soldati_class_dd_1942",
+    loadout: {
+      entries: [
+        {
+          entries: {
+            guns: [
+              {
+                mountCount: 2,
+                params: {
+                  rounds: 200,
+                },
+                part: "standard_gun_120mm_50_twin",
+              },
+            ],
+          },
+          id: "gun_a",
+          magazineEntry: "mag_fwd",
+          mountCount: 1,
+          part: "gun_120mm_50_twin_turret_x2",
+          slot: "forecastle.gun_mount",
+          stationPermille: 40,
+        },
+        {
+          entries: {
+            guns: [
+              {
+                mountCount: 2,
+                params: {
+                  rounds: 200,
+                },
+                part: "standard_gun_120mm_50_twin",
+              },
+            ],
+          },
+          id: "gun_y",
+          magazineEntry: "mag_aft",
+          mountCount: 1,
+          part: "gun_120mm_50_twin_turret_x2",
+          slot: "quarterdeck.gun_mount",
+          stationPermille: 900,
+        },
+        {
+          entries: {
+            guns: [
+              {
+                mountCount: 1,
+                params: {
+                  rounds: 200,
+                },
+                part: "standard_gun_120mm_50_single",
+              },
+            ],
+          },
+          id: "gun_x",
+          magazineEntry: "mag_aft",
+          mountCount: 1,
+          part: "gun_120mm_50_single_turret",
+          slot: "aft_service.gun_mount",
+          stationPermille: 760,
+        },
+        {
+          id: "tubes_a",
+          mountCount: 3,
+          part: "tube_21in_above_water",
+          slot: "superstructure.torpedo_launcher",
+          stationPermille: 600,
+        },
+        {
+          id: "tubes_b",
+          mountCount: 3,
+          part: "tube_21in_above_water",
+          slot: "superstructure.torpedo_launcher",
+          stationPermille: 620,
+        },
+        {
+          id: "mag_fwd",
+          mountCount: 1,
+          part: "magazine_heavy",
+          slot: "fwd_magazine.magazine",
+          stationPermille: 130,
+        },
+        {
+          id: "mag_aft",
+          mountCount: 1,
+          part: "magazine_heavy",
+          slot: "aft_magazine.magazine",
+          stationPermille: 830,
+        },
+        {
+          id: "rf",
+          mountCount: 1,
+          part: "rangefinder_optical",
+          slot: "superstructure.sensor",
+          stationPermille: 525,
+        },
+        {
+          id: "dyn",
+          mountCount: 1,
+          part: "dynamo_small",
+          slot: "fwd_service.electrical_plant",
+          stationPermille: 200,
+        },
+        {
+          id: "vent",
+          mountCount: 1,
+          part: "ventilation_plant",
+          slot: "fwd_service.ventilation",
+          stationPermille: 210,
+        },
+        {
+          id: "quarters",
+          mountCount: 30,
+          params: {
+            blocks: 30,
+          },
+          part: "quarters_crew",
+          slot: "superstructure.accommodation",
+          stationPermille: 560,
+        },
+        {
+          id: "quarters_fwd",
+          mountCount: 15,
+          params: {
+            blocks: 15,
+          },
+          part: "quarters_crew",
+          slot: "fwd_service.accommodation",
+          stationPermille: 230,
+        },
+        {
+          id: "quarters_aft",
+          mountCount: 15,
+          params: {
+            blocks: 15,
+          },
+          part: "quarters_crew",
+          slot: "aft_service.accommodation",
+          stationPermille: 720,
+        },
+        {
+          id: "funnel",
+          mountCount: 1,
+          part: "funnel_single",
+          slot: "superstructure.funnel",
+          stationPermille: 630,
+        },
+        {
+          mountCount: 1,
+          params: {
+            installedKw: 35794,
+          },
+          part: "hp_steam_geared_turbine",
+          slot: "central_machinery.propulsion_plant",
+          stationPermille: 450,
+        },
+      ],
+      platform: "destroyer_form",
+    },
+    month: "1942-02",
+    name: "Soldati-class destroyer (1942)",
+    starterFor: "DD",
+  },
 ]);

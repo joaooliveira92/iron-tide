@@ -1,7 +1,7 @@
 import { describe, it, expect } from "vite-plus/test";
 import type { ArmamentResolutionFinding } from "@bluewave/armament";
+import { armamentAmmunitionFor } from "../src/armamentAmmunition.js";
 import {
-  armamentAmmunitionFor,
   armamentContentLintOk,
   armamentFindingKey,
   armamentModelFor,
@@ -197,6 +197,78 @@ describe("armament content — catalogue construction", () => {
     const ammunition = armamentAmmunitionFor(armamentContent, "france", "gun_bl_274mm_m1875");
     expect(ammunition).not.toBeNull();
     expect(String(ammunition!.id)).toBe("fr_melinite_he");
+  });
+
+  describe("per-era ammunition resolution", () => {
+    const base = armamentContent.ammunition[0]!;
+    const pattern = (
+      id: string,
+      patch: Partial<AuthoredArmamentContent["ammunition"][number]>,
+    ): AuthoredArmamentContent["ammunition"][number] => ({
+      ...base,
+      id,
+      nationId: "testland",
+      compatibleGunFamilies: undefined,
+      compatibleGunModelIds: undefined,
+      ...patch,
+    });
+    const withPatterns = (
+      ...patterns: AuthoredArmamentContent["ammunition"]
+    ): AuthoredArmamentContent => ({ ...armamentContent, ammunition: patterns });
+
+    it("resolves each family to the pattern that lists it when a later era pattern leads the list", () => {
+      const content = withPatterns(
+        pattern("t_1954", { compatibleGunFamilies: ["gun_1954"], introductionMonth: "1954-01" }),
+        pattern("t_1880", {
+          compatibleGunFamilies: ["gun_1880"],
+          introductionMonth: "1880-01",
+          retirementMonth: "1939-01",
+        }),
+      );
+      expect(String(armamentAmmunitionFor(content, "testland", "gun_1880", "1885-06")!.id)).toBe(
+        "t_1880",
+      );
+      expect(String(armamentAmmunitionFor(content, "testland", "gun_1954", "1955-06")!.id)).toBe(
+        "t_1954",
+      );
+    });
+
+    it("resolves an unrestricted pattern for a family the leading post-1939 pattern does not list", () => {
+      const content = withPatterns(
+        pattern("t_1954", { compatibleGunFamilies: ["gun_1954"], introductionMonth: "1954-01" }),
+        pattern("t_1880", { introductionMonth: "1880-01", retirementMonth: "1939-01" }),
+      );
+      expect(String(armamentAmmunitionFor(content, "testland", "gun_1880", "1885-06")!.id)).toBe(
+        "t_1880",
+      );
+    });
+
+    it("resolves a family that both eras list to the pattern in service in the requested month", () => {
+      const content = withPatterns(
+        pattern("t_1954", { compatibleGunFamilies: ["gun_shared"], introductionMonth: "1954-01" }),
+        pattern("t_1880", {
+          compatibleGunFamilies: ["gun_shared"],
+          introductionMonth: "1880-01",
+          retirementMonth: "1939-01",
+        }),
+      );
+      expect(String(armamentAmmunitionFor(content, "testland", "gun_shared", "1885-06")!.id)).toBe(
+        "t_1880",
+      );
+      expect(String(armamentAmmunitionFor(content, "testland", "gun_shared", "1955-06")!.id)).toBe(
+        "t_1954",
+      );
+    });
+
+    it("keeps the first pattern as the fallback when nothing is compatible", () => {
+      const content = withPatterns(
+        pattern("t_a", { compatibleGunFamilies: ["gun_a"] }),
+        pattern("t_b", { compatibleGunFamilies: ["gun_b"] }),
+      );
+      expect(String(armamentAmmunitionFor(content, "testland", "gun_c", "1885-06")!.id)).toBe(
+        "t_a",
+      );
+    });
   });
 
   it("exposes a stable finding key", () => {

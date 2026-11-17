@@ -822,19 +822,81 @@ export default collection("gunFamilies", GunFamilySchema, [
   },
   {
     id: "gun_130mm_50_twin",
-    designation: "Soviet 130 mm/50 M-1954 gun in SM-2-1 twin mount",
+    designation: "Soviet 130 mm/58 SM-2-1 gun in twin mount",
     category: "SECONDARY_GUN",
     defaultMountType: "TURRET",
     provenance: {
       sourceStatus: "BALANCE_TARGET",
       confidence: "MEDIUM",
       kind: "balance_adjustment",
-      note: "issue #851. Navypedia and navweaps data of Research discussion #440 section 3; the component carries the derivations.",
+      note: "issue #851, reconciled by issues #879 and #885. Navweaps 130 mm/58 SM-2-1 Pattern 1957 (SINGLE-SOURCE) names the Kotlin gun and gives its 4.99 t gun mass, 57.325 t twin mount, 15 rounds per minute at +3 degrees and 1957 in-service date; navypedia labels it 130/50 M-1954 (Research discussion #440 section 3). The id keeps the legacy 50 key; the component and parts carry the derivations.",
       sources: [
+        {
+          title: "navweaps.com Russian 130 mm/58 (5.1-inch) SM-2-1 Pattern 1957",
+          archiveOrUrl: "https://www.navweaps.com/Weapons/WNRussian_51-58_m1957.php",
+          section: "Research discussion #875 section 2",
+        },
         {
           title: "navypedia.org Kotlin class destroyers",
           archiveOrUrl: "https://www.navypedia.org/ships/russia/rus_dd_kotlin.htm",
           section: "Research discussion #440 section 3",
+        },
+      ],
+    },
+  },
+  {
+    id: "gun_qf_6in_50_twin",
+    designation: "UK 6-inch/50 QF Mark N5 gun in Mark XXVI twin turret",
+    category: "MAIN_GUN",
+    defaultMountType: "TURRET",
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      note: "issue #869. Navweaps data of Research discussion #871 section 3; the component carries the derivations.",
+      sources: [
+        {
+          title: "navweaps.com UK 6-inch/50 (15.2 cm) QF Mark N5",
+          archiveOrUrl: "https://www.navweaps.com/Weapons/WNBR_6-50_mkN5.php",
+          section: "Research discussion #871 section 3",
+        },
+      ],
+    },
+  },
+  {
+    id: "gun_120mm_50_twin",
+    designation: "Italian 120 mm/50 Ansaldo 1926 gun in 1937 twin mount",
+    category: "SECONDARY_GUN",
+    defaultMountType: "TURRET",
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      note: "issue #249. Navweaps data of Research discussion #876; the component carries the derivations.",
+      sources: [
+        {
+          title: "navweaps.com Italian 120 mm/50 (4.7-inch) Models 1926, 1936 and 1937",
+          archiveOrUrl: "http://www.navweaps.com/Weapons/WNIT_47-50_m1926.php",
+          section: "Research discussion #876",
+        },
+      ],
+    },
+  },
+  {
+    id: "gun_120mm_50_single",
+    designation: "Italian 120 mm/50 Ansaldo 1926 gun in 1940 single mount",
+    category: "SECONDARY_GUN",
+    defaultMountType: "TURRET",
+    provenance: {
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      note: "issue #249. Navweaps data of Research discussion #876; the component carries the derivations.",
+      sources: [
+        {
+          title: "navweaps.com Italian 120 mm/50 (4.7-inch) Models 1926, 1936 and 1937",
+          archiveOrUrl: "http://www.navweaps.com/Weapons/WNIT_47-50_m1926.php",
+          section: "Research discussion #876",
         },
       ],
     },

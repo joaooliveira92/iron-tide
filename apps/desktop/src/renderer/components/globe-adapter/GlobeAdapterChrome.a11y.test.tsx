@@ -3,6 +3,9 @@ import axe from "axe-core";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 
 import { GlobeAdapterChrome } from "./GlobeAdapterChrome.js";
+import { GlobeAdapterLayers } from "./GlobeAdapterLayers.js";
+import { GlobeAdapterLegend } from "./GlobeAdapterLegend.js";
+import { GlobeMinimap } from "./GlobeAdapterWidgets.js";
 import { deriveAdapterModel } from "./adapter-derivations.js";
 import { EMPTY_LIVE_OVERLAY } from "../world-map/campaign-map-join.js";
 import { initialMapPrototypeState } from "../world-map/map-state.js";
@@ -32,29 +35,42 @@ describe("GlobeAdapterChrome accessibility", () => {
 
   it("has no automated accessibility violations in the access-tree mirror", async () => {
     const model = deriveAdapterModel(overlay(), "area_north_sea");
+    const viewport = { centre: [0, 30], zoom: 2, bearing: 0, pitch: 0 } as const;
     const { container } = render(
-      <GlobeAdapterChrome
-        state={initialMapPrototypeState}
-        route={{
-          path: ["area_north_sea", "area_western_approaches"],
-          hops: 1,
-          nauticalMiles: 420,
-          perHop: 420,
-          months: 0.1,
-        }}
-        viewport={{ centre: [0, 30], zoom: 2, bearing: 0, pitch: 0 }}
-        variant="full"
-        treeRows={model.treeRows}
-        ownershipRows={model.ownershipRows}
-        summary={model.summary}
-        nameFor={model.nameFor}
-        onSelect={noop}
-        onToggleLayer={noop}
-        onSetProjection={noop}
-        onSetCentre={noop}
-        onReset={noop}
-        onRecentre={noop}
-      />,
+      <>
+        <GlobeAdapterLayers
+          state={initialMapPrototypeState}
+          variant="full"
+          treeRows={model.treeRows}
+          ownershipRows={model.ownershipRows}
+          onSelect={noop}
+          onToggleLayer={noop}
+          onSetProjection={noop}
+          onSetCentre={noop}
+          onReset={noop}
+        />
+        <GlobeAdapterChrome
+          variant="full"
+          ownershipRows={model.ownershipRows}
+          summary={model.summary}
+          nameFor={model.nameFor}
+          onSelect={noop}
+        />
+        <GlobeAdapterLegend
+          state={initialMapPrototypeState}
+          route={{
+            path: ["area_north_sea", "area_western_approaches"],
+            hops: 1,
+            nauticalMiles: 420,
+            perHop: 420,
+            months: 0.1,
+          }}
+          viewport={viewport}
+          variant="full"
+        >
+          <GlobeMinimap viewport={viewport} onRecentre={noop} />
+        </GlobeAdapterLegend>
+      </>,
     );
     const results = await axe.run(container, {
       rules: {

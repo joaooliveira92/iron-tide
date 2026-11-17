@@ -33,6 +33,13 @@ export const ShortfallPrestigeRulesSchema = Schema.Struct({
   surplusShipsOnly: Schema.optional(Schema.Literal(true)),
 });
 
+export const ShortfallUnrestRulesSchema = Schema.Struct({
+  unrestPerShortMonth: Schema.Finite.check(
+    Schema.isInt(),
+    Schema.isBetween({ minimum: 1, maximum: 10 }),
+  ),
+});
+
 export const PresenceRulesSchema = Schema.Struct({
   colonialServiceDisplacementBp: Schema.Finite.check(
     Schema.isInt(),
@@ -46,6 +53,7 @@ export const PresenceRulesSchema = Schema.Struct({
   ),
   penaltyRequests: Schema.optional(Schema.Literal(true)),
   shortfallPrestige: Schema.optional(ShortfallPrestigeRulesSchema),
+  shortfallUnrest: Schema.optional(ShortfallUnrestRulesSchema),
   baseLimits: Schema.optional(BaseLimitRulesSchema),
   provenance: ProvenanceSchema,
 });

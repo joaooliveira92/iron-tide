@@ -37,6 +37,7 @@ export default {
         postwar_destroyer_form: 14946,
         // BALANCE TARGET fitted so the Worcester returns its 33 kn at 89,484 kW and 17,997 t full load (ADR-0290)
         light_cruiser_form: 20568,
+        postwar_light_cruiser_form: 20568,
         // BALANCE TARGET fitted so the Des Moines returns its 33 kn at 89,484 kW and 20,934 t full load (ADR-0290)
         heavy_cruiser_form: 22749,
         // BALANCE TARGET fitted so the Iowa returns its 32.5 kn at 158,084 kW and 57,540 t full load (ADR-0332)
@@ -475,6 +476,7 @@ export default {
       postwar_destroyer_form: 11000,
       // BALANCE TARGET: copied from protected_cruiser_form, the nearest cruiser hull
       light_cruiser_form: 10500,
+      postwar_light_cruiser_form: 10500,
       // BALANCE TARGET: copied from protected_cruiser_form, the nearest cruiser hull
       heavy_cruiser_form: 10500,
       // BALANCE TARGET: copied from pre_dreadnought_form, the nearest capital hull (ADR-0332)

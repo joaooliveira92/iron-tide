@@ -1,9 +1,10 @@
 #!/usr/bin/env node
-import { appendFileSync, mkdirSync, readFileSync } from "node:fs";
+import { appendFileSync, existsSync, mkdirSync, readFileSync } from "node:fs";
 import { homedir } from "node:os";
-import { dirname, resolve } from "node:path";
+import { basename, dirname, resolve } from "node:path";
 
 import { evaluateBashCommand, parseOverride } from "../lib/agent-guard.mjs";
+import { isPollCommand, trailingPollLength } from "../lib/poll-chain.mjs";
 import { rangeReadTargets, trailingChainLength } from "../lib/read-chain.mjs";
 import { readTail } from "../lib/transcript-context.mjs";
 
@@ -64,14 +65,45 @@ function main() {
   }
   const cwd = typeof payload.cwd === "string" ? payload.cwd : process.cwd();
   const chained = chainedTarget(policy, payload, command, cwd);
-  if (chained === null) return 0;
+  const polling = chained === null && pollingChain(policy, payload, command);
+  if (chained === null && !polling) return 0;
+  const rule = polling ? "poll-chain" : "read-chain";
   const override = parseOverride(command, policy);
   if (override !== null) {
-    auditOverride(policy, command, "read-chain", override.reason);
+    auditOverride(policy, command, rule, override.reason);
     return 0;
   }
-  process.stdout.write(`${JSON.stringify(denial(policy, chained))}\n`);
+  const reason = polling ? pollDenial(policy) : readDenial(policy, chained);
+  process.stdout.write(`${JSON.stringify(denial(policy, reason))}\n`);
   return 0;
+}
+
+function pollingChain(policy, payload, command) {
+  try {
+    if (!isPollCommand(command) || typeof payload.transcript_path !== "string") return false;
+    const path = payload.agent_id
+      ? subagentTranscript(payload.transcript_path, payload.agent_id)
+      : payload.transcript_path;
+    if (path === null) return false;
+    const lines = readTail(path, policy.transcriptTailBytes);
+    return (
+      trailingPollLength({ lines, currentToolUseId: payload.tool_use_id }) >=
+      policy.pollChainDenyAt - 1
+    );
+  } catch {
+    return false;
+  }
+}
+
+function subagentTranscript(transcriptPath, agentId) {
+  if (typeof agentId !== "string" || !/^[\w-]+$/u.test(agentId)) return null;
+  const path = resolve(
+    dirname(transcriptPath),
+    basename(transcriptPath, ".jsonl"),
+    "subagents",
+    `agent-${agentId}.jsonl`,
+  );
+  return existsSync(path) ? path : null;
 }
 
 function chainedTarget(policy, payload, command, cwd) {
@@ -96,16 +128,29 @@ function chainedTarget(policy, payload, command, cwd) {
   }
 }
 
-function denial(policy, path) {
+function readDenial(policy, path) {
+  return (
+    `Read ${path} in ranges ${policy.readChainDenyAt} times in a row. ` +
+    `Locate with \`rg -n -C3 <pattern> ${path} | head -${policy.readRangeMaxLines}\` or \`pnpm agent:map <symbol>\`, ` +
+    `or read one larger block with the Read tool.`
+  );
+}
+
+function pollDenial(policy) {
+  return (
+    `${policy.pollChainDenyAt} polling commands (tail, date, ps, sleep on a log) in a row. ` +
+    `Run the gate in the foreground with a long timeout, or start it with run_in_background ` +
+    `and end the turn or call t3_background_wait for the exit notification. ` +
+    `Read the result once with \`tail -n ${policy.quietFailTailLines} <log>\`.`
+  );
+}
+
+function denial(policy, reason) {
   return {
     hookSpecificOutput: {
       hookEventName: "PreToolUse",
       permissionDecision: "deny",
-      permissionDecisionReason:
-        `Read ${path} in ranges ${policy.readChainDenyAt} times in a row. ` +
-        `Locate with \`rg -n -C3 <pattern> ${path} | head -${policy.readRangeMaxLines}\` or \`pnpm agent:map <symbol>\`, ` +
-        `or read one larger block with the Read tool. ` +
-        `Override (audited): append \`# ${policy.overrideToken} <reason>\` to the command.`,
+      permissionDecisionReason: `${reason} Override (audited): append \`# ${policy.overrideToken} <reason>\` to the command.`,
     },
   };
 }

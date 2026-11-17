@@ -12879,7 +12879,7 @@ export default collection("parts", PartSchema, [
     provenance: {
       confidence: "MEDIUM",
       kind: "balance_adjustment",
-      note: "issue #851. The 35.2 t twin mount is SINGLE-SOURCE (Research discussion #440 section 3); its split into 13,600 kg per barrel and no fixed mass, the 6 crew per barrel, and the volume, footprint and cost conventions (3 L and 470 mm2 per kg, 197,368 micro per kg) are BALANCE TARGET.",
+      note: "issue #851, reconciled by issue #885. The SM-2 twin mount weighs 57.325 t guns included (navweaps, SINGLE-SOURCE); with the 4,990 kg gun that is 23,673 kg of mount per barrel and no fixed mass (57,325 = 2 x (4,990 + 23,673), 1 kg from rounding). The former 35.2 t came from Research discussion #440 section 3, whose cited navweaps page is dead. The 6 crew per barrel, and the volume, footprint and cost conventions (3 L and 470 mm2 per kg, 197,368 micro per kg) are BALANCE TARGET.",
       sourceStatus: "BALANCE_TARGET",
       sources: [
         {
@@ -12888,9 +12888,9 @@ export default collection("parts", PartSchema, [
           title: "navypedia.org Kotlin class destroyers",
         },
         {
-          archiveOrUrl: "http://www.navweaps.com/Weapons/WNRussian_5-50_m1946.php",
-          section: "Research discussion #440 section 3",
-          title: "navweaps.com Russian 130 mm/50 (5.1-inch) M1946",
+          archiveOrUrl: "https://www.navweaps.com/Weapons/WNRussian_51-58_m1957.php",
+          section: "Research discussion #875 section 2",
+          title: "navweaps.com Russian 130 mm/58 (5.1-inch) SM-2-1 Pattern 1957",
         },
       ],
     },
@@ -12906,13 +12906,13 @@ export default collection("parts", PartSchema, [
         basis: "PER_CONTAINED_UNIT",
         id: "installation_per_gun",
         kind: "massKg",
-        value: 13600,
+        value: 23673,
       },
       {
         basis: "PER_CONTAINED_UNIT",
         id: "mount_cost_per_gun",
         kind: "costMicro",
-        value: 2684000000,
+        value: 4672000000,
       },
       {
         basis: "PER_CONTAINED_UNIT",
@@ -12948,6 +12948,259 @@ export default collection("parts", PartSchema, [
       compatibleGunFamilies: ["gun_130mm_50_twin"],
       firingArcDeg: 150,
       gunsPerMount: 2,
+      mountType: "TURRET",
+    },
+  },
+  {
+    family: "gun_mount",
+    id: "gun_qf_6in_50_twin_turret_x2",
+    lifecycle: {
+      availableFrom: "1959-01",
+      availableUntil: null,
+    },
+    name: "gun_qf_6in_50_twin_turret_x2",
+    origin: {
+      sourceFile: "ship-building/components/guns/british-quick-firing.ts",
+    },
+    provenance: {
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      note: "issue #869. The Mark XXVI twin turret of 156 tons (158.5 t, guns included) is SINGLE-SOURCE (navweaps.com, Research discussion #871 section 3); its split into 72,290 kg per barrel (158,500 = 2 x (6,960 + 72,290)) and no fixed mass, the 11 crew per barrel (the US 6-inch/47 convention; the page states none), and the volume, footprint and cost conventions (3 L and 470 mm2 per kg, 197,368 micro per kg) are BALANCE TARGET.",
+      sourceStatus: "BALANCE_TARGET",
+      sources: [
+        {
+          archiveOrUrl: "https://www.navweaps.com/Weapons/WNBR_6-50_mkN5.php",
+          section: "Research discussion #871 section 3",
+          title: "navweaps.com UK 6-inch/50 (15.2 cm) QF Mark N5",
+        },
+      ],
+    },
+    provides: "gun_mount",
+    quantities: [
+      {
+        basis: "PER_LOADOUT_ENTRY",
+        id: "installation_fixed",
+        kind: "massKg",
+        value: 0,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "installation_per_gun",
+        kind: "massKg",
+        value: 72290,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "mount_cost_per_gun",
+        kind: "costMicro",
+        value: 14268000000,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "crew_per_gun",
+        kind: "crew",
+        value: 11,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "volume_per_gun",
+        kind: "volumeLitre",
+        value: 237750,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "deck_footprint_per_gun",
+        kind: "deckFootprintMm2",
+        value: 37250000,
+      },
+    ],
+    revisions: [],
+    slots: [
+      {
+        accepts: ["gun"],
+        id: "guns",
+        mountCount: {
+          max: 2,
+          min: 2,
+        },
+      },
+    ],
+    spec: {
+      compatibleGunFamilies: ["gun_qf_6in_50_twin"],
+      firingArcDeg: 150,
+      gunsPerMount: 2,
+      mountType: "TURRET",
+    },
+  },
+  {
+    family: "gun_mount",
+    id: "gun_120mm_50_twin_turret_x2",
+    lifecycle: {
+      availableFrom: "1937-01",
+      availableUntil: null,
+    },
+    name: "gun_120mm_50_twin_turret_x2",
+    origin: {
+      sourceFile: "ship-building/components/guns/italian.ts",
+    },
+    provenance: {
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      note: "issue #249, Research discussion #876. The 21.6 t twin mount is VERIFIED (navweaps.com and Campbell 1985 via Wikipedia); its split into 5,248 kg per barrel (21,600 = 2 x (5,552 + 5,248), assuming the mount mass includes the guns) and no fixed mass is DERIVED. Crew 3 per barrel, volume, footprint and cost follow the US 5-inch/38 twin: BALANCE TARGET.",
+      sourceStatus: "BALANCE_TARGET",
+      sources: [
+        {
+          archiveOrUrl: "http://www.navweaps.com/Weapons/WNIT_47-50_m1926.php",
+          section: "Research discussion #876",
+          title: "navweaps.com Italian 120 mm/50 (4.7-inch) Models 1926, 1936 and 1937",
+        },
+        {
+          archiveOrUrl: "https://en.wikipedia.org/wiki/120_mm_Italian_naval_gun",
+          section: "Research discussion #876",
+          title: "120 mm Italian naval gun (Campbell, Naval Weapons of World War Two, 1985)",
+        },
+      ],
+    },
+    provides: "gun_mount",
+    quantities: [
+      {
+        basis: "PER_LOADOUT_ENTRY",
+        id: "installation_fixed",
+        kind: "massKg",
+        value: 0,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "installation_per_gun",
+        kind: "massKg",
+        value: 5248,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "mount_cost_per_gun",
+        kind: "costMicro",
+        value: 1500000000,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "crew_per_gun",
+        kind: "crew",
+        value: 3,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "volume_per_gun",
+        kind: "volumeLitre",
+        value: 30600,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "deck_footprint_per_gun",
+        kind: "deckFootprintMm2",
+        value: 4794000,
+      },
+    ],
+    revisions: [],
+    slots: [
+      {
+        accepts: ["gun"],
+        id: "guns",
+        mountCount: {
+          max: 2,
+          min: 2,
+        },
+      },
+    ],
+    spec: {
+      compatibleGunFamilies: ["gun_120mm_50_twin"],
+      firingArcDeg: 150,
+      gunsPerMount: 2,
+      mountType: "TURRET",
+    },
+  },
+  {
+    family: "gun_mount",
+    id: "gun_120mm_50_single_turret",
+    lifecycle: {
+      availableFrom: "1940-01",
+      availableUntil: null,
+    },
+    name: "gun_120mm_50_single_turret",
+    origin: {
+      sourceFile: "ship-building/components/guns/italian.ts",
+    },
+    provenance: {
+      confidence: "MEDIUM",
+      kind: "balance_adjustment",
+      note: "issue #249, Research discussion #876. The 12.0 t single mount is VERIFIED (navweaps.com and Campbell 1985 via Wikipedia); its split into 6,448 kg per barrel (12,000 - 5,552, DERIVED) and no fixed mass follows. Crew 3, volume, footprint and cost follow the US 5-inch/38 twin per barrel: BALANCE TARGET.",
+      sourceStatus: "BALANCE_TARGET",
+      sources: [
+        {
+          archiveOrUrl: "http://www.navweaps.com/Weapons/WNIT_47-50_m1926.php",
+          section: "Research discussion #876",
+          title: "navweaps.com Italian 120 mm/50 (4.7-inch) Models 1926, 1936 and 1937",
+        },
+        {
+          archiveOrUrl: "https://en.wikipedia.org/wiki/120_mm_Italian_naval_gun",
+          section: "Research discussion #876",
+          title: "120 mm Italian naval gun (Campbell, Naval Weapons of World War Two, 1985)",
+        },
+      ],
+    },
+    provides: "gun_mount",
+    quantities: [
+      {
+        basis: "PER_LOADOUT_ENTRY",
+        id: "installation_fixed",
+        kind: "massKg",
+        value: 0,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "installation_per_gun",
+        kind: "massKg",
+        value: 6448,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "mount_cost_per_gun",
+        kind: "costMicro",
+        value: 1500000000,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "crew_per_gun",
+        kind: "crew",
+        value: 3,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "volume_per_gun",
+        kind: "volumeLitre",
+        value: 30600,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "deck_footprint_per_gun",
+        kind: "deckFootprintMm2",
+        value: 4794000,
+      },
+    ],
+    revisions: [],
+    slots: [
+      {
+        accepts: ["gun"],
+        id: "guns",
+        mountCount: {
+          max: 1,
+          min: 1,
+        },
+      },
+    ],
+    spec: {
+      compatibleGunFamilies: ["gun_120mm_50_single"],
+      firingArcDeg: 150,
+      gunsPerMount: 1,
       mountType: "TURRET",
     },
   },

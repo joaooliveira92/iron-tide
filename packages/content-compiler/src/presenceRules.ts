@@ -12,6 +12,7 @@ export interface PresenceValues {
     readonly openingGraceMonths?: number;
     readonly surplusShipsOnly?: true;
   };
+  readonly shortfallUnrest?: { readonly unrestPerShortMonth: number };
   readonly baseLimits?: {
     readonly limitByBaseLevel: readonly number[];
     readonly noBaseLimit: number;
@@ -57,6 +58,9 @@ export function presenceFromRulesets(rulesets: readonly unknown[]): PresenceValu
                 : {}),
             },
           }),
+      ...(value.shortfallUnrest === undefined
+        ? {}
+        : { shortfallUnrest: { unrestPerShortMonth: value.shortfallUnrest.unrestPerShortMonth } }),
       ...(value.baseLimits === undefined
         ? {}
         : {

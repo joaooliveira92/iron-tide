@@ -4,8 +4,8 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 
 | Status | Rows |
 | --- | --- |
-| reachable | 41 |
-| dormant-by-decision | 14 |
+| reachable | 42 |
+| dormant-by-decision | 13 |
 | internal | 16 |
 
 ## Reachable
@@ -42,6 +42,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | prestige | See and act on national prestige | `shell/status-strip/cards/PrestigeCard.tsx` | `apps/desktop/src/renderer/shell/PrestigeCardEvent.test.tsx` |
 | presence-shortfall-prestige | Lose prestige for an uncovered station | `shell/status-strip/cards/PrestigeCard.tsx` | `apps/desktop/src/renderer/shell/PrestigePresenceShortfall.test.tsx` |
 | presence-queued-order-warning | Be warned that a queued order leaves a station short | `screens/fleet/components/PresenceWarnings.tsx` | `apps/desktop/src/renderer/screens/fleet/components/PresenceWarnings.test.tsx` |
+| presence-revolt-pressure | See unrest after uncovered stations | `shell/status-strip/panels/NationPanel.tsx` | `apps/desktop/src/renderer/shell/StatusStripUnrest.test.tsx` |
 | ship-readiness | See and manage ship readiness | `screens/fleet/station/FleetStationSection.tsx` | `apps/desktop/src/renderer/screens/fleet/station/useStationAssignment.test.tsx` |
 | combat-fought-battle | Fight a battle: gunnery, spotting, contact, movement, weather, damage, torpedoes under stance, speed and course orders | `screens/battle/PlayerBattleScreen.tsx` | `apps/desktop/src/main/commands/battleOfferCommands.test.ts` |
 | read-campaign-overview | Read the campaign overview | `screens/overview/OverviewScreen.tsx` | `apps/desktop/src/main/commands/inspectCampaign.test.ts` |
@@ -60,7 +61,6 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | --- | --- | --- |
 | construction-events | Learn why a build slipped or cost more | #584 |
 | event-answer-unrest | See unrest rise or fall after a crisis answer | #427 |
-| presence-revolt-pressure | See revolts follow an uncovered station | #826 |
 | division-battle-experience | Divisions gain experience from the battles they fight | #276 |
 | aircraft-and-carriers | Develop aircraft and operate carriers | RULES.md#dormant-by-decision |
 | combat-air-combat | Air combat and air defence in a battle | RULES.md#dormant-by-decision |
