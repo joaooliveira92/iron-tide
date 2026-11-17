@@ -10,6 +10,16 @@
             "command": "bash \"$CLAUDE_PROJECT_DIR/scripts/hooks/session-start-cloud.sh\""
           }
         ]
+      },
+      {
+        "matcher": "compact|resume",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hooks/session-start-resume.mjs\"",
+            "timeout": 10
+          }
+        ]
       }
     ],
     "PreToolUse": [
