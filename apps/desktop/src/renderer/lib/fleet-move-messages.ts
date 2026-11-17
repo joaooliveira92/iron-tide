@@ -14,4 +14,5 @@ export const FLEET_MOVE_MESSAGES = {
   "fleet.move.reason.LandArea": "That area is land; ships cannot sail there.",
   "fleet.move.reason.AlreadyThere": "The ships are already in that area.",
   "fleet.move.reason.NoSeaRoute": "No sea route leads from the ships' area to that area.",
+  "fleet.move.reason.ShipNotInFleet": "That ship is not in the fleet being ordered.",
 } as const;

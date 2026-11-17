@@ -153,6 +153,7 @@ function applyAdministrativeCommand(ctx: PhaseContext, body: CommandBody): boole
       ctx.snapshot.current,
       body as MoveFleetCommand,
       collector,
+      campaignMonth,
     );
     return true;
   }

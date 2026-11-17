@@ -1,6 +1,16 @@
 import { evaluateShipGates, type GateReasonTag, type ShipGateSubject } from "./eligibility.js";
 import { isSeaArea } from "./seaArea.js";
-import type { CampaignSnapshot, NationState } from "./state.js";
+import { seaRoute } from "./seaRoute.js";
+import type { CampaignSnapshot, NationState, Ship } from "./state.js";
+
+export function orderedShips(
+  ships: readonly Ship[],
+  shipIds: readonly string[] | undefined,
+): Ship[] {
+  if (shipIds === undefined || shipIds.length === 0) return [...ships];
+  const ids = new Set(shipIds);
+  return ships.filter((s) => ids.has(s.id));
+}
 
 export type FleetMoveProblem =
   | {
@@ -13,6 +23,12 @@ export type FleetMoveProblem =
       readonly code: "INVALID_COMMAND_PAYLOAD";
       readonly nationId: string;
       readonly fleetId: string;
+    }
+  | {
+      readonly _tag: "ShipNotInFleet";
+      readonly code: "INVALID_COMMAND_PAYLOAD";
+      readonly fleetId: string;
+      readonly shipId: string;
     }
   | {
       readonly _tag: "ForeignStationPosted";
@@ -59,12 +75,17 @@ export function fleetMoveProblem(
   nationId: string,
   fleetId: string,
   toAreaId: string,
+  shipIds?: readonly string[],
 ): FleetMoveProblem | null {
   const nation = snapshot.nations.get(nationId);
   if (!nation) return { _tag: "UnknownNation", code: "INVALID_NATION_ID", nationId };
   const fleet = nation.fleets.find((f) => f.id === fleetId);
   if (!fleet) return { _tag: "FleetNotOwned", code: "INVALID_COMMAND_PAYLOAD", nationId, fleetId };
-  const stationed = fleet.ships.find((s) => hasSailGate(s, "AssignmentForbidsUse"));
+  const ordered = orderedShips(fleet.ships, shipIds);
+  const missing = (shipIds ?? []).find((id) => !fleet.ships.some((s) => s.id === id));
+  if (missing !== undefined)
+    return { _tag: "ShipNotInFleet", code: "INVALID_COMMAND_PAYLOAD", fleetId, shipId: missing };
+  const stationed = ordered.find((s) => hasSailGate(s, "AssignmentForbidsUse"));
   if (stationed !== undefined)
     return {
       _tag: "ForeignStationPosted",
@@ -72,11 +93,9 @@ export function fleetMoveProblem(
       fleetId,
       shipId: stationed.id,
     };
-  if (
-    !fleet.ships.some((s) => !hasSailGate(s, "UnderConstruction") && !hasSailGate(s, "Unavailable"))
-  )
+  if (!ordered.some((s) => !hasSailGate(s, "UnderConstruction") && !hasSailGate(s, "Unavailable")))
     return { _tag: "NoCommissionedShip", code: "SHIP_NOT_OPERATIONAL", fleetId };
-  const unavailable = fleet.ships.find((s) => hasSailGate(s, "Unavailable"));
+  const unavailable = ordered.find((s) => hasSailGate(s, "Unavailable"));
   if (unavailable !== undefined)
     return {
       _tag: "ShipUnderRebuild",
@@ -89,13 +108,7 @@ export function fleetMoveProblem(
   if (!isSeaArea(target)) return { _tag: "LandArea", code: "INVALID_ROUTE", areaId: toAreaId };
   if (fleet.locationAreaId === toAreaId)
     return { _tag: "AlreadyThere", code: "INVALID_ROUTE", fleetId, areaId: toAreaId };
-  const connected = snapshot.world.routes.some(
-    (r) =>
-      r.type === "sea" &&
-      ((r.from === fleet.locationAreaId && r.to === toAreaId) ||
-        (r.to === fleet.locationAreaId && r.from === toAreaId)),
-  );
-  if (!connected)
+  if (seaRoute(snapshot.world, fleet.locationAreaId, toAreaId) === null)
     return {
       _tag: "NoSeaRoute",
       code: "INVALID_ROUTE",

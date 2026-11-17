@@ -27,7 +27,11 @@ function fleetIdOf(snapshot: CampaignSnapshot): string {
   return snapshot.nations.get(ATTACKER_NATION)!.fleets[0]!.id;
 }
 
-function move(snapshot: CampaignSnapshot, toAreaId: string): CommandEnvelope<CommandBody> {
+function move(
+  snapshot: CampaignSnapshot,
+  toAreaId: string,
+  shipIds?: readonly string[],
+): CommandEnvelope<CommandBody> {
   return {
     commandId: `mv-${toAreaId}`,
     version: "0.1.0",
@@ -39,6 +43,7 @@ function move(snapshot: CampaignSnapshot, toAreaId: string): CommandEnvelope<Com
       nationId: ATTACKER_NATION,
       fleetId: fleetIdOf(snapshot),
       toAreaId,
+      ...(shipIds === undefined ? {} : { shipIds }),
     },
   };
 }
@@ -56,9 +61,19 @@ describe("fleetMoveProblem", () => {
   it("allows one hop along a route, in either direction", () => {
     expect(fleetMoveProblem(snapshot, ATTACKER_NATION, fleetId, "a-2")).toBeNull();
   });
-  it("rejects two hops, land, the current area, unknown areas and other nations' fleets", () => {
+  it("allows a multi-hop target and rejects an unreachable one with a tag", () => {
+    expect(fleetMoveProblem(snapshot, ATTACKER_NATION, fleetId, "a-3")).toBeNull();
+    const isolated: CampaignSnapshot = {
+      ...snapshot,
+      world: {
+        ...snapshot.world,
+        areas: [...snapshot.world.areas, { id: "a-9", name: "a-9", type: "sea" }],
+      },
+    };
+    expect(fleetMoveProblem(isolated, ATTACKER_NATION, fleetId, "a-9")?._tag).toBe("NoSeaRoute");
+  });
+  it("rejects land, the current area, unknown areas and other nations' fleets", () => {
     const code = (to: string) => fleetMoveProblem(snapshot, ATTACKER_NATION, fleetId, to)?.code;
-    expect(code("a-3")).toBe("INVALID_ROUTE");
     expect(code("land-1")).toBe("INVALID_ROUTE");
     expect(code("a-1")).toBe("INVALID_ROUTE");
     expect(code("nowhere")).toBe("INVALID_ROUTE");
@@ -120,17 +135,65 @@ describe("MoveFleet through the month", () => {
     expect(fleet.ships.every((s) => s.locationAreaId === "a-2")).toBe(true);
   });
 
-  it("covers a second hop only in a following month", () => {
+  it("covers a two-hop order in two months and clears the standing route on arrival", () => {
     const snapshot = world();
-    const first = run(snapshot, [move(snapshot, "a-2")]);
+    const first = run(snapshot, [move(snapshot, "a-3")]);
     expect(first.nation.fleets[0]!.locationAreaId).toBe("a-2");
-    const second = run(first.result.finalSnapshot, [move(first.result.finalSnapshot, "a-3")]);
+    expect(first.nation.fleets[0]!.destinationAreaId).toBe("a-3");
+    const second = run(first.result.finalSnapshot, []);
     expect(second.nation.fleets[0]!.locationAreaId).toBe("a-3");
+    expect(second.nation.fleets[0]!.destinationAreaId).toBeUndefined();
+    expect(second.nation.fleets[0]!.ships.every((s) => s.locationAreaId === "a-3")).toBe(true);
   });
 
-  it("leaves the fleet where it is when the order is not a legal hop", () => {
+  it("replaces a standing route with a new order", () => {
     const snapshot = world();
-    const { nation } = run(snapshot, [move(snapshot, "a-3")]);
+    const first = run(snapshot, [move(snapshot, "a-3")]);
+    const back = run(first.result.finalSnapshot, [move(first.result.finalSnapshot, "a-1")]);
+    expect(back.nation.fleets[0]!.locationAreaId).toBe("a-1");
+    expect(back.nation.fleets[0]!.destinationAreaId).toBeUndefined();
+  });
+
+  it("leaves the fleet where it is when the order targets land", () => {
+    const snapshot = world();
+    const { nation } = run(snapshot, [move(snapshot, "land-1")]);
     expect(nation.fleets[0]!.locationAreaId).toBe("a-1");
+    expect(nation.fleets[0]!.destinationAreaId).toBeUndefined();
+  });
+
+  it("detaches an ordered subset into its own fleet and keeps the rest in place", () => {
+    const snapshot = world();
+    const { nation } = run(snapshot, [move(snapshot, "a-3", ["g1"])]);
+    const original = nation.fleets.find((f) => f.id === fleetIdOf(snapshot))!;
+    const detached = nation.fleets.find((f) => f.id !== fleetIdOf(snapshot))!;
+    expect(original.ships.map((s) => s.id)).toEqual(["g2"]);
+    expect(original.locationAreaId).toBe("a-1");
+    expect(detached.ships.map((s) => s.id)).toEqual(["g1"]);
+    expect(detached.locationAreaId).toBe("a-2");
+    expect(detached.destinationAreaId).toBe("a-3");
+    expect(detached.id.startsWith("fleet-fs-")).toBe(false);
+    expect(detached.ships[0]!.locationAreaId).toBe("a-2");
+  });
+
+  it("moves the whole fleet when the subset names every ship", () => {
+    const snapshot = world();
+    const { nation } = run(snapshot, [move(snapshot, "a-2", ["g2", "g1"])]);
+    expect(nation.fleets).toHaveLength(1);
+    expect(nation.fleets[0]!.locationAreaId).toBe("a-2");
+  });
+
+  it("rejects a subset naming a ship outside the fleet", () => {
+    const snapshot = world();
+    const problem = fleetMoveProblem(snapshot, ATTACKER_NATION, fleetIdOf(snapshot), "a-2", ["zz"]);
+    expect(problem?._tag).toBe("ShipNotInFleet");
+  });
+
+  it("is deterministic across runs", () => {
+    const snapshot = world();
+    const one = run(snapshot, [move(snapshot, "a-3", ["g1"])]);
+    const two = run(snapshot, [move(snapshot, "a-3", ["g1"])]);
+    expect(sha256Hex(canonicalSerialize(one.result.finalSnapshot))).toBe(
+      sha256Hex(canonicalSerialize(two.result.finalSnapshot)),
+    );
   });
 });

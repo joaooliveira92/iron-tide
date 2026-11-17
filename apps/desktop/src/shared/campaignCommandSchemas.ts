@@ -222,6 +222,7 @@ export const SubmitMovementCommandPayloadSchema = Schema.Struct({
   divisionId: nonEmptyString,
   fromAreaId: Schema.String,
   toAreaId: nonEmptyString,
+  shipIds: Schema.optional(Schema.NonEmptyArray(nonEmptyString)),
 });
 export const ReplaceMovementCommandPayloadSchema = Schema.Struct({
   ...SubmitMovementCommandPayloadSchema.fields,

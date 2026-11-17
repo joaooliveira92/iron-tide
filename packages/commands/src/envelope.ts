@@ -111,6 +111,7 @@ export interface MoveFleetCommand {
   nationId: string;
   fleetId: string;
   toAreaId: string;
+  shipIds?: readonly string[];
 }
 export interface SubmitDesignCommand {
   type: "SubmitDesign";

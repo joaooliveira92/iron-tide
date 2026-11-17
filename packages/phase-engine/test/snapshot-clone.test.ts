@@ -66,8 +66,8 @@ function makeRichSnapshot(): CampaignSnapshot {
     month: { year: SafeInt(1880), month: SafeInt(2) },
   };
   const gbr = snapshot.nations.get(ATTACKER_NATION)!;
-  gbr.homeAreaId = "a-2";
-  Object.assign(gbr, EVENT_STATE_FIXTURE);
+  gbr.fleets[0]!.destinationAreaId = "a-3";
+  Object.assign(gbr, EVENT_STATE_FIXTURE, { homeAreaId: "a-2" });
   gbr.prestigeLastChange = {
     reasonCode: "BATTLE_LOST",
     before: SafeInt(20),

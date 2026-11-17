@@ -1,6 +1,7 @@
 import {
   describeFleetMoveProblem,
   fleetMoveProblem,
+  seaRoute,
   type CampaignSnapshot,
   type FleetMoveProblem,
 } from "@bluewave/campaign";
@@ -21,6 +22,9 @@ export interface StrategicMapFleetOrdersView {
   readonly areaId: string;
   readonly shipCount: number;
   readonly legalDestinations: readonly string[];
+  readonly routeHops: readonly { readonly areaId: string; readonly hops: number }[];
+  readonly destinationAreaId: string | null;
+  readonly remainingHops: number;
   readonly blockedReason: StrategicMapBlockedReason | null;
 }
 
@@ -64,17 +68,8 @@ export function buildStrategicMapView(
     .slice()
     .sort((a, b) => compareCodePoints(a.id, b.id))
     .map((fleet) => {
-      const candidates = [
-        ...new Set(
-          snapshot.world.routes
-            .filter((route) => route.type === "sea")
-            .flatMap((route) => {
-              if (route.from === fleet.locationAreaId) return [route.to];
-              if (route.to === fleet.locationAreaId) return [route.from];
-              return [];
-            }),
-        ),
-      ]
+      const candidates = snapshot.world.areas
+        .map((area) => area.id)
         .filter((areaId) => areaId !== fleet.locationAreaId)
         .filter((areaId) => areaById.get(areaId)?.type !== "land")
         .sort((a, b) => compareCodePoints(a, b));
@@ -82,6 +77,14 @@ export function buildStrategicMapView(
       const legalDestinations = candidates.filter(
         (areaId) => fleetMoveProblem(snapshot, viewerNationId, fleet.id, areaId) === null,
       );
+      const routeHops = legalDestinations.map((areaId) => ({
+        areaId,
+        hops: seaRoute(snapshot.world, fleet.locationAreaId, areaId)?.length ?? 0,
+      }));
+      const remainingHops =
+        fleet.destinationAreaId === undefined
+          ? 0
+          : (seaRoute(snapshot.world, fleet.locationAreaId, fleet.destinationAreaId)?.length ?? 0);
 
       let blockedReason: StrategicMapBlockedReason | null = null;
       if (legalDestinations.length === 0) {
@@ -102,6 +105,9 @@ export function buildStrategicMapView(
         areaId: fleet.locationAreaId,
         shipCount: fleet.ships.length,
         legalDestinations,
+        routeHops,
+        destinationAreaId: fleet.destinationAreaId ?? null,
+        remainingHops,
         blockedReason,
       };
     });

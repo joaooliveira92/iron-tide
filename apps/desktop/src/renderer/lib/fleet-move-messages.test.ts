@@ -11,6 +11,7 @@ const MOVE_PROBLEM_TAGS = [
   "LandArea",
   "AlreadyThere",
   "NoSeaRoute",
+  "ShipNotInFleet",
 ] as const;
 
 const BLOCKED_CODES = [

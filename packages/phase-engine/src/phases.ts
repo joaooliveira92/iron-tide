@@ -12,6 +12,7 @@ import {
   monthlyRevenuePhase,
   obligationPhase,
 } from "./economyPhases.js";
+import { fleetMovementPhase } from "./fleetOrders.js";
 import { foreignStationDeploymentPhase } from "./foreignStationDeployment.js";
 import { interruptionCheckpoint } from "./interruption.js";
 import { MonthPipeline } from "./pipeline.js";
@@ -27,6 +28,7 @@ export const monthPipeline = MonthPipeline.create(
     weatherGenerationPhase,
     monthlyRevenuePhase,
     commandCollectionPhase,
+    fleetMovementPhase,
     aiPlanningPhase,
     aiProcurementPhase,
     appropriationPhase,
