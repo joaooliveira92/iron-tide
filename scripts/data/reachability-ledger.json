@@ -440,6 +440,18 @@
       "decision": null
     },
     {
+      "id": "fleet-morale",
+      "player_verb": "See fleet morale fall",
+      "status": "reachable",
+      "engine_package": "phase-engine",
+      "engine_modules": [],
+      "engine_symbols": ["applyFleetMorale"],
+      "main_commands": ["resolveTurn"],
+      "renderer_screen": "shell/status-strip/panels/NationPanel.tsx",
+      "evidence_test": "apps/desktop/src/renderer/shell/StatusStrip.test.tsx",
+      "decision": null
+    },
+    {
       "id": "presence-revolt-pressure",
       "player_verb": "See unrest after uncovered stations",
       "status": "reachable",

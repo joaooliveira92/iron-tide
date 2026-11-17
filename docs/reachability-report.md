@@ -4,7 +4,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 
 | Status | Rows |
 | --- | --- |
-| reachable | 42 |
+| reachable | 43 |
 | dormant-by-decision | 13 |
 | internal | 16 |
 
@@ -42,6 +42,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | prestige | See and act on national prestige | `shell/status-strip/cards/PrestigeCard.tsx` | `apps/desktop/src/renderer/shell/PrestigeCardEvent.test.tsx` |
 | presence-shortfall-prestige | Lose prestige for an uncovered station | `shell/status-strip/cards/PrestigeCard.tsx` | `apps/desktop/src/renderer/shell/PrestigePresenceShortfall.test.tsx` |
 | presence-queued-order-warning | Be warned that a queued order leaves a station short | `screens/fleet/components/PresenceWarnings.tsx` | `apps/desktop/src/renderer/screens/fleet/components/PresenceWarnings.test.tsx` |
+| fleet-morale | See fleet morale fall | `shell/status-strip/panels/NationPanel.tsx` | `apps/desktop/src/renderer/shell/StatusStrip.test.tsx` |
 | presence-revolt-pressure | See unrest after uncovered stations | `shell/status-strip/panels/NationPanel.tsx` | `apps/desktop/src/renderer/shell/StatusStripUnrest.test.tsx` |
 | ship-readiness | See and manage ship readiness | `screens/fleet/station/FleetStationSection.tsx` | `apps/desktop/src/renderer/screens/fleet/station/useStationAssignment.test.tsx` |
 | combat-fought-battle | Fight a battle: gunnery, spotting, contact, movement, weather, damage, torpedoes under stance, speed and course orders | `screens/battle/PlayerBattleScreen.tsx` | `apps/desktop/src/main/commands/battleOfferCommands.test.ts` |

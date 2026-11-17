@@ -1,4 +1,8 @@
-import { decodePeaceBehaviourRules, decodeTensionDriftRules } from "@bluewave/content-schema";
+import {
+  decodeFleetMoraleRules,
+  decodePeaceBehaviourRules,
+  decodeTensionDriftRules,
+} from "@bluewave/content-schema";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 
 function validateTensionDriftRules(
@@ -27,6 +31,37 @@ function validateTensionDriftRules(
         stage: "validate",
         entityId: rulesetId,
         remediation: `Author every tensionDrift value in ruleset '${rulesetId}', or remove the section to leave drift dormant`,
+      },
+    );
+  }
+}
+
+function validateFleetMoraleRules(
+  rulesets: readonly unknown[],
+  collector: DiagnosticCollector,
+): void {
+  const carriers = rulesets.filter(
+    (ruleset) => (ruleset as Record<string, unknown>)["fleetMorale"] !== undefined,
+  );
+  if (carriers.length > 1)
+    collector.addError(
+      "FLEET_MORALE_RULES_AMBIGUOUS",
+      `More than one ruleset carries a fleetMorale section (${carriers.map((r) => String((r as Record<string, unknown>)["id"])).join(", ")}); exactly one may`,
+      { stage: "validate" },
+    );
+  for (const ruleset of rulesets) {
+    const record = ruleset as Record<string, unknown>;
+    if (record["fleetMorale"] === undefined) continue;
+    const rulesetId = String(record["id"]);
+    const decoded = decodeFleetMoraleRules(record["fleetMorale"]);
+    if (decoded.ok) continue;
+    collector.addError(
+      "FLEET_MORALE_RULES_INVALID",
+      `Ruleset '${rulesetId}' fleetMorale section is invalid at '${decoded.field}': ${decoded.message}`,
+      {
+        stage: "validate",
+        entityId: rulesetId,
+        remediation: `Author every fleetMorale value in ruleset '${rulesetId}', or remove the section to leave fleet morale dormant`,
       },
     );
   }
@@ -69,4 +104,5 @@ export function validateDiplomacyRules(
 ): void {
   validateTensionDriftRules(rulesets, collector);
   validatePeaceBehaviourRules(rulesets, collector);
+  validateFleetMoraleRules(rulesets, collector);
 }

@@ -70,6 +70,37 @@ export default list(RulesetManifestSchema, [
         note: "PROVISIONAL. With the authored pair frictions the monthly probabilities give one tension step about every nine years for the most hostile pairs and about every eighty for the quietest; they await a sourcing pass and the balance report.",
       },
     },
+    fleetMorale: {
+      sectionVersion: 1,
+      unpaidFundsLoss: 10,
+      blockadeCrampedLoss: 3,
+      longWarMonths: 12,
+      recoveryPerMonth: 2,
+      provenance: {
+        sourceStatus: "BALANCE_TARGET",
+        confidence: "LOW",
+        kind: "balance_adjustment",
+        sources: [
+          {
+            title: "Rule the Waves 3 manual",
+            author: "Naval War Simulations / Matrix Games",
+            year: 2023,
+            page: "13",
+            section:
+              "Running out of funds lowers prestige and affects fleet morale, as unpaid sailors tend to get surly",
+          },
+          {
+            title: "Rule the Waves 3 manual",
+            author: "Naval War Simulations / Matrix Games",
+            year: 2023,
+            page: "42",
+            section:
+              "Cramped accommodation: in a long war it can affect fleet morale if your nation is blockaded",
+          },
+        ],
+        note: "PROVISIONAL. The manual names the two movers but gives no scale, magnitude, threshold for a long war or recovery rate. The meter runs 0 to 100 and starts full; all four values are Bluewave balance targets awaiting a sourcing pass. The meter has no downstream effect yet (#884).",
+      },
+    },
     // The peace-behaviour section (#777, decisions 0054 and 0055). Every value is a PROVISIONAL Bluewave balance target:
     // the manual (p.66) describes peace but gives no acceptance rule or frequency. The margin is the 0055 placeholder
     // carried over from #554; the per-area cession costs are authored in areas.ts (#816). Removing this section returns AI

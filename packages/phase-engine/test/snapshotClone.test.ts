@@ -31,6 +31,14 @@ function minimalSnapshot(): CampaignSnapshot {
             flags: ["naval_scare_armed"],
           },
           unrest: 3,
+          fleetMorale: 90,
+          fleetMoraleLastChange: {
+            before: 100,
+            after: 90,
+            unclampedAfter: 90,
+            contributions: [{ reasonCode: "UNPAID_FUNDS", delta: -10 }],
+            month: "1880-02",
+          },
           budgetModifiers: [
             {
               eventId: "naval_scare",

@@ -43,6 +43,7 @@ import {
   makeLedgerEntry,
 } from "./events.js";
 import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
+import { applyFleetMorale } from "./fleetMoraleApplication.js";
 import { applyPrestigeChange } from "./prestigeApplication.js";
 import { reportOutflowShortfall } from "./outflowShortfall.js";
 import { applyReadinessEvolution } from "./readinessEvolution.js";
@@ -505,8 +506,10 @@ export function runObligationPhase(ctx: PhaseContext): PhaseRunOutcome {
       ),
     );
 
-    if (ctx.playerNationId === nationId && (settlement.shortfall as number) > 0) {
-      applyPrestigeChange(ctx, nationId, "UNPAID_FUNDS");
+    if (ctx.playerNationId === nationId) {
+      const unpaid = (settlement.shortfall as number) > 0;
+      if (unpaid) applyPrestigeChange(ctx, nationId, "UNPAID_FUNDS");
+      applyFleetMorale(ctx, nationId, unpaid);
     }
   }
   return { status: "continue" };
@@ -541,7 +544,7 @@ export const obligationPhase: MonthPhase = {
   id: "obligation",
   name: "Obligation",
   permissions: {
-    reads: ["nations", "prestigeRules", "rulesetVersion"],
+    reads: ["nations", "prestigeRules", "rulesetVersion", "wars", "designs"],
     writes: ["nations"],
     rng: false,
   },

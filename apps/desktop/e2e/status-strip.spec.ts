@@ -21,10 +21,15 @@ test("the status strip expands into Nation, Budget and Outlook cards that fit th
     strip.getByRole("group", { name: "Outlook" }).getByText(/^(Healthy|Narrow|Deficit|Critical)$/),
   ).toBeVisible();
 
+  await test.step("reachable:fleet-morale", async () => {
+    await expect(strip.locator('[data-row="fleet-morale"]')).toContainText("100 / 100");
+  });
+
   await expect(strip.getByText("Prestige")).toBeVisible();
   await strip.getByRole("button", { name: /Not yet modelled \(\d+\)/ }).click();
   const popover = page.getByRole("dialog", { name: "Not yet modelled" });
-  await expect(popover.getByText("Fleet morale", { exact: true })).toBeVisible();
+  await expect(popover.getByText("Dock size", { exact: true })).toBeVisible();
+  await expect(popover.getByText("Fleet morale", { exact: true })).toHaveCount(0);
   await expect(popover.getByText("Prestige", { exact: true })).toHaveCount(0);
   await page.keyboard.press("Escape");
   await expect(popover).toBeHidden();

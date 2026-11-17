@@ -694,6 +694,22 @@
       }
     },
     {
+      "file": "packages/campaign-engine/src/fleet-morale-projection.ts",
+      "type": "PlayerProjectionFleetMorale",
+      "area": "strategic",
+      "issue": "#884",
+      "covered": {
+        "changeExplanation": "fleet_morale_change"
+      },
+      "exempt": {
+        "current": "Accumulated morale state; the change tree explains the last movement, not the accumulated total (ADR-0307).",
+        "max": "Fixed scale ceiling of the 0 to 100 meter; it has no derived formula.",
+        "lastChange.before": "Shown as the \"Morale before\" line of fleet_morale_change.",
+        "lastChange.after": "Shown as the fleet_morale_change result, equal to the displayed after value.",
+        "lastChange.delta": "Shown as the sum of the driver and clamp lines of fleet_morale_change."
+      }
+    },
+    {
       "file": "packages/campaign-engine/src/projection.ts",
       "type": "PlayerProjectionCareer",
       "area": "strategic",

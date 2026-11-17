@@ -4,6 +4,7 @@ import {
   battleOffersFromRulesets,
   eventResolutionFromRulesets,
   fleetManagementFromRulesets,
+  fleetMoraleFromRulesets,
   gunneryFromRulesets,
   missilesFromRulesets,
   peaceBehaviourFromRulesets,
@@ -117,6 +118,26 @@ export function loadTensionDriftRules(): TensionDriftRules | undefined {
     );
   tensionDrift = { rules: decoded?.value };
   return tensionDrift.rules;
+}
+
+type FleetMoraleRules = Extract<
+  NonNullable<ReturnType<typeof fleetMoraleFromRulesets>>,
+  { readonly ok: true }
+>["value"];
+
+let fleetMorale: { readonly rules: FleetMoraleRules | undefined } | null = null;
+
+export function loadFleetMoraleRules(): FleetMoraleRules | undefined {
+  if (fleetMorale !== null) return fleetMorale.rules;
+  const { bundle } = readContentArtifact(resolveGeneratedContentDir());
+  const decoded = fleetMoraleFromRulesets(bundle.rulesets);
+  if (decoded !== undefined && !decoded.ok)
+    throw new ContentArtifactError(
+      "CONTENT_ARTIFACT_INVALID",
+      `ruleset fleetMorale section is invalid at '${decoded.field}': ${decoded.message}`,
+    );
+  fleetMorale = { rules: decoded?.value };
+  return fleetMorale.rules;
 }
 
 type PeaceBehaviourRules = Extract<
