@@ -11,6 +11,7 @@ type CampaignExecute = CampaignCommandClient["execute"];
 
 const projection: PlayerProjection = {
   prestige: { current: 20, sackingThreshold: 16, dismissalRisk: false },
+  fleetMorale: { current: 100, max: 100 },
   campaignIdentity: "campaign_1",
   snapshotHash: "hash_abc",
   revision: 3,
@@ -97,11 +98,7 @@ describe("useCampaignShell", () => {
   });
 
   it("reads the campaign views once per open, and once more per refresh", async () => {
-    const ok = <T>(value: T) => ({
-      outcome: "success" as const,
-      value,
-      diagnostics: [],
-    });
+    const ok = <T>(value: T) => ({ outcome: "success" as const, value, diagnostics: [] });
     const execute = vi.fn(async (command: string) =>
       command === "inspectCampaign" ? ok({ projection }) : ok({}),
     );

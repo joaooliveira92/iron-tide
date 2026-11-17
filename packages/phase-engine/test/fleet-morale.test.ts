@@ -160,7 +160,7 @@ function run(s: Scenario, rules: FleetMoraleRules | null = RULES) {
     "fleet-morale-seed",
     new DiagnosticCollector(),
     undefined,
-    { playerNationId: "GBR", ...(rules === null ? {} : { fleetMorale: rules }) },
+    rules === null ? { playerNationId: "GBR" } : { playerNationId: "GBR", fleetMorale: rules },
   );
   return result.finalSnapshot.nations;
 }
