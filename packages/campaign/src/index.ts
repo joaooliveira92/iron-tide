@@ -94,6 +94,7 @@ export type { DeclineCounterEntry, DeclinedBattleRecord } from "./declineRecords
 export type { PeaceOffer } from "./peaceOffer.js";
 export { BattleAbsenceSchema, type BattleAbsence } from "./battleAbsence.js";
 export { isSeaArea } from "./seaArea.js";
+export { nextHopToward, seaAdjacency, seaRoute, type SeaAdjacency } from "./seaRoute.js";
 export { stationAreaIds } from "./presence.js";
 export {
   applyPresenceOrder,

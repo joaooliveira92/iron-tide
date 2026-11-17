@@ -2,8 +2,9 @@ import {
   applyDivisionCommand,
   checkDivisionInvariants,
   DIVISION_STATE_INVARIANT_FAILED,
-  isSeaArea,
-  type CampaignSnapshot,
+  nextHopToward,
+  seaAdjacency,
+  type SeaAdjacency,
   type FleetState,
   type PermanentDivision,
   type Ship,
@@ -21,49 +22,6 @@ const byId = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 
 export function detachedFleetId(shipId: string): string {
   return `fleet-fs-${shipId}`;
-}
-
-function seaAdjacency(snapshot: CampaignSnapshot): Map<string, string[]> {
-  const sea = new Set(snapshot.world.areas.filter(isSeaArea).map((a) => a.id));
-  const adjacency = new Map<string, string[]>();
-  const link = (from: string, to: string): void => {
-    if (!sea.has(from) || !sea.has(to)) return;
-    const list = adjacency.get(from) ?? [];
-    if (!list.includes(to)) list.push(to);
-    adjacency.set(from, list);
-  };
-  for (const route of snapshot.world.routes) {
-    if (route.type !== "sea") continue;
-    link(route.from, route.to);
-    link(route.to, route.from);
-  }
-  for (const list of adjacency.values()) list.sort(byId);
-  return adjacency;
-}
-
-function hopsFrom(target: string, adjacency: Map<string, string[]>): Map<string, number> {
-  const distance = new Map<string, number>([[target, 0]]);
-  const queue = [target];
-  for (let i = 0; i < queue.length; i += 1) {
-    const here = queue[i]!;
-    for (const next of adjacency.get(here) ?? []) {
-      if (distance.has(next)) continue;
-      distance.set(next, distance.get(here)! + 1);
-      queue.push(next);
-    }
-  }
-  return distance;
-}
-
-export function nextHopToward(
-  from: string,
-  target: string,
-  adjacency: Map<string, string[]>,
-): string | null {
-  const distance = hopsFrom(target, adjacency);
-  const here = distance.get(from);
-  if (here === undefined || here === 0) return null;
-  return (adjacency.get(from) ?? []).find((n) => distance.get(n) === here - 1) ?? null;
 }
 
 function largestShortfall(rows: readonly StationPresenceRow[]): StationPresenceRow | undefined {
@@ -89,7 +47,7 @@ export function runForeignStationDeploymentPhase(ctx: PhaseContext): PhaseRunOut
     ctx.campaignMonth,
   );
 
-  const adjacency = seaAdjacency(ctx.snapshot.view());
+  const adjacency = seaAdjacency(ctx.snapshot.view().world);
   const nationIds = [...ctx.snapshot.view().nations.keys()].sort(byId);
   for (const nationId of nationIds) {
     const nation = ctx.snapshot.view().nations.get(nationId);
@@ -124,7 +82,7 @@ function deployShip(
   nationId: string,
   shipId: string,
   targetAreaId: string,
-  adjacency: Map<string, string[]>,
+  adjacency: SeaAdjacency,
 ): void {
   const snapshot = ctx.snapshot.view();
   const nation = snapshot.nations.get(nationId)!;
