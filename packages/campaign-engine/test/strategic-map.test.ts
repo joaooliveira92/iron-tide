@@ -172,6 +172,7 @@ describe("buildStrategicMapView legal destinations", () => {
         fleetName: "Home Fleet",
         areaId: "eng_home_coast",
         shipCount: 1,
+        ships: [{ id: "gbr_dreadnought", name: "HMS Dreadnought" }],
         legalDestinations: ["fra_med_coast", "sea_english_channel", "sea_north_sea"],
         routeHops: [
           { areaId: "fra_med_coast", hops: 1 },

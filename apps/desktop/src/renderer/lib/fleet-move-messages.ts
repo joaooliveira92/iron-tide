@@ -1,4 +1,10 @@
 export const FLEET_MOVE_MESSAGES = {
+  "map.orders.pendingRoute": "Ordered: sails for {area}, {duration} away, one hop at month end",
+  "map.orders.enRoute": "En route to {area}, {duration} remaining",
+  "map.orders.destination": "{area} · {duration}",
+  "map.orders.month": "1 month",
+  "map.orders.months": "{count} months",
+  "map.orders.shipsOnly": "Order only these ships (none ticked sends the whole fleet)",
   "fleet.move.blocked.FOREIGN_STATION_ASSIGNED":
     "{fleet} has a ship on foreign station. Clear its assignment before ordering the fleet to move.",
   "fleet.move.blocked.SHIP_NOT_OPERATIONAL": "{fleet} has no commissioned ship.",

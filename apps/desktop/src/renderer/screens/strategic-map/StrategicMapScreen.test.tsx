@@ -34,11 +34,17 @@ const fleet: MapOrderFleet = {
   mapAreaId: "area_north_sea",
   areaName: "North Sea",
   shipCount: 12,
+  ships: [
+    { id: "s1", name: "HMS One" },
+    { id: "s2", name: "HMS Two" },
+  ],
+  enRoute: { destinationName: "North Sea", months: 3 },
   legalDestinations: [
     {
       areaId: "sea_western_approaches",
       mapAreaId: "area_western_approaches",
       name: "Western Approaches",
+      months: 2,
     },
   ],
   blockedReason: null,
@@ -134,8 +140,40 @@ describe("StrategicMapScreen", () => {
   it("orders a fleet to a legal destination chosen in the panel", () => {
     hookMocks.stateFn.mockReturnValue(state({ selectedFleet: fleet }));
     render(<StrategicMapScreen sessionId="ses-1" />);
-    fireEvent.click(screen.getByRole("button", { name: "Western Approaches" }));
-    expect(hookMocks.orderTo).toHaveBeenCalledWith("home-fleet", "sea_western_approaches");
+    fireEvent.click(screen.getByRole("button", { name: "Western Approaches · 2 months" }));
+    expect(hookMocks.orderTo).toHaveBeenCalledWith(
+      "home-fleet",
+      "sea_western_approaches",
+      undefined,
+    );
+  });
+
+  it("orders only the ticked ships and says how long the route takes", () => {
+    hookMocks.stateFn.mockReturnValue(state({ selectedFleet: fleet }));
+    render(<StrategicMapScreen sessionId="ses-1" />);
+    fireEvent.click(screen.getByRole("checkbox", { name: "HMS Two" }));
+    fireEvent.click(screen.getByRole("button", { name: "Western Approaches · 2 months" }));
+    expect(hookMocks.orderTo).toHaveBeenCalledWith("home-fleet", "sea_western_approaches", ["s2"]);
+  });
+
+  it("sends the whole fleet when every ship is ticked", () => {
+    hookMocks.stateFn.mockReturnValue(state({ selectedFleet: fleet }));
+    render(<StrategicMapScreen sessionId="ses-1" />);
+    fireEvent.click(screen.getByRole("checkbox", { name: "HMS One" }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "HMS Two" }));
+    fireEvent.click(screen.getByRole("button", { name: "Western Approaches · 2 months" }));
+    expect(hookMocks.orderTo).toHaveBeenCalledWith(
+      "home-fleet",
+      "sea_western_approaches",
+      undefined,
+    );
+  });
+
+  it("shows the standing route and the months remaining for a fleet under way", () => {
+    render(<StrategicMapScreen sessionId="ses-1" />);
+    expect(screen.getByTestId("map-fleet-en-route").textContent).toBe(
+      "En route to North Sea, 3 months remaining",
+    );
   });
 
   it("shows each department as a tab that reports its live state", () => {

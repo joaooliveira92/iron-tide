@@ -41,7 +41,7 @@ export interface StrategicMapScreenState {
   readonly loadError: string | null;
   readonly loading: boolean;
   readonly selectFleet: (fleetId: string) => void;
-  readonly orderTo: (fleetId: string, areaId: string) => void;
+  readonly orderTo: (fleetId: string, areaId: string, shipIds?: readonly string[]) => void;
   readonly chooseDestination: (areaId: string) => void;
   readonly cancelChoice: () => void;
   readonly cancelOrder: (commandId: string) => void;
@@ -100,10 +100,16 @@ export function useStrategicMapScreen(sessionId: string): StrategicMapScreenStat
   }, []);
 
   const orderTo = useCallback(
-    (fleetId: string, areaId: string) => {
+    (fleetId: string, areaId: string, shipIds?: readonly string[]) => {
       const fleet = fleetById.get(fleetId);
       if (fleet === undefined) return;
-      const target = { divisionId: fleetId, fromAreaId: fleet.areaId, toAreaId: areaId };
+      const [firstShip, ...otherShips] = shipIds ?? [];
+      const target = {
+        divisionId: fleetId,
+        fromAreaId: fleet.areaId,
+        toAreaId: areaId,
+        ...(firstShip === undefined ? {} : { shipIds: [firstShip, ...otherShips] as const }),
+      };
       const existing = pending.find((order) => order.fleetId === fleetId);
       setLastOutcome(null);
       setChoices([]);

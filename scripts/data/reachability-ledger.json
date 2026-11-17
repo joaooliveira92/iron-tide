@@ -15,7 +15,7 @@
     },
     {
       "id": "move-fleet",
-      "player_verb": "Order a fleet along a route, one hop a month",
+      "player_verb": "Order a fleet or chosen ships along a sea route",
       "status": "reachable",
       "engine_package": "phase-engine",
       "engine_modules": [],
@@ -29,7 +29,7 @@
       "renderer_screen": "screens/strategic-map/StrategicMapScreen.tsx",
       "evidence_test": "apps/desktop/src/renderer/screens/strategic-map/StrategicMapScreen.test.tsx",
       "decision": null,
-      "note": "The map and Fleet panel share useMovementOrders, so both build the same MoveFleet body."
+      "note": "The map and Fleet panel share useMovementOrders, so both build the same MoveFleet body. Evidence covers route months and the ship picker."
     },
     {
       "id": "assign-station",

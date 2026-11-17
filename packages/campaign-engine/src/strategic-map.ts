@@ -21,6 +21,7 @@ export interface StrategicMapFleetOrdersView {
   readonly fleetName: string;
   readonly areaId: string;
   readonly shipCount: number;
+  readonly ships: readonly { readonly id: string; readonly name: string }[];
   readonly legalDestinations: readonly string[];
   readonly routeHops: readonly { readonly areaId: string; readonly hops: number }[];
   readonly destinationAreaId: string | null;
@@ -104,6 +105,7 @@ export function buildStrategicMapView(
         fleetName: fleet.name,
         areaId: fleet.locationAreaId,
         shipCount: fleet.ships.length,
+        ships: fleet.ships.map((ship) => ({ id: ship.id, name: ship.name })),
         legalDestinations,
         routeHops,
         destinationAreaId: fleet.destinationAreaId ?? null,

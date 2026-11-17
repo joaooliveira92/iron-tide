@@ -9,6 +9,7 @@ export interface MovementRouteTarget {
   readonly divisionId: string;
   readonly fromAreaId: string;
   readonly toAreaId: string;
+  readonly shipIds?: readonly [string, ...string[]];
 }
 
 function routeOf(target: MovementRouteTarget): MovementRouteTarget {
@@ -16,6 +17,7 @@ function routeOf(target: MovementRouteTarget): MovementRouteTarget {
     divisionId: target.divisionId,
     fromAreaId: target.fromAreaId,
     toAreaId: target.toAreaId,
+    ...(target.shipIds === undefined ? {} : { shipIds: target.shipIds }),
   };
 }
 

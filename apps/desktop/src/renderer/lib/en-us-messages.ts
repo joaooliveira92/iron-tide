@@ -156,7 +156,7 @@ export const EN_US_MESSAGES = {
 
   "map.title": "Strategic map",
   "map.description":
-    "Read the world from compiled campaign state. Drag one of your fleets onto a legal area, or pick a destination in the orders panel, to sail one hop at month end.",
+    "Read the world from compiled campaign state. Drag one of your fleets onto a legal area, or pick a destination in the orders panel, to sail along the sea route, one hop a month.",
   "map.retry": "Retry",
   "map.orders.title": "Fleet orders",
   "map.orders.hint":

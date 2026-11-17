@@ -4,6 +4,12 @@ export interface MapOrderDestination {
   readonly areaId: string;
   readonly mapAreaId: string;
   readonly name: string;
+  readonly months?: number;
+}
+
+export interface MapOrderShip {
+  readonly id: string;
+  readonly name: string;
 }
 
 export interface MapOrderFleet {
@@ -13,6 +19,8 @@ export interface MapOrderFleet {
   readonly mapAreaId: string | null;
   readonly areaName: string;
   readonly shipCount: number;
+  readonly ships?: readonly MapOrderShip[];
+  readonly enRoute?: { readonly destinationName: string; readonly months: number } | null;
   readonly legalDestinations: readonly MapOrderDestination[];
   readonly blockedReason: StrategicMapBlockedReason | null;
 }
