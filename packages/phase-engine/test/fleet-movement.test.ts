@@ -1,6 +1,7 @@
-import type { CampaignSnapshot } from "@bluewave/campaign";
-import { fleetMoveProblem } from "@bluewave/campaign";
+import type { CampaignSnapshot, PermanentDivision } from "@bluewave/campaign";
+import { divisionAggregateHash, fleetMoveProblem, VACANT } from "@bluewave/campaign";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
+import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
@@ -195,5 +196,96 @@ describe("MoveFleet through the month", () => {
     expect(sha256Hex(canonicalSerialize(one.result.finalSnapshot))).toBe(
       sha256Hex(canonicalSerialize(two.result.finalSnapshot)),
     );
+  });
+});
+
+function withDivision(snapshot: CampaignSnapshot, shipOrder: string[]): CampaignSnapshot {
+  const nation = snapshot.nations.get(ATTACKER_NATION)!;
+  const division: PermanentDivision = {
+    divisionId: "div-1",
+    nationId: ATTACKER_NATION,
+    shipOrder,
+    flagshipShipId: shipOrder[0]!,
+    commanderOfficerId: VACANT,
+    divisionRole: "CORE",
+    preferredFormation: "LINE_AHEAD",
+    experience: SafeInt(20),
+    cohesion: SafeInt(30),
+    locationAreaId: "a-1",
+    creationMonth: "1900-01",
+    lastReorganizationMonth: "1900-01",
+    provenanceRefs: [],
+    rulesetVersion: "test",
+    aggregateHash: "",
+  };
+  division.aggregateHash = divisionAggregateHash(division);
+  return {
+    ...snapshot,
+    nations: new Map([
+      ...snapshot.nations,
+      [ATTACKER_NATION, { ...nation, divisions: [division] }],
+    ]),
+  };
+}
+
+describe("detaching ships that belong to a division", () => {
+  it("removes the ordered ship from a partly ordered division", () => {
+    const snapshot = withDivision(world(), ["g1", "g2"]);
+    const { nation, collector } = run(snapshot, [move(snapshot, "a-3", ["g1"])]);
+    expect(collector.errors).toEqual([]);
+    expect(nation.divisions[0]!.shipOrder).toEqual(["g2"]);
+    expect(nation.divisions[0]!.flagshipShipId).toBe("g2");
+    expect(nation.fleets.some((f) => f.ships.map((s) => s.id).join() === "g1")).toBe(true);
+  });
+
+  it("leaves a division untouched when every ship of it is ordered", () => {
+    const snapshot = withDivision(world(), ["g1", "g2"]);
+    const { nation } = run(snapshot, [move(snapshot, "a-2", ["g1", "g2"])]);
+    expect(nation.divisions[0]!.shipOrder).toEqual(["g1", "g2"]);
+  });
+
+  it("rejects the order and keeps the fleet whole when the division would break an invariant", () => {
+    const snapshot = withDivision(world(), ["g1", "g2", "ghost"]);
+    const { nation, collector } = run(snapshot, [move(snapshot, "a-3", ["g1"])]);
+    expect(collector.errors.map((e) => e.code)).toContain("DIVISION_STATE_INVARIANT_FAILED");
+    expect(nation.fleets).toHaveLength(1);
+    expect(nation.fleets[0]!.locationAreaId).toBe("a-1");
+    expect(nation.divisions[0]!.shipOrder).toEqual(["g1", "g2", "ghost"]);
+  });
+});
+
+describe("a standing route that can no longer be sailed", () => {
+  it("halts in place when a ship of the fleet goes under rebuild mid-route", () => {
+    const snapshot = world();
+    const first = run(snapshot, [move(snapshot, "a-3")]);
+    const mid = first.result.finalSnapshot;
+    const nation = mid.nations.get(ATTACKER_NATION)!;
+    const fleet = nation.fleets[0]!;
+    const ships = fleet.ships.map((s, i) =>
+      i === 0 ? { ...s, availability: "UNAVAILABLE" as const } : s,
+    );
+    const stuck: CampaignSnapshot = {
+      ...mid,
+      nations: new Map([
+        ...mid.nations,
+        [ATTACKER_NATION, { ...nation, fleets: [{ ...fleet, ships }] }],
+      ]),
+    };
+    const second = run(stuck, []);
+    expect(second.nation.fleets[0]!.locationAreaId).toBe("a-2");
+    expect(second.nation.fleets[0]!.destinationAreaId).toBeUndefined();
+  });
+
+  it("halts when the destination is no longer reachable", () => {
+    const snapshot = world();
+    const first = run(snapshot, [move(snapshot, "a-3")]);
+    const mid = first.result.finalSnapshot;
+    const cut: CampaignSnapshot = {
+      ...mid,
+      world: { ...mid.world, routes: mid.world.routes.filter((r) => r.id !== "r2") },
+    };
+    const second = run(cut, []);
+    expect(second.nation.fleets[0]!.locationAreaId).toBe("a-2");
+    expect(second.nation.fleets[0]!.destinationAreaId).toBeUndefined();
   });
 });
