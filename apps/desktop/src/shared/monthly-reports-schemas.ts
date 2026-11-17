@@ -125,6 +125,28 @@ const MonthlyReportPresenceSchema = Schema.Struct({
   prestigeDelta: Schema.optional(int),
 });
 
+const ExerciseMonthSchema = Schema.String.check(Schema.isPattern(/^\d{4}-\d{2}$/));
+
+const MonthlyReportFleetExerciseSchema = Schema.Struct({
+  scheduled: Schema.optional(
+    Schema.Struct({ month: ExerciseMonthSchema, shipIds: Schema.Array(nonEmptyString) }),
+  ),
+  completed: Schema.optional(
+    Schema.Struct({
+      month: ExerciseMonthSchema,
+      shipIds: Schema.Array(nonEmptyString),
+      experienceGained: nonNegativeInt,
+    }),
+  ),
+  tension: Schema.Array(
+    Schema.Struct({
+      otherNationId: nonEmptyString,
+      before: nonNegativeInt,
+      after: nonNegativeInt,
+    }),
+  ),
+});
+
 const StrategicPrioritySchema = Schema.Struct({
   id: nonEmptyString,
   type: strategicPriorityTypeSchema,
@@ -150,6 +172,7 @@ const MonthlyReportEntrySchema = Schema.Struct({
   priorities: Schema.Array(StrategicPrioritySchema),
   battleOutcomes: Schema.Array(BattleOutcomeSchema),
   presence: Schema.optional(MonthlyReportPresenceSchema),
+  fleetExercise: Schema.optional(MonthlyReportFleetExerciseSchema),
 });
 
 export const MonthlyReportsSchema = Schema.Struct({

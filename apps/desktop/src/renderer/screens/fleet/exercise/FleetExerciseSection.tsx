@@ -5,7 +5,15 @@ import { useMemo } from "react";
 import { ExplanationDisclosure } from "../../../components/shared/ExplanationDisclosure.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
 import type { CommandOutcome } from "../../../lib/command-screen-workflow.js";
-import { limitReached, type ExerciseShipRow, type ExerciseState } from "./exercise-model.js";
+import type { FleetExerciseTensionPreview } from "../../../../shared/fleet-contract.js";
+import { campaignNationLabel } from "../../../content/presentationContent.js";
+import { translate } from "../../../lib/strings.js";
+import {
+  limitReached,
+  tensionOutlook,
+  type ExerciseShipRow,
+  type ExerciseState,
+} from "./exercise-model.js";
 import { useFleetExercise } from "./useFleetExercise.js";
 
 export interface FleetExerciseViewProps {
@@ -48,17 +56,21 @@ export function FleetExerciseView({
     >
       <div className="flex items-center gap-2">
         <h3 id="fleet-exercise-h" className="text-sm font-medium">
-          Annual fleet exercise
+          {translate("fleet.exercise.heading")}
         </h3>
         <Badge variant="secondary" className="text-xs">
-          {exercise.heldInNextExerciseYear} of {exercise.maxPerCalendarYear} in{" "}
-          {exercise.nextExerciseYear}
+          {translate("fleet.exercise.badge", {
+            held: exercise.heldInNextExerciseYear,
+            max: exercise.maxPerCalendarYear,
+            year: exercise.nextExerciseYear,
+          })}
         </Badge>
       </div>
       <p className="text-xs text-muted-foreground">
-        Chosen ships exercise together in the month after you order it. They cost{" "}
-        {exercise.maintenanceMultiple} times their active maintenance that month and cannot sail,
-        fight or take missions. Their divisions gain {exercise.experienceGain} experience.
+        {translate("fleet.exercise.intro", {
+          multiple: exercise.maintenanceMultiple,
+          gain: exercise.experienceGain,
+        })}
       </p>
       {exercise.experienceGainExplanation !== undefined && (
         <ExplanationDisclosure
@@ -69,12 +81,15 @@ export function FleetExerciseView({
           testId="fleet-exercise-gain-explanation"
         />
       )}
+      {exercise.tensionPreview !== undefined && !exhausted && (
+        <TensionPreview preview={exercise.tensionPreview} selectedCount={selected.length} />
+      )}
 
       {loadError !== null && (
         <div role="alert" className="space-y-2 rounded-md border border-destructive/50 p-3 text-sm">
           <p className="whitespace-pre-line text-destructive">{loadError}</p>
           <Button type="button" size="sm" variant="outline" onClick={onReload}>
-            Reload
+            {translate("fleet.exercise.reload")}
           </Button>
         </div>
       )}
@@ -85,9 +100,9 @@ export function FleetExerciseView({
       )}
       {outcomeUnknown && (
         <div role="alert" className="flex items-center gap-2 rounded-md border px-3 py-2 text-sm">
-          <span>The outcome of the last request is unknown.</span>
+          <span>{translate("fleet.exercise.outcomeUnknown")}</span>
           <Button type="button" size="sm" variant="outline" onClick={onRetry}>
-            Retry
+            {translate("fleet.exercise.retry")}
           </Button>
         </div>
       )}
@@ -98,17 +113,21 @@ export function FleetExerciseView({
           className="rounded-md border px-3 py-2 text-sm"
           data-testid="fleet-exercise-scheduled"
         >
-          Exercise set for {scheduled.month} with {scheduled.shipIds.length}{" "}
-          {scheduled.shipIds.length === 1 ? "ship" : "ships"}.
+          {translate(
+            scheduled.shipIds.length === 1
+              ? "fleet.exercise.scheduled.one"
+              : "fleet.exercise.scheduled.many",
+            { month: scheduled.month, n: scheduled.shipIds.length },
+          )}
         </p>
       )}
 
       {exhausted ? (
         <p className="text-sm text-muted-foreground">
-          The exercise for {exercise.nextExerciseYear} has already been ordered.
+          {translate("fleet.exercise.limitReached", { year: exercise.nextExerciseYear })}
         </p>
       ) : candidates.length === 0 ? (
-        <p className="text-sm text-muted-foreground">No active, unassigned ships are available.</p>
+        <p className="text-sm text-muted-foreground">{translate("fleet.exercise.noShips")}</p>
       ) : (
         <Card>
           <CardContent className="space-y-1.5 p-4">
@@ -120,11 +139,13 @@ export function FleetExerciseView({
                   checked={selectedIds.has(row.shipId)}
                   disabled={busy || !row.eligible}
                   onChange={() => onToggle(row.shipId)}
-                  aria-label={`Exercise ${row.name}`}
+                  aria-label={translate("fleet.exercise.shipLabel", { name: row.name })}
                 />
                 <span>{row.name}</span>
                 {row.exercising && (
-                  <span className="text-xs text-muted-foreground">exercising</span>
+                  <span className="text-xs text-muted-foreground">
+                    {translate("fleet.exercise.exercising")}
+                  </span>
                 )}
               </label>
             ))}
@@ -139,10 +160,61 @@ export function FleetExerciseView({
           disabled={busy || selected.length === 0}
           onClick={() => void onHold()}
         >
-          Hold fleet exercise
+          {translate("fleet.exercise.hold")}
         </Button>
       )}
     </section>
+  );
+}
+
+function TensionPreview({
+  preview,
+  selectedCount,
+}: {
+  readonly preview: FleetExerciseTensionPreview;
+  readonly selectedCount: number;
+}) {
+  const format = usePresentationFormat();
+  const outlook = tensionOutlook(preview, selectedCount);
+  const powers = outlook.rows.length;
+  return (
+    <div className="space-y-1 text-xs" data-testid="fleet-exercise-tension">
+      <p className="font-medium">{translate("fleet.exercise.tension.heading")}</p>
+      {outlook.belowThreshold ? (
+        <p className="text-muted-foreground">
+          {translate("fleet.exercise.tension.below", { min: preview.minShips })}
+        </p>
+      ) : powers === 0 ? (
+        <p className="text-muted-foreground">{translate("fleet.exercise.tension.none")}</p>
+      ) : (
+        <>
+          <p>
+            {translate(
+              powers === 1 ? "fleet.exercise.tension.one" : "fleet.exercise.tension.many",
+              { n: powers, step: preview.increase, ceiling: preview.ceiling },
+            )}
+          </p>
+          <ul className="space-y-0.5 pl-3 text-muted-foreground">
+            {outlook.rows.map((row) => (
+              <li key={row.otherNationId}>
+                {translate("fleet.exercise.tension.row", {
+                  nation: campaignNationLabel(row.otherNationId),
+                  before: row.before,
+                  after: row.after,
+                })}
+              </li>
+            ))}
+          </ul>
+        </>
+      )}
+      <ExplanationDisclosure
+        tree={preview.explanation}
+        area="fleet"
+        summaryKey="fleet.fleet_exercise_tension.summary"
+        format={format}
+        testId="fleet-exercise-tension-explanation"
+      />
+    </div>
   );
 }
 

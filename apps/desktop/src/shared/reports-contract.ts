@@ -79,6 +79,22 @@ export interface MonthlyReportPresence {
   readonly prestigeDelta?: number;
 }
 
+export interface MonthlyReportExerciseTension {
+  readonly otherNationId: string;
+  readonly before: number;
+  readonly after: number;
+}
+
+export interface MonthlyReportFleetExercise {
+  readonly scheduled?: { readonly month: string; readonly shipIds: readonly string[] };
+  readonly completed?: {
+    readonly month: string;
+    readonly shipIds: readonly string[];
+    readonly experienceGained: number;
+  };
+  readonly tension: readonly MonthlyReportExerciseTension[];
+}
+
 export interface MonthlyReportPeriod {
   readonly from: { readonly year: number; readonly month: number };
   readonly to: { readonly year: number; readonly month: number };
@@ -97,6 +113,7 @@ export interface MonthlyReportEntry {
   readonly priorities: readonly StrategicPriority[];
   readonly battleOutcomes: readonly BattleOutcome[];
   readonly presence?: MonthlyReportPresence;
+  readonly fleetExercise?: MonthlyReportFleetExercise;
 }
 
 export interface MonthlyReports {

@@ -11,6 +11,8 @@ import type {
   MonthlyReportConstructionProgress,
   MonthlyReportDiscovery,
   MonthlyReportEntry,
+  MonthlyReportExerciseTension,
+  MonthlyReportFleetExercise,
   MonthlyReportPresence,
   MonthlyReportPresenceShortfall,
   MonthlyReportResearchProgress,
@@ -134,6 +136,41 @@ export function presenceFromEvents(
   return { shortfalls, ...(prestigeDelta === undefined ? {} : { prestigeDelta }) };
 }
 
+export function fleetExerciseFromEvents(
+  events: readonly DomainEventEnvelope[],
+  nationId: string,
+): MonthlyReportFleetExercise | undefined {
+  let scheduled: MonthlyReportFleetExercise["scheduled"];
+  let completed: MonthlyReportFleetExercise["completed"];
+  const tension: MonthlyReportExerciseTension[] = [];
+  for (const { body } of events) {
+    if (body.kind === "FleetExerciseScheduled" && body.nationId === nationId) {
+      scheduled = { month: body.month, shipIds: [...body.shipIds] };
+    } else if (body.kind === "FleetExerciseCompleted" && body.nationId === nationId) {
+      completed = {
+        month: body.month,
+        shipIds: [...body.shipIds],
+        experienceGained: Number(body.experienceGained),
+      };
+    } else if (body.kind === "ExerciseTensionRaised" && body.nationId === nationId) {
+      tension.push({
+        otherNationId: body.otherNationId,
+        before: Number(body.before),
+        after: Number(body.after),
+      });
+    }
+  }
+  if (scheduled === undefined && completed === undefined && tension.length === 0) return undefined;
+  tension.sort((a, b) =>
+    a.otherNationId < b.otherNationId ? -1 : a.otherNationId > b.otherNationId ? 1 : 0,
+  );
+  return {
+    ...(scheduled === undefined ? {} : { scheduled }),
+    ...(completed === undefined ? {} : { completed }),
+    tension,
+  };
+}
+
 export function activeShipCount(nation: FleetSnapshot): number {
   return nation.fleets.flatMap((fleet) => fleet.ships).filter((ship) => !ship.isUnderConstruction)
     .length;
@@ -172,6 +209,7 @@ export function buildMonthlyReportEntry(input: MonthlyReportEntryInput): Monthly
   );
 
   const presence = presenceFromEvents(input.domainEvents, playerNationId);
+  const fleetExercise = fleetExerciseFromEvents(input.domainEvents, playerNationId);
 
   return {
     reportId: input.reportId,
@@ -228,5 +266,6 @@ export function buildMonthlyReportEntry(input: MonthlyReportEntryInput): Monthly
       explanation: [...outcome.explanation],
     })),
     ...(presence === undefined ? {} : { presence }),
+    ...(fleetExercise === undefined ? {} : { fleetExercise }),
   };
 }

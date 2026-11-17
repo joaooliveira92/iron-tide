@@ -5,6 +5,7 @@ import type {
   FleetScreenProjection,
 } from "../../../../shared/fleet-contract.js";
 import { useBridge } from "../../../lib/bridge-context.js";
+import { translate } from "../../../lib/strings.js";
 import {
   type CommandOutcome,
   requestLifecycleAdapter,
@@ -50,7 +51,10 @@ export function useFleetExercise(sessionId: string): UseFleetExerciseReturn {
       project: projectExercise,
       accept: (value) => ({
         patch: {},
-        notice: `Fleet exercise queued for ${value.shipCount} ${value.shipCount === 1 ? "ship" : "ships"}. It is held the month after you advance.`,
+        notice: translate(
+          value.shipCount === 1 ? "fleet.exercise.queued.one" : "fleet.exercise.queued.many",
+          { n: value.shipCount },
+        ),
       }),
     }),
     { refreshKey: campaignRevision },

@@ -70,7 +70,22 @@ export interface FleetTrainingProjection {
   readonly selections: readonly FleetTrainingSelectionView[];
 }
 
+export interface FleetExerciseTensionRow {
+  readonly otherNationId: string;
+  readonly before: number;
+  readonly after: number;
+}
+
+export interface FleetExerciseTensionPreview {
+  readonly minShips: number;
+  readonly increase: number;
+  readonly ceiling: number;
+  readonly rows: readonly FleetExerciseTensionRow[];
+  readonly explanation: ExplanationTree;
+}
+
 export interface FleetExerciseProjection {
+  readonly tensionPreview?: FleetExerciseTensionPreview;
   readonly maxPerCalendarYear: number;
   readonly maintenanceMultiple: number;
   readonly experienceGain: number;
