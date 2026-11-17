@@ -233,6 +233,30 @@ export const DivisionExperienceChangedSchema = Schema.Struct({
   delta: nonNegativeSafeInt,
 });
 
+export const FleetExerciseScheduledSchema = Schema.Struct({
+  kind: Schema.Literal("FleetExerciseScheduled"),
+  nationId: nonEmptyString,
+  month: discoveryMonth,
+  shipIds: Schema.Array(nonEmptyString).check(Schema.isMinLength(1)),
+});
+
+export const FleetExerciseCompletedSchema = Schema.Struct({
+  kind: Schema.Literal("FleetExerciseCompleted"),
+  nationId: nonEmptyString,
+  month: discoveryMonth,
+  shipIds: Schema.Array(nonEmptyString).check(Schema.isMinLength(1)),
+  experienceGained: nonNegativeSafeInt,
+});
+
+export const ExerciseTensionRaisedSchema = Schema.Struct({
+  kind: Schema.Literal("ExerciseTensionRaised"),
+  nationId: nonEmptyString,
+  otherNationId: nonEmptyString,
+  before: nonNegativeSafeInt,
+  after: nonNegativeSafeInt,
+  delta: positiveSafeInt,
+});
+
 export const PrestigeLossRequestedSchema = Schema.Struct({
   kind: Schema.Literal("PrestigeLossRequested"),
   nationId: nonEmptyString,
@@ -320,6 +344,9 @@ export const DomainEventBodySchema = Schema.Union([
   EnemyDeclinedBattleSchema,
   PrestigeChangedSchema,
   DivisionExperienceChangedSchema,
+  FleetExerciseScheduledSchema,
+  FleetExerciseCompletedSchema,
+  ExerciseTensionRaisedSchema,
 ]);
 
 const eventKindList = [
@@ -350,6 +377,9 @@ const eventKindList = [
   "EnemyDeclinedBattle",
   "PrestigeChanged",
   "DivisionExperienceChanged",
+  "FleetExerciseScheduled",
+  "FleetExerciseCompleted",
+  "ExerciseTensionRaised",
 ] as const;
 
 export const DomainEventEnvelopeSchema = Schema.Struct({
@@ -393,6 +423,9 @@ export type DeclineThresholdReached = Schema.Schema.Type<typeof DeclineThreshold
 export type EnemyDeclinedBattle = Schema.Schema.Type<typeof EnemyDeclinedBattleSchema>;
 export type PrestigeChanged = Schema.Schema.Type<typeof PrestigeChangedSchema>;
 export type DivisionExperienceChanged = Schema.Schema.Type<typeof DivisionExperienceChangedSchema>;
+export type FleetExerciseScheduled = Schema.Schema.Type<typeof FleetExerciseScheduledSchema>;
+export type FleetExerciseCompleted = Schema.Schema.Type<typeof FleetExerciseCompletedSchema>;
+export type ExerciseTensionRaised = Schema.Schema.Type<typeof ExerciseTensionRaisedSchema>;
 export type PrestigeLossRequested = Schema.Schema.Type<typeof PrestigeLossRequestedSchema>;
 export type RevoltPressureRequested = Schema.Schema.Type<typeof RevoltPressureRequestedSchema>;
 export type ShipDetachedToFleet = Schema.Schema.Type<typeof ShipDetachedToFleetSchema>;

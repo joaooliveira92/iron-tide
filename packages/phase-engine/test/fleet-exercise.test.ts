@@ -2,6 +2,7 @@ import {
   economyOutlook,
   evaluateShipGates,
   divisionAggregateHash,
+  scheduleFleetExercise,
   type CampaignSnapshot,
   type PermanentDivision,
   type Ship,
@@ -118,7 +119,7 @@ function makeSnapshot(ships: Ship[], divisions: PermanentDivision[]): CampaignSn
 }
 
 const envelope = (body: CommandBody, from: CampaignSnapshot): CommandEnvelope<CommandBody> => ({
-  commandId: `cmd-${body.type}-${String(from.turnNumber)}`,
+  commandId: `cmd-${body.type}-${String(from.turnNumber)}-${JSON.stringify(body)}`,
   version: "0.1.0",
   expectedSnapshotHash: sha256Hex(canonicalSerialize(from)),
   idempotencyKey: `ik-${body.type}-${String(from.turnNumber)}-${JSON.stringify(body)}`,
@@ -252,6 +253,28 @@ describe("exercise tension", () => {
     expect(tensions(afterHeld.next).FRA).toBe(6);
     expect(tensions(month(afterHeld.next, [], options).next).FRA).toBe(6);
   });
+
+  it("records the raised tensions as deterministic events, skipped at the ceiling", () => {
+    const options = rules(TENSION);
+    const scheduled = month(withRelations(), [hold(["s1", "s2", "s3", "s4"])], options);
+    const held = month(scheduled.next, [], options);
+    const raised = held.result.eventLedger.all.filter(
+      (e) => e.body.kind === "ExerciseTensionRaised",
+    );
+    expect(
+      raised.map((e) => {
+        const body = e.body as { otherNationId: string; before: number; after: number };
+        return [e.eventType, body.otherNationId, body.before, body.after];
+      }),
+    ).toEqual([["ExerciseTensionRaised", "FRA", 5, 6]]);
+    expect(
+      held.result.eventLedger.all.some(
+        (e) =>
+          e.body.kind === "ExerciseTensionRaised" &&
+          (e.body as { otherNationId: string }).otherNationId === "ITA",
+      ),
+    ).toBe(false);
+  });
 });
 
 describe("annual fleet exercise", () => {
@@ -330,5 +353,99 @@ describe("annual fleet exercise", () => {
     const dormant = month(makeSnapshot(ships(), divisions()), [hold(["s1"])], {});
     expect(dormant.collector.all.map((d) => d.code)).toContain("FLEET_EXERCISE_DORMANT");
     expect(gbr(dormant.next).fleetExercise).toBeUndefined();
+  });
+
+  it("appends a scheduled event carrying the ordered ships, and a completed event with the gain", () => {
+    const base = makeSnapshot(ships(), divisions());
+    const scheduled = month(base, [hold(["s2", "s1"])]);
+    expect(
+      scheduled.result.eventLedger.all.flatMap((e) =>
+        e.body.kind === "FleetExerciseScheduled"
+          ? [[e.aggregateId, e.body.month, [...e.body.shipIds]]]
+          : [],
+      ),
+    ).toEqual([["GBR", "1880-03", ["s1", "s2"]]]);
+
+    const held = month(scheduled.next);
+    expect(
+      held.result.eventLedger.all.flatMap((e) =>
+        e.body.kind === "FleetExerciseCompleted"
+          ? [[e.aggregateId, e.body.month, [...e.body.shipIds], e.body.experienceGained]]
+          : [],
+      ),
+    ).toEqual([["GBR", "1880-03", ["s1", "s2"], 5]]);
+    expect(
+      month(held.next).result.eventLedger.all.some((e) => e.body.kind === "FleetExerciseCompleted"),
+    ).toBe(false);
+    expect(
+      scheduled.result.eventLedger.all.some((e) => e.body.kind === "FleetExerciseCompleted"),
+    ).toBe(false);
+  });
+
+  it("orders the completed events by nation id when two nations exercise the same month", () => {
+    const base = makeSnapshot(ships(), divisions());
+    const fraShips = [makeShip("f1", { nationId: "FRA" }), makeShip("f2", { nationId: "FRA" })];
+    const fraDivisions = [
+      makeDivision({
+        divisionId: "d-fra",
+        nationId: "FRA",
+        shipOrder: ["f1", "f2"],
+        flagshipShipId: "f1",
+        lastReorganizationMonth: "1879-06",
+      }),
+    ];
+    const both: CampaignSnapshot = {
+      ...base,
+      nations: new Map([
+        ...base.nations,
+        [
+          "FRA",
+          {
+            ...gbr(base),
+            id: "FRA",
+            name: "FRA",
+            tag: "FRA",
+            fleets: [
+              {
+                id: "fleet-FRA",
+                nationId: "FRA",
+                name: "FRA Fleet",
+                locationAreaId: "a-1",
+                ships: fraShips,
+              },
+            ],
+            divisions: fraDivisions,
+          },
+        ],
+      ]),
+    } as CampaignSnapshot;
+    const rules = FIXTURE_FLEET_MANAGEMENT_RULES.exercise;
+    const preScheduled = new Map(both.nations);
+    preScheduled.set("GBR", scheduleFleetExercise(gbr(both), ["s1", "s2"], "1880-02", rules));
+    preScheduled.set(
+      "FRA",
+      scheduleFleetExercise(both.nations.get("FRA")!, ["f2", "f1"], "1880-02", rules),
+    );
+    const held = month({
+      ...both,
+      nations: preScheduled,
+      turnNumber: SafeInt(Number(both.turnNumber) + 1),
+    } as CampaignSnapshot);
+    const completed = held.result.eventLedger.all
+      .filter((e) => e.body.kind === "FleetExerciseCompleted")
+      .map((e) => (e.body as { nationId: string }).nationId);
+    expect(completed).toEqual(["FRA", "GBR"]);
+  });
+
+  it("appends no exercise event when the section is dormant or the command is refused", () => {
+    const dormant = month(makeSnapshot(ships(), divisions()), [hold(["s1"])], {});
+    const refused = month(makeSnapshot([makeShip("s1", { readiness: "MOTHBALLED" })], []), [
+      hold(["s1"]),
+    ]);
+    for (const { result } of [dormant, refused]) {
+      expect(result.eventLedger.all.filter((e) => e.body.kind.startsWith("FleetExercise"))).toEqual(
+        [],
+      );
+    }
   });
 });

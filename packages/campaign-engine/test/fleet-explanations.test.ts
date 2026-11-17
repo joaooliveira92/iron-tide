@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import {
   explainExerciseGain,
+  explainExerciseTension,
   explainTrainingMaintenanceAdder,
   explainTrainingProgress,
 } from "../src/fleet-explanations.js";
@@ -54,5 +55,18 @@ describe("fleet explanations", () => {
       ref: "fleet_management.divisionExperience.perExercise",
     });
     expect(tree.operation).toBe("identity");
+  });
+
+  it("explains the exercise tension from the ruleset threshold, step and ceiling", () => {
+    const tree = explainExerciseTension({ minShips: 4, increase: 1, ceiling: 5 }, 3);
+    expect(tree.formulaId).toBe("fleet_exercise_tension");
+    expect(Number(tree.result)).toBe(3);
+    expect(tree.source).toEqual({ kind: "ruleset", ref: "fleet_management.exercise.tension" });
+    expect(tree.inputs).toEqual({ minShips: 4, increase: 1, ceiling: 5 });
+    expect((tree.children ?? []).map((c) => [c.formulaId, Number(c.result)])).toEqual([
+      ["fleet_exercise_tension.threshold", 4],
+      ["fleet_exercise_tension.step", 1],
+      ["fleet_exercise_tension.ceiling", 5],
+    ]);
   });
 });

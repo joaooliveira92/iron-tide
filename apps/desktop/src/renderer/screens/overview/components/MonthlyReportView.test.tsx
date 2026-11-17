@@ -122,6 +122,44 @@ describe("MonthlyReportView", () => {
     ).toBeTruthy();
   });
 
+  it("lists the exercise ordering, its result and the tension changes only when the month had them", () => {
+    const { rerender } = render(
+      <MonthlyReportView report={report(1)} previous={undefined} areaName={areaName} />,
+    );
+    expect(screen.queryByText("Fleet exercise")).toBeNull();
+
+    rerender(
+      <MonthlyReportView
+        report={report(1, {
+          fleetExercise: {
+            scheduled: { month: "1880-02", shipIds: ["s1", "s2"] },
+            tension: [],
+          },
+        })}
+        previous={undefined}
+        areaName={areaName}
+      />,
+    );
+    expect(screen.getByText("Exercise set for 1880-02 with 2 ships.")).toBeTruthy();
+
+    rerender(
+      <MonthlyReportView
+        report={report(2, {
+          fleetExercise: {
+            completed: { month: "1880-02", shipIds: ["s1", "s2"], experienceGained: 5 },
+            tension: [{ otherNationId: "france", before: 2, after: 3 }],
+          },
+        })}
+        previous={undefined}
+        areaName={areaName}
+      />,
+    );
+    expect(
+      screen.getByText("Exercise held in 1880-02 with 2 ships; divisions gained 5 experience."),
+    ).toBeTruthy();
+    expect(screen.getByText(/tension 2 to 3/)).toBeTruthy();
+  });
+
   it("offers the previous month as a disclosure when one exists", () => {
     render(<MonthlyReportView report={report(2)} previous={report(1)} areaName={areaName} />);
 

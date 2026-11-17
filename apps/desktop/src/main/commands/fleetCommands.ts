@@ -1,6 +1,7 @@
 import {
   buildFleetScreenView,
   explainExerciseGain,
+  explainExerciseTension,
   explainTrainingEffect,
   explainTrainingMaintenanceAdder,
   explainTrainingMonthlyCost,
@@ -14,6 +15,7 @@ import {
   trainingSelections,
   exerciseLimitReached,
   exerciseMonthAfter,
+  exerciseTensionPreview,
   FLEET_EXERCISE_DORMANT,
   FLEET_EXERCISE_LIMIT_REACHED,
   isTrainingProficient,
@@ -232,6 +234,12 @@ export const inspectFleetScreenProgram: CommandHandler<"inspectFleetScreen"> = (
     const exerciseYear = exerciseMonthAfter(
       campaignMonthId(snapshot.startYear, snapshot.startMonth, Number(snapshot.turnNumber)),
     ).year;
+    const tensionRules = fleetManagement?.exercise.tension;
+    const tensionRows = exerciseTensionPreview(
+      snapshot.politics.relations,
+      nation.id,
+      tensionRules,
+    );
     const exercise: FleetExerciseProjection | undefined =
       fleetManagement === undefined
         ? undefined
@@ -242,6 +250,15 @@ export const inspectFleetScreenProgram: CommandHandler<"inspectFleetScreen"> = (
             experienceGainExplanation: explainExerciseGain(
               fleetManagement.divisionExperience.perExercise,
             ),
+            ...(tensionRules === undefined
+              ? {}
+              : {
+                  tensionPreview: {
+                    ...tensionRules,
+                    rows: tensionRows,
+                    explanation: explainExerciseTension(tensionRules, tensionRows.length),
+                  },
+                }),
             nextExerciseYear: exerciseYear,
             heldInNextExerciseYear:
               nation.fleetExercise?.year === exerciseYear ? nation.fleetExercise.yearCount : 0,

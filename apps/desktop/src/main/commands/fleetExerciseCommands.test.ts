@@ -45,6 +45,23 @@ const withoutSection = Layer.effect(
   }),
 ).pipe(Layer.provide(contentArtifactLayer()));
 
+const TENSION = { minShips: 2, increase: 1, ceiling: 5 };
+const withTension = Layer.effect(
+  ContentArtifact,
+  Effect.gen(function* () {
+    const real = yield* ContentArtifact;
+    return {
+      ...real,
+      loadFleetManagementRules: () =>
+        Effect.succeed({
+          ...FIXTURE_FLEET_MANAGEMENT_RULES,
+          exercise: { ...FIXTURE_FLEET_MANAGEMENT_RULES.exercise, tension: TENSION },
+        }),
+    };
+  }),
+).pipe(Layer.provide(contentArtifactLayer()));
+const tensionRuntime = ManagedRuntime.make(Layer.mergeAll(desktopMainLayer(), withTension));
+
 const dormantRuntime = ManagedRuntime.make(Layer.mergeAll(desktopMainLayer(), withoutSection));
 
 type TestRuntime = typeof sectionRuntime;
@@ -133,6 +150,25 @@ describe("fleet exercise commands", () => {
     expect(view.exercise).toBeUndefined();
     const refused = await hold(dormantRuntime, "dormant", 0, firstShips(view, 1));
     expect(refused).toMatchObject({ outcome: "rejected", reason: "FLEET_EXERCISE_DORMANT" });
+  });
+
+  it("previews the tension the exercise would raise, with an explanation tree, and none when unauthored", async () => {
+    registerSession("tension");
+    const view = await fleet(tensionRuntime, "tension");
+    const preview = view.exercise?.tensionPreview;
+    expect(preview).toMatchObject(TENSION);
+    const rows = preview?.rows ?? [];
+    expect(rows.length).toBeGreaterThan(0);
+    for (const row of rows) expect(row.after).toBe(Math.min(TENSION.ceiling, row.before + 1));
+    expect(rows.map((row) => row.otherNationId)).toEqual(
+      rows.map((row) => row.otherNationId).sort(),
+    );
+    expect(preview?.explanation.formulaId).toBe("fleet_exercise_tension");
+    expect(Number(preview?.explanation.result)).toBe(rows.length);
+
+    registerSession("plain");
+    const plain = await fleet(sectionRuntime, "plain");
+    expect(plain.exercise?.tensionPreview).toBeUndefined();
   });
 
   it("schedules the exercise, marks the ships, holds it the next month and then refuses a second in the year", async () => {

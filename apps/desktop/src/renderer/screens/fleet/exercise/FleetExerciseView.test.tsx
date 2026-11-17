@@ -9,6 +9,10 @@ import {
   type ExerciseState,
 } from "./exercise-model.js";
 
+vi.mock("../../../content/presentationContent.js", () => ({
+  campaignNationLabel: (id: string) => `Nation ${id}`,
+}));
+
 const exercise = (over: Partial<FleetExerciseProjection> = {}): FleetExerciseProjection => ({
   maxPerCalendarYear: 1,
   maintenanceMultiple: 2,
@@ -114,6 +118,63 @@ describe("FleetExerciseView", () => {
     );
     expect(screen.getByText(/already been ordered/)).toBeTruthy();
     expect(screen.queryByRole("button", { name: "Hold fleet exercise" })).toBeNull();
+  });
+});
+
+describe("FleetExerciseView tension preview", () => {
+  afterEach(cleanup);
+
+  const preview = {
+    minShips: 4,
+    increase: 1,
+    ceiling: 5,
+    rows: [
+      { otherNationId: "france", before: 2, after: 3 },
+      { otherNationId: "russia", before: 4, after: 5 },
+    ],
+    explanation: {
+      formulaId: "fleet_exercise_tension",
+      formulaVersion: "fleet_v1",
+      inputs: { minShips: 4, increase: 1, ceiling: 5 },
+      intermediate: {},
+      result: 2,
+      children: [
+        {
+          formulaId: "fleet_exercise_tension.threshold",
+          formulaVersion: "fleet_v1",
+          inputs: { amount: 4 },
+          intermediate: {},
+          result: 4,
+        },
+      ],
+    },
+  };
+  const ships = ["a", "b", "c", "d"].map((id) => row(id));
+
+  it("predicts the tension change per power with an explanation tree at the threshold", () => {
+    renderView(exercise({ tensionPreview: preview }), ships, {
+      selected: ["a", "b", "c", "d"],
+    });
+    expect(screen.getByTestId("fleet-exercise-tension").textContent).toContain(
+      "Raises tension with 2 powers by 1, up to a ceiling of 5.",
+    );
+    expect(screen.getByText("Nation france: tension 2 to 3")).toBeTruthy();
+    expect(screen.getByText("Nation russia: tension 4 to 5")).toBeTruthy();
+    expect(screen.getByText("Raises tension with 2 powers")).toBeTruthy();
+    expect(screen.getByText("Ships needed")).toBeTruthy();
+  });
+
+  it("says no tension is raised below the threshold", () => {
+    renderView(exercise({ tensionPreview: preview }), ships, { selected: ["a", "b"] });
+    expect(screen.getByTestId("fleet-exercise-tension").textContent).toContain(
+      "Fewer than 4 ships raises no tension.",
+    );
+    expect(screen.queryByText("Nation france: tension 2 to 3")).toBeNull();
+  });
+
+  it("shows nothing about tension when the rule is unauthored", () => {
+    renderView(exercise(), ships, { selected: ["a"] });
+    expect(screen.queryByTestId("fleet-exercise-tension")).toBeNull();
   });
 });
 

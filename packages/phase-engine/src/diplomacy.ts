@@ -28,6 +28,8 @@ import type {
 import { SafeInt } from "@bluewave/contracts";
 import type { DomainEventEnvelope } from "@bluewave/events";
 import { Result } from "effect";
+
+import { exerciseTensionRaisedEvent } from "./fleetExercise.js";
 import { possessionTransferredEvent } from "./events.js";
 import { applyEventsForMonth } from "./eventDraw.js";
 import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
@@ -378,13 +380,32 @@ function applyExerciseTensionForMonth(ctx: PhaseContext): void {
   )) {
     const record = nation["fleetExercise"];
     if (record === undefined || record.month !== ctx.campaignMonth) continue;
-    next = applyExerciseTension(next, nationId, record.shipIds.length, rules);
+    for (let index = 0; index < next.length; index += 1) {
+      const before = next[index]!;
+      const raised = applyExerciseTension([before], nationId, record.shipIds.length, rules)[0]!;
+      if (raised === before) continue;
+      next = next.map((relation, at) => (at === index ? raised : relation));
+      ctx.eventLedger.append(
+        exerciseTensionRaisedEvent(
+          nationId,
+          otherNationOf(before, nationId),
+          before.tension,
+          raised.tension,
+          ctx.nextSeq(),
+          ctx.campaignMonth,
+        ),
+      );
+    }
   }
   if (next === relations) return;
   ctx.snapshot.write("politics", {
     ...ctx.snapshot.read("politics"),
     relations: [...next],
   });
+}
+
+function otherNationOf(relation: DiplomaticRelation, nationId: string): string {
+  return relation.nationA === nationId ? relation.nationB : relation.nationA;
 }
 
 function navalBudgetOf(nations: ReadonlyMap<string, NationState>, nationId: string): number {

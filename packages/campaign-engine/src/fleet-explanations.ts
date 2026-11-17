@@ -118,6 +118,35 @@ export function explainExerciseGain(experienceGain: number): ExplanationTree {
     .build();
 }
 
+const EXERCISE_TENSION_SOURCE = {
+  kind: "ruleset",
+  ref: "fleet_management.exercise.tension",
+} as const;
+
+function exerciseTensionChild(suffix: string, value: number): ExplanationTree {
+  return new ExplanationBuilder(`fleet_exercise_tension.${suffix}`, FLEET_FORMULA_VERSION)
+    .withInput("amount", value)
+    .withResult(value)
+    .withSource(EXERCISE_TENSION_SOURCE)
+    .build();
+}
+
+export function explainExerciseTension(
+  rules: { readonly minShips: number; readonly increase: number; readonly ceiling: number },
+  powersAffected: number,
+): ExplanationTree {
+  return new ExplanationBuilder("fleet_exercise_tension", FLEET_FORMULA_VERSION)
+    .withInput("minShips", rules.minShips)
+    .withInput("increase", rules.increase)
+    .withInput("ceiling", rules.ceiling)
+    .withResult(powersAffected)
+    .withSource(EXERCISE_TENSION_SOURCE)
+    .addChild(exerciseTensionChild("threshold", rules.minShips))
+    .addChild(exerciseTensionChild("step", rules.increase))
+    .addChild(exerciseTensionChild("ceiling", rules.ceiling))
+    .build();
+}
+
 export function explainPresenceShortfall(
   requiredTons: number,
   presentTons: number,

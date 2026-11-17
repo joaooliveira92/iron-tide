@@ -1,0 +1,55 @@
+export const FLEET_EXERCISE_MESSAGES = {
+  "fleet.fleet_exercise_tension.summary": "Raises tension with {value} powers",
+  "fleet.fleet_exercise_tension.threshold": "Ships needed",
+  "fleet.fleet_exercise_tension.step": "Tension added per power",
+  "fleet.fleet_exercise_tension.ceiling": "Tension ceiling",
+  "fleet.exercise.heading": "Annual fleet exercise",
+  "fleet.exercise.badge": "{held} of {max} in {year}",
+  "fleet.exercise.intro":
+    "Chosen ships exercise together in the month after you order it. They cost {multiple} times their active maintenance that month and cannot sail, fight or take missions. Their divisions gain {gain} experience.",
+  "fleet.exercise.reload": "Reload",
+  "fleet.exercise.retry": "Retry",
+  "fleet.exercise.outcomeUnknown": "The outcome of the last request is unknown.",
+  "fleet.exercise.scheduled.one": "Exercise set for {month} with {n} ship.",
+  "fleet.exercise.scheduled.many": "Exercise set for {month} with {n} ships.",
+  "fleet.exercise.limitReached": "The exercise for {year} has already been ordered.",
+  "fleet.exercise.noShips": "No active, unassigned ships are available.",
+  "fleet.exercise.exercising": "exercising",
+  "fleet.exercise.shipLabel": "Exercise {name}",
+  "fleet.exercise.hold": "Hold fleet exercise",
+  "fleet.exercise.queued.one":
+    "Fleet exercise queued for 1 ship. It is held the month after you advance.",
+  "fleet.exercise.queued.many":
+    "Fleet exercise queued for {n} ships. It is held the month after you advance.",
+  "fleet.exercise.tension.heading": "Predicted tension",
+  "fleet.exercise.tension.below":
+    "Fewer than {min} ships raises no tension. Choose {min} or more to send a signal.",
+  "fleet.exercise.tension.one":
+    "Raises tension with 1 power by {step}, up to a ceiling of {ceiling}.",
+  "fleet.exercise.tension.many":
+    "Raises tension with {n} powers by {step}, up to a ceiling of {ceiling}.",
+  "fleet.exercise.tension.none": "No neutral power has room left to rise, so tension stays put.",
+  "fleet.exercise.tension.row": "{nation}: tension {before} to {after}",
+  "fleet.exercise.rejected": "Fleet exercise rejected. Nothing was queued.",
+  "fleet.exercise.gate.UnderConstruction": "{name} is still under construction.",
+  "fleet.exercise.gate.Unavailable": "{name} is under rebuild.",
+  "fleet.exercise.gate.WorkingUp": "{name} is still working up.",
+  "fleet.exercise.gate.InRepair": "{name} is under repair.",
+  "fleet.exercise.gate.InReserve": "{name} is in reserve.",
+  "fleet.exercise.gate.Mothballed": "{name} is mothballed.",
+  "fleet.exercise.gate.InBattle": "{name} is committed to a battle.",
+  "fleet.exercise.gate.Assigned": "{name} holds an assignment.",
+  "fleet.exercise.gate.AssignmentForbidsUse": "{name} holds an assignment that bars this.",
+  "fleet.exercise.gate.EMPTY_BATCH": "No ship was selected.",
+  "fleet.exercise.gate.DUPLICATE_SHIP": "{name} was selected more than once.",
+  "fleet.exercise.gate.NOT_OWNED": "{name} is not one of your ships.",
+  "reports.exercise.title": "Fleet exercise",
+  "reports.exercise.scheduled.one": "Exercise set for {month} with 1 ship.",
+  "reports.exercise.scheduled.many": "Exercise set for {month} with {n} ships.",
+  "reports.exercise.completed.one":
+    "Exercise held in {month} with 1 ship; divisions gained {experience} experience.",
+  "reports.exercise.completed.many":
+    "Exercise held in {month} with {n} ships; divisions gained {experience} experience.",
+  "reports.exercise.tension": "{nation}: tension {before} to {after}",
+  "reports.exercise.noTension": "The exercise raised no tension.",
+} as const;

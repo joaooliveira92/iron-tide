@@ -92,6 +92,12 @@ function describeDomainEventBody(body: DomainEventBody): string {
       return `${body.nationId}: division ${body.divisionId} experience ${String(body.before)} to ${String(body.after)} (${body.reasonCode}, ${body.sourceId})`;
     case "PrestigeChanged":
       return `${body.nationId}: prestige ${String(body.before)} to ${String(body.after)} (${String(body.delta)}; ${body.reasonCode}, ${body.ruleKind})`;
+    case "FleetExerciseScheduled":
+      return `${body.nationId}: fleet exercise set for ${body.month} with ${String(body.shipIds.length)} ships (${body.shipIds.join(", ")})`;
+    case "FleetExerciseCompleted":
+      return `${body.nationId}: fleet exercise held in ${body.month} with ${String(body.shipIds.length)} ships (${String(body.experienceGained)} experience gained)`;
+    case "ExerciseTensionRaised":
+      return `${body.nationId}: exercise raised tension with ${body.otherNationId} from ${String(body.before)} to ${String(body.after)}`;
     case "PresenceShortfall":
       return `${body.nationId}: presence in ${body.areaId} short by ${body.shortfallTons} t (${body.presentTons} of ${body.requiredTons} t)`;
     case "PrestigeLossRequested":

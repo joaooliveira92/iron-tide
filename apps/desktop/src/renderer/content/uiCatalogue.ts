@@ -2,12 +2,14 @@ import type { UiCatalogueDto } from "../../shared/content-contract.js";
 import { DIPLOMACY_PEACE_MESSAGES } from "../lib/diplomacy-peace-messages.js";
 import { ECONOMY_MODIFIER_MESSAGES } from "../lib/economy-modifier-messages.js";
 import { EN_US_MESSAGES } from "../lib/en-us-messages.js";
+import { FLEET_EXERCISE_MESSAGES } from "../lib/fleet-exercise-messages.js";
 import { FLEET_STATION_MESSAGES } from "../lib/fleet-station-messages.js";
 import { PRESENCE_WARNING_MESSAGES } from "../lib/presence-warning-messages.js";
 
 const AUTHORED_MESSAGES: Readonly<Record<string, string | undefined>> = {
   ...EN_US_MESSAGES,
   ...FLEET_STATION_MESSAGES,
+  ...FLEET_EXERCISE_MESSAGES,
   ...PRESENCE_WARNING_MESSAGES,
   ...DIPLOMACY_PEACE_MESSAGES,
   ...ECONOMY_MODIFIER_MESSAGES,

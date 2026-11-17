@@ -8,11 +8,12 @@ import {
   exerciseMaintenanceAdderBp,
   exerciseMonthAfter,
   exerciseProblems,
+  exerciseTensionPreview,
   FleetExerciseRecordSchema,
   scheduleFleetExercise,
 } from "../src/fleetExercise.js";
 import { stationAssignmentProblems } from "../src/stationAssignment.js";
-import type { NationState, Ship } from "../src/state.js";
+import type { DiplomaticRelation, NationState, Ship } from "../src/state.js";
 
 const ship = (id: string, over: Partial<Ship> = {}): Ship =>
   ({
@@ -134,5 +135,40 @@ describe("FleetExerciseRecordSchema", () => {
     ]) {
       expect(Result.isFailure(decode(bad))).toBe(true);
     }
+  });
+});
+
+describe("exerciseTensionPreview", () => {
+  const tension = { minShips: 4, increase: 1, ceiling: 5 };
+  const relation = (
+    nationA: string,
+    nationB: string,
+    kind: DiplomaticRelation["relation"],
+    level: number,
+  ): DiplomaticRelation => ({
+    nationA,
+    nationB,
+    relation: kind,
+    tension: level,
+    nap: false,
+    since: "1880-01",
+  });
+  const relations = [
+    relation("RUS", "GBR", "neutral", 2),
+    relation("GBR", "FRA", "neutral", 5),
+    relation("GBR", "ITA", "allied", 1),
+    relation("FRA", "RUS", "neutral", 0),
+    relation("GBR", "AUS", "neutral", 4),
+  ];
+
+  it("lists only the neutral relations that would rise, ordered by nation id", () => {
+    expect(exerciseTensionPreview(relations, "GBR", tension)).toEqual([
+      { otherNationId: "AUS", before: 4, after: 5 },
+      { otherNationId: "RUS", before: 2, after: 3 },
+    ]);
+  });
+
+  it("is empty when the rule is not authored", () => {
+    expect(exerciseTensionPreview(relations, "GBR", undefined)).toEqual([]);
   });
 });
