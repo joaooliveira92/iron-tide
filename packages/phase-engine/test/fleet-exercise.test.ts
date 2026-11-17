@@ -358,30 +358,21 @@ describe("annual fleet exercise", () => {
   it("appends a scheduled event carrying the ordered ships, and a completed event with the gain", () => {
     const base = makeSnapshot(ships(), divisions());
     const scheduled = month(base, [hold(["s2", "s1"])]);
-    const scheduledEvents = scheduled.result.eventLedger.all.filter(
-      (e) => e.body.kind === "FleetExerciseScheduled",
-    );
     expect(
-      scheduledEvents.map((e) => {
-        const body = e.body as { nationId: string; month: string; shipIds: string[] };
-        return [e.aggregateId, body.month, [...body.shipIds]];
-      }),
+      scheduled.result.eventLedger.all.flatMap((e) =>
+        e.body.kind === "FleetExerciseScheduled"
+          ? [[e.aggregateId, e.body.month, [...e.body.shipIds]]]
+          : [],
+      ),
     ).toEqual([["GBR", "1880-03", ["s1", "s2"]]]);
 
     const held = month(scheduled.next);
-    const completed = held.result.eventLedger.all.filter(
-      (e) => e.body.kind === "FleetExerciseCompleted",
-    );
     expect(
-      completed.map((e) => {
-        const body = e.body as {
-          nationId: string;
-          month: string;
-          shipIds: string[];
-          experienceGained: number;
-        };
-        return [e.aggregateId, body.month, [...body.shipIds], body.experienceGained];
-      }),
+      held.result.eventLedger.all.flatMap((e) =>
+        e.body.kind === "FleetExerciseCompleted"
+          ? [[e.aggregateId, e.body.month, [...e.body.shipIds], e.body.experienceGained]]
+          : [],
+      ),
     ).toEqual([["GBR", "1880-03", ["s1", "s2"], 5]]);
     expect(
       month(held.next).result.eventLedger.all.some((e) => e.body.kind === "FleetExerciseCompleted"),
