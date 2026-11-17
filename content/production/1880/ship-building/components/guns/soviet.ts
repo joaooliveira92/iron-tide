@@ -7,7 +7,7 @@ import {
 export default defineShipComponentCatalogue([
   defineShipComponent({
     id: "gun_130mm_50_twin",
-    displayName: "130 mm/50 M-1954 gun in SM-2-1 twin mount",
+    displayName: "130 mm/58 SM-2-1 gun in twin mount",
     category: "SECONDARY_GUN",
     introduction: { fromMonth: "1954-01", obsoleteMonth: null },
     constants: {
@@ -33,8 +33,8 @@ export default defineShipComponentCatalogue([
     }),
     attributes: () => ({
       caliberUm: number(130000),
-      shellMassG: number(53600),
-      chargeBp: number(2870),
+      shellMassG: number(33000),
+      chargeBp: number(4636),
       roundVolumeMl: number(34500),
       rofBaseX100: number(1300),
       beamArcDeg: number(150),

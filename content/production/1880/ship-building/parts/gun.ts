@@ -11986,10 +11986,10 @@ export default collection("parts", PartSchema, [
       requires: ["gun_dp_rapid_5in"],
     },
     metadata: {
-      displayName: "130 mm/50 M-1954 gun in SM-2-1 twin mount",
+      displayName: "130 mm/58 SM-2-1 gun in twin mount",
       tags: ["gun", "medium"],
     },
-    name: "Soviet 130 mm/50 M-1954 gun in SM-2-1 twin mount",
+    name: "Soviet 130 mm/58 SM-2-1 gun in twin mount",
     origin: {
       sourceFile: "ship-building/components/guns/soviet.ts",
     },
@@ -12040,18 +12040,18 @@ export default collection("parts", PartSchema, [
     provenance: {
       confidence: "MEDIUM",
       kind: "balance_adjustment",
-      note: "issue #851. 130 mm bore, 53.6 kg HE-Frag shell, about 4,000 kg gun, 13 rounds per minute and the 15.4 kg charge (2,870 bp, DERIVED) are SINGLE-SOURCE (Research discussion #440 section 3); gun cost is 197,000 micro per kg like the other 1950s gun parts, a BALANCE TARGET.",
+      note: "issue #851, corrected by issue #879. The Kotlin SM-2-1 twin mount carries the 130 mm/58 SM-2-1 Pattern 1957 gun (navweaps, SINGLE-SOURCE; navypedia labels it 130/50 M-1954 per Research discussion #440). Shell is the 33.0 kg OF-42 HE-FRAG (navweaps SINGLE-SOURCE); the former 53.6 kg came from a navweaps page that returns 404 and matches no listed shell, only the 53.8 to 61.4 kg complete round. The 15.3 kg propellant charge (navweaps SINGLE-SOURCE) over that shell is 4,636 bp (DERIVED, 15,300 / 33,000), replacing 2,870 bp that was derived against 53.6 kg. The 130 mm bore is navweaps. Still carried from Research discussion #440 and unverified because its cited page is dead: about 4,000 kg gun (navweaps lists 4.99 t), 13 rounds per minute (navweaps lists 15 rpm at +3 degrees and 11.5 to 12 at +30 to +50) and the 1954-01 introduction (navweaps lists 1957 service); follow-up issue. Gun cost is 197,000 micro per kg like the other 1950s gun parts, a BALANCE TARGET.",
       sourceStatus: "BALANCE_TARGET",
       sources: [
+        {
+          archiveOrUrl: "https://www.navweaps.com/Weapons/WNRussian_51-58_m1957.php",
+          section: "Research discussion #875 section 2",
+          title: "navweaps.com Russian 130 mm/58 (5.1-inch) SM-2-1 Pattern 1957",
+        },
         {
           archiveOrUrl: "https://www.navypedia.org/ships/russia/rus_dd_kotlin.htm",
           section: "Research discussion #440 section 3",
           title: "navypedia.org Kotlin class destroyers",
-        },
-        {
-          archiveOrUrl: "http://www.navweaps.com/Weapons/WNRussian_5-50_m1946.php",
-          section: "Research discussion #440 section 3",
-          title: "navweaps.com Russian 130 mm/50 (5.1-inch) M1946",
         },
       ],
     },
@@ -12077,9 +12077,9 @@ export default collection("parts", PartSchema, [
       gunFamily: "gun_130mm_50_twin",
       gunMassKg: 4000,
       mechanicalRateOfFireRoundsPerMinuteX100: 1300,
-      propellantChargeBp: 2870,
+      propellantChargeBp: 4636,
       roundVolumeMl: 34500,
-      shellMassG: 53600,
+      shellMassG: 33000,
       supportedMountTypes: ["TURRET"],
       weaponCategory: "SECONDARY_GUN",
     },

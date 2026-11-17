@@ -305,13 +305,14 @@ export default collection("ammunition", AmmunitionPatternSchema, [
     shellType: "HE",
     nationId: "russia",
     compatibleGunFamilies: ["gun_130mm_50_twin"],
+    shellMassG: 33000,
     introductionMonth: "1954-01",
     retirementMonth: null,
     provenance: {
       sourceStatus: "BALANCE_TARGET",
       confidence: "LOW",
       kind: "balance_adjustment",
-      note: "issue #867. Shell type HE from the OF-42 HE-FRAG round of the SM-2-1 mount (navweaps, SINGLE-SOURCE). The 53.6 kg figure on the component and part conflicts with the 33.0 kg navweaps shell, so no mass is authored here. No penetration bias, filler or cost is sourced.",
+      note: "issue #867, mass added by issue #879. Shell type HE and the 33.0 kg (72.75 lb) mass are the OF-42 HE-FRAG round of the 130 mm/58 SM-2-1 Pattern 1957 (navweaps, SINGLE-SOURCE), equal to the component and part. The former 53.6 kg matched no listed shell. No penetration bias, filler or cost is sourced.",
       sources: [
         {
           title: "navweaps.com Russian 130 mm/58 (5.1-inch) SM-2-1 Pattern 1957",

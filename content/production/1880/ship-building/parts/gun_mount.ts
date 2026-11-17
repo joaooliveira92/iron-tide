@@ -12879,7 +12879,7 @@ export default collection("parts", PartSchema, [
     provenance: {
       confidence: "MEDIUM",
       kind: "balance_adjustment",
-      note: "issue #851. The 35.2 t twin mount is SINGLE-SOURCE (Research discussion #440 section 3); its split into 13,600 kg per barrel and no fixed mass, the 6 crew per barrel, and the volume, footprint and cost conventions (3 L and 470 mm2 per kg, 197,368 micro per kg) are BALANCE TARGET.",
+      note: "issue #851, sources corrected by issue #879. The 35.2 t twin mount is SINGLE-SOURCE from Research discussion #440 section 3, whose cited navweaps page is dead; navweaps 130/58 SM-2-1 lists 57.325 t for the SM-2 mount, a conflict left for a follow-up. Its split into 13,600 kg per barrel and no fixed mass, the 6 crew per barrel, and the volume, footprint and cost conventions (3 L and 470 mm2 per kg, 197,368 micro per kg) are BALANCE TARGET.",
       sourceStatus: "BALANCE_TARGET",
       sources: [
         {
@@ -12888,9 +12888,9 @@ export default collection("parts", PartSchema, [
           title: "navypedia.org Kotlin class destroyers",
         },
         {
-          archiveOrUrl: "http://www.navweaps.com/Weapons/WNRussian_5-50_m1946.php",
-          section: "Research discussion #440 section 3",
-          title: "navweaps.com Russian 130 mm/50 (5.1-inch) M1946",
+          archiveOrUrl: "https://www.navweaps.com/Weapons/WNRussian_51-58_m1957.php",
+          section: "Research discussion #875 section 2",
+          title: "navweaps.com Russian 130 mm/58 (5.1-inch) SM-2-1 Pattern 1957",
         },
       ],
     },
