@@ -5,7 +5,7 @@ import { shipBuildingContent } from "./helpers/earlyContext.js";
 import { armamentAmmunitionFor } from "../src/armamentAmmunition.js";
 import { armamentContent } from "./helpers/armamentContext.js";
 import { components, earlyContext } from "./helpers/earlyContext.js";
-import { designs, gunPlacements, resolveRow, where } from "./helpers/gunReadPath.js";
+import { designs, gunPartModel, gunPlacements, resolveRow, where } from "./helpers/gunReadPath.js";
 import { renderExplanation } from "./helpers/explanation.js";
 
 const EXPECTED: Readonly<Record<string, Readonly<Record<string, string>>>> = {
@@ -131,9 +131,27 @@ describe("Russian and US per-era ammunition patterns (issue #867, builds on #856
     }
   });
 
-  it("leaves the 130 mm shell mass to the part until the 53.6 kg figure is reconciled", () => {
+  describe("Kotlin 130 mm shell (issue #879)", () => {
     const pattern = armamentContent.ammunition.find((a) => a.id === "ru_he_130mm_50");
-    expect(pattern?.shellMassG).toBeUndefined();
+    const component = components.find((c) => c.id === "gun_130mm_50_twin");
+    const part = gunPartModel.parts.find((p) => p.id === "standard_gun_130mm_50_twin");
+
+    it("carries the 33.0 kg OF-42 HE-FRAG shell of the 130 mm/58 SM-2-1 on pattern, component and part", () => {
+      expect(pattern?.shellMassG).toBe(33000);
+      expect(Number(component?.attributes?.shellMassG)).toBe(33000);
+      expect(part?.spec.shellMassG).toBe(33000);
+    });
+
+    it("derives the charge from the 15.3 kg navweaps propellant over that shell", () => {
+      expect(Number(component?.attributes?.chargeBp)).toBe(4636);
+      expect(part?.spec.propellantChargeBp).toBe(4636);
+    });
+
+    it("keeps shell plus charge below the 61.4 kg navweaps complete round", () => {
+      const grams = Number(component?.attributes?.shellMassG);
+      const bp = Number(component?.attributes?.chargeBp);
+      expect(grams + Math.round((grams * bp) / 10000)).toBeLessThanOrEqual(61400);
+    });
   });
 
   it("keeps the 1880 Russian and US patterns on the profile values they were promoted from", () => {

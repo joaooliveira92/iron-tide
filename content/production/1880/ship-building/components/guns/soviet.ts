@@ -7,15 +7,15 @@ import {
 export default defineShipComponentCatalogue([
   defineShipComponent({
     id: "gun_130mm_50_twin",
-    displayName: "130 mm/50 M-1954 gun in SM-2-1 twin mount",
+    displayName: "130 mm/58 SM-2-1 gun in twin mount",
     category: "SECONDARY_GUN",
     introduction: { fromMonth: "1954-01", obsoleteMonth: null },
     constants: {
-      gun_kg: 4000,
-      mount_per_barrel_kg: 13600,
+      gun_kg: 4990,
+      mount_per_barrel_kg: 23673,
       mount_fixed_kg: 0,
       cost_per_kg_micro: 197000,
-      mount_cost_micro: 2684000000,
+      mount_cost_micro: 4672000000,
     },
     parameters: { barrels: { min: 2, max: 2, step: 1 }, rounds: { min: 200, max: 600, step: 50 } },
     formulas: (v) => ({
@@ -33,10 +33,10 @@ export default defineShipComponentCatalogue([
     }),
     attributes: () => ({
       caliberUm: number(130000),
-      shellMassG: number(53600),
-      chargeBp: number(2870),
+      shellMassG: number(33000),
+      chargeBp: number(4636),
       roundVolumeMl: number(34500),
-      rofBaseX100: number(1300),
+      rofBaseX100: number(1500),
       beamArcDeg: number(150),
       maxFeedPermille: number(300),
     }),
