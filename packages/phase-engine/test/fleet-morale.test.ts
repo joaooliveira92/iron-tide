@@ -1,11 +1,11 @@
 import type {
   CampaignSnapshot,
   CompiledDesignVersion,
-  FleetMoraleRules,
   NationState,
   Ship,
   WarState,
 } from "@bluewave/campaign";
+import type { FleetMoraleRules } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
@@ -13,10 +13,26 @@ import { describe, expect, it } from "vite-plus/test";
 import { MonthExecutor } from "../src/index.js";
 
 const RULES: FleetMoraleRules = {
+  sectionVersion: 1,
   unpaidFundsLoss: 10,
   blockadeCrampedLoss: 5,
   longWarMonths: 3,
   recoveryPerMonth: 4,
+  provenance: {
+    sourceStatus: "BALANCE_TARGET",
+    confidence: "LOW",
+    kind: "balance_adjustment",
+    sources: [
+      {
+        title: "Rule the Waves 3 manual",
+        author: "Naval War Simulations / Matrix Games",
+        year: 2023,
+        page: "13",
+        section: "Running out of funds lowers prestige and affects fleet morale",
+      },
+    ],
+    note: "PROVISIONAL test fixture",
+  },
 };
 
 function ship(designVersionId: string): Ship {
