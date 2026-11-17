@@ -38,7 +38,7 @@ const categoryOf = (id: string) => components.find((c) => c.id === id)?.category
 
 describe("content codemod planner (ticket 11c)", () => {
   it("migrates the whole catalogue and every design", () => {
-    expect(planned.manifest.records.parts).toBe(353);
+    expect(planned.manifest.records.parts).toBe(357);
     expect(planned.manifest.records.designs).toBe(101);
     expect(planned.manifest.records.placements).toBe(965);
     expect(planned.manifest.records.gunPlacements).toBe(274);
@@ -48,7 +48,7 @@ describe("content codemod planner (ticket 11c)", () => {
       (a, b) => a + b,
       0,
     );
-    expect(familyTotal).toBe(353);
+    expect(familyTotal).toBe(357);
     expect(planned.manifest.records.partsByFamily.torpedo).toBe(8);
     expect(planned.designs).toHaveLength(101);
   });

@@ -504,6 +504,24 @@ export default collection("gunFamilies", GunFamilySchema, [
       ],
     },
   },
+  {
+    id: "gun_rml_64in_parrott",
+    designation: "6.4-inch Parrott rifle (100-pdr)",
+    category: "SECONDARY_GUN",
+    defaultMountType: "DECK_OPEN",
+    provenance: {
+      sourceStatus: "ESTIMATE",
+      confidence: "LOW",
+      kind: "historical_fact",
+      note: "issue #895. Dedicated family so the shared 64-pdr 71-cwt family keeps its 29 kg shell. Gun 9,700 lb, 8 lb charge, 80 lb shell and 70 lb solid shot are read from the 1866 US Ordnance Instructions para 384 (SINGLE-SOURCE primary); mount, cost and rate of fire are copied from the 64-pdr family.",
+      sources: [
+        {
+          sourceId: "oi66",
+          title: "US Navy, Ordnance Instructions 1866 (4th ed.), para 384",
+        },
+      ],
+    },
+  },
   // Dutch 28 cm (283 mm) Krupp Ringkanone No.1, the monitor *Matador* main gun (ADR-0119). Bore and mount from
   // navypedia; gun mass from Von Müller 1879 (28 cm RK L/22, a labelled analogy: the Dutch mark is 283/20);
   // shell/charge/MV ESTIMATE. A breech-loading built-up steel rifle with black powder.

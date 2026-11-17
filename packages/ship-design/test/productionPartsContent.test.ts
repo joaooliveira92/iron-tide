@@ -69,8 +69,8 @@ const catalogue = partCatalogue({ parts, slotTemplates, platforms });
 const legacyById = new Map(readReferenceDesignEntries().map((d) => [d.id, d] as const));
 
 describe("production parts content → compile (ticket 11d)", () => {
-  it("carries the staged plan: 344 parts, 12 slot templates, 11 platforms, 101 loadouts", () => {
-    expect(parts).toHaveLength(344);
+  it("carries the staged plan: 347 parts, 12 slot templates, 11 platforms, 101 loadouts", () => {
+    expect(parts).toHaveLength(347);
     expect(slotTemplates).toHaveLength(12);
     expect(platforms).toHaveLength(11);
     expect(loadouts).toHaveLength(101);

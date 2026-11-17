@@ -69,6 +69,64 @@ export default defineShipComponentCatalogue([
     fcClass: "heavy",
     maintenanceMonthlyBp: 20,
   }),
+  // 6.4-inch (100-pdr) Parrott rifle: 1866 US Ordnance Instructions para 384 gives gun 9,700 lb (4,400 kg), 8 lb rifle
+  // powder charge, 80 lb shell (36.3 kg) and 70 lb solid shot (SINGLE-SOURCE primary). Its own family so the shared
+  // 64-pdr 71-cwt family (29 kg shell) and every starter placing it keep their numbers (issue #895). Mount, cost, crew,
+  // rate of fire and round volume are copied from the 64-pdr family (ESTIMATE).
+  defineShipComponent({
+    id: "gun_rml_64in_parrott",
+    displayName: "6.4-inch Parrott rifle (100-pdr)",
+    category: "SECONDARY_GUN",
+    introduction: { fromMonth: "1880-01", obsoleteMonth: null },
+    constants: {
+      gun_kg: 4400,
+      mount_per_barrel_kg: 3000,
+      mount_fixed_kg: 1500,
+      cost_per_kg_micro: 150000,
+      mount_cost_micro: 500000000,
+    },
+    parameters: { barrels: { min: 1, max: 8, step: 1 }, rounds: { min: 50, max: 300, step: 50 } },
+    formulas: (v) => ({
+      weightKg: v.gun_kg.plus(v.mount_per_barrel_kg).times(v.barrels).plus(v.mount_fixed_kg),
+      volumeLitre: number(3).times(v.gun_kg.plus(v.mount_per_barrel_kg)).times(v.barrels),
+      costMicro: v.gun_kg
+        .times(v.barrels)
+        .times(v.cost_per_kg_micro)
+        .plus(v.mount_cost_micro.times(v.barrels)),
+      crew: number(4).times(v.barrels),
+      powerKw: number(1).times(v.barrels),
+      deckFootprintMm2: number(470).times(v.gun_kg.plus(v.mount_per_barrel_kg)).times(v.barrels),
+      heightMm: number(2200),
+      zCgMm: number(6000),
+    }),
+    attributes: () => ({
+      caliberUm: number(162560),
+      shellMassG: number(36300),
+      chargeBp: number(1000),
+      roundVolumeMl: number(18150),
+      rofBaseX100: number(33),
+      beamArcDeg: number(140),
+      maxFeedPermille: number(350),
+    }),
+    fieldProvenance: {
+      volumeLitre: { status: "estimate", rationale: "copied from gun_rml_64pdr_71cwt" },
+      costMicro: { status: "estimate", rationale: "copied from gun_rml_64pdr_71cwt" },
+      deckFootprintMm2: { status: "estimate", rationale: "copied from gun_rml_64pdr_71cwt" },
+      "attributes.roundVolumeMl": {
+        status: "estimate",
+        rationale: "0.5 mL per gram of shell like the 64-pdr rows",
+      },
+      "attributes.rofBaseX100": {
+        status: "estimate",
+        rationale: "copied from gun_rml_64pdr_71cwt",
+      },
+    },
+    requires: [],
+    upgradePath: [],
+    tags: ["gun", "light"],
+    fcClass: "light",
+    maintenanceMonthlyBp: 20,
+  }),
   // --- E-1 1940-1949 (ADR-0284) ---------------------------------------------------------------------------------------------
   // US 5-inch/38 Mark 12 in the Mark 38 twin dual-purpose mount (Research discussion #439 sections 1-2).
   // Sourced (navweaps.com WNUS_5-38_mk12, SINGLE-SOURCE): 127 mm bore, 25.0 kg shell, 1,810 kg gun without breech, Mk 38 Mod 0 mount
