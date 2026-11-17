@@ -3,7 +3,7 @@ import { CircleAlert } from "lucide-react";
 import { Badge } from "../../../../components/ui/badge.js";
 import type { AllocationSegment } from "../../../status-strip-state.js";
 import { rowById } from "../../rows.js";
-import { PinnableCard, StripNoteCard } from "../../StripCard.js";
+import { PinnableCard, StripCard, StripNoteCard } from "../../StripCard.js";
 import { StripPanel } from "../../StripPanel.js";
 import { FIELD_LABEL } from "../../strip-styles.js";
 import { useStatusStripState } from "../../StatusStripContext.js";
@@ -64,6 +64,18 @@ function CommittedRow() {
   );
 }
 
+function TrainingRow() {
+  const { model } = useStatusStripState();
+  const row = rowById(model.budget, "extra-training");
+  if (row === undefined || row.deferred) return null;
+  return (
+    <StripCard row={row} className="flex-row items-baseline justify-between gap-3 px-1.5 py-1">
+      <span className={FIELD_LABEL}>{row.label}</span>
+      <span className="font-display text-sm font-semibold tabular-nums">{row.value}</span>
+    </StripCard>
+  );
+}
+
 export function BudgetPanel() {
   const { model } = useStatusStripState();
   const noteFor = (id: AllocationSegment["id"]): string => rowById(model.budget, id)?.note ?? "";
@@ -75,6 +87,7 @@ export function BudgetPanel() {
           <AllocationBar />
           <AllocationLegend />
           <CommittedRow />
+          <TrainingRow />
         </div>
       </BudgetAllocationProvider>
     </StripPanel>
