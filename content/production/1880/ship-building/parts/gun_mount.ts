@@ -4432,6 +4432,164 @@ export default collection("parts", PartSchema, [
   },
   {
     family: "gun_mount",
+    id: "gun_bl_6in_obr1867_casemate",
+    lifecycle: {
+      availableFrom: "1880-01",
+      availableUntil: null,
+    },
+    name: "gun_bl_6in_obr1867_casemate",
+    origin: {
+      sourceFile: "ship-building/components/guns/russian.yaml",
+    },
+    provenance: {
+      confidence: "LOW",
+      kind: "historical_fact",
+      sourceStatus: "ESTIMATE",
+      sources: [
+        {
+          sourceId: "navy-su-6in-obr1867",
+          title: "navy.su 6.03-inch and 6-inch guns obr.1867",
+        },
+      ],
+    },
+    provides: "gun_mount",
+    quantities: [
+      {
+        basis: "PER_LOADOUT_ENTRY",
+        id: "installation_fixed",
+        kind: "massKg",
+        value: 1500,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "installation_per_gun",
+        kind: "massKg",
+        value: 3000,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "mount_cost_per_gun",
+        kind: "costMicro",
+        value: 500000000,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "crew_per_gun",
+        kind: "crew",
+        value: 4,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "volume_per_gun",
+        kind: "volumeLitre",
+        value: 21777,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "deck_footprint_per_gun",
+        kind: "deckFootprintMm2",
+        value: 3411730,
+      },
+    ],
+    revisions: [],
+    slots: [
+      {
+        accepts: ["gun"],
+        id: "guns",
+        mountCount: {
+          max: 1,
+          min: 1,
+        },
+      },
+    ],
+    spec: {
+      compatibleGunFamilies: ["gun_bl_6in_obr1867"],
+      firingArcDeg: 140,
+      gunsPerMount: 1,
+      mountType: "CASEMATE",
+    },
+  },
+  {
+    family: "gun_mount",
+    id: "gun_bl_6in_obr1867_deck_open",
+    lifecycle: {
+      availableFrom: "1880-01",
+      availableUntil: null,
+    },
+    name: "gun_bl_6in_obr1867_deck_open",
+    origin: {
+      sourceFile: "ship-building/components/guns/russian.yaml",
+    },
+    provenance: {
+      confidence: "LOW",
+      kind: "historical_fact",
+      sourceStatus: "ESTIMATE",
+      sources: [
+        {
+          sourceId: "navy-su-6in-obr1867",
+          title: "navy.su 6.03-inch and 6-inch guns obr.1867",
+        },
+      ],
+    },
+    provides: "gun_mount",
+    quantities: [
+      {
+        basis: "PER_LOADOUT_ENTRY",
+        id: "installation_fixed",
+        kind: "massKg",
+        value: 1500,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "installation_per_gun",
+        kind: "massKg",
+        value: 3000,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "mount_cost_per_gun",
+        kind: "costMicro",
+        value: 500000000,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "crew_per_gun",
+        kind: "crew",
+        value: 4,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "volume_per_gun",
+        kind: "volumeLitre",
+        value: 21777,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "deck_footprint_per_gun",
+        kind: "deckFootprintMm2",
+        value: 3411730,
+      },
+    ],
+    revisions: [],
+    slots: [
+      {
+        accepts: ["gun"],
+        id: "guns",
+        mountCount: {
+          max: 1,
+          min: 1,
+        },
+      },
+    ],
+    spec: {
+      compatibleGunFamilies: ["gun_bl_6in_obr1867"],
+      firingArcDeg: 140,
+      gunsPerMount: 1,
+      mountType: "DECK_OPEN",
+    },
+  },
+  {
+    family: "gun_mount",
     id: "gun_bl_92in_315_barbette",
     lifecycle: {
       availableFrom: "1881-01",

@@ -175,6 +175,25 @@ export default collection("gunFamilies", GunFamilySchema, [
     },
   },
   {
+    id: "gun_bl_6in_obr1867",
+    designation: "6-inch obr.1867 Obukhov steel breech-loader",
+    category: "SECONDARY_GUN",
+    defaultMountType: "DECK_OPEN",
+    provenance: {
+      sourceStatus: "ESTIMATE",
+      confidence: "LOW",
+      kind: "historical_fact",
+      note: "issue #892. Dedicated family so the shared 64-pdr 71-cwt family keeps its 29 kg shell and 3,582 kg gun. Gun 4,259 kg with breech, 8.2 kg prismatic charge and the 33.37 kg and 38.08 kg shells are read from one secondary Russian reference page (SINGLE-SOURCE, Research discussion #916); mount, cost and rate of fire are copied from the 64-pdr family.",
+      sources: [
+        {
+          title: "navy.su 6.03-inch and 6-inch guns obr.1867",
+          archiveOrUrl: "http://www.navy.su/navyarms/bronen/1867/6-6.03/6-6.03.htm",
+          section: "Research discussion #916",
+        },
+      ],
+    },
+  },
+  {
     id: "gun_bl_274mm_m1875",
     designation: "Canon de 27 cm modèle 1875",
     category: "MAIN_GUN",

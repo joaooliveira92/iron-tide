@@ -5830,10 +5830,10 @@ export default collection("parts", PartSchema, [
     nation: "russia",
     origin: {
       prototype: {
-        id: "standard_gun_rml_64pdr_71cwt",
+        id: "standard_gun_bl_6in_obr1867",
         inheritedQuantities: [],
         inheritedSpec: [],
-        sourceFile: "ship-building/components/guns/british-rml.yaml",
+        sourceFile: "ship-building/components/guns/russian.yaml",
       },
       sourceFile: "ship-building/naval-profiles/russia.yaml",
     },
@@ -5862,25 +5862,25 @@ export default collection("parts", PartSchema, [
         basis: "PER_PART_UNIT",
         id: "gun_mass",
         kind: "massKg",
-        value: 3582,
+        value: 4259,
       },
       {
         basis: "PER_PART_UNIT",
         id: "gun_cost",
         kind: "costMicro",
-        value: 537300000,
+        value: 638850000,
       },
     ],
     revisions: [],
     spec: {
       beamArcDeg: 140,
-      calibreUm: 160000,
-      gunFamily: "gun_rml_64pdr_71cwt",
-      gunMassKg: 3582,
+      calibreUm: 152400,
+      gunFamily: "gun_bl_6in_obr1867",
+      gunMassKg: 4259,
       mechanicalRateOfFireRoundsPerMinuteX100: 33,
-      propellantChargeBp: 1241,
-      roundVolumeMl: 14500,
-      shellMassG: 29000,
+      propellantChargeBp: 2457,
+      roundVolumeMl: 16685,
+      shellMassG: 33370,
       supportedMountTypes: ["CASEMATE", "DECK_OPEN"],
       weaponCategory: "SECONDARY_GUN",
     },
@@ -9782,6 +9782,106 @@ export default collection("parts", PartSchema, [
       roundVolumeMl: 18150,
       shellMassG: 36300,
       supportedMountTypes: ["DECK_OPEN"],
+      weaponCategory: "SECONDARY_GUN",
+    },
+  },
+  {
+    capabilities: [
+      {
+        kind: "ammunition_feed",
+        maxFeedPermille: 350,
+      },
+      {
+        class: "light",
+        kind: "fire_control_class",
+      },
+    ],
+    engineering: {
+      maintenance: {
+        monthlyBpOfCost: 20,
+      },
+      physical: {
+        centreOfGravity: {
+          datum: "PART_BASE",
+          zMm: 6000,
+        },
+        envelopeHeightMm: 2200,
+      },
+      power: {
+        consumption: [
+          {
+            basis: "PER_PART_UNIT",
+            id: "power",
+            kind: "powerKw",
+            value: 1,
+          },
+        ],
+      },
+    },
+    entryUnits: {
+      max: 8,
+      min: 1,
+      step: 1,
+    },
+    family: "gun",
+    id: "standard_gun_bl_6in_obr1867",
+    lifecycle: {
+      availableFrom: "1880-01",
+      availableUntil: null,
+    },
+    metadata: {
+      displayName: "6-inch obr.1867 Obukhov steel breech-loader",
+      tags: ["gun", "light"],
+    },
+    name: "6-inch obr.1867 Obukhov steel breech-loader",
+    origin: {
+      sourceFile: "ship-building/components/guns/russian.yaml",
+    },
+    parameters: {
+      rounds: {
+        max: 300,
+        min: 50,
+        step: 50,
+      },
+    },
+    provenance: {
+      confidence: "LOW",
+      kind: "historical_fact",
+      sourceStatus: "ESTIMATE",
+      note: "issue #892. Dedicated family so the shared 64-pdr family keeps its 29 kg shell. Gun 4,259 kg with breech, charge 8.2 kg and shell 33.37 kg from one secondary Russian reference page (SINGLE-SOURCE, Research discussion #916); mount, cost and rate of fire copied from the 64-pdr family.",
+      sources: [
+        {
+          sourceId: "navy-su-6in-obr1867",
+          title: "navy.su 6.03-inch and 6-inch guns obr.1867",
+        },
+      ],
+    },
+    provides: "gun",
+    quantities: [
+      {
+        basis: "PER_PART_UNIT",
+        id: "gun_mass",
+        kind: "massKg",
+        value: 4259,
+      },
+      {
+        basis: "PER_PART_UNIT",
+        id: "gun_cost",
+        kind: "costMicro",
+        value: 638850000,
+      },
+    ],
+    revisions: [],
+    spec: {
+      beamArcDeg: 140,
+      calibreUm: 152400,
+      gunFamily: "gun_bl_6in_obr1867",
+      gunMassKg: 4259,
+      mechanicalRateOfFireRoundsPerMinuteX100: 33,
+      propellantChargeBp: 2457,
+      roundVolumeMl: 16685,
+      shellMassG: 33370,
+      supportedMountTypes: ["CASEMATE", "DECK_OPEN"],
       weaponCategory: "SECONDARY_GUN",
     },
   },

@@ -244,6 +244,10 @@ export default collection("navalProfiles", NationNavalProfileSchema, [
         status: "DOMESTIC",
         producer: "Obukhov",
       },
+      gun_bl_6in_obr1867: {
+        status: "DOMESTIC",
+        producer: "Obukhov",
+      },
       gun_bl_12in_25: {
         status: "DOMESTIC",
         producer: "Obukhov",
@@ -335,7 +339,7 @@ export default collection("navalProfiles", NationNavalProfileSchema, [
       },
       {
         id: "ru_6in_obr1867",
-        familyId: "gun_rml_64pdr_71cwt",
+        familyId: "gun_bl_6in_obr1867",
         designation: "6-in obr.1867",
         overrides: {
           displayName: "6-inch obr.1867 in casemate",
