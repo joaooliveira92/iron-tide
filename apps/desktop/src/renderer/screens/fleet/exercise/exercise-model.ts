@@ -1,9 +1,12 @@
 import type {
   FleetDivisionView,
   FleetExerciseProjection,
+  FleetExerciseTensionPreview,
+  FleetExerciseTensionRow,
   FleetScreenProjection,
 } from "../../../../shared/fleet-contract.js";
 import type { RequestLifecycle } from "../../../lib/command-screen-workflow.js";
+import { translate } from "../../../lib/strings.js";
 
 export interface ExerciseShipRow {
   readonly shipId: string;
@@ -49,36 +52,50 @@ export function limitReached(exercise: FleetExerciseProjection): boolean {
   return exercise.heldInNextExerciseYear >= exercise.maxPerCalendarYear;
 }
 
-const GATE_REASON_TEXT: Readonly<Record<string, string>> = {
-  UnderConstruction: "is still under construction.",
-  Unavailable: "is under rebuild.",
-  WorkingUp: "is still working up.",
-  InRepair: "is under repair.",
-  InReserve: "is in reserve.",
-  Mothballed: "is mothballed.",
-  InBattle: "is committed to a battle.",
-  Assigned: "holds an assignment.",
-  AssignmentForbidsUse: "holds an assignment that bars this.",
-  EMPTY_BATCH: "No ship was selected.",
-  DUPLICATE_SHIP: "was selected more than once.",
-  NOT_OWNED: "is not one of your ships.",
-};
+const GATE_REASON_CODES: ReadonlySet<string> = new Set([
+  "UnderConstruction",
+  "Unavailable",
+  "WorkingUp",
+  "InRepair",
+  "InReserve",
+  "Mothballed",
+  "InBattle",
+  "Assigned",
+  "AssignmentForbidsUse",
+  "EMPTY_BATCH",
+  "DUPLICATE_SHIP",
+  "NOT_OWNED",
+]);
+
+export interface ExerciseTensionOutlook {
+  readonly belowThreshold: boolean;
+  readonly rows: readonly FleetExerciseTensionRow[];
+}
+
+export function tensionOutlook(
+  preview: FleetExerciseTensionPreview,
+  selectedCount: number,
+): ExerciseTensionOutlook {
+  return selectedCount < preview.minShips
+    ? { belowThreshold: true, rows: [] }
+    : { belowThreshold: false, rows: preview.rows };
+}
 
 export function explainExerciseRejection(
   diagnostics: readonly string[],
   rows: readonly ExerciseShipRow[],
 ): string[] {
   const names = new Map(rows.map((row) => [row.shipId, row.name]));
-  const lines: string[] = ["Fleet exercise rejected. Nothing was queued."];
+  const lines: string[] = [translate("fleet.exercise.rejected")];
   for (const diagnostic of diagnostics) {
     const detail = diagnostic.includes(": ")
       ? diagnostic.slice(diagnostic.indexOf(": ") + 2)
       : diagnostic;
     const pairs = detail.split(", ").map((part) => part.split("="));
-    if (pairs.every((pair) => pair.length === 2 && pair[1]! in GATE_REASON_TEXT)) {
+    if (pairs.every((pair) => pair.length === 2 && GATE_REASON_CODES.has(pair[1]!))) {
       for (const [id, code] of pairs as [string, string][]) {
-        const reason = GATE_REASON_TEXT[code]!;
-        lines.push(id === "<batch>" || id === "" ? reason : `${names.get(id) ?? id} ${reason}`);
+        const name = id === "<batch>" || id === "" ? "" : (names.get(id) ?? id);
+        lines.push(translate(`fleet.exercise.gate.${code}`, { name }));
       }
     } else lines.push(diagnostic);
   }

@@ -47,6 +47,34 @@ export function applyExerciseTension(
   });
 }
 
+export interface ExerciseTensionChange {
+  readonly otherNationId: string;
+  readonly before: number;
+  readonly after: number;
+}
+
+export function exerciseTensionPreview(
+  relations: readonly DiplomaticRelation[],
+  nationId: string,
+  rules: ExerciseTensionRules | undefined,
+): readonly ExerciseTensionChange[] {
+  if (rules === undefined) return [];
+  const raised = applyExerciseTension(relations, nationId, rules.minShips, rules);
+  const changes: ExerciseTensionChange[] = [];
+  relations.forEach((relation, index) => {
+    const after = raised[index]!.tension;
+    if (after === relation.tension) return;
+    changes.push({
+      otherNationId: relation.nationA === nationId ? relation.nationB : relation.nationA,
+      before: relation.tension,
+      after,
+    });
+  });
+  return changes.sort((a, b) =>
+    a.otherNationId < b.otherNationId ? -1 : a.otherNationId > b.otherNationId ? 1 : 0,
+  );
+}
+
 export type FleetExerciseProblemReason =
   | GateReasonTag
   | "EMPTY_BATCH"

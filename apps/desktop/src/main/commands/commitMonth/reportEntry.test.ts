@@ -6,6 +6,7 @@ import {
   completedShips,
   constructionProgressFromEvents,
   discoveriesFromEvents,
+  fleetExerciseFromEvents,
   newlyActiveProjectIds,
   presenceFromEvents,
   researchProgressFromEvents,
@@ -180,6 +181,68 @@ describe("presenceFromEvents", () => {
         { areaId: "med_malta", requiredTons: 1200, presentTons: 300, shortfallTons: 900 },
       ],
       prestigeDelta: -2,
+    });
+  });
+});
+
+describe("fleetExerciseFromEvents", () => {
+  const scheduled = (nationId: string) =>
+    envelope({
+      kind: "FleetExerciseScheduled",
+      nationId,
+      month: "1880-03",
+      shipIds: ["s1", "s2"],
+    });
+  const completed = (nationId: string) =>
+    envelope({
+      kind: "FleetExerciseCompleted",
+      nationId,
+      month: "1880-03",
+      shipIds: ["s1", "s2"],
+      experienceGained: SafeInt(5),
+    });
+  const raised = (nationId: string, otherNationId: string, before: number, after: number) =>
+    envelope({
+      kind: "ExerciseTensionRaised",
+      nationId,
+      otherNationId,
+      before: SafeInt(before),
+      after: SafeInt(after),
+      delta: SafeInt(after - before),
+    });
+
+  it("is absent when the player held no exercise event", () => {
+    expect(fleetExerciseFromEvents([scheduled("france"), completed("france")], "uk")).toBe(
+      undefined,
+    );
+  });
+
+  it("carries the scheduling, the result and the tension rows ordered by nation id", () => {
+    expect(
+      fleetExerciseFromEvents(
+        [
+          scheduled("uk"),
+          completed("uk"),
+          raised("uk", "russia", 2, 3),
+          raised("uk", "france", 5, 6),
+          raised("france", "uk", 1, 2),
+        ],
+        "uk",
+      ),
+    ).toEqual({
+      scheduled: { month: "1880-03", shipIds: ["s1", "s2"] },
+      completed: { month: "1880-03", shipIds: ["s1", "s2"], experienceGained: 5 },
+      tension: [
+        { otherNationId: "france", before: 5, after: 6 },
+        { otherNationId: "russia", before: 2, after: 3 },
+      ],
+    });
+  });
+
+  it("omits the parts that did not happen this month", () => {
+    expect(fleetExerciseFromEvents([scheduled("uk")], "uk")).toEqual({
+      scheduled: { month: "1880-03", shipIds: ["s1", "s2"] },
+      tension: [],
     });
   });
 });

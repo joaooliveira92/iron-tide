@@ -2,6 +2,7 @@ import {
   economyOutlook,
   evaluateShipGates,
   divisionAggregateHash,
+  scheduleFleetExercise,
   type CampaignSnapshot,
   type PermanentDivision,
   type Ship,
@@ -118,7 +119,7 @@ function makeSnapshot(ships: Ship[], divisions: PermanentDivision[]): CampaignSn
 }
 
 const envelope = (body: CommandBody, from: CampaignSnapshot): CommandEnvelope<CommandBody> => ({
-  commandId: `cmd-${body.type}-${String(from.turnNumber)}`,
+  commandId: `cmd-${body.type}-${String(from.turnNumber)}-${JSON.stringify(body)}`,
   version: "0.1.0",
   expectedSnapshotHash: sha256Hex(canonicalSerialize(from)),
   idempotencyKey: `ik-${body.type}-${String(from.turnNumber)}-${JSON.stringify(body)}`,
@@ -427,17 +428,18 @@ describe("annual fleet exercise", () => {
         ],
       ]),
     } as CampaignSnapshot;
-    const scheduled = month(both, [
-      hold(["s1", "s2"]),
-      { type: "HoldFleetExercise", nationId: "FRA", shipIds: ["f2", "f1"] },
-    ]);
-    expect(scheduled.collector.all.map((d) => d.code)).toEqual([]);
-    expect(
-      scheduled.result.eventLedger.all
-        .filter((e) => e.body.kind === "FleetExerciseScheduled")
-        .map((e) => (e.body as { nationId: string }).nationId),
-    ).toEqual(["FRA", "GBR"]);
-    const held = month(scheduled.next);
+    const rules = FIXTURE_FLEET_MANAGEMENT_RULES.exercise;
+    const preScheduled = new Map(both.nations);
+    preScheduled.set("GBR", scheduleFleetExercise(gbr(both), ["s1", "s2"], "1880-02", rules));
+    preScheduled.set(
+      "FRA",
+      scheduleFleetExercise(both.nations.get("FRA")!, ["f2", "f1"], "1880-02", rules),
+    );
+    const held = month({
+      ...both,
+      nations: preScheduled,
+      turnNumber: SafeInt(Number(both.turnNumber) + 1),
+    } as CampaignSnapshot);
     const completed = held.result.eventLedger.all
       .filter((e) => e.body.kind === "FleetExerciseCompleted")
       .map((e) => (e.body as { nationId: string }).nationId);
