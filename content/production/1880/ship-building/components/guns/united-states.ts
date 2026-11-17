@@ -109,9 +109,9 @@ export default defineShipComponentCatalogue([
       maxFeedPermille: number(350),
     }),
     fieldProvenance: {
-      volumeLitre: { status: "placeholder", rationale: "unsourced" },
+      volumeLitre: { status: "estimate", rationale: "copied from gun_rml_64pdr_71cwt" },
       costMicro: { status: "estimate", rationale: "copied from gun_rml_64pdr_71cwt" },
-      deckFootprintMm2: { status: "placeholder", rationale: "unsourced" },
+      deckFootprintMm2: { status: "estimate", rationale: "copied from gun_rml_64pdr_71cwt" },
       "attributes.roundVolumeMl": {
         status: "estimate",
         rationale: "0.5 mL per gram of shell like the 64-pdr rows",
