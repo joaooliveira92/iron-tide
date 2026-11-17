@@ -829,7 +829,7 @@ export default collection("gunFamilies", GunFamilySchema, [
       sourceStatus: "BALANCE_TARGET",
       confidence: "MEDIUM",
       kind: "balance_adjustment",
-      note: "issue #851, corrected by issue #879. Navweaps 130 mm/58 SM-2-1 Pattern 1957 (SINGLE-SOURCE) names the Kotlin gun; navypedia labels it 130/50 M-1954 (Research discussion #440 section 3). The id keeps the legacy 50 key; the component carries the derivations.",
+      note: "issue #851, reconciled by issues #879 and #885. Navweaps 130 mm/58 SM-2-1 Pattern 1957 (SINGLE-SOURCE) names the Kotlin gun and gives its 4.99 t gun mass, 57.325 t twin mount, 15 rounds per minute at +3 degrees and 1957 in-service date; navypedia labels it 130/50 M-1954 (Research discussion #440 section 3). The id keeps the legacy 50 key; the component and parts carry the derivations.",
       sources: [
         {
           title: "navweaps.com Russian 130 mm/58 (5.1-inch) SM-2-1 Pattern 1957",

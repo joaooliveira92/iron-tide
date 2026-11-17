@@ -11,11 +11,11 @@ export default defineShipComponentCatalogue([
     category: "SECONDARY_GUN",
     introduction: { fromMonth: "1954-01", obsoleteMonth: null },
     constants: {
-      gun_kg: 4000,
-      mount_per_barrel_kg: 13600,
+      gun_kg: 4990,
+      mount_per_barrel_kg: 23673,
       mount_fixed_kg: 0,
       cost_per_kg_micro: 197000,
-      mount_cost_micro: 2684000000,
+      mount_cost_micro: 4672000000,
     },
     parameters: { barrels: { min: 2, max: 2, step: 1 }, rounds: { min: 200, max: 600, step: 50 } },
     formulas: (v) => ({
@@ -36,7 +36,7 @@ export default defineShipComponentCatalogue([
       shellMassG: number(33000),
       chargeBp: number(4636),
       roundVolumeMl: number(34500),
-      rofBaseX100: number(1300),
+      rofBaseX100: number(1500),
       beamArcDeg: number(150),
       maxFeedPermille: number(300),
     }),

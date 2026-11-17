@@ -12879,7 +12879,7 @@ export default collection("parts", PartSchema, [
     provenance: {
       confidence: "MEDIUM",
       kind: "balance_adjustment",
-      note: "issue #851, sources corrected by issue #879. The 35.2 t twin mount is SINGLE-SOURCE from Research discussion #440 section 3, whose cited navweaps page is dead; navweaps 130/58 SM-2-1 lists 57.325 t for the SM-2 mount, a conflict left for a follow-up. Its split into 13,600 kg per barrel and no fixed mass, the 6 crew per barrel, and the volume, footprint and cost conventions (3 L and 470 mm2 per kg, 197,368 micro per kg) are BALANCE TARGET.",
+      note: "issue #851, reconciled by issue #885. The SM-2 twin mount weighs 57.325 t guns included (navweaps, SINGLE-SOURCE); with the 4,990 kg gun that is 23,673 kg of mount per barrel and no fixed mass (57,325 = 2 x (4,990 + 23,673), 1 kg from rounding). The former 35.2 t came from Research discussion #440 section 3, whose cited navweaps page is dead. The 6 crew per barrel, and the volume, footprint and cost conventions (3 L and 470 mm2 per kg, 197,368 micro per kg) are BALANCE TARGET.",
       sourceStatus: "BALANCE_TARGET",
       sources: [
         {
@@ -12906,13 +12906,13 @@ export default collection("parts", PartSchema, [
         basis: "PER_CONTAINED_UNIT",
         id: "installation_per_gun",
         kind: "massKg",
-        value: 13600,
+        value: 23673,
       },
       {
         basis: "PER_CONTAINED_UNIT",
         id: "mount_cost_per_gun",
         kind: "costMicro",
-        value: 2684000000,
+        value: 4672000000,
       },
       {
         basis: "PER_CONTAINED_UNIT",
