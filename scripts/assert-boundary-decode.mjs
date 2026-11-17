@@ -11,6 +11,7 @@
 //   --scope desktop   apps/desktop/src/main          (project/pack loaders)
 //   --scope cli       apps/compiler-cli/src          (the bwc entry point)
 //   --scope persistence  packages/persistence/src    (save, pointer, and metadata readers)
+//   --scope replay    packages/cross-process-test/src (replay corpus, fuzz manifest, and plan readers)
 //
 // A site is a boundary cast when a `JSON.parse(...)` call (possibly wrapped in
 // parens or a further `as unknown`) is asserted to a named type. `JSON.parse`
@@ -38,7 +39,7 @@
 // own options, the content manifest/lock tolerate extra keys (pinned by test), and the
 // save-header probe stays lenient.
 //
-// Usage: `node scripts/assert-boundary-decode.mjs [--scope compiler|desktop|cli|persistence|decode-options|all] [--self-test] [--strict] [--write]`
+// Usage: `node scripts/assert-boundary-decode.mjs [--scope compiler|desktop|cli|persistence|replay|decode-options|all] [--self-test] [--strict] [--write]`
 //   (`--write` reseeds the decode-options baseline from the current tree)
 //   (`--strict` fails on a stale allowlist entry; CI is always strict)
 //
@@ -58,6 +59,7 @@ export const SCOPES = {
   desktop: ["apps/desktop/src/main"],
   cli: ["apps/compiler-cli/src"],
   persistence: ["packages/persistence/src"],
+  replay: ["packages/cross-process-test/src"],
 };
 
 /**
