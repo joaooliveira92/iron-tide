@@ -9689,6 +9689,106 @@ export default collection("parts", PartSchema, [
     capabilities: [
       {
         kind: "ammunition_feed",
+        maxFeedPermille: 350,
+      },
+      {
+        class: "light",
+        kind: "fire_control_class",
+      },
+    ],
+    engineering: {
+      maintenance: {
+        monthlyBpOfCost: 20,
+      },
+      physical: {
+        centreOfGravity: {
+          datum: "PART_BASE",
+          zMm: 6000,
+        },
+        envelopeHeightMm: 2200,
+      },
+      power: {
+        consumption: [
+          {
+            basis: "PER_PART_UNIT",
+            id: "power",
+            kind: "powerKw",
+            value: 1,
+          },
+        ],
+      },
+    },
+    entryUnits: {
+      max: 8,
+      min: 1,
+      step: 1,
+    },
+    family: "gun",
+    id: "standard_gun_rml_64in_parrott",
+    lifecycle: {
+      availableFrom: "1880-01",
+      availableUntil: null,
+    },
+    metadata: {
+      displayName: "6.4-inch Parrott rifle (100-pdr)",
+      tags: ["gun", "light"],
+    },
+    name: "6.4-inch Parrott rifle (100-pdr)",
+    origin: {
+      sourceFile: "ship-building/components/guns/united-states.yaml",
+    },
+    parameters: {
+      rounds: {
+        max: 300,
+        min: 50,
+        step: 50,
+      },
+    },
+    provenance: {
+      confidence: "LOW",
+      kind: "historical_fact",
+      sourceStatus: "ESTIMATE",
+      note: "issue #895. Dedicated family so the shared 64-pdr family keeps its 29 kg shell. Gun 9,700 lb, charge 8 lb, shell 80 lb and 70 lb solid shot from the 1866 Ordnance Instructions para 384 (SINGLE-SOURCE primary); mount, cost and rate of fire copied from the 64-pdr family.",
+      sources: [
+        {
+          sourceId: "oi66",
+          title: "US Navy, Ordnance Instructions 1866 (4th ed.), para 384",
+        },
+      ],
+    },
+    provides: "gun",
+    quantities: [
+      {
+        basis: "PER_PART_UNIT",
+        id: "gun_mass",
+        kind: "massKg",
+        value: 4400,
+      },
+      {
+        basis: "PER_PART_UNIT",
+        id: "gun_cost",
+        kind: "costMicro",
+        value: 660000000,
+      },
+    ],
+    revisions: [],
+    spec: {
+      beamArcDeg: 140,
+      calibreUm: 162560,
+      gunFamily: "gun_rml_64in_parrott",
+      gunMassKg: 4400,
+      mechanicalRateOfFireRoundsPerMinuteX100: 33,
+      propellantChargeBp: 1000,
+      roundVolumeMl: 18150,
+      shellMassG: 36300,
+      supportedMountTypes: ["DECK_OPEN"],
+      weaponCategory: "SECONDARY_GUN",
+    },
+  },
+  {
+    capabilities: [
+      {
+        kind: "ammunition_feed",
         maxFeedPermille: 300,
       },
       {
@@ -11711,10 +11811,10 @@ export default collection("parts", PartSchema, [
     nation: "usa",
     origin: {
       prototype: {
-        id: "standard_gun_rml_64pdr_71cwt",
+        id: "standard_gun_rml_64in_parrott",
         inheritedQuantities: [],
         inheritedSpec: [],
-        sourceFile: "ship-building/components/guns/british-rml.yaml",
+        sourceFile: "ship-building/components/guns/united-states.yaml",
       },
       sourceFile: "ship-building/naval-profiles/usa.yaml",
     },
@@ -11744,25 +11844,25 @@ export default collection("parts", PartSchema, [
         basis: "PER_PART_UNIT",
         id: "gun_mass",
         kind: "massKg",
-        value: 3582,
+        value: 4400,
       },
       {
         basis: "PER_PART_UNIT",
         id: "gun_cost",
         kind: "costMicro",
-        value: 537300000,
+        value: 660000000,
       },
     ],
     revisions: [],
     spec: {
       beamArcDeg: 140,
-      calibreUm: 160000,
-      gunFamily: "gun_rml_64pdr_71cwt",
-      gunMassKg: 3582,
+      calibreUm: 162560,
+      gunFamily: "gun_rml_64in_parrott",
+      gunMassKg: 4400,
       mechanicalRateOfFireRoundsPerMinuteX100: 33,
-      propellantChargeBp: 1241,
-      roundVolumeMl: 14500,
-      shellMassG: 29000,
+      propellantChargeBp: 1000,
+      roundVolumeMl: 18150,
+      shellMassG: 36300,
       supportedMountTypes: ["DECK_OPEN", "BROADSIDE_BATTERY"],
       weaponCategory: "SECONDARY_GUN",
     },

@@ -874,6 +874,30 @@ export default collection("gunMounts", GunMountSchema, [
     },
   },
   {
+    id: "gun_rml_64in_parrott_deck_open",
+    mountType: "DECK_OPEN",
+    compatibleGunFamilies: ["gun_rml_64in_parrott"],
+    gunCount: 1,
+    baseInstallationMassKg: 1500,
+    perGunInstallationMassKg: 3000,
+    firingArcDeg: 140,
+    introductionMonth: "1880-01",
+    retirementMonth: null,
+    requiredTechnologyIds: [],
+    provenance: {
+      sourceStatus: "ESTIMATE",
+      confidence: "LOW",
+      kind: "historical_fact",
+      note: "issue #895. Mount masses and arc are copied from the 64-pdr 71-cwt deck mount.",
+      sources: [
+        {
+          sourceId: "oi66",
+          title: "US Navy, Ordnance Instructions 1866 (4th ed.), para 384",
+        },
+      ],
+    },
+  },
+  {
     id: "gun_rml_7in_7ton_barbette",
     mountType: "BARBETTE",
     compatibleGunFamilies: ["gun_rml_7in_7ton"],
