@@ -35,7 +35,6 @@ import {
   applyBudgetProject,
   applyDivisionCommandMonth,
   applyHaltConstruction,
-  applyMoveFleet,
   applyOfficerCommand,
   applyOrderConstruction,
   applyOrderForeignConstruction,
@@ -45,6 +44,7 @@ import {
   applySetResearchPriority,
   applySubmitDesign,
 } from "./commands.js";
+import { applyMoveFleet } from "./fleetOrders.js";
 import {
   applyDeclareBlockade,
   applyDeclareWar,

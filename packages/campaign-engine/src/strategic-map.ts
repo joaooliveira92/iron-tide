@@ -1,4 +1,9 @@
-import { fleetMoveProblem, type CampaignSnapshot, type FleetMoveProblem } from "@bluewave/campaign";
+import {
+  describeFleetMoveProblem,
+  fleetMoveProblem,
+  type CampaignSnapshot,
+  type FleetMoveProblem,
+} from "@bluewave/campaign";
 import { buildWorldMapView, type WorldMapView } from "./world-map.js";
 import { compareCodePoints } from "@bluewave/deterministic";
 
@@ -87,7 +92,7 @@ export function buildStrategicMapView(
           candidates[0] ?? fleet.locationAreaId,
         );
         if (probe !== null && isFleetLevelCode(probe.code)) {
-          blockedReason = { code: probe.code, message: probe.message };
+          blockedReason = { code: probe.code, message: describeFleetMoveProblem(probe) };
         }
       }
 

@@ -91,7 +91,7 @@ describe("a ship under rebuild cannot sail (DESIGN-23 section 20, ADR-0078)", ()
     const s = withAvailability(false);
     const problem = fleetMoveProblem(s, ATTACKER_NATION, fleetIdOf(s), "a-2");
     expect(problem?.code).toBe("SHIP_UNAVAILABLE");
-    expect(problem?.message).toContain("under rebuild");
+    expect(problem?._tag).toBe("ShipUnderRebuild");
   });
   it("refuses a fleet whose every ship is unavailable as having no operational ship", () => {
     const s = withAvailability(true);

@@ -7,8 +7,6 @@ import type {
 import {
   applyCommanderChange,
   DIVISION_MEMBERSHIP_CHANGE_INELIGIBLE,
-  fleetMoveProblem,
-  relocateFleet,
   isTerminalConstructionProjectStatus,
   monthlyRevenue,
   researchCap,
@@ -21,7 +19,6 @@ import type {
   AuthorizeDockExpansionCommand,
   BudgetProjectCommand,
   HaltConstructionCommand,
-  MoveFleetCommand,
   OrderConstructionCommand,
   OrderForeignConstructionCommand,
   RelieveOfficerCommand,
@@ -142,24 +139,6 @@ export function applyOfficerCommand(
   const nations = new Map(currentSnapshot["nations"]);
   nations.set(body["nationId"], { ...nation, divisions });
   return { ...currentSnapshot, nations };
-}
-
-export function applyMoveFleet(
-  currentSnapshot: CampaignSnapshot,
-  body: MoveFleetCommand,
-  collector: DiagnosticCollector,
-): CampaignSnapshot {
-  const problem = fleetMoveProblem(
-    currentSnapshot,
-    body["nationId"],
-    body["fleetId"],
-    body["toAreaId"],
-  );
-  if (problem !== null) {
-    collector.addError(problem.code, problem.message, { stage: "command_collection" });
-    return currentSnapshot;
-  }
-  return relocateFleet(currentSnapshot, body["nationId"], body["fleetId"], body["toAreaId"]);
 }
 
 export function applySetBudgetAllocation(

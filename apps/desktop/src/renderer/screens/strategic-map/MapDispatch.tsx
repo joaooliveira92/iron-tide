@@ -101,7 +101,9 @@ export function MapDispatch({
         <div className="space-y-2 border-t border-admiralty-border pt-3">
           {selectedFleet.blockedReason === null ? null : (
             <p role="status" className="text-sm font-medium text-admiralty-accent">
-              {selectedFleet.blockedReason.message}
+              {translate(`fleet.move.blocked.${selectedFleet.blockedReason.code}`, {
+                fleet: selectedFleet.fleetName,
+              })}
             </p>
           )}
           {choices.length > 0 ? (

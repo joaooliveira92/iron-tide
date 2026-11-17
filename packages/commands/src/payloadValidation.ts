@@ -6,6 +6,7 @@ import {
   RESEARCH_BUDGET_MIN,
   canTransitionConstructionProject,
   constructionAccelerationAllowed,
+  describeFleetMoveProblem,
   fleetMoveProblem,
   isTerminalConstructionProjectStatus,
   isShipOperational,
@@ -65,7 +66,7 @@ export function validatePayloadRules(
     const problem = fleetMoveProblem(snapshot, move.nationId, move.fleetId, move.toAreaId);
     return problem === null
       ? { ok: true }
-      : rejectValidation(envelope, snapshot, problem.code, problem.message);
+      : rejectValidation(envelope, snapshot, problem.code, describeFleetMoveProblem(problem));
   }
   if (envelope.body.type === "DeclareWar") return validateDeclareWar(envelope, snapshot);
   if (envelope.body.type === "AcceptPeace") return validateAcceptPeace(envelope, snapshot);
