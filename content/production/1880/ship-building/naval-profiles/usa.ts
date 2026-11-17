@@ -271,6 +271,10 @@ export default collection("navalProfiles", NationNavalProfileSchema, [
         status: "DOMESTIC",
         producer: "West Point",
       },
+      gun_rml_64in_parrott: {
+        status: "DOMESTIC",
+        producer: "West Point",
+      },
       tube_14in_above_water: {
         status: "IMPORTED",
         producer: "Whitehead",
@@ -348,7 +352,7 @@ export default collection("navalProfiles", NationNavalProfileSchema, [
       },
       {
         id: "us_parrott_100pdr",
-        familyId: "gun_rml_64pdr_71cwt",
+        familyId: "gun_rml_64in_parrott",
         designation: "VI.4-inch Parrott rifle (100-pdr)",
         overrides: {
           displayName: "VI.4-inch Parrott rifle",

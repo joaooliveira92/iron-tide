@@ -885,4 +885,33 @@ export default collection("gunModels", GunModelSchema, [
       ],
     },
   },
+  {
+    id: "us_parrott_100pdr",
+    familyId: "gun_rml_64in_parrott",
+    nationId: "usa",
+    designation: "VI.4-inch Parrott rifle (100-pdr)",
+    caliberUm: 162560,
+    gunMassKg: 4400,
+    shellMassG: 36300,
+    propellantChargeBp: 1000,
+    roundVolumeMl: 18150,
+    mechanicalRateOfFireRoundsPerMinuteX100: 33,
+    introductionMonth: "1880-01",
+    retirementMonth: null,
+    supportedMountTypes: ["DECK_OPEN", "BROADSIDE_BATTERY"],
+    requiredTechnologyIds: [],
+    provenance: {
+      sourceStatus: "DERIVED",
+      confidence: "MEDIUM",
+      kind: "historical_fact",
+      note: "issue #895. Promoted from the United States profile gun model of the same id onto a dedicated family, so the shared 64-pdr 71-cwt family and every starter placing it keep their numbers. Gun 9,700 lb (4,400 kg), 8 lb charge and 80 lb (36.3 kg) shell are from the 1866 Ordnance Instructions para 384, SINGLE-SOURCE primary. Rate of fire and round volume are copied from the 64-pdr family and are ESTIMATE.",
+      sources: [
+        {
+          title: "US Navy, Ordnance Instructions 1866 (4th ed.), para 384",
+          archiveOrUrl: "https://archive.org/details/ordnanceinstruc01ordngoog",
+          section: "Research discussion #890",
+        },
+      ],
+    },
+  },
 ]);

@@ -10637,6 +10637,164 @@ export default collection("parts", PartSchema, [
   },
   {
     family: "gun_mount",
+    id: "gun_rml_64in_parrott_broadside_battery",
+    lifecycle: {
+      availableFrom: "1880-01",
+      availableUntil: null,
+    },
+    name: "gun_rml_64in_parrott_broadside_battery",
+    origin: {
+      sourceFile: "ship-building/components/guns/united-states.yaml",
+    },
+    provenance: {
+      confidence: "LOW",
+      kind: "historical_fact",
+      sourceStatus: "ESTIMATE",
+      sources: [
+        {
+          sourceId: "oi66",
+          title: "US Navy, Ordnance Instructions 1866 (4th ed.), para 384",
+        },
+      ],
+    },
+    provides: "gun_mount",
+    quantities: [
+      {
+        basis: "PER_LOADOUT_ENTRY",
+        id: "installation_fixed",
+        kind: "massKg",
+        value: 1500,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "installation_per_gun",
+        kind: "massKg",
+        value: 3000,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "mount_cost_per_gun",
+        kind: "costMicro",
+        value: 500000000,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "crew_per_gun",
+        kind: "crew",
+        value: 4,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "volume_per_gun",
+        kind: "volumeLitre",
+        value: 22200,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "deck_footprint_per_gun",
+        kind: "deckFootprintMm2",
+        value: 3478000,
+      },
+    ],
+    revisions: [],
+    slots: [
+      {
+        accepts: ["gun"],
+        id: "guns",
+        mountCount: {
+          max: 1,
+          min: 1,
+        },
+      },
+    ],
+    spec: {
+      compatibleGunFamilies: ["gun_rml_64in_parrott"],
+      firingArcDeg: 140,
+      gunsPerMount: 1,
+      mountType: "BROADSIDE_BATTERY",
+    },
+  },
+  {
+    family: "gun_mount",
+    id: "gun_rml_64in_parrott_deck_open",
+    lifecycle: {
+      availableFrom: "1880-01",
+      availableUntil: null,
+    },
+    name: "gun_rml_64in_parrott_deck_open",
+    origin: {
+      sourceFile: "ship-building/components/guns/united-states.yaml",
+    },
+    provenance: {
+      confidence: "LOW",
+      kind: "historical_fact",
+      sourceStatus: "ESTIMATE",
+      sources: [
+        {
+          sourceId: "oi66",
+          title: "US Navy, Ordnance Instructions 1866 (4th ed.), para 384",
+        },
+      ],
+    },
+    provides: "gun_mount",
+    quantities: [
+      {
+        basis: "PER_LOADOUT_ENTRY",
+        id: "installation_fixed",
+        kind: "massKg",
+        value: 1500,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "installation_per_gun",
+        kind: "massKg",
+        value: 3000,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "mount_cost_per_gun",
+        kind: "costMicro",
+        value: 500000000,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "crew_per_gun",
+        kind: "crew",
+        value: 4,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "volume_per_gun",
+        kind: "volumeLitre",
+        value: 22200,
+      },
+      {
+        basis: "PER_CONTAINED_UNIT",
+        id: "deck_footprint_per_gun",
+        kind: "deckFootprintMm2",
+        value: 3478000,
+      },
+    ],
+    revisions: [],
+    slots: [
+      {
+        accepts: ["gun"],
+        id: "guns",
+        mountCount: {
+          max: 1,
+          min: 1,
+        },
+      },
+    ],
+    spec: {
+      compatibleGunFamilies: ["gun_rml_64in_parrott"],
+      firingArcDeg: 140,
+      gunsPerMount: 1,
+      mountType: "DECK_OPEN",
+    },
+  },
+  {
+    family: "gun_mount",
     id: "gun_rml_64pdr_71cwt_broadside_battery",
     lifecycle: {
       availableFrom: "1880-01",
