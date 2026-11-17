@@ -472,4 +472,141 @@ export default collection("ammunition", AmmunitionPatternSchema, [
       ],
     },
   },
+  {
+    id: "ru_chilled_iron_11in",
+    shellType: "AP",
+    nationId: "russia",
+    compatibleGunModelIds: ["ru_11in_obr1867"],
+    shellMassG: 225200,
+    explosiveFillerG: 3280,
+    introductionMonth: "1880-01",
+    retirementMonth: null,
+    provenance: {
+      sourceStatus: "ESTIMATE",
+      confidence: "LOW",
+      kind: "historical_fact",
+      note: "issue #880. Chilled-iron (armour-piercing) shell 225.2 kg with 3.28 kg black powder, from one secondary Russian reference page (SINGLE-SOURCE). Shell type AP because it is the armour-piercing round; scoped to the model, never the family, so no starter resolution moves. No penetration bias or cost is sourced.",
+      sources: [
+        {
+          title: "navy.su 11-inch gun obr.1867",
+          archiveOrUrl: "http://www.navy.su/navyarms/bronen/1867/11/11.htm",
+          section: "Research discussion #890 section 2",
+        },
+      ],
+    },
+  },
+  {
+    id: "ru_cast_iron_11in",
+    shellType: "HE",
+    nationId: "russia",
+    compatibleGunModelIds: ["ru_11in_obr1867"],
+    shellMassG: 222000,
+    explosiveFillerG: 7450,
+    introductionMonth: "1880-01",
+    retirementMonth: null,
+    provenance: {
+      sourceStatus: "ESTIMATE",
+      confidence: "LOW",
+      kind: "historical_fact",
+      note: "issue #880. Common cast-iron shell 222 kg with 7.45 kg black powder, from one secondary Russian reference page (SINGLE-SOURCE). Shell type HE because it is the percussion-fuzed bursting shell; scoped to the model. No penetration bias or cost is sourced.",
+      sources: [
+        {
+          title: "navy.su 11-inch gun obr.1867",
+          archiveOrUrl: "http://www.navy.su/navyarms/bronen/1867/11/11.htm",
+          section: "Research discussion #890 section 2",
+        },
+      ],
+    },
+  },
+  {
+    id: "ru_chilled_iron_8in",
+    shellType: "AP",
+    nationId: "russia",
+    compatibleGunModelIds: ["ru_8in_obr1867"],
+    shellMassG: 84800,
+    introductionMonth: "1880-01",
+    retirementMonth: null,
+    provenance: {
+      sourceStatus: "ESTIMATE",
+      confidence: "LOW",
+      kind: "historical_fact",
+      note: "issue #880. Lead-coated chilled-iron shell 84.8 kg, the heaviest of the 73.7 to 84.8 kg range, from one secondary Russian reference page (SINGLE-SOURCE). The page gives no filler for it. Scoped to the model. No penetration bias or cost is sourced.",
+      sources: [
+        {
+          title: "navy.su 8-inch gun obr.1867",
+          archiveOrUrl: "http://www.navy.su/navyarms/bronen/1867/8/8.htm",
+          section: "Research discussion #890 section 2",
+        },
+      ],
+    },
+  },
+  {
+    id: "ru_cast_iron_8in",
+    shellType: "HE",
+    nationId: "russia",
+    compatibleGunModelIds: ["ru_8in_obr1867"],
+    shellMassG: 73700,
+    explosiveFillerG: 2640,
+    introductionMonth: "1880-01",
+    retirementMonth: null,
+    provenance: {
+      sourceStatus: "ESTIMATE",
+      confidence: "LOW",
+      kind: "historical_fact",
+      note: "issue #880. Common cast-iron shell 73.7 kg with the normal 2.64 kg black-powder filling, from one secondary Russian reference page (SINGLE-SOURCE). Scoped to the model. No penetration bias or cost is sourced.",
+      sources: [
+        {
+          title: "navy.su 8-inch gun obr.1867",
+          archiveOrUrl: "http://www.navy.su/navyarms/bronen/1867/8/8.htm",
+          section: "Research discussion #890 section 2",
+        },
+      ],
+    },
+  },
+  {
+    id: "us_shell_15in_dahlgren",
+    shellType: "HE",
+    nationId: "usa",
+    compatibleGunModelIds: ["us_dahlgren_15in"],
+    shellMassG: 149700,
+    introductionMonth: "1880-01",
+    retirementMonth: null,
+    provenance: {
+      sourceStatus: "DERIVED",
+      confidence: "MEDIUM",
+      kind: "historical_fact",
+      note: "issue #880. XV-inch shell 330 lb (149,685 g, authored as 149,700 g like the component) from the 1866 Ordnance Instructions proof table, SINGLE-SOURCE primary. The conflicting 352 lb figure is absent from that text. Shell type HE for the cast-iron bursting shell; scoped to the model, so the nation default pattern still resolves for starters. No filler, penetration bias or cost is sourced.",
+      sources: [
+        {
+          title:
+            "US Navy, Ordnance Instructions 1866 (4th ed.), Part III para 31 powder-proof table",
+          archiveOrUrl: "https://archive.org/details/ordnanceinstruc01ordngoog",
+          section: "Research discussion #890 section 1",
+        },
+      ],
+    },
+  },
+  {
+    id: "us_cored_shot_15in_dahlgren",
+    shellType: "AP",
+    nationId: "usa",
+    compatibleGunModelIds: ["us_dahlgren_15in"],
+    shellMassG: 181400,
+    introductionMonth: "1880-01",
+    retirementMonth: null,
+    provenance: {
+      sourceStatus: "ESTIMATE",
+      confidence: "LOW",
+      kind: "historical_fact",
+      note: "issue #880. 400 lb (181,437 g, rounded to 181,400 g) from the same proof table, whose OCR label reads 'Cored sh.' and is read as cored shot; hence ESTIMATE/LOW. Shell type AP because it is solid shot against armour; scoped to the model. No penetration bias or cost is sourced.",
+      sources: [
+        {
+          title:
+            "US Navy, Ordnance Instructions 1866 (4th ed.), Part III para 31 powder-proof table",
+          archiveOrUrl: "https://archive.org/details/ordnanceinstruc01ordngoog",
+          section: "Research discussion #890 section 1",
+        },
+      ],
+    },
+  },
 ]);
