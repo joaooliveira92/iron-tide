@@ -1,17 +1,13 @@
 import type { Bp, Money, SafeInt } from "@bluewave/contracts";
 import type { CapabilityData, GovernmentType, NationTrait } from "@bluewave/content-schema";
-import type {
-  AppliedPrestigeRule,
-  CareerResult,
-  PrestigeBounds,
-  PrestigeReasonCode,
-  PrestigeValueSet,
-} from "./prestige.js";
+import type { CareerResult, PrestigeValueSet } from "./prestige.js";
+import type { PrestigeLastChange } from "./prestigeLastChange.js";
 import type { CompiledArmamentMount, CompiledTorpedo } from "@bluewave/armament";
 import type { CanonicalEnvelope } from "@bluewave/deterministic";
 import type { BattleAbsence } from "./battleAbsence.js";
 import type { BudgetModifier, NationEventHistory } from "./eventState.js";
 import type { FleetExerciseRecord } from "./fleetExercise.js";
+import type { FleetMoraleLastChange } from "./fleetMorale.js";
 import type { TrainingSubjectEntry } from "./specialTraining.js";
 import type { WarOptionalRecords } from "./warRecords.js";
 import type { PermanentDivision } from "./division.js";
@@ -365,6 +361,8 @@ export interface NationState {
   traits?: NationTrait[];
   eventHistory?: NationEventHistory;
   unrest?: number;
+  fleetMorale?: number;
+  fleetMoraleLastChange?: FleetMoraleLastChange;
   budgetModifiers?: BudgetModifier[];
   treasury: SafeInt;
   income: SafeInt;
@@ -617,17 +615,6 @@ export interface CampaignWeatherState {
   formulaVersion: string;
   rngVersion: string;
   stateHash: string;
-}
-
-export interface PrestigeLastChange {
-  reasonCode: PrestigeReasonCode | (string & {});
-  before: SafeInt;
-  after: SafeInt;
-  delta: SafeInt;
-  month: string;
-  appliedRule?: AppliedPrestigeRule;
-  unclampedAfter?: SafeInt;
-  bounds?: PrestigeBounds;
 }
 
 export interface CampaignSnapshot {

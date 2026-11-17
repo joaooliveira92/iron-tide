@@ -35,6 +35,7 @@ Retired: bare **"budget"**. Say appropriation, allocation or spend.
 - **Sea area** — any non-land `AreaData` (`isSeaArea`): `sea` and `coastal` both count. The UI says "area".
 - **Station** — a possession's area, where a nation owes a presence requirement (`stationAreaIds`, `StationPresenceRow`).
 - **Presence** — tonnage kept at a station against the tonnage required. Never "presence area".
+- **Fleet morale** — `fleetMorale`, 0 to 100, absent means full; only unpaid funds and a long cramped blockade lower it. Separate from **unrest** (`unrest`, manual p.62 overlaps) and from cohesion; no effect yet, values PROVISIONAL (#884).
 - **Foreign station posting** — the ship assignment (`stationAssignment`); it carries no area, only `locationAreaId`.
 
 Frozen aliases: `presenceAreaIds` on `WorldMapNationView`, `areaId` on station rows, `FOREIGN_STATION`.

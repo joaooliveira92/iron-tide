@@ -24,6 +24,7 @@ export * from "./fleetExercise.js";
 export * from "./tensionDrift.js";
 export * from "./eventDraw.js";
 export * from "./eventEffects.js";
+export * from "./fleetMorale.js";
 export * from "./designUnits.js";
 export * from "./fleetSize.js";
 export * from "./snapshotHash.js";
@@ -77,7 +78,6 @@ export type {
   ProcurementIntentStatus,
   PersistenceManifest,
   PoliticalState,
-  PrestigeLastChange,
   ResearchState,
   OverBaseFlag,
   Ship,
@@ -90,6 +90,7 @@ export type {
   WorldState,
 } from "./state.js";
 export { isShipOperational } from "./state.js";
+export type { PrestigeLastChange } from "./prestigeLastChange.js";
 export type { DeclineCounterEntry, DeclinedBattleRecord } from "./declineRecords.js";
 export type { PeaceOffer } from "./peaceOffer.js";
 export { BattleAbsenceSchema, type BattleAbsence } from "./battleAbsence.js";

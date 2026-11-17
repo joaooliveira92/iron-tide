@@ -8,6 +8,7 @@ import { CampaignPreferencesScreen } from "./CampaignPreferencesScreen.js";
 
 const projection: PlayerProjection = {
   prestige: { current: 20, sackingThreshold: 16, dismissalRisk: false },
+  fleetMorale: { current: 100, max: 100 },
   campaignIdentity: "campaign_1",
   revision: 3 as PlayerProjection["revision"],
   month: { year: 1880, month: 3 },

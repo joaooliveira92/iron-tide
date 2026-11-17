@@ -19,6 +19,7 @@ const { buildStatusStrip } = await import("./status-strip-state.js");
 
 const projection: PlayerProjection = {
   prestige: { current: 20, sackingThreshold: 16, dismissalRisk: false },
+  fleetMorale: { current: 100, max: 100 },
   campaignIdentity: "campaign_1",
   snapshotHash: "hash_abc",
   revision: 4,

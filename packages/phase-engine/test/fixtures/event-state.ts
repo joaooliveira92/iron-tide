@@ -2,7 +2,13 @@ import type { NationState } from "@bluewave/campaign";
 
 export const EVENT_STATE_FIXTURE: Pick<
   NationState,
-  "governmentType" | "traits" | "eventHistory" | "unrest" | "budgetModifiers"
+  | "governmentType"
+  | "traits"
+  | "eventHistory"
+  | "unrest"
+  | "fleetMorale"
+  | "fleetMoraleLastChange"
+  | "budgetModifiers"
 > = {
   governmentType: "liberal_democracy",
   traits: ["cautious"],
@@ -11,6 +17,14 @@ export const EVENT_STATE_FIXTURE: Pick<
     flags: ["naval_scare_armed"],
   },
   unrest: 3,
+  fleetMorale: 90,
+  fleetMoraleLastChange: {
+    before: 100,
+    after: 90,
+    unclampedAfter: 90,
+    contributions: [{ reasonCode: "UNPAID_FUNDS", delta: -10 }],
+    month: "1880-02",
+  },
   budgetModifiers: [
     {
       eventId: "naval_scare",

@@ -6,6 +6,11 @@ import { economyStatusLabel, researchNote } from "../lib/economy-wording.js";
 import type { PresentationFormat } from "../lib/presentation-format/index.js";
 import { KG_PER_TONNE } from "../lib/presentation-format/units.js";
 import { translate } from "../lib/strings.js";
+import {
+  buildFleetMoraleGauge,
+  buildFleetMoraleRow,
+  type FleetMoraleGauge,
+} from "./fleet-morale-strip.js";
 
 export const FOREIGN_STATION_RULE_V1 = "controlled-by-another-nation";
 
@@ -113,6 +118,8 @@ export interface StatusStripModel {
   readonly nationName: string;
   readonly prestige: PrestigeGauge;
   readonly prestigeExplanation?: ExplanationTree;
+  readonly fleetMorale: FleetMoraleGauge;
+  readonly fleetMoraleExplanation?: ExplanationTree;
   readonly outlook: OutlookDetail;
   readonly stations: StationDetail;
   readonly ports: readonly PortDetail[];
@@ -463,11 +470,7 @@ export function buildStatusStrip(input: StatusStripInput): StatusStripModel {
   const nation: StripRow[] = [
     prestigeRow(projection),
     ...(projection.career === undefined ? [] : [careerRow(projection.career)]),
-    deferred(
-      "fleet-morale",
-      "Fleet morale",
-      "Only per-division cohesion exists, not a national figure.",
-    ),
+    buildFleetMoraleRow(projection.fleetMorale),
     foreignStations,
     deferred(
       "dock-size",
@@ -553,6 +556,10 @@ export function buildStatusStrip(input: StatusStripInput): StatusStripModel {
     ...(projection.prestige.changeExplanation === undefined
       ? {}
       : { prestigeExplanation: projection.prestige.changeExplanation }),
+    fleetMorale: buildFleetMoraleGauge(projection.fleetMorale),
+    ...(projection.fleetMorale.changeExplanation === undefined
+      ? {}
+      : { fleetMoraleExplanation: projection.fleetMorale.changeExplanation }),
     outlook: buildOutlook(projection, balanceStatus, balanceTone, researchRemark, format),
     stations: buildStations(projection, areas, format),
     ports: buildPorts(projection),
