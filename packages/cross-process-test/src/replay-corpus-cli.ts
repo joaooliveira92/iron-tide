@@ -8,6 +8,7 @@ import {
   FUZZ_CASES,
   checkFuzzCase,
   commandPlanDivergence,
+  decodeCommandPlan,
   decodeFuzzManifest,
   fuzzSubsystems,
   formatCommandPlanFailure,
@@ -19,7 +20,6 @@ import {
   recordReplay,
   verifyReplay,
   REPLAY_SCENARIOS,
-  type CommandPlan,
 } from "./replay-corpus/index.js";
 
 const REPLAY_DIR = resolve(
@@ -50,13 +50,12 @@ function fuzz(action: string | undefined, args: readonly string[]): number {
       process.stderr.write(`${USAGE}\n`);
       return 2;
     }
-    let plan: CommandPlan;
-    try {
-      plan = JSON.parse(planText) as CommandPlan;
-    } catch {
-      process.stderr.write("fuzz plan: the plan is not valid JSON\n");
+    const decodedPlan = decodeCommandPlan(planText);
+    if (Result.isFailure(decodedPlan)) {
+      process.stderr.write(`fuzz plan: ${decodedPlan.failure.message}\n`);
       return 2;
     }
+    const plan = decodedPlan.success;
     const report = commandPlanDivergence(seed, plan);
     if (report !== undefined) {
       process.stderr.write(formatCommandPlanFailure(seed, plan, report));
