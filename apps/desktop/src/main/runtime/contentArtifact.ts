@@ -1,6 +1,7 @@
 import type {
   BattleOfferRules,
   FleetManagementRules,
+  FleetMoraleRules,
   GunneryRules,
   MissilesRules,
   PeaceBehaviourRules,
@@ -32,6 +33,7 @@ import {
   loadConstructionEvents,
   type ConstructionEventRules,
   loadEventContent,
+  loadFleetMoraleRules,
   loadPeaceBehaviourRules,
   loadTensionDriftRules,
   shipBuildingContentHash,
@@ -74,6 +76,7 @@ export class ContentArtifact extends Context.Service<
     >;
     readonly loadGunneryRules: () => Effect.Effect<GunneryRules | undefined, CommandFailed>;
     readonly loadMissilesRules: () => Effect.Effect<MissilesRules | undefined, CommandFailed>;
+    readonly loadFleetMoraleRules: () => Effect.Effect<FleetMoraleRules | undefined, CommandFailed>;
     readonly loadTensionDriftRules: () => Effect.Effect<
       TensionDriftRules | undefined,
       CommandFailed
@@ -138,6 +141,8 @@ export function contentArtifactLayer(
       Effect.try({ try: () => loadGunneryRules(), catch: contentUnavailable }),
     loadMissilesRules: () =>
       Effect.try({ try: () => loadMissilesRules(), catch: contentUnavailable }),
+    loadFleetMoraleRules: () =>
+      Effect.try({ try: () => loadFleetMoraleRules(), catch: contentUnavailable }),
     loadTensionDriftRules: () =>
       Effect.try({ try: () => loadTensionDriftRules(), catch: contentUnavailable }),
     loadPeaceBehaviourRules: () =>

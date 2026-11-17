@@ -240,6 +240,8 @@ export {
   EventTraitAnswerEffectSchema,
   EventTraitShiftSchema,
 } from "./event-resolution-rules.js";
+export type { FleetMoraleRules, FleetMoraleRulesDecoded } from "./fleet-morale-rules.js";
+export { decodeFleetMoraleRules, FleetMoraleRulesSchema } from "./fleet-morale-rules.js";
 export type { TensionDriftRules, TensionDriftRulesDecoded } from "./tension-drift-rules.js";
 export { decodeTensionDriftRules, TensionDriftRulesSchema } from "./tension-drift-rules.js";
 export type { PresenceRules, PresenceRulesDecoded } from "./presence-rules.js";

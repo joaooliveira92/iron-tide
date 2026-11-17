@@ -40,7 +40,7 @@
   "docs/agents/task-lifecycle.md": 740,
   "docs/agents/triage-labels.md": 275,
   "docs/agents/yaml-inventory.md": 600,
-  "docs/reachability-report.md": 1119,
+  "docs/reachability-report.md": 1140,
   "engine-suite.md": 425,
   "packages/README.md": 325,
   "packages/ai/AGENTS.md": 100,
@@ -66,5 +66,5 @@
   "packages/ship-visual/AGENTS.md": 100,
   "packages/test-support/AGENTS.md": 100,
   "scripts/README.md": 625,
-  "scripts/data/reachability-ledger.json": 2528
+  "scripts/data/reachability-ledger.json": 2570
 }

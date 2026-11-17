@@ -440,6 +440,18 @@
       "decision": null
     },
     {
+      "id": "fleet-morale",
+      "player_verb": "See fleet morale fall",
+      "status": "dormant-by-decision",
+      "engine_package": "phase-engine",
+      "engine_modules": [],
+      "engine_symbols": ["applyFleetMorale"],
+      "main_commands": [],
+      "renderer_screen": null,
+      "evidence_test": null,
+      "decision": "#884"
+    },
+    {
       "id": "presence-revolt-pressure",
       "player_verb": "See unrest after uncovered stations",
       "status": "reachable",
