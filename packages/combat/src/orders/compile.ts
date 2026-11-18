@@ -5,7 +5,7 @@ import type { MovementState } from "../movement/neighbour.js";
 import { KNOTS_TO_UM_S, SPEED_BP_SCALE } from "../movement/neighbour.js";
 import type { UnitOrders } from "../simulation/engine.js";
 import { foldHeading, headingToward } from "../battleResolution/engagement.js";
-import { TWO_KNOTS_SPEED_BP } from "./constants.js";
+import { TWO_KNOTS_SPEED_BP, UM_PER_METRE } from "./constants.js";
 import type {
   DivisionOrder,
   DivisionOrderSet,
@@ -204,8 +204,8 @@ export function compileDivisionOrders(
         } else {
           unitOrders[unit.assetId] = {
             orderedHeading: headingToward(
-              order.navigation.xMetres - movement.position[0],
-              order.navigation.yMetres - movement.position[1],
+              order.navigation.xMetres - Math.trunc(movement.position[0] / UM_PER_METRE),
+              order.navigation.yMetres - Math.trunc(movement.position[1] / UM_PER_METRE),
             ),
             orderedSpeedBp: speedForOrder(),
           };
