@@ -30,6 +30,7 @@ import {
   projectionFailureReason,
   startPlayerBattle,
 } from "./playerBattleSession.js";
+import { PlayerBattleRegistry } from "../runtime/playerBattleRegistry.js";
 import { runTurnTransaction } from "./turnTransaction.js";
 import { registerWarSession } from "./warSessionFixture.js";
 
@@ -171,6 +172,35 @@ describe("player battle session over in-memory sidecar stores", () => {
       reason: "PLAYER_BATTLE_PROJECTION_FAILED",
       diagnostics: ["manifest persistent asset not found in either nation's committed ships"],
     });
+    await a.runtime.dispose();
+  });
+
+  it("exposes no hostile true name, id or unrevealed class anywhere in the start or advance reply", async () => {
+    const a = app(memoryStores());
+    const battleId = await acceptedBattle(a);
+    const started = await start(a, battleId);
+    const advanced = await advance(a, battleId, "minute", ordersFor(started, 40));
+    if (advanced.outcome !== "success") throw new Error("advance failed");
+    const live = await a.runtime.runPromise(
+      Effect.gen(function* () {
+        return yield* (yield* PlayerBattleRegistry).get(SESSION, battleId);
+      }),
+    );
+    if (live === null) throw new Error("expected a live battle");
+    const side = started.battleView.side;
+    const hostile = live.session.units.filter((unit) => unit.sideId !== side);
+    const ownClasses = new Set(
+      live.session.units.filter((unit) => unit.sideId === side).map((unit) => unit.className),
+    );
+    expect(hostile.length).toBeGreaterThan(0);
+    for (const reply of [started, advanced.value]) {
+      const exposed = JSON.stringify(reply);
+      for (const unit of hostile) {
+        expect(exposed).not.toContain(unit.assetId);
+        expect(exposed).not.toContain(unit.name);
+        if (!ownClasses.has(unit.className)) expect(exposed).not.toContain(unit.className);
+      }
+    }
     await a.runtime.dispose();
   });
 
