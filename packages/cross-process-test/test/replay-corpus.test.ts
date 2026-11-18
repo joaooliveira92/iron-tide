@@ -1,7 +1,6 @@
 import { readFileSync, readdirSync } from "node:fs";
 
 import { CommandLedger } from "@bluewave/commands";
-import { canonicalSerialize } from "@bluewave/deterministic";
 import { ReplayVerifier, type MonthResult } from "@bluewave/phase-engine";
 import { Result } from "effect";
 import { describe, expect, it, vi } from "vite-plus/test";
