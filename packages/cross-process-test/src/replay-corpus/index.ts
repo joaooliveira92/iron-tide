@@ -7,7 +7,12 @@ export type {
   VerifyOptions,
   VerifyOutcome,
 } from "./corpus.js";
-export { REPLAY_FORMAT_VERSION, ReplayFileError, decodeReplayFile } from "./format.js";
+export {
+  REPLAY_FORMAT_VERSION,
+  ReplayFileError,
+  decodeReplayFile,
+  serializeReplayFile,
+} from "./format.js";
 export { REPLAY_SCENARIOS } from "./scenarios.js";
 export {
   SUBSYSTEMS,

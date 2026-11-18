@@ -1,7 +1,8 @@
+import { canonicalSerialize, compareCodePoints } from "@bluewave/deterministic";
 import { Data, Result, Schema, SchemaIssue } from "effect";
 
-export const REPLAY_FORMAT_VERSION = 2;
-export const SUPPORTED_REPLAY_FORMAT_VERSIONS = [1, 2] as const;
+export const REPLAY_FORMAT_VERSION = 3;
+export const SUPPORTED_REPLAY_FORMAT_VERSIONS = [1, 2, 3] as const;
 
 export const REPLAY_SETUP_IDS = [
   "armed-adriatic-war",
@@ -164,7 +165,7 @@ export const ReplayFileSchema = Schema.Struct({
   rulesetVersion: Schema.String,
   compatibilityVersion: Schema.String,
   seed: Schema.String,
-  contentHash: Hash,
+  contentHash: Schema.optionalKey(Hash),
   initial: Schema.Struct({
     kind: Schema.Literal("production-pack"),
     pack: Schema.String,
@@ -227,5 +228,26 @@ export function decodeReplayFile(text: string): Result.Result<ReplayFile, Replay
       }),
     );
   }
+  if (decoded.success.formatVersion >= 3 && decoded.success.contentHash !== undefined) {
+    return Result.fail(
+      new ReplayFileError({
+        message:
+          "Replay file failed validation: contentHash: format version 3 records no content hash",
+      }),
+    );
+  }
   return Result.succeed(decoded.success);
+}
+
+export function serializeReplayFile(file: ReplayFile): string {
+  const { months, ...head } = file;
+  const record: Record<string, unknown> = { ...head, months };
+  const lines = Object.keys(record)
+    .sort(compareCodePoints)
+    .map((key) =>
+      key === "months"
+        ? `${canonicalSerialize(key)}:[\n${months.map((m) => canonicalSerialize(m)).join(",\n")}\n]`
+        : `${canonicalSerialize(key)}:${canonicalSerialize(record[key])}`,
+    );
+  return `{\n${lines.join(",\n")}\n}\n`;
 }

@@ -30,6 +30,7 @@ import {
   REPLAY_FORMAT_VERSION,
   ReplayFileError,
   decodeReplayFile,
+  serializeReplayFile,
   type LedgerName,
   type ReplayCommandEnvelope,
   type ReplayFile,
@@ -370,7 +371,7 @@ export function* executeScenario(scenario: ReplayScenario): Generator<ExecutedMo
 }
 
 export function recordReplay(scenario: ReplayScenario): string {
-  const { state, contentHash } = production();
+  const { state } = production();
   const months: ReplayFile["months"][number][] = [];
   for (const executed of executeScenario(scenario)) {
     const checkpoint = monthCheckpoint(executed.turnNumber, executed.result, executed.commands);
@@ -401,7 +402,6 @@ export function recordReplay(scenario: ReplayScenario): string {
     rulesetVersion: state.snapshot.rulesetVersion,
     compatibilityVersion: state.snapshot.compatibilityVersion,
     seed: scenario.seed,
-    contentHash,
     initial: {
       kind: "production-pack",
       pack: PACK,
@@ -414,7 +414,7 @@ export function recordReplay(scenario: ReplayScenario): string {
         : { kind: "player", playerNationId: scenario.playerNationId },
     months,
   };
-  return `${canonicalSerialize(file)}\n`;
+  return serializeReplayFile(file);
 }
 
 export function firstLedgerDifference(
@@ -448,7 +448,7 @@ export function verifyReplay(
   const fail = (divergence: ReplayDivergence) =>
     Result.succeed<VerifyOutcome>({ ok: false, divergence });
 
-  if (contentHash !== file.contentHash) {
+  if (file.contentHash !== undefined && contentHash !== file.contentHash) {
     return fail({
       month: 0,
       turnNumber: 0,

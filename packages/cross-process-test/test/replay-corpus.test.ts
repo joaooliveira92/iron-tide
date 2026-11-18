@@ -14,6 +14,7 @@ import {
   decodeReplayFile,
   formatDivergence,
   recordReplay,
+  serializeReplayFile,
   verifyReplay,
   type ExecutorPerturbation,
   type ReplayScenario,
@@ -139,7 +140,7 @@ describe("replay file format parity", () => {
   it("decodes the checked-in replay and re-encodes it byte-identically", () => {
     const decoded = decodeReplayFile(fixture);
     if (Result.isFailure(decoded)) throw new Error(decoded.failure.message);
-    expect(`${canonicalSerialize(decoded.success)}\n`).toBe(fixture);
+    expect(serializeReplayFile(decoded.success)).toBe(fixture);
   });
 
   it("rejects a ledger whose count disagrees with its entry hashes", () => {
@@ -301,8 +302,31 @@ describe("replay corpus pinned probe mutations", () => {
     return { ...input, documents: { ...input.documents, [key]: [edit(first!), ...rest] } };
   }
 
-  it("detects a changed content bundle at the content check", () => {
+  const legacy = tamper(recorded, (f) => {
+    f.formatVersion = 2;
+    f.contentHash = "a".repeat(64);
+  });
+
+  it("records no content hash in the current format", () => {
+    expect(JSON.parse(recorded)).toMatchObject({ formatVersion: 3 });
+    expect(JSON.parse(recorded)).not.toHaveProperty("contentHash");
+    const decoded = decodeReplayFile(
+      tamper(recorded, (f) => {
+        f.contentHash = "a".repeat(64);
+      }),
+    );
+    expect(Result.isFailure(decoded)).toBe(true);
+  });
+
+  it("passes a content edit that moves no checkpoint", () => {
     const outcome = withInput(recorded, (input) =>
+      editFirstRow(input, input.areaFiles, (row) => ({ ...row, name: `${String(row["name"])}!` })),
+    );
+    expect(outcome).toMatchObject({ ok: true });
+  });
+
+  it("detects a changed content bundle at the content check of a legacy replay", () => {
+    const outcome = withInput(legacy, (input) =>
       editFirstRow(input, input.technologyFiles, (row) => ({
         ...row,
         cost: Number(row["cost"]) + 1,
@@ -310,13 +334,6 @@ describe("replay corpus pinned probe mutations", () => {
     );
     expect(outcome).toMatchObject({ ok: false, divergence: { month: 0, where: "content" } });
     if (!outcome.ok) expect(outcome.divergence.actual).not.toBe(outcome.divergence.expected);
-  });
-
-  it("detects a changed compiled artifact hash at the content check", () => {
-    const outcome = withInput(recorded, (input) =>
-      editFirstRow(input, input.areaFiles, (row) => ({ ...row, name: `${String(row["name"])}!` })),
-    );
-    expect(outcome).toMatchObject({ ok: false, divergence: { month: 0, where: "content" } });
   });
 
   it("detects a changed initial snapshot at the initial check", () => {
