@@ -7,12 +7,13 @@ import { FleetScreen } from "./FleetScreen.js";
 
 const hook = vi.hoisted(() => ({
   state: null as unknown,
+  loadError: null as string | null,
   setSelectedDivisionId: vi.fn<(id: string) => void>(),
 }));
 vi.mock("./hooks/useFleetScreen.js", () => ({
   useFleetScreen: () => ({
     state: hook.state,
-    loadError: null,
+    loadError: hook.loadError,
     selectedDivisionId: "fleet_home",
     selectedDivision: null,
     pendingRoute: null,
@@ -69,7 +70,54 @@ describe("FleetScreen", () => {
       },
     );
   });
-  afterEach(cleanup);
+  afterEach(() => {
+    cleanup();
+    hook.loadError = null;
+    vi.unstubAllGlobals();
+    vi.stubGlobal(
+      "ResizeObserver",
+      class {
+        observe() {}
+        unobserve() {}
+        disconnect() {}
+      },
+    );
+  });
+
+  it("shows the load error card with a reload action", () => {
+    hook.state = loaded;
+    hook.loadError = "Fleet unavailable";
+    const { container } = render(<FleetScreen sessionId="ses-1" />);
+    expect(container.querySelector("[data-guided-target='fleet']")).not.toBeNull();
+    expect(screen.getByText("Fleet unavailable")).toBeTruthy();
+    expect(screen.queryByTestId("map-stub")).toBeNull();
+  });
+
+  it("shows the loading state until the player nation is known", () => {
+    hook.state = initialFleetScreenState();
+    const { container } = render(<FleetScreen sessionId="ses-1" />);
+    expect(container.querySelector("[data-guided-target='fleet']")).not.toBeNull();
+    expect(screen.queryByTestId("map-stub")).toBeNull();
+    expect(screen.queryByRole("navigation", { name: "Fleet departments" })).toBeNull();
+  });
+
+  it("stacks the map, roster, dispatch and tabs under a page header on a narrow window", () => {
+    vi.stubGlobal("matchMedia", () => ({
+      matches: false,
+      addEventListener: () => undefined,
+      removeEventListener: () => undefined,
+    }));
+    hook.state = loaded;
+    const { container } = render(<FleetScreen sessionId="ses-1" />);
+    expect(screen.getByRole("heading", { name: "Fleet", level: 2 })).toBeTruthy();
+    expect(container.querySelector("h2.sr-only")).toBeNull();
+    expect(screen.getByTestId("map-stub")).toBeTruthy();
+    expect(screen.getByRole("radio", { name: /Home Fleet/ })).toBeTruthy();
+    expect(screen.getByTestId("fleet-order")).toBeTruthy();
+    const affairs = within(screen.getByRole("navigation", { name: "Fleet departments" }));
+    fireEvent.click(affairs.getByRole("button", { name: /^Station/ }));
+    expect(container.querySelector(".h-\\[70vh\\]")).not.toBeNull();
+  });
 
   it("offers movement orders limited to the areas one hop away, and no longer claims they are unmodelled", () => {
     hook.state = loaded;
