@@ -10,7 +10,13 @@ import {
   type WorldPoint,
 } from "../tactical/tactical-geometry.js";
 import { appendTrails, knownPositions, type Trails } from "../tactical/tactical-model.js";
-import { applyCameraChange, trackFocus, type CameraFollow } from "./camera-follow.js";
+import type { ScreenRectangle } from "../tactical/tactical-rectangle.js";
+import {
+  applyCameraChange,
+  frameRectangle,
+  trackFocus,
+  type CameraFollow,
+} from "./camera-follow.js";
 
 const INITIAL_CAMERA: TacticalCamera = { centreX: 0, centreY: 0, metresPerPixel: 400 };
 const INITIAL_VIEWPORT: TacticalViewport = { width: 800, height: 480 };
@@ -24,6 +30,7 @@ export interface BattleCamera {
   readonly setViewport: (viewport: TacticalViewport) => void;
   readonly zoomIn: () => void;
   readonly zoomOut: () => void;
+  readonly zoomToRectangle: (rect: ScreenRectangle) => void;
   readonly fit: () => void;
   readonly focus: () => void;
   readonly toggleFollow: () => void;
@@ -85,6 +92,14 @@ export function useBattleCamera(
     setCamera((current) => zoomCameraAt(current, viewport, 1 / PROVISIONAL_ZOOM_STEP, centre));
   }, [viewport, setCamera]);
 
+  const zoomToRectangle = useCallback(
+    (rect: ScreenRectangle): void => {
+      userMoved.current = true;
+      setCameraFollow((state) => frameRectangle(state, viewport, rect));
+    },
+    [viewport],
+  );
+
   const fit = useCallback((): void => {
     if (view === null) return;
     setCameraFollow((state) => ({
@@ -115,6 +130,7 @@ export function useBattleCamera(
     setViewport,
     zoomIn,
     zoomOut,
+    zoomToRectangle,
     fit,
     focus,
     toggleFollow,
