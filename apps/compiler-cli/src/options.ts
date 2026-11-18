@@ -34,6 +34,7 @@ export function parseOptions(
   let formulaVersion = "1";
   let rulesetVersion: string | undefined;
   let contentVersion = "0.1.0";
+  let lockMode: "release" | "write" | undefined;
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i];
     switch (arg) {
@@ -73,6 +74,12 @@ export function parseOptions(
       case "--json":
         outputMode = "json";
         break;
+      case "--release":
+        lockMode = "release";
+        break;
+      case "--write-lock":
+        lockMode = "write";
+        break;
     }
   }
   if (battleGenerate) {
@@ -94,7 +101,13 @@ export function parseOptions(
   if (extended) {
     return { manifest, contentDir, outputDir, outputMode, saveDir, seed, commandsPath };
   }
-  return { manifest, contentDir, outputDir, outputMode };
+  return {
+    manifest,
+    contentDir,
+    outputDir,
+    outputMode,
+    ...(lockMode === undefined ? {} : { lockMode }),
+  };
 }
 
 export function parseBattleAdvanceMinuteOptions(argv: string[]): BattleAdvanceMinuteCliOptions {

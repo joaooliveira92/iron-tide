@@ -167,5 +167,6 @@ export {
   type ContentBundleManifest,
   type ContentBundleVerification,
   type ContentLock,
+  type ContentLockMode,
   type ContentLockVerification,
 } from "./artifact.js";

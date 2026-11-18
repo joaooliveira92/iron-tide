@@ -12,7 +12,8 @@ import {
 import { fileURLToPath } from "node:url";
 import { join, resolve } from "node:path";
 
-import { runContentCheck, runContentBuild, runContentVerify } from "../src/commands.js";
+import { runContentCheck, runContentBuild } from "../src/commands.js";
+import { runContentVerify } from "../src/contentVerify.js";
 import { runCli } from "./runCli.js";
 
 const here = fileURLToPath(new URL(".", import.meta.url));
@@ -209,75 +210,59 @@ describe("content:verify over the production pack (CAH-LOCK)", () => {
     ).toBe("success");
   });
 
-  it("fails on content drift naming both hashes, and succeeds once the lock is refreshed", async () => {
+  const verifyIn = (dir: string, lockMode?: "release" | "write"): ReturnType<typeof runCli> =>
+    runCli(
+      runContentVerify({
+        manifest: resolve(dir, "pack.json"),
+        contentDir: dir,
+        outputDir: tempDir(),
+        outputMode: "json",
+        ...(lockMode === undefined ? {} : { lockMode }),
+      }),
+    );
+
+  it("rejects the committed lock in release mode because it records no body hash", async () => {
+    expect(
+      await runCli(
+        runContentVerify({
+          manifest,
+          contentDir,
+          outputDir: tempDir(),
+          outputMode: "json",
+          lockMode: "release",
+        }),
+      ),
+    ).toBe("validation-error");
+  });
+
+  it("passes dev on content drift, fails release until the lock is refreshed", async () => {
+    const recorded = tempDir();
+    cpSync(contentDir, recorded, { recursive: true });
+    expect(await verifyIn(recorded, "write")).toBe("success");
+    expect(await verifyIn(recorded, "release")).toBe("success");
+
     const dir = tempDir();
-    cpSync(contentDir, dir, { recursive: true });
-    const localManifest = resolve(dir, "pack.json");
-
-    const lockPath = resolve(dir, "content-lock.json");
-    const lock = JSON.parse(readFileSync(lockPath, "utf8")) as { bodyHash: string };
-
+    cpSync(recorded, dir, { recursive: true });
     const areasPath = resolve(dir, "areas.ts");
     writeFileSync(
       areasPath,
       readFileSync(areasPath, "utf8").replace('name: "Gibraltar"', 'name: "Gibraltar (drift)"'),
       "utf8",
     );
-    expect(
-      await runCli(
-        runContentVerify({
-          manifest: localManifest,
-          contentDir: dir,
-          outputDir: tempDir(),
-          outputMode: "json",
-        }),
-      ),
-    ).toBe("validation-error");
+    expect(await verifyIn(dir)).toBe("success");
+    expect(await verifyIn(dir, "release")).toBe("validation-error");
 
-    const fresh = tempDir();
-    await runCli(
-      runContentBuild({
-        manifest: localManifest,
-        contentDir: dir,
-        outputDir: fresh,
-        outputMode: "json",
-      }),
-    );
-    const manifestJson = JSON.parse(
-      readFileSync(resolve(fresh, "content-manifest.json"), "utf8"),
-    ) as { bodyHash: string };
-    writeFileSync(
-      lockPath,
-      JSON.stringify({ ...lock, bodyHash: manifestJson.bodyHash }, null, 2),
-      "utf8",
-    );
-    expect(
-      await runCli(
-        runContentVerify({
-          manifest: localManifest,
-          contentDir: dir,
-          outputDir: tempDir(),
-          outputMode: "json",
-        }),
-      ),
-    ).toBe("success");
+    expect(await verifyIn(dir, "write")).toBe("success");
+    expect(await verifyIn(dir, "release")).toBe("success");
   });
 
-  it("fails on a tampered lock naming both hashes", async () => {
+  it("fails release on a tampered lock hash while dev ignores it", async () => {
     const dir = tempDir();
     cpSync(contentDir, dir, { recursive: true });
     const lockPath = resolve(dir, "content-lock.json");
     const lock = JSON.parse(readFileSync(lockPath, "utf8")) as Record<string, unknown>;
     writeFileSync(lockPath, JSON.stringify({ ...lock, bodyHash: "0".repeat(64) }, null, 2), "utf8");
-    expect(
-      await runCli(
-        runContentVerify({
-          manifest: resolve(dir, "pack.json"),
-          contentDir: dir,
-          outputDir: tempDir(),
-          outputMode: "json",
-        }),
-      ),
-    ).toBe("validation-error");
+    expect(await verifyIn(dir, "release")).toBe("validation-error");
+    expect(await verifyIn(dir)).toBe("success");
   });
 });
