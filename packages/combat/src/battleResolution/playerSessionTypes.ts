@@ -14,7 +14,15 @@ import type { GunneryRadarRules } from "./gunneryRadar.js";
 import type { GunQualityRules } from "./gunQualityRules.js";
 import type { AutoResolverNation } from "./project.js";
 import type { TrainingEffectsBySide } from "./trainingEffects.js";
-import { DIVISION_STANCES, type DivisionStance } from "../orders/index.js";
+import {
+  DIVISION_STANCES,
+  type DivisionStance,
+  type ForceOrderIssue,
+  type ForceOrderRuleset,
+  type ForceOrderSet,
+  type ForceRuntime,
+  type RealismMode,
+} from "../orders/index.js";
 
 export const PLAYER_BATTLE_STANCES = DIVISION_STANCES;
 export type PlayerBattleStance = DivisionStance;
@@ -44,6 +52,15 @@ export interface PlayerBattleDivisionOrder {
 
 export interface PlayerBattleOrders {
   readonly divisions: Readonly<Record<string, PlayerBattleDivisionOrder>>;
+  readonly forceOrders?: ForceOrderSet;
+}
+
+export interface PlayerForceSession {
+  readonly forceId: string;
+  readonly realismMode: RealismMode;
+  readonly ruleset: ForceOrderRuleset;
+  readonly runtime: ForceRuntime;
+  readonly lastIssues: readonly ForceOrderIssue[];
 }
 
 export interface PlayerBattleEvent {
@@ -167,6 +184,7 @@ export interface PlayerBattleSession {
   >;
   readonly log: readonly PlayerBattleEvent[];
   readonly result: PlayerBattleResult | null;
+  readonly force?: PlayerForceSession;
   readonly waypointRules?: WaypointRules;
   readonly waypointArrivals?: Readonly<Record<string, PlayerBattleWaypointArrival>>;
 }
