@@ -4,6 +4,7 @@ import { describe, expect, it } from "vite-plus/test";
 import {
   approvalsCommand,
   checkReplayApprovals,
+  mergeApprovalFiles,
   proposeApprovals,
   recordReplay,
   type ApprovalsIo,
@@ -165,6 +166,7 @@ describe("replay approvals tool", () => {
     overrides: Partial<Pick<ApprovalsIo, "base" | "gateBase">> = {},
   ): ApprovalsIo & { written: string[]; printed: string[] } {
     const written: string[] = [];
+    const files = new Map<string, string>();
     const printed: string[] = [];
     return {
       written,
@@ -172,8 +174,16 @@ describe("replay approvals tool", () => {
       base: overrides.base ?? "origin/dev",
       gateBase: overrides.gateBase ?? "origin/dev",
       readBase: () => base,
-      readHead: () => ({ replays: changed.replays, approvals: written.at(-1) }),
-      writeApprovals: (text) => void written.push(text),
+      readHead: () => {
+        const approvals = unwrap(mergeApprovalFiles(files));
+        return approvals === undefined
+          ? { replays: changed.replays }
+          : { replays: changed.replays, approvals };
+      },
+      writeApprovalFile: (name, text) => {
+        files.set(name, text);
+        written.push(text);
+      },
       print: (line) => void printed.push(line),
     };
   }

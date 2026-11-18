@@ -227,8 +227,8 @@ function goldenArtifacts(root, workspace, instructions) {
   const text = readFileSync(resolve(root, scoped), "utf8");
   if (!/golden/iu.test(text)) return [];
   const artifacts = ["docs/agents/replay-corpus.md"];
-  if (existsSync(resolve(root, "golden/replay-approvals.json"))) {
-    artifacts.unshift("golden/replay-approvals.json");
+  if (existsSync(resolve(root, "golden/replay-approvals"))) {
+    artifacts.unshift("golden/replay-approvals");
   }
   return artifacts;
 }
