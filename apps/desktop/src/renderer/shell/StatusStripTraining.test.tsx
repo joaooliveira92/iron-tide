@@ -21,6 +21,7 @@ const FORMAT = createPresentationFormat({
 function projection(training: PlayerProjection["training"]): PlayerProjection {
   return {
     prestige: { current: 19, sackingThreshold: 16, dismissalRisk: false },
+    fleetMorale: { current: 100, max: 100 },
     ...(training === undefined ? {} : { training }),
     campaignIdentity: "campaign_1",
     snapshotHash: "hash_abc",
