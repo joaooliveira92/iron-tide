@@ -130,6 +130,12 @@ void test("the persistence scope guards the save-file readers", () => {
   assert.deepEqual(scanBoundaryDecodeCasts(repoRoot, SCOPES.persistence), []);
 });
 
+void test("the replay scope guards the corpus and fuzz readers", () => {
+  const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
+  assert.deepEqual(SCOPES.replay, ["packages/cross-process-test/src"]);
+  assert.deepEqual(scanBoundaryDecodeCasts(repoRoot, SCOPES.replay), []);
+});
+
 void test("the real tree passes every scope (allowlisted sites excluded)", () => {
   const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
   for (const roots of Object.values(SCOPES)) {

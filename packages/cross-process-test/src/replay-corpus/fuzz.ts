@@ -58,13 +58,17 @@ const ROOT_CONTEXT = "bluewave/replay-fuzz/v1";
 const MONTH_DIGEST_CONTEXT = "bluewave/replay-fuzz/month/v1";
 const CASE_DIGEST_CONTEXT = "bluewave/replay-fuzz/case/v1";
 const MAX_COMMANDS_PER_MONTH = 3;
-const KINDS = ["SetBudgetAllocation", "SetResearchPriority", "OrderConstruction"] as const;
+export const COMMAND_KINDS = [
+  "SetBudgetAllocation",
+  "SetResearchPriority",
+  "OrderConstruction",
+] as const;
 
 function pick(stream: RandomStream, lo: number, hi: number): number {
   return lo + Math.min(hi - lo, Math.floor(stream.next() * (hi - lo + 1)));
 }
 
-export type CommandKind = (typeof KINDS)[number];
+export type CommandKind = (typeof COMMAND_KINDS)[number];
 
 type Draw = (lo: number, hi: number) => number;
 
@@ -147,7 +151,7 @@ export function generateFuzzCommands(
   const count = pick(shape, 0, MAX_COMMANDS_PER_MONTH);
   const bodies: (CommandBody | undefined)[] = [];
   for (let index = 0; index < count; index++) {
-    const kind = KINDS[pick(shape, 0, KINDS.length - 1)] as CommandKind;
+    const kind = COMMAND_KINDS[pick(shape, 0, COMMAND_KINDS.length - 1)] as CommandKind;
     const stream = engine.stream(`command:${String(index)}:${kind}`);
     bodies.push(candidate(kind, snapshot, slot, (lo, hi) => pick(stream, lo, hi)));
   }
