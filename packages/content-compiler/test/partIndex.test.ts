@@ -752,7 +752,7 @@ describe("the part index is deterministic and covered by the hash and lock", () 
         bodyHash: before.envelope.bodyHash,
         algorithm: before.envelope.algorithm,
       };
-      expect(verifyContentLock(before, lock)).toEqual({ ok: true });
+      expect(verifyContentLock(before, lock, "release")).toEqual({ ok: true });
 
       const rebuilt = buildArtifact(handWorked(fixture));
       const edited = buildArtifact(
@@ -765,7 +765,7 @@ describe("the part index is deterministic and covered by the hash and lock", () 
       );
       expect(rebuilt.envelope.bodyHash).toBe(before.envelope.bodyHash);
       expect(edited.envelope.bodyHash).not.toBe(before.envelope.bodyHash);
-      expect(verifyContentLock(edited, lock)).toMatchObject({
+      expect(verifyContentLock(edited, lock, "release")).toMatchObject({
         ok: false,
         code: "CONTENT_LOCK_HASH_MISMATCH",
       });

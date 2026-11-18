@@ -92,12 +92,43 @@ describe("content lock verification", () => {
         ok: false,
         code: "CONTENT_LOCK_INVALID",
         message:
-          "The content lock must carry string 'contentVersion', 'bodyHash' and 'algorithm' fields.",
+          "The content lock must carry string 'contentVersion' and 'algorithm' fields and, if present, a string 'bodyHash'.",
       });
     },
   );
 
   it("tolerates extra lock keys", () => {
     expect(verifyContentLock(artifact, { ...lock, surprise: true })).toEqual({ ok: true });
+  });
+
+  const hashless = { contentVersion: lock.contentVersion, algorithm: lock.algorithm };
+
+  it("accepts a lock with no body hash on dev and ignores a stale one", () => {
+    expect(verifyContentLock(artifact, hashless)).toEqual({ ok: true });
+    expect(verifyContentLock(artifact, { ...lock, bodyHash: "0".repeat(64) })).toEqual({
+      ok: true,
+    });
+  });
+
+  it("still checks the version and algorithm on dev", () => {
+    expect(verifyContentLock(artifact, { ...hashless, contentVersion: "9.9.9" })).toMatchObject({
+      ok: false,
+      code: "CONTENT_LOCK_VERSION_MISMATCH",
+    });
+    expect(verifyContentLock(artifact, { ...hashless, algorithm: "md5" })).toMatchObject({
+      ok: false,
+      code: "CONTENT_LOCK_ALGORITHM_MISMATCH",
+    });
+  });
+
+  it("requires a matching body hash for a release", () => {
+    expect(verifyContentLock(artifact, lock, "release")).toEqual({ ok: true });
+    expect(verifyContentLock(artifact, hashless, "release")).toMatchObject({
+      ok: false,
+      code: "CONTENT_LOCK_HASH_MISSING",
+    });
+    expect(
+      verifyContentLock(artifact, { ...lock, bodyHash: "0".repeat(64) }, "release"),
+    ).toMatchObject({ ok: false, code: "CONTENT_LOCK_HASH_MISMATCH" });
   });
 });

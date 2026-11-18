@@ -45,7 +45,7 @@ const ContentBundleManifestSchema = Schema.Struct({
 
 const ContentLockSchema = Schema.Struct({
   contentVersion: Schema.String,
-  bodyHash: Schema.String,
+  bodyHash: Schema.optionalKey(Schema.String),
   algorithm: Schema.String,
 });
 
@@ -77,9 +77,11 @@ export type ContentBundleVerification =
 
 export interface ContentLock {
   readonly contentVersion: string;
-  readonly bodyHash: string;
+  readonly bodyHash?: string;
   readonly algorithm: string;
 }
+
+export type ContentLockMode = "dev" | "release";
 
 export type ContentLockVerification =
   | { readonly ok: true }
@@ -94,6 +96,7 @@ export type ContentLockVerification =
 export function verifyContentLock(
   artifact: ContentBundleArtifact,
   lock: unknown,
+  mode: ContentLockMode = "dev",
 ): ContentLockVerification {
   if (!Predicate.isObject(lock)) {
     return {
@@ -108,7 +111,7 @@ export function verifyContentLock(
       ok: false,
       code: "CONTENT_LOCK_INVALID",
       message:
-        "The content lock must carry string 'contentVersion', 'bodyHash' and 'algorithm' fields.",
+        "The content lock must carry string 'contentVersion' and 'algorithm' fields and, if present, a string 'bodyHash'.",
     };
   }
   const { contentVersion, bodyHash, algorithm } = decodedLock.success;
@@ -122,7 +125,15 @@ export function verifyContentLock(
     };
   }
   const actualHash = artifact.envelope.bodyHash;
-  if (actualHash !== bodyHash) {
+  if (mode === "release" && bodyHash === undefined) {
+    return {
+      ok: false,
+      code: "CONTENT_LOCK_HASH_MISSING",
+      message: `The content lock records no body hash; run the content lock refresh before promoting to main (rebuilt artifact has '${actualHash}').`,
+      actual: actualHash,
+    };
+  }
+  if (mode === "release" && bodyHash !== undefined && actualHash !== bodyHash) {
     return {
       ok: false,
       code: "CONTENT_LOCK_HASH_MISMATCH",

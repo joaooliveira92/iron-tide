@@ -1,10 +1,8 @@
 import {
   Compiler,
-  CONTENT_LOCK_FILENAME,
   buildContentBundleArtifact,
   buildFullSurfaceInput,
   countConfidence,
-  verifyContentLock,
   writeContentBundleArtifact,
   checkPlaceholderGate,
   type ConfidenceCounts,
@@ -86,11 +84,12 @@ export interface CliOptions {
   contentDir: string;
   outputDir: string;
   outputMode: OutputMode;
+  lockMode?: "release" | "write";
 }
 
 const STRICT_DECODE_OPTIONS = { onExcessProperty: "error" } as const;
 
-const isUnknownRecord = (value: unknown): value is Record<string, unknown> =>
+export const isUnknownRecord = (value: unknown): value is Record<string, unknown> =>
   typeof value === "object" && value !== null && !Array.isArray(value);
 
 const schemaFormatter = SchemaIssue.makeFormatterStandardSchemaV1();
@@ -146,7 +145,7 @@ const CommandEnvelopeSchema = Schema.Struct({
 
 const CommandEnvelopeListSchema = Schema.Array(CommandEnvelopeSchema);
 
-const printDiagnostics = (
+export const printDiagnostics = (
   collector: DiagnosticCollector,
   mode: OutputMode,
 ): Effect.Effect<void, never, CliConsole> =>
@@ -160,7 +159,7 @@ const printDiagnostics = (
     }
   });
 
-const printResult = (message: string): Effect.Effect<void, never, CliConsole> =>
+export const printResult = (message: string): Effect.Effect<void, never, CliConsole> =>
   Effect.gen(function* () {
     const console = yield* CliConsole;
     yield* console.out(message + "\n");
@@ -173,7 +172,10 @@ const runWriteBlock = (
 ): Effect.Effect<void> =>
   write.pipe(Effect.ensuring(Effect.forEach(temps, (path) => fs.remove(path), { discard: true })));
 
-const readFileOption = (fs: CliFileSystemShape, path: string): Effect.Effect<string | undefined> =>
+export const readFileOption = (
+  fs: CliFileSystemShape,
+  path: string,
+): Effect.Effect<string | undefined> =>
   fs.readFile(path).pipe(Effect.catchTag("CliFileSystemError", () => Effect.succeed(undefined)));
 
 export const runValidate = (options: CliOptions): Effect.Effect<ExitCategory, never, CliEnv> =>
@@ -1372,69 +1374,6 @@ export const runContentBuild = (options: CliOptions): Effect.Effect<ExitCategory
       yield* printResult(`  Artifact: ${artifactPath} (SHA-256: ${artifact.envelope.bodyHash})`);
       yield* printResult(`  Manifest: ${manifestPath}`);
       yield* printResult(`  Content version: ${artifact.contentVersion}`);
-    }
-    return "success";
-  });
-
-export const runContentVerify = (options: CliOptions): Effect.Effect<ExitCategory, never, CliEnv> =>
-  Effect.gen(function* () {
-    const fs = yield* CliFileSystem;
-    const collector = new DiagnosticCollector();
-    const input = yield* buildContentSurfaceInput(options, collector);
-    if (!input) return "usage-error";
-    const artifact = buildContentBundleArtifact(input, new AbortController().signal, collector);
-    yield* printDiagnostics(collector, options.outputMode);
-    if (collector.hasErrors) return "validation-error";
-    if (!artifact) return "compile-error";
-
-    const lockPath = resolve(options.contentDir, CONTENT_LOCK_FILENAME);
-    if (!(yield* fs.exists(lockPath))) {
-      collector.addError("CONTENT-LOCK", `Content lock not found: ${lockPath}`, {
-        stage: "validate",
-      });
-      yield* printDiagnostics(collector, options.outputMode);
-      return "usage-error";
-    }
-    const lockText = yield* readFileOption(fs, lockPath);
-    let lock: unknown;
-    try {
-      lock = JSON.parse(lockText ?? "");
-    } catch {
-      collector.addError("CONTENT-LOCK", `Failed to parse content lock: ${lockPath}`, {
-        stage: "validate",
-      });
-      yield* printDiagnostics(collector, options.outputMode);
-      return "usage-error";
-    }
-
-    const verification = verifyContentLock(artifact, lock);
-    if (!verification.ok) {
-      collector.addError("CONTENT-LOCK", verification.message, {
-        stage: "validate",
-        sourceLocation: { path: CONTENT_LOCK_FILENAME, line: 1 },
-        remediation:
-          verification.code === "CONTENT_LOCK_HASH_MISMATCH"
-            ? "If the content change is deliberate, update content-lock.json to the new hash"
-            : undefined,
-      });
-      yield* printDiagnostics(collector, options.outputMode);
-      return "validation-error";
-    }
-
-    if (options.outputMode === "json") {
-      yield* printResult(
-        JSON.stringify({
-          contentVersion: artifact.contentVersion,
-          contentHash: artifact.envelope.bodyHash,
-          lockPath,
-          verified: true,
-        }),
-      );
-    } else {
-      yield* printResult("Content lock verified");
-      yield* printResult(`  Content version: ${artifact.contentVersion}`);
-      yield* printResult(`  Content hash: ${artifact.envelope.bodyHash}`);
-      yield* printResult(`  Lock: ${lockPath}`);
     }
     return "success";
   });

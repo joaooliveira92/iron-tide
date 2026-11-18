@@ -9,7 +9,6 @@ import {
   runCompare,
   runContentCheck,
   runContentBuild,
-  runContentVerify,
   runContentGate,
   runCampaignCompile,
   runCampaignSave,
@@ -23,6 +22,7 @@ import {
   type BattleGenerateCliOptions,
   type ExitCategory,
 } from "./commands.js";
+import { runContentVerify } from "./contentVerify.js";
 import {
   exitCodes,
   parseOptions,
@@ -41,8 +41,9 @@ Commands:
                      ship-building catalogue) without writing
   content:build      Compile the whole authored surface to a generated
                      content artifact + manifest
-  content:verify     Rebuild in memory and verify against the committed
-                     content lock (fails on drift or tamper)
+  content:verify     Rebuild twice in memory and require identical hashes
+                     and the locked version. --release also requires the
+                     locked body hash; --write-lock records it first
   content:gate       Fail a shipping (production) pack that still carries an
                      unresolved placeholder value (unless allowlisted)
   inspect            Inspect compiled artifact and envelope
