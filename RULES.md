@@ -95,6 +95,10 @@ contract wins; fix this file in the same change.
   envelopes, and file contents with a strict schema before use.
 - Wire formats are frozen. Every schema change carries a parity test built from
   the existing fixtures. Never dual-maintain Zod and Effect Schema.
+- The player's battle read path is `battleView` (combat) decoded by
+  `BattleViewSchema` in main: own side only, enemy detail only through contacts
+  gated by sighting tier (class at `CLASS` only), opaque handles, integer metres.
+  Never add enemy truth to it; a leak is a failing test in `battle-view.test.ts`.
 
 ## Content and compiler
 

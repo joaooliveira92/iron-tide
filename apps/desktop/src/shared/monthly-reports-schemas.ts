@@ -13,7 +13,7 @@ const ExplanationSourceSchema = Schema.Struct({
   ref: nonEmptyString,
 });
 
-const ExplanationTreeSchema: Schema.Codec<ExplanationTree> = Schema.Struct({
+export const ExplanationTreeSchema: Schema.Codec<ExplanationTree> = Schema.Struct({
   formulaId: nonEmptyString,
   formulaVersion: nonEmptyString,
   inputs: Schema.Record(Schema.String, Schema.Union([Schema.Finite, Schema.String])),

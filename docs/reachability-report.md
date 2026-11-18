@@ -5,7 +5,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | Status | Rows |
 | --- | --- |
 | reachable | 43 |
-| dormant-by-decision | 14 |
+| dormant-by-decision | 15 |
 | internal | 16 |
 
 ## Reachable
@@ -68,6 +68,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | combat-carrier-operations | Carrier operations in a battle | RULES.md#dormant-by-decision |
 | combat-mines | Mine laying and sweeping | RULES.md#dormant-by-decision |
 | combat-missiles | Surface-to-surface missile salvos | RULES.md#dormant-by-decision |
+| combat-navigation | Machinery speed effects: fouling, breakdowns, vibration | RULES.md#dormant-by-decision |
 | combat-formation | Formation keeping | RULES.md#dormant-by-decision |
 | combat-submarines | Submarine operations | RULES.md#dormant-by-decision |
 | combat-terrain | Coast, shoals and base exclusion zones in battle | RULES.md#dormant-by-decision |
