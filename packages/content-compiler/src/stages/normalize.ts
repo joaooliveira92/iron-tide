@@ -4,6 +4,7 @@ import type { DiagnosticCollector } from "@bluewave/diagnostics";
 
 import type { CompilerStage } from "../index.js";
 import type { FlattenOutput } from "./flatten.js";
+import type { TerrainValidated } from "./validateTerrain.js";
 
 export interface NormalizeOutput {
   manifest: unknown;
@@ -36,6 +37,7 @@ export interface NormalizeOutput {
   divisions: Record<string, unknown>[];
   events: Record<string, unknown>[];
   constructionEvents: Record<string, unknown>[];
+  terrain?: TerrainValidated;
   presentation?: unknown;
   ui?: unknown;
 }
@@ -97,6 +99,7 @@ export class NormalizeStage implements CompilerStage<FlattenOutput, NormalizeOut
       divisions: sortById((input.divisions ?? []) as Record<string, unknown>[]),
       events: sortById((input.events ?? []) as Record<string, unknown>[]),
       constructionEvents: sortById((input.constructionEvents ?? []) as Record<string, unknown>[]),
+      ...(input.terrain !== undefined ? { terrain: input.terrain } : {}),
       ...(input.presentation !== undefined ? { presentation: input.presentation } : {}),
       ...(input.ui !== undefined ? { ui: input.ui } : {}),
     };

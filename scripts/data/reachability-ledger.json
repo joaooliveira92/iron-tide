@@ -681,6 +681,19 @@
       "decision": "RULES.md#dormant-by-decision"
     },
     {
+      "id": "combat-terrain",
+      "player_verb": "Coast, shoals and base exclusion zones in battle",
+      "status": "dormant-by-decision",
+      "engine_package": "combat",
+      "engine_modules": ["terrain"],
+      "engine_symbols": [],
+      "main_commands": [],
+      "renderer_screen": null,
+      "evidence_test": null,
+      "decision": "RULES.md#dormant-by-decision",
+      "note": "Four pure queries on compiled terrain; movement blocking and battle placement are the follow-up (#324)."
+    },
+    {
       "id": "combat-coastal-defense",
       "player_verb": "Coastal defence batteries",
       "status": "dormant-by-decision",
