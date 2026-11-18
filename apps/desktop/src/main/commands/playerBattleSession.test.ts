@@ -47,12 +47,20 @@ interface StartValue {
   readonly sessionHash: string;
   readonly resumed: boolean;
   readonly lastOrders: readonly { divisionId: string; stance: string; speedPercent: number }[];
+  readonly battleView: {
+    readonly version: string;
+    readonly side: string;
+    readonly pauseReason: string | null;
+    readonly contacts: readonly unknown[];
+    readonly ships: readonly { readonly shipId: string }[];
+  };
   readonly view: {
     readonly minute: number;
     readonly ended: boolean;
     readonly playerNationId: string;
     readonly attackerId: string;
     readonly divisions: readonly { divisionId: string; sideId: string }[];
+    readonly ships: readonly { shipId: string; name: string; sideId: string }[];
   };
 }
 
@@ -173,6 +181,18 @@ describe("player battle session over in-memory sidecar stores", () => {
     expect(started.resumed).toBe(false);
     expect(started.lastOrders).toEqual([]);
     expect(started.view.minute).toBe(0);
+    expect(started.battleView.version).toBe("battle_view_v1");
+    expect(started.battleView.pauseReason).toBeNull();
+    expect(started.battleView.contacts).toEqual([]);
+    const hostileShips = started.view.ships.filter(
+      (ship) => ship.sideId !== started.battleView.side,
+    );
+    expect(hostileShips.length).toBeGreaterThan(0);
+    const exposed = JSON.stringify(started.battleView);
+    for (const ship of hostileShips) {
+      expect(exposed).not.toContain(ship.shipId);
+      expect(exposed).not.toContain(ship.name);
+    }
 
     const minute = await advance(a, battleId, "minute", ordersFor(started, 40));
     expect(minute.outcome).toBe("success");

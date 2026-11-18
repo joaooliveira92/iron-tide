@@ -1,4 +1,4 @@
-import type { PlayerBattleView } from "@bluewave/combat/battleResolution";
+import type { BattleView, PlayerBattleView } from "@bluewave/combat/battleResolution";
 
 export interface PlayerBattleDivisionOrderDto {
   readonly divisionId: string;
@@ -19,6 +19,7 @@ export interface PlayerBattleResultDto {
 
 export interface StartPlayerBattleResult {
   readonly view: PlayerBattleView;
+  readonly battleView: BattleView;
   readonly sessionHash: string;
   readonly resumed: boolean;
   readonly lastOrders: readonly PlayerBattleDivisionOrderDto[];
@@ -26,6 +27,7 @@ export interface StartPlayerBattleResult {
 
 export interface AdvancePlayerBattleResult {
   readonly view: PlayerBattleView;
+  readonly battleView: BattleView;
   readonly sessionHash: string;
   readonly result: PlayerBattleResultDto | null;
 }
