@@ -15,14 +15,6 @@ on:
       - "apps/desktop/package-policy/**"
       - ".github/workflows/globe-map.yml"
   pull_request:
-    paths:
-      - "apps/desktop/map-assets/**"
-      - "apps/desktop/src/renderer/components/globe-adapter/**"
-      - "apps/desktop/src/renderer/components/globe-spike/**"
-      - "apps/desktop/scripts/map-data/**"
-      - "apps/desktop/scripts/package-guard/**"
-      - "apps/desktop/package-policy/**"
-      - ".github/workflows/globe-map.yml"
   workflow_dispatch:
 
 permissions:
@@ -33,7 +25,34 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  scope:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      run: ${{ steps.diff.outputs.run }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - id: diff
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PATTERN: '^(apps/desktop/map-assets/|apps/desktop/src/renderer/components/globe-adapter/|apps/desktop/src/renderer/components/globe-spike/|apps/desktop/scripts/map-data/|apps/desktop/scripts/package-guard/|apps/desktop/package-policy/|\.github/workflows/globe-map\.yml$)'
+        run: |
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          elif git diff --name-only "$BASE_SHA...$HEAD_SHA" | grep -Eq "$PATTERN"; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
   globe:
+    needs: scope
+    if: needs.scope.outputs.run == 'true'
     strategy:
       fail-fast: false
       matrix:
@@ -72,3 +91,25 @@ jobs:
         run: pnpm --filter @bluewave/desktop exec electron-builder ${{ matrix.target }} --dir --config electron-builder.json
       - name: Enforce the production package policy
         run: pnpm --filter @bluewave/desktop exec node scripts/package-guard/cli.ts --mode default --package dist-electron
+
+  globe-ok:
+    name: globe-ok
+    if: always()
+    needs: [scope, globe]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require the scope decision and, when in scope, every OS leg
+        env:
+          SCOPE: ${{ needs.scope.result }}
+          RUN: ${{ needs.scope.outputs.run }}
+          RESULT: ${{ needs.globe.result }}
+        run: |
+          if [ "$SCOPE" != "success" ]; then
+            echo "::error::scope finished as $SCOPE"
+            exit 1
+          fi
+          if [ "$RUN" = "true" ] && [ "$RESULT" != "success" ]; then
+            echo "::error::globe finished as $RESULT"
+            exit 1
+          fi

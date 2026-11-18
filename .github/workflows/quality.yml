@@ -7,6 +7,7 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
+  workflow_call:
 
 permissions:
   contents: read
@@ -68,7 +69,7 @@ jobs:
       # needs a committed, hash-bound approval. CI only verifies; it never
       # writes approvals (`pnpm replay:approve` refuses to run under CI).
       - name: Replay approvals
-        if: github.event_name != 'pull_request'
+        if: github.event_name == 'workflow_dispatch'
         env:
           REPLAY_APPROVALS_BASE: ${{ github.event.pull_request.base.sha || github.event.before || 'origin/dev' }}
         run: pnpm check:replay-approvals
