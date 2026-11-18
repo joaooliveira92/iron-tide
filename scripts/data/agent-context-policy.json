@@ -22,6 +22,8 @@
   "guardAuditLogEnv": "AGENT_GUARD_AUDIT_LOG",
   "telemetryDirEnv": "CLAUDE_TELEMETRY_DIR",
   "hookStderrMaxChars": 600,
+  "resumeContextMaxChars": 600,
+  "resumeHandoffMaxAgeMinutes": 720,
   "quietFailTailLines": 40,
   "quietLogDir": "node_modules/.cache/bluewave-quiet"
 }

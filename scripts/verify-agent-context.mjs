@@ -21,14 +21,18 @@ const NUMERIC_POLICY_KEYS = [
   "handoffMaxWords",
   "taskPromptMaxWords",
   "hookStderrMaxChars",
+  "resumeContextMaxChars",
+  "resumeHandoffMaxAgeMinutes",
   "quietFailTailLines",
 ];
 const HOOK_SOURCES = [
   "scripts/hooks/pre-tool-use-bash.mjs",
   "scripts/hooks/user-prompt-context.mjs",
   "scripts/hooks/session-telemetry.mjs",
+  "scripts/hooks/session-start-resume.mjs",
   "scripts/lib/agent-guard.mjs",
   "scripts/lib/hook-telemetry.mjs",
+  "scripts/lib/session-resume.mjs",
   "scripts/lib/transcript-context.mjs",
 ];
 const THRESHOLD_KEYS_TO_KEEP_OUT_OF_SOURCE = [
@@ -144,6 +148,7 @@ function checkSettings(root, failures) {
     ["UserPromptSubmit", "scripts/hooks/user-prompt-context.mjs", undefined],
     ["PostToolUse", "scripts/hooks/session-telemetry.mjs", undefined],
     ["PreCompact", "scripts/hooks/session-telemetry.mjs", undefined],
+    ["SessionStart", "scripts/hooks/session-start-resume.mjs", "compact|resume"],
     ["Stop", "scripts/hooks/stop-gate.mjs", undefined],
   ];
   for (const [event, script, matcher] of expectations) {
