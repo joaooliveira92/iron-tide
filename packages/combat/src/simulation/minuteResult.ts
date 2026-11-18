@@ -31,6 +31,8 @@ export function buildMinuteResult(run: MinuteRun): MinuteResult {
     salvos,
     formationTracks,
     formationRecords,
+    collisionRecords,
+    collisionState,
   } = run;
   const events = ledger.sorted();
   const hasTorpedoSurface =
@@ -157,6 +159,20 @@ export function buildMinuteResult(run: MinuteRun): MinuteResult {
           },
         }
       : {}),
+    ...(collisionRecords && collisionRecords.length > 0
+      ? {
+          collision: {
+            records: collisionRecords.map((r) => ({
+              kind: r.kind,
+              substep: r.substep,
+              shipAId: r.shipAId,
+              shipBId: r.shipBId,
+              closingSpeedMps: r.closingSpeedMps,
+              bearingDeg: r.bearingDeg,
+            })),
+          },
+        }
+      : {}),
     ...(smokeRecords && smokeRecords.length > 0
       ? {
           smoke: {
@@ -227,5 +243,7 @@ export function buildMinuteResult(run: MinuteRun): MinuteResult {
     ...(airDefenseStates ? { airDefenseStates } : {}),
     ...(formationTracks ? { formationTracks } : {}),
     ...(formationRecords ? { formationRecords } : {}),
+    ...(collisionRecords && collisionRecords.length > 0 ? { collisionRecords } : {}),
+    ...(collisionState ? { collisionState } : {}),
   };
 }

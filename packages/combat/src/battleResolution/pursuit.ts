@@ -1,6 +1,8 @@
 import type { TacticalBattleState } from "../tactical/state.js";
 import type { TacticalShipUnit } from "../tactical/unit.js";
 import type { DamageContext } from "../damage/minuteDamage.js";
+import { steerClearOfLand } from "../collision/steering.js";
+import type { TerrainView } from "../terrain/index.js";
 import {
   engagementHeading,
   headingToward,
@@ -14,8 +16,9 @@ export function pursuitOrders(input: {
   damage: DamageContext;
   units: readonly TacticalShipUnit[];
   baseOrders: Readonly<Record<string, { orderedHeading: number; orderedSpeedBp: number }>>;
+  terrain?: TerrainView;
 }): Record<string, { orderedHeading: number; orderedSpeedBp: number }> {
-  const { battleId, battleState, damage, units, baseOrders } = input;
+  const { battleId, battleState, damage, units, baseOrders, terrain } = input;
   const movement = battleState.movementStates ?? {};
   const contactPos = new Map(
     (battleState.contacts ?? []).map((c) => [c.contactId, c.position] as const),
@@ -47,15 +50,23 @@ export function pursuitOrders(input: {
       }
     }
     const isController = rangeController !== null && u.sideId === rangeController;
+    const wanted = !best
+      ? own.heading
+      : isController
+        ? engagementHeading({
+            rangeUm: rangeBetweenUm(own.position, best.pos),
+            bearingToEnemy: headingToward(best.dx, best.dy),
+          })
+        : headingToward(best.dx, best.dy);
     out[u.assetId] = {
-      orderedHeading: !best
-        ? own.heading
-        : isController
-          ? engagementHeading({
-              rangeUm: rangeBetweenUm(own.position, best.pos),
-              bearingToEnemy: headingToward(best.dx, best.dy),
-            })
-          : headingToward(best.dx, best.dy),
+      orderedHeading: terrain
+        ? steerClearOfLand({
+            terrain,
+            position: own.position,
+            heading: wanted,
+            speedBp: base.orderedSpeedBp,
+          })
+        : wanted,
       orderedSpeedBp: base.orderedSpeedBp,
     };
   }

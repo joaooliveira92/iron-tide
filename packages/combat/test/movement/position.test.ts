@@ -4,7 +4,6 @@ import {
   resolvePropulsion,
   resolveTurning,
   reciprocalCourse,
-  resolveCollisionsGrounding,
   type MovementState,
 } from "@bluewave/combat/movement";
 
@@ -122,15 +121,5 @@ describe("AC-4 turning", () => {
   it("reciprocal course is exactly 180 degrees away (battleTurnAway reuse)", () => {
     expect(reciprocalCourse(60)).toBe(240);
     expect(reciprocalCourse(0)).toBe(180);
-  });
-});
-
-describe("AC-6 collisions/grounding hook", () => {
-  it("emits a successful empty record with no partial mutation", () => {
-    const r = resolveCollisionsGrounding();
-    expect(r.phase).toBe("resolve_collisions_grounding");
-    expect(r.success).toBe(true);
-    expect(r.empty).toBe(true);
-    expect(r.records).toEqual([]);
   });
 });
