@@ -607,7 +607,7 @@ export default collection("ammunition", AmmunitionPatternSchema, [
     shellType: "HE",
     nationId: "usa",
     compatibleGunModelIds: ["us_dahlgren_15in"],
-    shellMassG: 149700,
+    shellMassG: 159700,
     explosiveFillerG: 5900,
     penetrationBiasBp: 2500,
     ammunitionCostMicro: 1351791,
@@ -617,13 +617,19 @@ export default collection("ammunition", AmmunitionPatternSchema, [
       sourceStatus: "BALANCE_TARGET",
       confidence: "LOW",
       kind: "balance_adjustment",
-      note: "issues #880, #898. Mass: XV-inch shell 330 lb (149,685 g, authored as 149,700 g like the component), two sources (Ordnance Instructions 1866 proof table and Holley Table XXIII Navy). The 352 lb figure is the same 1866 text's filled-and-sabotted weight (gauge table), so 330 lb is the empty casting weight; the mass is kept for compatibility and flagged in the PR. explosiveFillerG 5,900: Ordnance Instructions 1866 para 105, XV-inch bursting or service charge 13 lb (5,897 g), primary; the Army 15-inch figure of 17 lb (Holley Table XXII) is listed for owner review and 352 minus 330 = 22 lb of filler, fuze and sabot is consistent. Shell type HE; scoped to the model. penetrationBiasBp 2500: BALANCE_TARGET copied from the nearest sourced HE siblings. ammunitionCostMicro 1,351,791 micro-GBP: BALANCE_TARGET, mass 149.7 kg x 9,030 micro-GBP/kg (Holley 1862 hollow cast-iron shell price at par $4.8665 per GBP); filler and fuze excluded.",
+      note: "issues #880, #898. Mass (issue #915): XV-inch shell 352 lb filled and sabotted (159,665 g, authored as 159,700 g like the component), read from the 1866 Ordnance Instructions shot and shell gauge table para 89 (page image n274; the djvu text layer misreads the cell as 302). The 330 lb of the proof table and Holley Table XXIII is the empty casting weight required of foundries, and 330 + 13 lb bursting charge (para 105) + 8.9 lb sabot (para 91) = 351.9 lb reconciles with 352. explosiveFillerG 5,900: Ordnance Instructions 1866 para 105, XV-inch bursting or service charge 13 lb (5,897 g), primary; the Army 15-inch figure of 17 lb (Holley Table XXII) is listed for owner review; filler is part of the 352 lb, not added to it (nothing sums the two). Shell type HE; scoped to the model. penetrationBiasBp 2500: BALANCE_TARGET copied from the nearest sourced HE siblings. ammunitionCostMicro 1,351,791 micro-GBP: BALANCE_TARGET, mass 149.7 kg (the 330 lb empty casting, not the 159.7 kg round) x 9,030 micro-GBP/kg (Holley 1862 hollow cast-iron shell price at par $4.8665 per GBP); filler and fuze excluded; left unchanged by #915 for the #898 owner review.",
       sources: [
         {
           title:
             "US Navy, Ordnance Instructions 1866 (4th ed.), Part III para 31 powder-proof table (page image n251) and para 105 bursting charge (page image n279)",
           archiveOrUrl: "https://archive.org/details/ordnanceinstruct00unit/page/n279",
           section: "Research discussion #890 section 1",
+        },
+        {
+          title:
+            "US Navy, Ordnance Instructions 1866 (4th ed.), shot and shell gauge table para 89 (XV-inch shell 330 lb for foundries, 352 lb filled and sabotted) and para 91 sabot weight 8.90 lb (page image n274)",
+          archiveOrUrl: "https://archive.org/details/ordnanceinstruct00unit/page/n274",
+          section: "Issue #915",
         },
         {
           title: "Holley, A Treatise on Ordnance and Armor (1865), Tables XXII and XXIII, para 593",

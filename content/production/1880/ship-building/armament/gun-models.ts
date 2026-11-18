@@ -862,8 +862,8 @@ export default collection("gunModels", GunModelSchema, [
     designation: "XV-inch Dahlgren smoothbore",
     caliberUm: 381000,
     gunMassKg: 19504,
-    shellMassG: 149700,
-    propellantChargeBp: 1515,
+    shellMassG: 159700,
+    propellantChargeBp: 1420,
     roundVolumeMl: 260000,
     mechanicalRateOfFireRoundsPerMinuteX100: 12,
     introductionMonth: "1880-01",
@@ -874,7 +874,7 @@ export default collection("gunModels", GunModelSchema, [
       sourceStatus: "DERIVED",
       confidence: "MEDIUM",
       kind: "historical_fact",
-      note: "issue #880. Promoted from the United States profile gun model of the same id. Shell 330 lb (149.7 kg) is the proof-table shell of the 43,000 lb XV-inch gun in the 1866 Ordnance Instructions, SINGLE-SOURCE primary; the 352 lb figure is not in that text. Every other numeric field is copied from the shared family.",
+      note: "issue #880. Promoted from the United States profile gun model of the same id. Shell mass is the 352 lb filled and sabotted round (159.7 kg, rounded to 100 g like the sibling shells) of the XV-inch shell gauge table (para 89, page image n274) in the 1866 Ordnance Instructions, SINGLE-SOURCE primary; the 330 lb proof-table figure is the empty casting weight required of foundries, and 330 + 13 lb bursting charge (para 105) + 8.9 lb sabot (para 91) = 351.9 lb reconciles with 352 (issue #915). propellantChargeBp 1420 keeps the 50 lb proof charge (22.7 kg) over the 352 lb round; 1515 was 50 lb over 330 lb. Every other numeric field is copied from the shared family.",
       sources: [
         {
           title:

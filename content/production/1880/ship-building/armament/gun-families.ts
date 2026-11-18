@@ -490,7 +490,7 @@ export default collection("gunFamilies", GunFamilySchema, [
       sourceStatus: "DERIVED",
       confidence: "MEDIUM",
       kind: "historical_fact",
-      note: "Smoothbore: 381 mm bore and 43,000 lb gun mass, plus the 330 lb shell and 50/35/60 lb black-powder charges, are read from the 1866 US Ordnance Instructions; muzzle velocity and rate of fire are ESTIMATE. Not an armour-piercing rifle.",
+      note: "Smoothbore: 381 mm bore and 43,000 lb gun mass, plus the 352 lb filled and sabotted shell (330 lb empty casting) and 50/35/60 lb black-powder charges, are read from the 1866 US Ordnance Instructions; muzzle velocity and rate of fire are ESTIMATE. Not an armour-piercing rifle.",
       sources: [
         {
           sourceId: "oi66",
