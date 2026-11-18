@@ -2,6 +2,7 @@
   "catMaxLines": 200,
   "readRangeMaxLines": 120,
   "readChainDenyAt": 3,
+  "fileReadBudget": 6,
   "pollChainDenyAt": 4,
   "overrideToken": "agent-guard: allow",
   "overrideMinReasonChars": 3,

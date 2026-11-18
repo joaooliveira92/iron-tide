@@ -29,11 +29,21 @@ function headTailOperands(words) {
   return counted ? operands : null;
 }
 
+function rgPipedToHead(words, next) {
+  return words[0] === "rg" && next?.words[0] === "head" && next.words.length >= 2;
+}
+
+function rgFileOperands(words) {
+  const operands = words.slice(1).filter((w) => !w.startsWith("-"));
+  return operands.length === 2 ? [operands[1]] : null;
+}
+
 export function rangeReadTargets(command, cwd) {
   let workdir = cwd;
   let workdirKnown = typeof cwd === "string" && cwd.length > 0;
   const targets = [];
-  for (const segment of tokenizeCommand(command)) {
+  const segments = tokenizeCommand(command);
+  for (const [index, segment] of segments.entries()) {
     const [program] = segment.words;
     if (program === "cd" && segment.words.length >= 2 && !segment.pipedOut) {
       const target = segment.words[1];
@@ -44,6 +54,9 @@ export function rangeReadTargets(command, cwd) {
     let operands = null;
     if (program === "sed") operands = sedOperands(segment.words);
     else if (program === "head" || program === "tail") operands = headTailOperands(segment.words);
+    else if (rgPipedToHead(segment.words, segments[index + 1])) {
+      operands = rgFileOperands(segment.words);
+    }
     if (operands === null || operands.length !== 1 || !workdirKnown) continue;
     if (hasDynamicText(operands[0])) continue;
     targets.push(resolvePath(workdir, operands[0]));
@@ -93,4 +106,8 @@ export function trailingChainLength({ lines, path, cwd, currentToolUseId }) {
     length += 1;
   }
   return length;
+}
+
+export function rangeReadCount({ lines, path, cwd, currentToolUseId }) {
+  return toolUsesOf(lines, currentToolUseId).filter((use) => readsRangeOf(use, path, cwd)).length;
 }

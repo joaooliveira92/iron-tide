@@ -31,6 +31,14 @@ void describe("rangeReadTargets", () => {
     assert.deepEqual(targets("head -30 src/a.ts"), [FILE]);
     assert.deepEqual(targets("tail -n 30 src/a.ts"), [FILE]);
   });
+  void test("recognises a single-file rg piped to head as a read of that file", () => {
+    assert.deepEqual(targets("rg -n -C3 foo src/a.ts | head -120"), [FILE]);
+    assert.deepEqual(targets("rg -n foo src/a.ts | head -n 40"), [FILE]);
+  });
+  void test("ignores rg piped to head without a single file operand", () => {
+    assert.deepEqual(targets("git grep foo | head -120"), []);
+    assert.deepEqual(targets("rg -n foo | head -120"), []);
+  });
   void test("resolves absolute paths and leading cd", () => {
     assert.deepEqual(targets(`sed -n 1,5p ${posix(FILE)}`), [FILE]);
     assert.deepEqual(targets("cd src && sed -n 1,5p a.ts"), [FILE]);
@@ -96,6 +104,13 @@ void describe("trailingChainLength", () => {
     ];
     assert.equal(chain(lines), 1);
   });
+  void test("counts rg piped to head reads of the file", () => {
+    const lines = [
+      bashRead("rg -n foo src/a.ts | head -120"),
+      bashRead("rg -n bar src/a.ts | head -120"),
+    ];
+    assert.equal(chain(lines), 2);
+  });
   void test("excludes the current tool call when it is already in the transcript", () => {
     const lines = [bashRead("sed -n 1,50p src/a.ts"), bashRead("sed -n 50,90p src/a.ts", "now")];
     assert.equal(chain(lines), 1);
@@ -155,6 +170,34 @@ void describe("hook deny on the third consecutive range read", () => {
   });
   void test("allows when another call interrupts the chain", () => {
     const result = run(read(81), [bashRead(read(1)), bashRead("pnpm test"), bashRead(read(41))]);
+    assert.equal(result.stdout, "");
+  });
+  void test("denies the third consecutive rg piped to head read of one file", () => {
+    const grep = (pattern) => `rg -n ${pattern} ${target()} | head -120`;
+    const result = run(grep("gamma"), [bashRead(grep("alpha")), bashRead(grep("beta"))]);
+    assert.equal(result.status, 0);
+    const output = JSON.parse(result.stdout).hookSpecificOutput;
+    assert.equal(output.permissionDecision, "deny");
+    assert.match(output.permissionDecisionReason, /Read tool/u);
+    assert.match(output.permissionDecisionReason, /agent-guard: allow/u);
+  });
+  void test("denies a file read budget exhausted across interrupted reads", () => {
+    const history = [];
+    for (let k = 0; k < POLICY.fileReadBudget - 1; k += 1) {
+      history.push(bashRead(read(1 + k * 40)), bashRead("pnpm test"));
+    }
+    const result = run(read(1), history);
+    assert.equal(result.status, 0);
+    const output = JSON.parse(result.stdout).hookSpecificOutput;
+    assert.equal(output.permissionDecision, "deny");
+    assert.match(output.permissionDecisionReason, /Read tool/u);
+  });
+  void test("allows reads of other files under the per-file budget", () => {
+    const history = [];
+    for (let k = 0; k < POLICY.fileReadBudget - 1; k += 1) {
+      history.push(bashRead(`sed -n 1,40p ${join(sandbox, "other.ts")}`), bashRead("pnpm test"));
+    }
+    const result = run(read(1), history);
     assert.equal(result.stdout, "");
   });
   void test("an audited override lets the third read through", () => {
