@@ -166,10 +166,10 @@ describe("ship-on-ship collision inside the propulsion loop", () => {
       collision: context(),
       damage: damageContext(),
     });
-    const slowDamage = slowRun.results.flatMap((r) => r.damageStates ?? []);
-    expect(slowDamage.length).toBeGreaterThan(0);
+    const slowDamage = slowRun.results.map((r) => r.damageStates).find((s) => s !== undefined);
+    expect(slowDamage).toBeDefined();
     const fastIntegrity = fast.results[0]!.damageStates!["a1"]!.structuralIntegrity;
-    const slowIntegrity = slowDamage[0]!["a1"]!.structuralIntegrity;
+    const slowIntegrity = slowDamage!["a1"]!.structuralIntegrity;
     expect(slowIntegrity).toBeGreaterThan(fastIntegrity);
   });
 
