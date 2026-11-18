@@ -149,6 +149,13 @@ and `scripts/verify-reachability-ledger.mjs` fails when a row drifts.
   Effect code — bridge with `Deferred`, `Queue`, or `FiberSet`. Log with
   `Effect.log*`, never `console.*`. Add `Effect.fn`/`withSpan` spans with stable
   names at workflow and IO boundaries.
+- React effect hooks (`useEffect`, `useLayoutEffect`, `useInsertionEffect`) are
+  banned in `apps/` and `packages/` (tests exempt). Derive during render, react in
+  event handlers, subscribe with `useSyncExternalStore`, reset with `key`, attach
+  DOM and external instances with ref callbacks (React 19 cleanup return), and keep
+  async work in Effect services. `scripts/effect-hooks.baseline.json` lists the
+  files not yet migrated; `gate:effect-hooks` fails any new use and any entry that
+  could be lowered, so the list only shrinks (#930).
 
 ## Module size
 
