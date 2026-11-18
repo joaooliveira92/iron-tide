@@ -58,6 +58,14 @@ const OwnShipSchema = Schema.Struct({
   speedExplanation: nullable(ExplanationTreeSchema),
   damageStars: Schema.Literals([0, 1, 2, 3]),
   damageState: Schema.String,
+  hitPoints: nonNegativeInt,
+  maxHitPoints: nonNegativeInt,
+  explanations: Schema.Struct({
+    gunneryAccuracy: nullable(ExplanationTreeSchema),
+    torpedoSolution: nullable(ExplanationTreeSchema),
+    damageControl: nullable(ExplanationTreeSchema),
+    loss: nullable(ExplanationTreeSchema),
+  }),
   carriesMines: nullable(Schema.Boolean),
   machinery: nullable(Schema.Struct({ label: nonEmptyString })),
   turrets: Schema.Array(
@@ -144,6 +152,7 @@ export const BattleViewSchema: Schema.Codec<BattleView> = Schema.Struct({
   version: Schema.Literal("battle_view_v1"),
   battleId: nonEmptyString,
   areaId: nonEmptyString,
+  campaignMonth: nonEmptyString,
   side: Schema.Literals(["ATTACKER", "DEFENDER"]),
   playerNationId: nonEmptyString,
   ended: Schema.Boolean,

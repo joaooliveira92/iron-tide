@@ -6,7 +6,6 @@ import {
   createPlayerBattleSession,
   playerBattleResult,
   playerBattleSessionHash,
-  playerBattleView,
   runPlayerBattleToEnd,
   type AutoResolverNation,
   type PlayerBattleSession,
@@ -252,7 +251,6 @@ export const startPlayerBattle = (input: {
     yield* (yield* PlayerBattleRegistry).put(input.sessionId, input.battleId, { session, steps });
     const value: StartPlayerBattleResult = {
       sessionHash: playerBattleSessionHash(session),
-      view: playerBattleView(session),
       battleView: boundary.view,
       resumed: resume === "resumed",
       lastOrders: [...(steps.at(-1)?.divisions ?? [])],
@@ -290,7 +288,6 @@ export const stepPlayerBattle = (input: {
     }
     const value: AdvancePlayerBattleResult = {
       sessionHash: playerBattleSessionHash(next),
-      view: playerBattleView(next),
       battleView: boundary.view,
       result: next.ended ? toResultDto(next) : null,
     };

@@ -70,61 +70,6 @@ export interface PlayerBattleEvent {
   readonly targetId: string;
 }
 
-export interface PlayerBattleShipView {
-  readonly shipId: string;
-  readonly name: string;
-  readonly className: string;
-  readonly shipType: string;
-  readonly sideId: string;
-  readonly divisionId: string | null;
-  readonly hitPoints: number;
-  readonly maxHitPoints: number;
-  readonly damageState: string;
-  readonly position: readonly [number, number] | null;
-  readonly headingDeg: number | null;
-  readonly speedBp: number | null;
-  readonly contactConfidenceBp: number | null;
-  readonly motion?: ExplanationTree;
-  readonly gunneryAccuracy?: ExplanationTree;
-  readonly torpedoSolution?: ExplanationTree;
-  readonly damageControl?: ExplanationTree;
-  readonly loss?: ExplanationTree;
-}
-
-export interface PlayerBattleDivisionView {
-  readonly divisionId: string;
-  readonly sideId: string;
-  readonly role: string;
-  readonly formation: string;
-  readonly flagshipId: string;
-  readonly unitIds: readonly string[];
-}
-
-export interface PlayerBattleView {
-  readonly battleId: string;
-  readonly campaignMonth: string;
-  readonly playerNationId: string;
-  readonly areaId: string;
-  readonly attackerId: string;
-  readonly defenderId: string;
-  readonly minute: number;
-  readonly maxMinutes: number;
-  readonly ended: boolean;
-  readonly endReason: string | null;
-  readonly winnerId: string | null;
-  readonly loserId: string | null;
-  readonly objectives: readonly string[];
-  readonly weather: {
-    readonly seaState: string;
-    readonly visibilityNm: number;
-    readonly precipitation: string;
-    readonly daylight: boolean;
-  };
-  readonly ships: readonly PlayerBattleShipView[];
-  readonly divisions: readonly PlayerBattleDivisionView[];
-  readonly log: readonly PlayerBattleEvent[];
-}
-
 export interface PlayerBattleResult {
   readonly winnerId: string | null;
   readonly loserId: string | null;

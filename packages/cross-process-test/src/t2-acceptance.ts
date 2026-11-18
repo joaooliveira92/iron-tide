@@ -4,7 +4,6 @@ import {
   createPlayerBattleSession,
   playerBattleResult,
   playerBattleSessionHash,
-  playerBattleView,
   runPlayerBattleToEnd,
   type AutoResolverNation,
 } from "@bluewave/combat/battleResolution";
@@ -190,7 +189,6 @@ export function runT2Acceptance(): T2Observation {
   });
   const finished = runPlayerBattleToEnd(session, { divisions: {} });
   const result = playerBattleResult(finished);
-  const view = playerBattleView(finished);
 
   const payload: BattleResultInput = {
     interruptionId: battle.interruptionId,
@@ -216,9 +214,9 @@ export function runT2Acceptance(): T2Observation {
       attackerLosses: [...result.attackerLosses],
       defenderLosses: [...result.defenderLosses],
       damageReport: { ...result.damageReport },
-      objectives: [...view.objectives],
-      playerDivisions: view.divisions.filter((d) => d.sideId === "ATTACKER").length,
-      enemyDivisions: view.divisions.filter((d) => d.sideId === "DEFENDER").length,
+      objectives: [...finished.objectives],
+      playerDivisions: finished.state.divisions.filter((d) => d.sideId === "ATTACKER").length,
+      enemyDivisions: finished.state.divisions.filter((d) => d.sideId === "DEFENDER").length,
       sessionHash: playerBattleSessionHash(finished),
     },
     submitted: {
