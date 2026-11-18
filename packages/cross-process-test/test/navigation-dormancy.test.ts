@@ -145,6 +145,40 @@ describe("navigation stays dormant without the ruleset section (#937)", () => {
     expect(explicitUndefined.results.every((result) => result.navigation === undefined)).toBe(true);
   });
 
+  it("a section without a separation block emits no separation state or records", () => {
+    const ships = [{ shipId: "a1", machineryClass: "COAL" as const, enginePriorityBp: 0 }];
+    const result = run({ navigation: { rules: combatRules, ships } });
+    expect("separation" in combatRules).toBe(false);
+    for (const minute of result.results) {
+      expect(minute.navigation).toBeDefined();
+      expect(minute.navigation?.separation).toBeUndefined();
+      expect(minute.navigation?.separationRecords).toBeUndefined();
+    }
+  });
+
+  it("a separation block without a formation context leaves the minute hashes unchanged", () => {
+    const withBlock = decodeNavigationRules({
+      ...sample,
+      separation: {
+        formationBaseBp: { LINE_ABREAST: 40, SEARCH_LINE: 60, SCREEN: 50 },
+        nightFactorBp: 20_000,
+        poorVisibilityFactorBp: 30_000,
+        poorVisibilityThresholdUm: 4_000_000_000,
+        cohesionReferenceBp: 10_000,
+        heavyShipTypes: ["BB"],
+        drift: { thresholdMinutes: 30, toleranceMultiplierBp: 30_000, steeringErrorDeg: 5 },
+      },
+    });
+    if (!withBlock.ok) throw new Error(withBlock.message);
+    const ships = [{ shipId: "a1", machineryClass: "COAL" as const, enginePriorityBp: 0 }];
+    const without = run({ navigation: { rules: combatRules, ships } });
+    const blocked = run({ navigation: { rules: withBlock.value, ships } });
+    expect(blocked.hashes).toEqual(without.hashes);
+    expect(blocked.results.every((minute) => minute.navigation?.separation === undefined)).toBe(
+      true,
+    );
+  });
+
   it("a decoded content-schema NavigationRules feeds the combat NavigationRules input", () => {
     const result = run({
       navigation: {

@@ -57,8 +57,11 @@ export interface BattleViewOwnShip {
   readonly damageState: string;
   readonly carriesMines: boolean | null;
   readonly machinery: BattleViewMachinery | null;
+  readonly separation: BattleViewSeparation | null;
   readonly turrets: readonly BattleViewTurretBearing[];
 }
+
+export type BattleViewSeparation = "SEPARATED" | "DISORDERED";
 
 export interface BattleViewOwnDivision {
   readonly divisionId: string;
