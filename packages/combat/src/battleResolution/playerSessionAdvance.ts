@@ -5,6 +5,7 @@ import type { TorpedoContext } from "../torpedoes/index.js";
 import { advanceMinute } from "../simulation/engine.js";
 import { planTorpedoCommands } from "./torpedoDoctrine.js";
 import { withNightTraining } from "./trainingEffects.js";
+import { advancePlayerForce } from "./playerSessionForce.js";
 import { resolveOrders } from "./playerSessionOrders.js";
 import { resultOf } from "./playerSessionSnapshot.js";
 import {
@@ -101,11 +102,24 @@ export function advancePlayerBattleMinute(
   });
   const damageControl = damageControlFor(session, minute);
 
+  let force = session.force;
+  const unitOrders = resolveOrders(
+    session,
+    orders,
+    session.force === undefined
+      ? undefined
+      : (set) => {
+          const stepped = advancePlayerForce(session, orders, set);
+          force = stepped.force;
+          return stepped.divisionOrders;
+        },
+  );
+
   const result = advanceMinute({
     state: session.state,
     minute,
     observationTime,
-    orders: resolveOrders(session, orders),
+    orders: unitOrders,
     ...(engine === undefined ? {} : { engine }),
     gunnery: withNightTraining(
       batteries,
@@ -200,6 +214,7 @@ export function advancePlayerBattleMinute(
     airDefense,
     ...(nextTorpedoes === undefined ? {} : { torpedoes: nextTorpedoes }),
     ...(nextMissiles === undefined ? {} : { missiles: nextMissiles }),
+    ...(force === undefined ? {} : { force }),
     log: [
       ...session.log,
       ...result.events.map((event) => ({

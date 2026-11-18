@@ -119,7 +119,9 @@ function headingAway(session: PlayerBattleSession, unit: TacticalShipUnit): numb
 export function resolveOrders(
   session: PlayerBattleSession,
   orders: PlayerBattleOrders,
+  adjust?: (set: DivisionOrderSet) => DivisionOrderSet,
 ): Record<string, UnitOrders> {
+  const base = divisionOrderSet(orders, session.state.divisions);
   const pursuit = pursuitOrders({
     battleId: session.battleId,
     battleState: session.state,
@@ -128,7 +130,7 @@ export function resolveOrders(
     baseOrders: session.baseOrders,
   });
   return compileDivisionOrders({
-    orders: divisionOrderSet(orders, session.state.divisions),
+    orders: adjust === undefined ? base : adjust(base),
     units: session.units,
     divisions: session.state.divisions,
     baseOrders: session.baseOrders,
