@@ -1,6 +1,7 @@
 import { act, cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 import { BattleMapPane } from "./BattleMapPane.js";
+import { BattleToolbar } from "./BattleToolbar.js";
 import {
   mountSession,
   useBattleSessionSnapshot,
@@ -152,6 +153,21 @@ describe("tactical rectangle zoom", () => {
     expect(current().state.camera.metresPerPixel).toBe(TACTICAL_MIN_M_PER_PX);
     for (let index = 0; index < 30; index += 1) fireEvent.keyDown(map(), { key: "x" });
     expect(current().state.camera.metresPerPixel).toBe(TACTICAL_MAX_M_PER_PX);
+  });
+
+  it("advertises the hotkeys and the rectangle gesture on the toolbar buttons", async () => {
+    mountSession(
+      <>
+        <BattleToolbar />
+        <BattleMapPane />
+      </>,
+    );
+    await screen.findByTestId("tactical-map");
+    const zoomIn = screen.getByTestId("tactical-zoom-in");
+    expect(zoomIn.getAttribute("aria-keyshortcuts")).toBe("Z");
+    expect(zoomIn.title).toContain("Shift-drag");
+    expect(screen.getByTestId("tactical-zoom-out").getAttribute("aria-keyshortcuts")).toBe("X");
+    expect(map().getAttribute("aria-label")).toContain("shift-drag");
   });
 
   it("leaves Z and X to the browser when a command modifier is held", async () => {
