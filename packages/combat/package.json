@@ -64,6 +64,10 @@
       "types": "./src/missiles/index.ts",
       "default": "./dist/missiles/index.js"
     },
+    "./navigation": {
+      "types": "./src/navigation/index.ts",
+      "default": "./dist/navigation/index.js"
+    },
     "./movement": {
       "types": "./src/movement/index.ts",
       "default": "./dist/movement/index.js"

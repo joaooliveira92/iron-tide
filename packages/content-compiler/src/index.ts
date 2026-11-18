@@ -142,6 +142,7 @@ export { peaceBehaviourFromRulesets } from "./peaceBehaviourRules.js";
 export { eventResolutionFromRulesets } from "./eventResolutionRules.js";
 export { gunneryFromRulesets } from "./gunneryRules.js";
 export { missilesFromRulesets } from "./missilesRules.js";
+export { navigationFromRulesets } from "./navigationRules.js";
 export { fleetManagementFromRulesets } from "./fleetManagementRules.js";
 export { presenceFromRulesets, type PresenceValues } from "./presenceRules.js";
 export { discoverShipBuildingFiles, type ShipBuildingFileGroups } from "./shipBuildingDiscovery.js";
