@@ -216,6 +216,35 @@ export {
 } from "./fleet-management-rules.js";
 export type { BattleOfferRules, BattleOfferRulesDecoded } from "./battle-offer-rules.js";
 export { BattleOfferRulesSchema, decodeBattleOfferRules } from "./battle-offer-rules.js";
+export type {
+  CompiledTerrain,
+  CompiledTerrainRecord,
+  TerrainArea,
+  TerrainBox,
+  TerrainPolygonSource,
+  TerrainRules,
+  TerrainRulesDecoded,
+  TerrainVertex,
+} from "./terrain.js";
+export {
+  CompiledTerrainExclusionSchema,
+  CompiledTerrainPolygonSchema,
+  CompiledTerrainRecordSchema,
+  CompiledTerrainSchema,
+  TERRAIN_ARTIFACT_KIND,
+  TERRAIN_COMPATIBILITY_VERSION,
+  TERRAIN_COORDINATE_LIMIT_M,
+  TERRAIN_HASH_DOMAIN,
+  TERRAIN_LAYERS,
+  TERRAIN_VERSION,
+  TerrainAreaSchema,
+  TerrainBaseSchema,
+  TerrainBoxSchema,
+  TerrainPolygonSchema,
+  TerrainRulesSchema,
+  TerrainVertexSchema,
+  decodeTerrainRules,
+} from "./terrain.js";
 export type { GunneryRules, GunneryRulesDecoded } from "./gunnery-rules.js";
 export { GunneryRulesSchema, decodeGunneryRules } from "./gunnery-rules.js";
 export type { MissileClassRules, MissilesRules, MissilesRulesDecoded } from "./missiles-rules.js";

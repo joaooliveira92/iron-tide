@@ -414,6 +414,18 @@ export default list(RulesetManifestSchema, [
         note: "ADR-0266. The manual states that each quantity exists and supplies no number, model or rule; every value is a Bluewave balance target adopted by the owner's delegation (Research discussion #450, decisions 0016-0023, 0026).",
       },
     },
+    terrain: {
+      sectionVersion: 1,
+      exclusionRadiusM: 600,
+      maxVerticesPerPolygon: 16,
+      provenance: {
+        sourceStatus: "BALANCE_TARGET",
+        confidence: "LOW",
+        kind: "balance_adjustment",
+        sources: [],
+        note: "PROVISIONAL: the base exclusion radius and the vertex cap are Bluewave tuning placeholders for the first coastal set (#935). No source gives these values; set them once battle placement and movement consume terrain.",
+      },
+    },
     eventResolution: {
       sectionVersion: 1,
       defaultAnswerAfterMonths: 3,

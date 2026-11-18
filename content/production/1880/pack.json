@@ -21,6 +21,7 @@
       "events/eastern.ts",
       "events/crises.ts"
     ],
+    "terrain": ["terrain.ts"],
     "diplomacy": ["diplomacy.ts"],
     "research": ["research.ts"],
     "designs": ["designs.ts"],

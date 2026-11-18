@@ -13,6 +13,11 @@ import { Predicate, Result, Schema } from "effect";
 import { Compiler } from "./compiler.js";
 import type { CompilerInput } from "./index.js";
 import { BUNDLE_GENERATED_BY } from "./stages/compile.js";
+import {
+  TERRAIN_ARTIFACT_FILENAME,
+  buildTerrainArtifact,
+  type TerrainArtifact,
+} from "./terrainArtifact.js";
 
 export const CONTENT_BUNDLE_ARTIFACT_KIND = "content-bundle";
 export const CONTENT_BUNDLE_COMPATIBILITY_VERSION = "0.1.0";
@@ -65,6 +70,7 @@ export interface ContentBundleArtifact {
   readonly contentVersion: string;
   readonly artifactJson: string;
   readonly manifestJson: string;
+  readonly terrain?: TerrainArtifact;
 }
 
 export type ContentBundleVerification =
@@ -211,6 +217,7 @@ export function buildContentBundleArtifact(
     contentVersion: output.contentVersion,
     artifactJson: canonicalSerialize(bundle),
     manifestJson: canonicalSerialize(manifest),
+    ...(output.terrain !== undefined ? { terrain: buildTerrainArtifact(output.terrain) } : {}),
   };
 }
 
@@ -226,6 +233,13 @@ export function writeContentBundleArtifact(
   const manifestPath = resolve(outDir, CONTENT_MANIFEST_FILENAME);
   const tempArtifact = artifactPath + ".tmp";
   const tempManifest = manifestPath + ".tmp";
+  if (artifact.terrain !== undefined) {
+    writeFileSync(
+      resolve(outDir, TERRAIN_ARTIFACT_FILENAME),
+      artifact.terrain.artifactJson,
+      "utf8",
+    );
+  }
   try {
     writeFileSync(tempArtifact, artifact.artifactJson, "utf8");
     writeFileSync(tempManifest, artifact.manifestJson, "utf8");

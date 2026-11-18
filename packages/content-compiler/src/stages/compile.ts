@@ -21,6 +21,7 @@ import type {
   ContentBundle,
   ShipBuildingCatalogue,
 } from "../index.js";
+import { compileTerrain } from "./compileTerrain.js";
 import type { NormalizeOutput } from "./normalize.js";
 
 export const BUNDLE_GENERATED_BY =
@@ -55,7 +56,18 @@ function artifactManifest(manifest: unknown): unknown {
     return manifest;
   }
   const { shipBuilding: _shipBuilding, ...identity } = manifest as Record<string, unknown>;
-  return identity;
+  const files = identity["files"];
+  if (typeof files !== "object" || files === null || Array.isArray(files)) return identity;
+  const { terrain: _terrain, ...remaining } = files as Record<string, unknown>;
+  return { ...identity, files: remaining };
+}
+
+function bundleRulesets(rulesets: readonly unknown[]): readonly unknown[] {
+  return rulesets.map((ruleset) => {
+    if (typeof ruleset !== "object" || ruleset === null) return ruleset;
+    const { terrain: _terrain, ...remaining } = ruleset as Record<string, unknown>;
+    return remaining;
+  });
 }
 
 export class CompileStage implements CompilerStage<NormalizeOutput, CompilerOutput> {
@@ -68,7 +80,7 @@ export class CompileStage implements CompilerStage<NormalizeOutput, CompilerOutp
   ): CompilerOutput {
     const artifact = {
       manifest: artifactManifest(input.manifest),
-      rulesets: input.rulesets,
+      rulesets: bundleRulesets(input.rulesets),
       nations: input.countries,
       areas: input.areas,
       routes: input.routes,
@@ -112,6 +124,7 @@ export class CompileStage implements CompilerStage<NormalizeOutput, CompilerOutp
       envelopeHash,
       bundle,
       contentVersion: typeof manifestVersion === "string" ? manifestVersion : "0.0.0",
+      ...(input.terrain !== undefined ? { terrain: compileTerrain(input.terrain) } : {}),
     };
   }
 }

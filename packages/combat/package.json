@@ -96,6 +96,10 @@
       "types": "./src/tactical/index.ts",
       "default": "./dist/tactical/index.js"
     },
+    "./terrain": {
+      "types": "./src/terrain/index.ts",
+      "default": "./dist/terrain/index.js"
+    },
     "./torpedoes": {
       "types": "./src/torpedoes/index.ts",
       "default": "./dist/torpedoes/index.js"
