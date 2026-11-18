@@ -1,10 +1,38 @@
 import { execFileSync } from "node:child_process";
 
-import type { ChainInput, ChainStep, CorpusState } from "./replay-corpus/index.js";
+import { Result } from "effect";
+
+import {
+  APPROVALS_DIR,
+  APPROVAL_FILE_SUFFIX,
+  LEGACY_APPROVALS_FILE,
+  mergeApprovalFiles,
+  type ChainInput,
+  type ChainStep,
+  type CorpusState,
+} from "./replay-corpus/index.js";
 
 const REPLAYS = "golden/replays";
-const APPROVALS = "golden/replay-approvals.json";
 const SUFFIX = ".replay.json";
+
+export function readApprovalsAt(
+  git: (...args: string[]) => string,
+  commit: string,
+): string | undefined {
+  const files = new Map<string, string>();
+  try {
+    files.set(LEGACY_APPROVALS_FILE, git("show", `${commit}:${LEGACY_APPROVALS_FILE}`));
+  } catch {
+    files.delete(LEGACY_APPROVALS_FILE);
+  }
+  const listing = git("ls-tree", "--name-only", commit, `${APPROVALS_DIR}/`).split("\n");
+  for (const path of listing.filter((p) => p.endsWith(APPROVAL_FILE_SUFFIX))) {
+    files.set(path, git("show", `${commit}:${path}`));
+  }
+  const merged = mergeApprovalFiles(files);
+  if (Result.isFailure(merged)) throw merged.failure;
+  return merged.success;
+}
 
 export interface ChainRefs {
   readonly main: string;
@@ -28,7 +56,9 @@ export function readChainInput(repo: string, refs: ChainRefs): ChainInput {
   };
   const cache = new Map<string, CorpusState>();
   const stateAt = (commit: string): CorpusState => {
-    const key = `${objectId(commit, REPLAYS) ?? "none"}/${objectId(commit, APPROVALS) ?? "none"}`;
+    const key = [REPLAYS, APPROVALS_DIR, LEGACY_APPROVALS_FILE]
+      .map((path) => objectId(commit, path) ?? "none")
+      .join("/");
     const known = cache.get(key);
     if (known !== undefined) return known;
     const replays = new Map<string, string>();
@@ -38,8 +68,7 @@ export function readChainInput(repo: string, refs: ChainRefs): ChainInput {
         replays.set(path.slice(REPLAYS.length + 1), git("show", `${commit}:${path}`));
       }
     }
-    const approvals =
-      objectId(commit, APPROVALS) === undefined ? undefined : git("show", `${commit}:${APPROVALS}`);
+    const approvals = readApprovalsAt(git, commit);
     const state: CorpusState = approvals === undefined ? { replays } : { replays, approvals };
     cache.set(key, state);
     return state;

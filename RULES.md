@@ -13,6 +13,9 @@ contract wins; fix this file in the same change.
   narrow and Conventional.
 - Use one production owner for overlapping files. Review agents are read-only:
   they must not edit code, tests, commits, branches, or PR state.
+- After a guard-blocked Bash mutation the next one must use Edit or Write, never
+  a retry through another mechanism; two blocks lock mutations until `pnpm agent:map`
+  or an `rg` search.
 
 ## Authority and docs
 
@@ -103,6 +106,10 @@ contract wins; fix this file in the same change.
   and block downstream stages whose prerequisites are invalid.
 - Keep validation, normalization, and repair distinct. Repair is explicit,
   narrow, logged, and limited to safely recomputable data.
+- The content lock records the body hash only on a dev to main promotion: run
+  `pnpm content:lock` first, and `pnpm content:verify:release` (main-bound
+  quality workflow) requires it. On dev, `pnpm content:verify` checks version,
+  algorithm and two identical builds, so content PRs never conflict on the hash.
 
 ## Scope and values
 

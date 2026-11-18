@@ -6,6 +6,7 @@ import {
   effectiveAppropriationRateBp,
   isPresenceExempt,
   measurePresence,
+  trainingMaintenanceAdderBp,
   monthId,
   type EconomyOutlookOptions,
   type EconomyStatus,
@@ -155,6 +156,16 @@ export interface PlayerProjectionCareer {
   readonly month: PlayerProjectionMonth;
 }
 
+export interface PlayerProjectionTrainingSubject {
+  readonly subject: string;
+  readonly fundedMonths: number;
+}
+
+export interface PlayerProjectionTraining {
+  readonly subjects: readonly PlayerProjectionTrainingSubject[];
+  readonly maintenanceAdderBp: number;
+}
+
 export interface PlayerProjection {
   readonly campaignIdentity: string;
   readonly snapshotHash: string;
@@ -167,6 +178,7 @@ export interface PlayerProjection {
   readonly prestige: PlayerProjectionPrestige;
   readonly unrest?: number;
   readonly fleetMorale: PlayerProjectionFleetMorale;
+  readonly training?: PlayerProjectionTraining;
   readonly career?: PlayerProjectionCareer;
   readonly fleet: readonly PlayerProjectionFleet[];
   readonly ports: readonly PlayerProjectionPort[];
@@ -227,6 +239,17 @@ function buildPrestige(
           },
         }),
     ...(changeExplanation === undefined ? {} : { changeExplanation }),
+  };
+}
+
+function buildTraining(nation: NationState): PlayerProjectionTraining {
+  const program = nation.specialTraining ?? [];
+  return {
+    subjects: program.map((entry) => ({
+      subject: entry.subject,
+      fundedMonths: entry.fundedMonths,
+    })),
+    maintenanceAdderBp: Number(trainingMaintenanceAdderBp(program)),
   };
 }
 
@@ -335,6 +358,7 @@ export function buildPlayerProjection(
     prestige: buildPrestige(snapshot.prestigeRules.sackingThreshold, nation),
     ...(nation.unrest === undefined ? {} : { unrest: nation.unrest }),
     fleetMorale: buildFleetMorale(nation),
+    training: buildTraining(nation),
     ...(snapshot.careerResult === undefined
       ? {}
       : {

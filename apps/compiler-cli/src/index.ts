@@ -6,7 +6,6 @@ export {
   runCompare,
   runContentCheck,
   runContentBuild,
-  runContentVerify,
   runContentGate,
   runCampaignCompile,
   runCampaignSave,
@@ -33,6 +32,7 @@ export type {
   OutputMode,
   ExitCategory,
 } from "./commands.js";
+export { runContentVerify } from "./contentVerify.js";
 export { reportBluewaveError, runCombatOperation } from "./combatDiagnostics.js";
 export type { CombatOperationResult } from "./combatDiagnostics.js";
 export { CliFileSystem, CliFileSystemError, cliFileSystemLayer } from "./runtime/cliFileSystem.js";

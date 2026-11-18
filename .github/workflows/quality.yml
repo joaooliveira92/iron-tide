@@ -99,6 +99,8 @@ jobs:
       # stale or tampered artifact fails CI exactly as it does in `pnpm check`.
       - name: Verify the committed content lock
         run: pnpm content:verify
+      - name: Verify the content lock hash for promotion to main
+        run: pnpm content:verify:release
       # A deterministic fixed-seed month-advance over the production pack. Gated
       # behind BLUEWAVE_PERF so it is a dedicated step, not timing flake in the
       # default suite; a 3x-baseline ceiling catches order-of-magnitude

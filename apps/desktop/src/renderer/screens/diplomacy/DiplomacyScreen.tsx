@@ -1,14 +1,11 @@
-import type { DiplomacyPeaceTermRef } from "@bluewave/campaign-engine";
 import { Handshake } from "lucide-react";
-import { useCallback, useId, useMemo, useState, type CSSProperties } from "react";
+import type { CSSProperties } from "react";
 import { ScreenStage } from "../../components/shared/ScreenStage.js";
 import { debugRevisionActions } from "../../components/shared/debugRevisionActions.js";
 import { cn } from "../../lib/utils.js";
-import { useScreenHeaderHost } from "../../shell/screen-header.js";
 import { Inspector } from "../shipbuilding/components/Inspector.js";
 import { InspectorResizeHandle } from "../shipbuilding/components/InspectorResizeHandle.js";
 import { INSPECTOR_COLLAPSED_PX } from "../shipbuilding/inspector-layout.js";
-import { useInspectorLayout } from "../shipbuilding/useInspectorLayout.js";
 import {
   BattleHistorySection,
   DiplomacyLoadErrorState,
@@ -24,26 +21,10 @@ import {
   RailFooter,
   WarFront,
 } from "./components/index.js";
-import {
-  DEFAULT_PLOT_LAYERS,
-  toggleLayer,
-  type PlotLayer,
-  type PlotView,
-} from "./components/plot-layers.js";
-import { battleRecords } from "./diplomacy-hover.js";
 import { foreignReadouts } from "./diplomacy-readouts.js";
-import { resolveSelectedNation } from "./diplomacy-selection.js";
-import {
-  OVERVIEW_PLACE,
-  activeTab,
-  nationPlace,
-  reconcilePlace,
-  tabsFor,
-  type DiplomacyPlace,
-} from "./diplomacy-sections.js";
-import { buildDiplomacyViewModel } from "./diplomacy-view-model.js";
-import { useBattleHistory, type BattleHistoryState } from "./hooks/useBattleHistory.js";
-import { useDiplomacyScreen } from "./hooks/useDiplomacyScreen.js";
+import { tabsFor } from "./diplomacy-sections.js";
+import type { BattleHistoryState } from "./hooks/useBattleHistory.js";
+import { useDiplomacyWorkspace, type DiplomacyWorkspace } from "./hooks/useDiplomacyWorkspace.js";
 
 function battlesAgainst(state: BattleHistoryState, nationName: string): BattleHistoryState {
   if (state.status !== "ready") return state;
@@ -58,126 +39,52 @@ function battlesAgainst(state: BattleHistoryState, nationName: string): BattleHi
   };
 }
 
+function InspectorBody({ workspace }: { readonly workspace: DiplomacyWorkspace }) {
+  const { selected, tab, battleHistory, state, busy, vm } = workspace;
+  if (selected !== null) {
+    if (tab.id === "battles") {
+      return <BattleHistorySection state={battlesAgainst(battleHistory, selected.partnerName)} />;
+    }
+    return (
+      <NationDossier
+        key={selected.partnerNationId}
+        row={selected}
+        draft={state.draftCommand}
+        busy={busy}
+        onAction={workspace.setRowAction}
+      />
+    );
+  }
+  if (tab.id === "dispatches") return <BattleHistorySection state={battleHistory} />;
+  if (tab.id === "gaps") return <NotModelled />;
+  return <OverviewSummary vm={vm} onSelect={workspace.selectNation} />;
+}
+
 export function DiplomacyScreen({ sessionId }: { readonly sessionId: string }) {
-  const {
-    state,
-    loadError,
-    setRowAction,
-    setPeaceAction,
-    setPeaceTerms,
-    setBlockadeArea,
-    clearDraft,
-    submit,
-    reload,
-    canSubmit,
-  } = useDiplomacyScreen(sessionId);
-  const battleHistory = useBattleHistory(sessionId, state.revision);
-  const [place, setPlace] = useState<DiplomacyPlace>(OVERVIEW_PLACE);
-  const [plotView, setPlotView] = useState<PlotView>("plot");
-  const [layers, setLayers] = useState<ReadonlySet<PlotLayer>>(DEFAULT_PLOT_LAYERS);
-  const {
-    layout: inspectorLayout,
-    setWidth: setInspectorWidth,
-    toggleCollapsed: toggleInspector,
-  } = useInspectorLayout(sessionId);
-  const inspectorId = useId();
-  const hosted = useScreenHeaderHost();
-  const projection = state.kind === "idle" ? null : state.projection;
-  const draft = state.kind === "idle" ? null : state.draftCommand;
-  const vm = useMemo(
-    () => (projection === null ? null : buildDiplomacyViewModel(projection, draft)),
-    [projection, draft],
-  );
-  const records = useMemo(
-    () =>
-      vm === null
-        ? null
-        : battleRecords(
-            battleHistory,
-            vm.relations.map((row) => row.partnerName),
-          ),
-    [vm, battleHistory],
-  );
-  const partnerNationIds = useMemo(
-    () => vm?.relations.map((row) => row.partnerNationId) ?? [],
-    [vm],
-  );
-  const selectNation = useCallback((nationId: string) => setPlace(nationPlace(nationId)), []);
-  const acceptPeace = useCallback(
-    (warId: string) => {
-      const war = projection?.wars.find((w) => w.warId === warId);
-      if (war !== undefined) {
-        selectNation(war.playerSide === "attacker" ? war.defenderId : war.attackerId);
-      }
-      setPeaceAction(warId);
-    },
-    [projection, selectNation, setPeaceAction],
-  );
+  const workspace = useDiplomacyWorkspace(sessionId);
 
-  const proposePeaceTerms = useCallback(
-    (warId: string, term: DiplomacyPeaceTermRef) => {
-      const war = projection?.wars.find((w) => w.warId === warId);
-      if (war !== undefined) {
-        selectNation(war.playerSide === "attacker" ? war.defenderId : war.attackerId);
-      }
-      setPeaceTerms(warId, term);
-    },
-    [projection, selectNation, setPeaceTerms],
-  );
-
-  if (loadError !== null) {
-    return <DiplomacyLoadErrorState message={loadError} onRetry={() => void reload()} />;
+  if (workspace.status === "error") {
+    return <DiplomacyLoadErrorState message={workspace.message} onRetry={workspace.retry} />;
   }
 
-  if (state.kind === "idle" || vm === null || records === null) {
+  if (workspace.status === "loading") {
     return <DiplomacyLoadingState />;
   }
 
-  const busy = state.kind === "submitting";
-  const queued = state.kind === "submitted";
-  const declaringWar = state.draftCommand?.kind === "DeclareWar" && !queued;
-  const draftPartnerId = state.draftCommand?.partnerNationId ?? null;
-  const currentPlace = reconcilePlace(place, partnerNationIds);
-  const selected =
-    currentPlace.kind === "nation"
-      ? resolveSelectedNation(vm.relations, currentPlace.nationId, null)
-      : null;
-  const tab = activeTab(currentPlace);
-
-  const breadcrumb = ["Your nation", selected?.partnerName ?? "Overview", tab.label];
-
-  const inspectorBody = (() => {
-    if (selected !== null) {
-      if (tab.id === "battles") {
-        return <BattleHistorySection state={battlesAgainst(battleHistory, selected.partnerName)} />;
-      }
-      return (
-        <NationDossier
-          key={selected.partnerNationId}
-          row={selected}
-          draft={state.draftCommand}
-          busy={busy}
-          onAction={setRowAction}
-        />
-      );
-    }
-    if (tab.id === "dispatches") return <BattleHistorySection state={battleHistory} />;
-    if (tab.id === "gaps") return <NotModelled />;
-    return <OverviewSummary vm={vm} onSelect={selectNation} />;
-  })();
+  const { state, vm, records, selected, tab, currentPlace, inspectorLayout, hosted } = workspace;
 
   const ordersBar = (
     <OrdersBar
-      busy={busy}
-      queued={queued}
+      busy={workspace.busy}
+      queued={workspace.queued}
       areas={state.projection.areas}
       draft={state.draftCommand}
       draftLabel={vm.draftLabel}
       draftFlagUrl={vm.draftFlagUrl}
-      canSubmit={canSubmit}
-      onAreaChange={setBlockadeArea}
-      onClear={clearDraft}
-      onApply={submit}
+      canSubmit={workspace.canSubmit}
+      onAreaChange={workspace.setBlockadeArea}
+      onClear={workspace.clearDraft}
+      onApply={workspace.submit}
       inHeader={hosted}
     />
   );
@@ -199,13 +106,15 @@ export function DiplomacyScreen({ sessionId }: { readonly sessionId: string }) {
       }
       className="space-y-3"
     >
-      {hosted && declaringWar && (
+      {hosted && workspace.declaringWar && (
         <p role="alert" className="text-xs font-medium text-destructive">
           Once submitted, a declaration of war cannot be cancelled from this screen. It takes effect
           when you advance the month.
         </p>
       )}
-      {state.notice !== null && <DiplomacyNotice submitted={queued} notice={state.notice} />}
+      {state.notice !== null && (
+        <DiplomacyNotice submitted={workspace.queued} notice={state.notice} />
+      )}
 
       <div
         data-testid="diplomacy-workspace"
@@ -213,25 +122,7 @@ export function DiplomacyScreen({ sessionId }: { readonly sessionId: string }) {
           "grid h-[clamp(30rem,calc(100svh_-_var(--chrome-top,0px)_-_var(--chrome-bottom,0px)_-_3rem),60rem)] min-h-0 overflow-hidden rounded-lg border bg-background",
           hosted ? "grid-rows-[minmax(0,1fr)_auto]" : "grid-rows-[auto_minmax(0,1fr)_auto]",
         )}
-        onKeyDownCapture={(event) => {
-          if (
-            (event.metaKey || event.ctrlKey) &&
-            !event.altKey &&
-            event.key.toLowerCase() === "b"
-          ) {
-            event.preventDefault();
-            toggleInspector();
-            return;
-          }
-          if (
-            event.key === "Escape" &&
-            currentPlace.kind === "nation" &&
-            event.target instanceof Element &&
-            !event.target.closest("[role='dialog'],[role='listbox']")
-          ) {
-            setPlace(OVERVIEW_PLACE);
-          }
-        }}
+        onKeyDownCapture={workspace.onWorkspaceKeyDownCapture}
       >
         {!hosted && ordersBar}
 
@@ -251,9 +142,9 @@ export function DiplomacyScreen({ sessionId }: { readonly sessionId: string }) {
             records={records}
             overviewActive={currentPlace.kind === "overview"}
             selectedId={selected?.partnerNationId ?? null}
-            draftPartnerId={draftPartnerId}
-            onOverview={() => setPlace(OVERVIEW_PLACE)}
-            onSelect={selectNation}
+            draftPartnerId={workspace.draftPartnerId}
+            onOverview={workspace.showOverview}
+            onSelect={workspace.selectNation}
             footer={
               <RailFooter
                 month={`${state.month.year}-${String(state.month.month).padStart(2, "0")}`}
@@ -266,46 +157,40 @@ export function DiplomacyScreen({ sessionId }: { readonly sessionId: string }) {
             vm={vm}
             records={records}
             selectedId={selected?.partnerNationId ?? null}
-            view={plotView}
-            onView={setPlotView}
-            layers={layers}
-            onToggleLayer={(layer) => setLayers((current) => toggleLayer(current, layer))}
-            onSelect={selectNation}
+            view={workspace.plotView}
+            onView={workspace.setPlotView}
+            layers={workspace.layers}
+            onToggleLayer={workspace.toggleChartLayer}
+            onSelect={workspace.selectNation}
             wars={
               <WarFront
                 rows={vm.wars}
-                busy={busy}
-                onPeaceAction={acceptPeace}
-                onPeaceTerms={proposePeaceTerms}
+                busy={workspace.busy}
+                onPeaceAction={workspace.acceptPeace}
+                onPeaceTerms={workspace.proposePeaceTerms}
               />
             }
           />
 
-          <div id={inspectorId} className="relative min-h-0">
+          <div id={workspace.inspectorId} className="relative min-h-0">
             {!inspectorLayout.collapsed && (
               <InspectorResizeHandle
                 widthPx={inspectorLayout.widthPx}
-                onChange={setInspectorWidth}
-                controls={inspectorId}
+                onChange={workspace.setInspectorWidth}
+                controls={workspace.inspectorId}
                 className="absolute inset-y-0 -left-2 z-10 w-4"
               />
             )}
             <Inspector
               title={selected?.partnerName ?? "Overview"}
-              breadcrumb={breadcrumb}
+              breadcrumb={["Your nation", selected?.partnerName ?? "Overview", tab.label]}
               tabs={tabsFor(currentPlace)}
               tab={tab.id}
-              onTab={(next) =>
-                setPlace(
-                  currentPlace.kind === "nation"
-                    ? nationPlace(currentPlace.nationId, next)
-                    : { kind: "overview", tab: next },
-                )
-              }
+              onTab={workspace.selectTab}
               collapsed={inspectorLayout.collapsed}
-              onToggleCollapsed={toggleInspector}
+              onToggleCollapsed={workspace.toggleInspector}
             >
-              {inspectorBody}
+              <InspectorBody workspace={workspace} />
             </Inspector>
           </div>
         </div>

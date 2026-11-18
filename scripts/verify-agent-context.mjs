@@ -12,6 +12,7 @@ const NUMERIC_POLICY_KEYS = [
   "catMaxLines",
   "readRangeMaxLines",
   "overrideMinReasonChars",
+  "mutationLockAt",
   "contextAdvisorTokens",
   "contextWarnTokens",
   "contextBlockTokens",
@@ -27,10 +28,12 @@ const NUMERIC_POLICY_KEYS = [
 ];
 const HOOK_SOURCES = [
   "scripts/hooks/pre-tool-use-bash.mjs",
+  "scripts/hooks/pre-tool-use-edit.mjs",
   "scripts/hooks/user-prompt-context.mjs",
   "scripts/hooks/session-telemetry.mjs",
   "scripts/hooks/session-start-resume.mjs",
   "scripts/lib/agent-guard.mjs",
+  "scripts/lib/mutation-streak.mjs",
   "scripts/lib/hook-telemetry.mjs",
   "scripts/lib/session-resume.mjs",
   "scripts/lib/transcript-context.mjs",
@@ -145,6 +148,7 @@ function checkSettings(root, failures) {
   }
   const expectations = [
     ["PreToolUse", "scripts/hooks/pre-tool-use-bash.mjs", "Bash"],
+    ["PreToolUse", "scripts/hooks/pre-tool-use-edit.mjs", "Edit|Write|Grep"],
     ["UserPromptSubmit", "scripts/hooks/user-prompt-context.mjs", undefined],
     ["PostToolUse", "scripts/hooks/session-telemetry.mjs", undefined],
     ["PreCompact", "scripts/hooks/session-telemetry.mjs", undefined],
