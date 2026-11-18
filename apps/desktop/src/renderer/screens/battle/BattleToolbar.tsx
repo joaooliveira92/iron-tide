@@ -1,11 +1,17 @@
-import { useBattleActions, useBattleState } from "./session/battle-session-contexts.js";
+import {
+  useBattleActions,
+  useBattleCameraState,
+  useBattleState,
+} from "./session/battle-session-contexts.js";
 import { TacticalToolbar } from "./tactical/TacticalToolbar.js";
 
 export function BattleToolbar() {
   const state = useBattleState();
   const actions = useBattleActions();
+  const { following } = useBattleCameraState();
   return (
     <TacticalToolbar
+      following={following}
       running={state.running}
       scale={state.scale}
       busy={state.busy}
@@ -20,6 +26,7 @@ export function BattleToolbar() {
       onZoomOut={actions.zoomOut}
       onFit={actions.fit}
       onFocus={actions.focus}
+      onToggleFollow={actions.toggleFollow}
       onOverlay={actions.setOverlay}
       onNames={actions.setNames}
     />

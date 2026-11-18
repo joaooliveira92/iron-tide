@@ -1,5 +1,6 @@
 import { DOCK_EXPANSION_MESSAGES } from "./dock-expansion-messages.js";
 import { STATUS_STRIP_MESSAGES } from "./strip-messages.js";
+import { TACTICAL_TOOLBAR_MESSAGES } from "./tactical-toolbar-messages.js";
 
 export const EN_US_MESSAGES = {
   "settings.title": "Options",
@@ -392,19 +393,7 @@ export const EN_US_MESSAGES = {
   "tactical.log.damage_impact": "{actor} hit {target}.",
   "tactical.log.smoke_fire": "Fire burning on {actor}.",
   "tactical.log.battle_end": "Battle ended: {reason}.",
-  "tactical.toolbar.label": "Tactical controls",
-  "tactical.toolbar.pause": "Pause",
-  "tactical.toolbar.resume": "Resume",
-  "tactical.toolbar.step": "Step one minute",
-  "tactical.toolbar.fight_to_end": "Fight to end",
-  "tactical.toolbar.speed_group": "Simulation speed",
-  "tactical.toolbar.speed_option": "{scale}×",
-  "tactical.toolbar.zoom_in": "Zoom in",
-  "tactical.toolbar.zoom_out": "Zoom out",
-  "tactical.toolbar.fit": "Fit battle",
-  "tactical.toolbar.focus": "Focus selection",
-  "tactical.toolbar.focus_disabled": "Select a ship with a known position to focus on it.",
-  "tactical.toolbar.overlays": "Map overlays",
+  ...TACTICAL_TOOLBAR_MESSAGES,
   "tactical.names.label": "Ship names",
   "tactical.names.all": "All",
   "tactical.names.selected": "Selected",

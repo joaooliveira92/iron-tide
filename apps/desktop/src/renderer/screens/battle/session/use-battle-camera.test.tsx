@@ -2,7 +2,9 @@ import { act, cleanup, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 import {
   BASE_VIEW,
+  NM_UM,
   mountSession,
+  ship,
   useBattleSessionSnapshot,
   type BattleSessionSnapshot,
 } from "./battle-session-harness.js";
@@ -22,6 +24,53 @@ const current = (): BattleSessionSnapshot => {
 };
 
 const MEASURED = { width: 900, height: 500 };
+
+describe("battle camera follow", () => {
+  afterEach(() => {
+    cleanup();
+    session = null;
+  });
+
+  const MOVED_VIEW = {
+    ...BASE_VIEW,
+    minute: 1,
+    ships: BASE_VIEW.ships.map((candidate) =>
+      candidate.shipId === "a2" ? ship({ ...candidate, position: [3 * NM_UM, NM_UM] }) : candidate,
+    ),
+  };
+
+  it("keeps the selected division centred through a tick and stops on a pan", async () => {
+    mountSession(<Probe />, MOVED_VIEW);
+    await waitFor(() => expect(current().state.view).not.toBeNull());
+    act(() => current().actions.selectDivision("d1"));
+    act(() => current().actions.toggleFollow());
+    await waitFor(() => expect(current().state.following).toBe(true));
+    expect(current().state.camera.centreX).toBe(-NM_UM / 4);
+
+    act(() => current().actions.step());
+    await waitFor(() => expect(current().state.view?.minute).toBe(1));
+    expect(current().state.camera.centreX).toBe(3 * NM_UM);
+    expect(current().state.camera.centreY).toBe(NM_UM);
+
+    const panned = { ...current().state.camera, centreX: 0 };
+    act(() => current().actions.changeCamera(panned));
+    expect(current().state.following).toBe(false);
+    expect(current().state.camera).toEqual(panned);
+  });
+
+  it("keeps following through a zoom and turns off on request", async () => {
+    mountSession(<Probe />, MOVED_VIEW);
+    await waitFor(() => expect(current().state.view).not.toBeNull());
+    act(() => current().actions.selectDivision("d1"));
+    act(() => current().actions.toggleFollow());
+    await waitFor(() => expect(current().state.following).toBe(true));
+    act(() => current().actions.zoomIn());
+    expect(current().state.following).toBe(true);
+    expect(current().state.camera.centreX).toBe(-NM_UM / 4);
+    act(() => current().actions.toggleFollow());
+    expect(current().state.following).toBe(false);
+  });
+});
 
 describe("battle camera auto-fit", () => {
   afterEach(() => {

@@ -10,6 +10,7 @@ export interface TacticalToolbarProps {
   readonly busy: boolean;
   readonly ended: boolean;
   readonly canFocus: boolean;
+  readonly following: boolean;
   readonly overlays: MapOverlays;
   readonly onToggleRunning: () => void;
   readonly onScale: (scale: TacticalTimeScale) => void;
@@ -19,12 +20,20 @@ export interface TacticalToolbarProps {
   readonly onZoomOut: () => void;
   readonly onFit: () => void;
   readonly onFocus: () => void;
+  readonly onToggleFollow: () => void;
   readonly onOverlay: (overlay: (typeof OVERLAY_KEYS)[number], on: boolean) => void;
   readonly onNames: (filter: NameFilter) => void;
 }
 
 const OVERLAY_KEYS = ["tracks", "rings", "fire"] as const;
 const NAME_FILTERS = ["all", "selected", "none"] as const;
+
+function followTitle(following: boolean, canFocus: boolean): string {
+  if (following) return translate("tactical.toolbar.follow_hint_on");
+  return translate(
+    canFocus ? "tactical.toolbar.follow_hint_off" : "tactical.toolbar.follow_disabled",
+  );
+}
 
 export const TacticalToolbar = memo(function TacticalToolbar(props: TacticalToolbarProps) {
   const { running, scale, busy, ended } = props;
@@ -124,6 +133,19 @@ export const TacticalToolbar = memo(function TacticalToolbar(props: TacticalTool
         onClick={props.onFocus}
       >
         {translate("tactical.toolbar.focus")}
+      </Button>
+      <Button
+        type="button"
+        size="sm"
+        variant={props.following ? "default" : "outline"}
+        data-testid="tactical-follow"
+        aria-pressed={props.following}
+        aria-keyshortcuts="F"
+        disabled={!props.canFocus && !props.following}
+        title={followTitle(props.following, props.canFocus)}
+        onClick={props.onToggleFollow}
+      >
+        {translate(props.following ? "tactical.toolbar.follow_on" : "tactical.toolbar.follow_off")}
       </Button>
       <fieldset
         className="flex items-center gap-2"
