@@ -1,22 +1,8 @@
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-  type CSSProperties,
-  type ReactNode,
-} from "react";
+import type { CSSProperties, ReactNode } from "react";
 import { DEBUG_MODE } from "../../shell/debug-flag.js";
 import { Ship } from "lucide-react";
 import { PageHeader } from "../../components/shared/PageHeader.js";
 import { Badge } from "../../components/ui/badge.js";
-import {
-  buildAreaOverview,
-  divisionIdForShip,
-  divisionPickerRows,
-  movementCommandRows,
-  orderStatusView,
-} from "./fleet-screen-state.js";
 import { FleetReportSections } from "./components/FleetReportSections.js";
 import { MovementCommandsTable } from "./components/MovementCommandsTable.js";
 import { OrderSection } from "./components/OrderSection.js";
@@ -25,9 +11,7 @@ import { FleetStationSection } from "./station/FleetStationSection.js";
 import { FleetExerciseSection } from "./exercise/FleetExerciseSection.js";
 import { FleetTrainingSection } from "./training/FleetTrainingSection.js";
 import { AreaOverviewTable } from "./components/AreaOverviewTable.js";
-import { orderHotkeyIntent, stepDivisionSelection } from "./fleet-hotkeys.js";
-import { useFleetHotkeys } from "./hooks/useFleetHotkeys.js";
-import { useFleetScreen } from "./hooks/useFleetScreen.js";
+import { useFleetWorkspace, type FleetWorkspace } from "./hooks/useFleetWorkspace.js";
 import {
   FleetInspectionContext,
   useFleetInspectionCache,
@@ -41,8 +25,6 @@ import { DivisionPicker } from "./components/DivisionPicker.js";
 import { FleetMap } from "./components/FleetMap.js";
 import { FleetRoster } from "./components/FleetRoster.js";
 import { fleetDepartmentMeta, fleetIndexTabs, type FleetDepartment } from "./fleet-departments.js";
-import { useMinWidth } from "../../lib/use-min-width.js";
-import { COMMAND_OVERLAY_MIN_WIDTH } from "../overview/hooks/useOverviewModel.js";
 import { LoadErrorCard } from "./components/LoadErrorCard.js";
 import { LoadingState } from "./components/LoadingState.js";
 
@@ -80,137 +62,37 @@ function FleetScreenContent({
   readonly focusShipId: string | null;
   readonly onFocusHandled?: () => void;
 }) {
-  const {
-    state,
-    loadError,
-    selectedDivisionId,
-    selectedDivision,
-    pendingRoute,
-    destinationAreaId,
-    reachableAreas,
-    request,
-    loadScreen,
-    setSelectedDivisionId,
-    setDestinationAreaId,
-    submit,
-    replace,
-    cancel,
-  } = useFleetScreen(sessionId, load);
-  const wide = useMinWidth(COMMAND_OVERLAY_MIN_WIDTH);
-  const [department, setDepartment] = useState<FleetDepartment | null>(null);
-  const [preferredFlagshipId, setPreferredFlagshipId] = useState<string | null>(null);
+  const workspace = useFleetWorkspace(sessionId, load, focusShipId, onFocusHandled);
 
-  const loadedForFocus = state.playerNationId !== null;
-  useEffect(() => {
-    if (focusShipId === null || !loadedForFocus) return;
-    const divisionId = divisionIdForShip(focusShipId, state.divisions);
-    if (divisionId !== null) setSelectedDivisionId(divisionId);
-    setPreferredFlagshipId(focusShipId);
-    setDepartment("organization");
-    onFocusHandled?.();
-  }, [focusShipId, loadedForFocus, state.divisions, setSelectedDivisionId, onFocusHandled]);
-
-  const areaNameMap = useMemo(() => new Map(state.areas.map((a) => [a.id, a.name])), [state.areas]);
-  const divisionNameMap = useMemo(
-    () => new Map(state.divisions.map((d) => [d.divisionId, d.fleetName])),
-    [state.divisions],
-  );
-
-  const areaOverview = useMemo(
-    () => buildAreaOverview(state.areas, state.areaEdges, state.ports, state.divisions),
-    [state.areas, state.areaEdges, state.ports, state.divisions],
-  );
-
-  const areaName = useCallback(
-    (areaId: string) => areaNameMap.get(areaId) ?? areaId,
-    [areaNameMap],
-  );
-  const presenceView = useMemo(
-    () => ({ warnings: state.presenceWarnings, areaName }),
-    [state.presenceWarnings, areaName],
-  );
-  const divisionName = useCallback(
-    (divisionId: string) => divisionNameMap.get(divisionId) ?? divisionId,
-    [divisionNameMap],
-  );
-
-  const divisionRows = useMemo(
-    () => divisionPickerRows(state.divisions, areaName),
-    [state.divisions, areaName],
-  );
-  const movementRows = useMemo(
-    () => movementCommandRows(state.movementCommands, areaName, divisionName),
-    [state.movementCommands, areaName, divisionName],
-  );
-  const orderStatus = useMemo(
-    () => orderStatusView(selectedDivision, pendingRoute, areaName),
-    [selectedDivision, pendingRoute, areaName],
-  );
-  const order = useMemo(() => ({ status: orderStatus, pendingRoute }), [orderStatus, pendingRoute]);
-  const orderActions = useMemo(
-    () => ({
-      busy: state.pendingRequest !== null || state.requiresRefresh,
-      hasPendingRequest: request.outcomeUnknown,
-      onSubmit: submit,
-      onReplace: replace,
-      onCancel: cancel,
-      onRefresh: () => void loadScreen(),
-      onRetry: request.retry,
-    }),
-    [
-      state.pendingRequest,
-      state.requiresRefresh,
-      request.outcomeUnknown,
-      request.retry,
-      submit,
-      replace,
-      cancel,
-      loadScreen,
-    ],
-  );
-
-  const divisionIds = useMemo(() => divisionRows.map((row) => row.divisionId), [divisionRows]);
-  const runOrderHotkey = useCallback(
-    (action: "submit-order" | "cancel-order") => {
-      const intent = orderHotkeyIntent(action, {
-        busy: orderActions.busy,
-        divisionSelected: selectedDivision !== null,
-        destinationChosen: destinationAreaId !== null,
-        pendingCommandId: pendingRoute?.commandId ?? null,
-      });
-      if (intent === null) return;
-      if (intent.kind === "submit") submit();
-      else if (intent.kind === "replace") replace(intent.commandId);
-      else cancel(intent.commandId);
-    },
-    [orderActions.busy, selectedDivision, destinationAreaId, pendingRoute, submit, replace, cancel],
-  );
-  useFleetHotkeys({
-    "previous-division": () =>
-      setSelectedDivisionId((current) => stepDivisionSelection(divisionIds, current, -1)),
-    "next-division": () =>
-      setSelectedDivisionId((current) => stepDivisionSelection(divisionIds, current, 1)),
-    "focus-destination": () =>
-      document.querySelector<HTMLElement>("[data-fleet-destination]")?.focus(),
-    "submit-order": () => runOrderHotkey("submit-order"),
-    "cancel-order": () => runOrderHotkey("cancel-order"),
-  });
-
-  if (loadError !== null) {
+  if (workspace.status === "error") {
     return (
       <div data-guided-target="fleet">
-        <LoadErrorCard message={loadError} onReload={() => void loadScreen()} />
+        <LoadErrorCard message={workspace.message} onReload={workspace.reload} />
       </div>
     );
   }
 
-  if (state.playerNationId === null) {
+  if (workspace.status === "loading") {
     return (
       <div data-guided-target="fleet">
         <LoadingState />
       </div>
     );
   }
+
+  return <FleetWorkspaceView sessionId={sessionId} workspace={workspace} />;
+}
+
+function FleetWorkspaceView({
+  sessionId,
+  workspace,
+}: {
+  readonly sessionId: string;
+  readonly workspace: FleetWorkspace;
+}) {
+  const { screen, model, wide, department, preferredFlagshipId, playerNationId } = workspace;
+  const { state, selectedDivisionId, selectedDivision } = screen;
+  const { divisionRows, movementRows, areaOverview } = model;
 
   const stationsShort =
     state.presence === null || !state.presence.configured
@@ -222,20 +104,20 @@ function FleetScreenContent({
       <DivisionPicker
         rows={divisionRows}
         selectedDivisionId={selectedDivisionId}
-        onSelectDivision={setSelectedDivisionId}
+        onSelectDivision={screen.setSelectedDivisionId}
       />
     </FleetRoster>
   );
 
   const dispatch = (
     <OrderSection
-      destinations={reachableAreas}
-      destinationAreaId={destinationAreaId}
-      onDestinationChange={setDestinationAreaId}
-      order={order}
-      actions={orderActions}
+      destinations={screen.reachableAreas}
+      destinationAreaId={screen.destinationAreaId}
+      onDestinationChange={screen.setDestinationAreaId}
+      order={model.order}
+      actions={model.orderActions}
       notice={state.notice}
-      presence={presenceView}
+      presence={model.presenceView}
     />
   );
 
@@ -250,7 +132,7 @@ function FleetScreenContent({
         stationsShort,
       })}
       openId={department}
-      onOpen={(id) => setDepartment(department === id ? null : id)}
+      onOpen={workspace.toggleDepartment}
       attached={wide}
     />
   );
@@ -280,7 +162,7 @@ function FleetScreenContent({
         width={meta.width}
         testId="fleet-workbench"
         hotkeyScope
-        onClose={() => setDepartment(null)}
+        onClose={workspace.closeDepartment}
       >
         <div className="space-y-4 [&>section]:border-t-0 [&>section]:pt-0">
           {panels[department]}
@@ -305,7 +187,7 @@ function FleetScreenContent({
         <h2 className="sr-only">Fleet</h2>
         <FleetMap
           sessionId={sessionId}
-          playerNationId={state.playerNationId}
+          playerNationId={playerNationId}
           focusAreaId={focusAreaId}
           variant="command"
           leftPanels={roster}
@@ -336,7 +218,7 @@ function FleetScreenContent({
       <div className="h-[60vh] min-h-[22rem]">
         <FleetMap
           sessionId={sessionId}
-          playerNationId={state.playerNationId}
+          playerNationId={playerNationId}
           focusAreaId={focusAreaId}
           variant="panel"
         />
