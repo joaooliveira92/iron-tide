@@ -6,7 +6,7 @@ import { basename, dirname, resolve } from "node:path";
 import { evaluateBashCommand, parseOverride } from "../lib/agent-guard.mjs";
 import { isReassessmentCommand, lockedMessage, openStreak } from "../lib/mutation-streak.mjs";
 import { isPollCommand, trailingPollLength } from "../lib/poll-chain.mjs";
-import { rangeReadTargets, trailingChainLength } from "../lib/read-chain.mjs";
+import { rangeReadCount, rangeReadTargets, trailingChainLength } from "../lib/read-chain.mjs";
 import { readTail } from "../lib/transcript-context.mjs";
 
 const POLICY_PATH = resolve(import.meta.dirname, "../data/agent-context-policy.json");
@@ -121,28 +121,30 @@ function chainedTarget(policy, payload, command, cwd) {
     const targets = rangeReadTargets(command, cwd);
     if (targets.length === 0 || typeof payload.transcript_path !== "string") return null;
     const lines = readTail(payload.transcript_path, policy.transcriptTailBytes);
-    return (
-      targets.find(
-        (path) =>
-          trailingChainLength({
-            lines,
-            path,
-            cwd,
-            currentToolUseId: payload.tool_use_id,
-          }) >=
-          policy.readChainDenyAt - 1,
-      ) ?? null
-    );
+    const args = { lines, cwd, currentToolUseId: payload.tool_use_id };
+    for (const path of targets) {
+      if (trailingChainLength({ ...args, path }) >= policy.readChainDenyAt - 1) {
+        return { path, kind: "chain" };
+      }
+      if (rangeReadCount({ ...args, path }) >= policy.fileReadBudget - 1) {
+        return { path, kind: "budget" };
+      }
+    }
+    return null;
   } catch {
     return null;
   }
 }
 
-function readDenial(policy, path) {
+function readDenial(policy, { path, kind }) {
+  const why =
+    kind === "chain"
+      ? `in ranges ${policy.readChainDenyAt} times in a row`
+      : `in ranges ${policy.fileReadBudget} times in this transcript tail`;
   return (
-    `Read ${path} in ranges ${policy.readChainDenyAt} times in a row. ` +
-    `Locate with \`rg -n -C3 <pattern> ${path} | head -${policy.readRangeMaxLines}\` or \`pnpm agent:map <symbol>\`, ` +
-    `or read one larger block with the Read tool.`
+    `Read ${path} ${why}. ` +
+    `Use the Read tool with offset and limit for one block of up to ${policy.readRangeMaxLines} lines, ` +
+    `or locate with \`pnpm agent:map <symbol>\` or \`rg -n -C3 <pattern> ${path}\`.`
   );
 }
 
