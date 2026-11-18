@@ -287,7 +287,7 @@ export default collection("navalProfiles", NationNavalProfileSchema, [
         designation: "XV-inch Dahlgren smoothbore",
         overrides: {
           displayName: "XV-inch Dahlgren smoothbore in monitor turret",
-          "attributes.shellMassG": "149700",
+          "attributes.shellMassG": "159700",
         },
         mounts: ["TURRET"],
         provenance: {

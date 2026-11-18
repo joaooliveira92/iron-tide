@@ -10145,7 +10145,7 @@ export default collection("parts", PartSchema, [
     provenance: {
       confidence: "MEDIUM",
       kind: "historical_fact",
-      note: "Smoothbore: 381 mm bore and 43,000 lb gun mass, plus the 330 lb shell and 50/35/60 lb black-powder charges, are read from the 1866 US Ordnance Instructions; muzzle velocity and rate of fire are ESTIMATE. Not an armour-piercing rifle.",
+      note: "Smoothbore: 381 mm bore and 43,000 lb gun mass, plus the 352 lb filled and sabotted shell (330 lb empty casting) and 50/35/60 lb black-powder charges, are read from the 1866 US Ordnance Instructions; muzzle velocity and rate of fire are ESTIMATE. Not an armour-piercing rifle.",
       sourceStatus: "DERIVED",
       sources: [
         {
@@ -10181,9 +10181,9 @@ export default collection("parts", PartSchema, [
       gunFamily: "gun_sb_15in_dahlgren",
       gunMassKg: 19504,
       mechanicalRateOfFireRoundsPerMinuteX100: 12,
-      propellantChargeBp: 1515,
+      propellantChargeBp: 1420,
       roundVolumeMl: 260000,
-      shellMassG: 149700,
+      shellMassG: 159700,
       supportedMountTypes: ["TURRET"],
       weaponCategory: "MAIN_GUN",
     },
@@ -11744,9 +11744,9 @@ export default collection("parts", PartSchema, [
       gunFamily: "gun_sb_15in_dahlgren",
       gunMassKg: 19504,
       mechanicalRateOfFireRoundsPerMinuteX100: 12,
-      propellantChargeBp: 1515,
+      propellantChargeBp: 1420,
       roundVolumeMl: 260000,
-      shellMassG: 149700,
+      shellMassG: 159700,
       supportedMountTypes: ["TURRET"],
       weaponCategory: "MAIN_GUN",
     },

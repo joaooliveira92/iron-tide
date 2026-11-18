@@ -5,7 +5,7 @@
 // @bluewave/ship-design. Every component id is unique across this directory; the compiler
 // discovers nothing on its own: pack.json's `shipBuilding.shipComponents` lists every file.
 // 15in Dahlgren SMOOTHBORE in monitor turret (US Canonicus class). Bore and gun mass 43,000 lb from the 1866 US
-// Ordnance Instructions powder-proof table; shell 330 lb and charges 50/35/60 lb from the same table (VERIFIED).
+// Ordnance Instructions powder-proof table; charges 50/35/60 lb from the same table and the 352 lb filled and sabotted shell from its gauge table (VERIFIED).
 // Muzzle velocity and the very low rate of fire are ESTIMATE. This is a SMOOTH BORE: it must never be mapped onto a
 // rifled RML family (ADR-0117). Rate of fire is deliberately far below a rifle's.
 import {
@@ -43,10 +43,10 @@ export default defineShipComponentCatalogue([
     }),
     attributes: () => ({
       caliberUm: number(381000),
-      // 330 lb proof/service shell [OI66] VERIFIED
-      shellMassG: number(149700),
-      // 50 lb distant black-powder charge over a 330 lb shell [OI66] VERIFIED
-      chargeBp: number(1515),
+      // 352 lb filled and sabotted shell [OI66 gauge table para 89] VERIFIED
+      shellMassG: number(159700),
+      // 50 lb distant black-powder charge over a 352 lb round [OI66] VERIFIED
+      chargeBp: number(1420),
       roundVolumeMl: number(260000),
       rofBaseX100: number(12),
       beamArcDeg: number(120),

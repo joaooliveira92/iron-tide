@@ -14,7 +14,7 @@ const PARROTT_FAMILY = "gun_rml_64in_parrott";
 const SHARED_FAMILY = "gun_rml_64pdr_71cwt";
 
 const US_STARTER_HASHES: Readonly<Record<string, string>> = {
-  canonicus_1879: "2a3a6165c733b9065edcece1bedbd20730ef4c19740c8bda5183db571466e221",
+  canonicus_1879: "0238b374f26456d8433bc64b5c09c325e4a03f9ff58cc031636d8889b6559b42",
   starter_ca_usa_1880: "1fda42bce66a928770a694b323c28c7d8e17d492c59eae3ea18218e71fe3df9b",
   starter_cl_usa_1880: "e8f2e98910f566ad9ae349ec174b737eb5a26acaca51a153d266fda503580901",
   starter_dd_usa_1880: "8c035544b2740f162ad3bbf0f615d8fa0bdc47dc285003be48a6594e187ea016",

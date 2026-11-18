@@ -46,7 +46,7 @@ const SHELLS: Readonly<Record<string, ExpectedShell>> = {
   },
   us_shell_15in_dahlgren: {
     shellType: "HE",
-    shellMassG: 149700,
+    shellMassG: 159700,
     explosiveFillerG: 5900,
     penetrationBiasBp: 2500,
     ammunitionCostMicro: 1351791,
