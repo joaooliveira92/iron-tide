@@ -15,6 +15,10 @@ the class is `EXPECTED_GAMEPLAY_CHANGE`, `SERIALIZATION_ONLY` or `RULESET_VERSIO
 entry. CI only verifies; entries are append-only relative to the gate base. A `dev` to `main` PR runs
 `check-chain --main <ref> --head <ref>`: per first-parent hop.
 
+## File format
+
+Replay files are format version 3: one top-level key per line and one month per line, so git merges edits to different months. A v3 file records no content hash: a content edit that moves no checkpoint touches no replay, and one that does fails at the first moved month. Content integrity is `pnpm content:verify`. Versions 1 and 2 still decode, and a recorded `contentHash` is still checked.
+
 ## Verifying and extending
 
 `pnpm check:replay-corpus` (in `pnpm check`; three OSes in `determinism.yml`) verifies replays twice and via save/load.

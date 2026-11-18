@@ -38,7 +38,7 @@ describe("replay format v2: recorded command envelopes", () => {
     const decoded = decodeReplayFile(recorded);
     expect(Result.isSuccess(decoded)).toBe(true);
     if (!Result.isSuccess(decoded)) return;
-    expect(decoded.success.formatVersion).toBe(2);
+    expect(decoded.success.formatVersion).toBe(3);
     expect(decoded.success.months.map((m) => m.commands.length)).toEqual([2, 0, 1, 1, 2, 1]);
     expect(decoded.success.months[0]!.commands.map((c) => c.body.type)).toEqual([
       "SetShipReadiness",
