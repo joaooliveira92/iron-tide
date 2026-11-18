@@ -171,6 +171,14 @@ export default defineConfig({
         command: "node scripts/assert-no-library-console.mjs",
         dependsOn: ["gate:library-console-self-test"],
       },
+      "gate:effect-hooks-self-test": {
+        command: "node scripts/assert-no-effect-hooks.mjs --self-test",
+        dependsOn: ["gate:git-state"],
+      },
+      "gate:effect-hooks": {
+        command: "node scripts/assert-no-effect-hooks.mjs",
+        dependsOn: ["gate:effect-hooks-self-test"],
+      },
       "gate:claude-skill-links": {
         command: "node scripts/link-claude-skills.mjs",
         dependsOn: ["gate:git-state"],
@@ -321,6 +329,7 @@ export default defineConfig({
           "gate:stage-io",
           "gate:canonical-serialization",
           "gate:library-console",
+          "gate:effect-hooks",
           "gate:claude-skill-links",
           "gate:docs",
           "gate:doc-budgets",
