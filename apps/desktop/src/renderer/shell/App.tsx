@@ -1,14 +1,8 @@
-import type { ReactNode } from "react";
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
 import type { WindowState } from "../../shared/bridge-contract.js";
-import { PresentationContentGate } from "../content/PresentationContentGate.js";
-import { UiCatalogueGate } from "../content/UiCatalogueGate.js";
-import { SharedWorldMapProvider } from "../components/world-map/shared-world-map.js";
-import { BridgeProvider } from "../lib/bridge-context.js";
+import { AppProviders } from "./AppProviders.js";
 import { BackgroundLayer } from "./BackgroundLayer.js";
 import { useBackground } from "./BackgroundContext.js";
-import { CampaignShellProvider, useCampaignShellState } from "./CampaignShellContext.js";
-import { FleetFocusProvider } from "./fleet-focus.js";
 import { CampaignInterruptions } from "./interruptions/CampaignInterruptions.js";
 import { MapSheet } from "./MapSheet.js";
 import { ScreenHeaderProvider } from "./screen-header.js";
@@ -55,15 +49,6 @@ function CampaignShellApplication({
   );
 }
 
-function CampaignWorldMap({ children }: { readonly children: ReactNode }) {
-  const { campaign } = useCampaignShellState();
-  return (
-    <SharedWorldMapProvider key={campaign?.sessionId ?? "no-campaign"}>
-      {children}
-    </SharedWorldMapProvider>
-  );
-}
-
 export function App({
   bridge = window.bluewave,
   initialWindowState,
@@ -72,18 +57,8 @@ export function App({
   readonly initialWindowState?: WindowState | undefined;
 } = {}) {
   return (
-    <BridgeProvider bridge={bridge}>
-      <PresentationContentGate>
-        <UiCatalogueGate>
-          <CampaignShellProvider bridge={bridge}>
-            <CampaignWorldMap>
-              <FleetFocusProvider>
-                <CampaignShellApplication bridge={bridge} initialWindowState={initialWindowState} />
-              </FleetFocusProvider>
-            </CampaignWorldMap>
-          </CampaignShellProvider>
-        </UiCatalogueGate>
-      </PresentationContentGate>
-    </BridgeProvider>
+    <AppProviders bridge={bridge}>
+      <CampaignShellApplication bridge={bridge} initialWindowState={initialWindowState} />
+    </AppProviders>
   );
 }
