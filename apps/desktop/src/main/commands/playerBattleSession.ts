@@ -22,6 +22,7 @@ import type {
   StartPlayerBattleResult,
 } from "../../shared/player-battle-contract.js";
 import { toCombatOrders } from "../../shared/player-battle-orders.js";
+import { BATTLE_VIEW_INVALID, boundaryBattleView } from "./battleViewBoundary.js";
 import type { PlayerBattleStep } from "../playerBattleSidecar.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { ContentArtifact } from "../runtime/contentArtifact.js";
@@ -244,10 +245,15 @@ export const startPlayerBattle = (input: {
       }
     }
 
+    const boundary = boundaryBattleView(session, steps.at(-1));
+    if (boundary.kind === "invalid") {
+      return refuse(BATTLE_VIEW_INVALID, ...boundary.diagnostics);
+    }
     yield* (yield* PlayerBattleRegistry).put(input.sessionId, input.battleId, { session, steps });
     const value: StartPlayerBattleResult = {
       sessionHash: playerBattleSessionHash(session),
       view: playerBattleView(session),
+      battleView: boundary.view,
       resumed: resume === "resumed",
       lastOrders: [...(steps.at(-1)?.divisions ?? [])],
     };
@@ -267,6 +273,10 @@ export const stepPlayerBattle = (input: {
       return refuse("PLAYER_BATTLE_NOT_STARTED", "Start the player battle before advancing it");
     }
     const next = applyStep(live.session, input.step);
+    const boundary = boundaryBattleView(next, input.step);
+    if (boundary.kind === "invalid") {
+      return refuse(BATTLE_VIEW_INVALID, ...boundary.diagnostics);
+    }
     const steps = [...live.steps, input.step];
     yield* registry.put(input.sessionId, input.battleId, { session: next, steps });
     const pending = yield* (yield* PendingTurnStore).load(record.saveDir);
@@ -281,6 +291,7 @@ export const stepPlayerBattle = (input: {
     const value: AdvancePlayerBattleResult = {
       sessionHash: playerBattleSessionHash(next),
       view: playerBattleView(next),
+      battleView: boundary.view,
       result: next.ended ? toResultDto(next) : null,
     };
     return { kind: "stepped" as const, value };
