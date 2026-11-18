@@ -5,7 +5,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | Status | Rows |
 | --- | --- |
 | reachable | 43 |
-| dormant-by-decision | 13 |
+| dormant-by-decision | 14 |
 | internal | 16 |
 
 ## Reachable
@@ -70,6 +70,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | combat-missiles | Surface-to-surface missile salvos | RULES.md#dormant-by-decision |
 | combat-formation | Formation keeping | RULES.md#dormant-by-decision |
 | combat-submarines | Submarine operations | RULES.md#dormant-by-decision |
+| combat-terrain | Coast, shoals and base exclusion zones in battle | RULES.md#dormant-by-decision |
 | combat-coastal-defense | Coastal defence batteries | RULES.md#dormant-by-decision |
 | combat-smoke | Smokescreens and funnel smoke | RULES.md#dormant-by-decision |
 | national-traits | Play a nation whose national traits change shipbuilding, prestige loss, budget and surprise attack | #424 |

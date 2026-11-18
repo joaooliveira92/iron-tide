@@ -129,7 +129,7 @@ contract wins; fix this file in the same change.
 
 Engine capabilities with no desktop path stay dormant until a ticket wires them:
 aircraft and carriers, air combat, mines, submarines, coastal defence, smoke,
-surface-to-surface missiles and formation keeping. `scripts/data/reachability-ledger.json` lists each one
+surface-to-surface missiles, formation keeping and terrain queries. `scripts/data/reachability-ledger.json` lists each one
 and `scripts/verify-reachability-ledger.mjs` fails when a row drifts.
 
 ## Services, layers, composition
