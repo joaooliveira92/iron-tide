@@ -1,10 +1,16 @@
 import assert from "node:assert/strict";
 import { spawnSync } from "node:child_process";
 import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
-import { join, resolve } from "node:path";
+import path, { join, resolve } from "node:path";
 import { after, before, describe, test } from "node:test";
 
-import { evaluateBashCommand } from "../lib/agent-guard.mjs";
+import {
+  evaluateBashCommand,
+  isAbsoluteTarget,
+  isGitInternalPath,
+  isScratchDestination,
+  isScratchPath,
+} from "../lib/agent-guard.mjs";
 import { isReassessmentCommand } from "../lib/mutation-streak.mjs";
 
 const ROOT = resolve(import.meta.dirname, "..", "..");
@@ -275,6 +281,48 @@ void describe("isReassessmentCommand", () => {
       "",
     ]) {
       assert.equal(isReassessmentCommand(command), false, command);
+    }
+  });
+});
+
+void describe("platform-independent path classification", () => {
+  const win = path.win32;
+  const winTmp = "C:\\Users\\runneradmin\\AppData\\Local\\Temp";
+
+  void test("win32-resolved posix scratch targets are scratch", () => {
+    for (const target of ["/tmp/a.ts", "/var/tmp/a.ts", "/dev/null", "/private/tmp/a.json"]) {
+      assert.equal(isScratchDestination(target, win.resolve("D:\\repo", target), winTmp), true);
+    }
+  });
+
+  void test("a Windows tmpdir is scratch under both slash styles and any drive case", () => {
+    assert.equal(isScratchPath(`${winTmp}\\x\\a.ts`, winTmp), true);
+    assert.equal(isScratchPath(`${winTmp.toLowerCase()}\\a.ts`, winTmp), true);
+    assert.equal(isScratchPath("/var/folders/ab/T/a.ts", "/var/folders/ab/T"), true);
+  });
+
+  void test("repository paths and dot-dot escapes are not scratch", () => {
+    for (const target of ["src/a.ts", "/tmp/../repo/a.ts", "../tmp/a.ts", "/tmpfoo/a.ts"]) {
+      const absolute = win.resolve("D:\\repo", target);
+      assert.equal(isScratchDestination(target, absolute, winTmp), false, target);
+    }
+    assert.equal(isScratchPath(`${winTmp}-other\\a.ts`, winTmp), false);
+    assert.equal(isScratchPath("D:\\repo\\src\\a.ts", winTmp), false);
+  });
+
+  void test(".git internals are recognised with either separator", () => {
+    assert.equal(isGitInternalPath("D:\\repo\\.git\\probe.json"), true);
+    assert.equal(isGitInternalPath("/repo/.git/probe.json"), true);
+    assert.equal(isGitInternalPath("D:\\repo\\.github\\a.yml"), false);
+    assert.equal(isGitInternalPath("/repo/src/a.ts"), false);
+  });
+
+  void test("absolute detection covers drive and backslash destinations", () => {
+    for (const target of ["/a.ts", "~/a.ts", "C:\\a.ts", "C:/a.ts", "\\a.ts"]) {
+      assert.equal(isAbsoluteTarget(target), true, target);
+    }
+    for (const target of ["a.ts", "src/a.ts", "./a.ts", "..\\a.ts"]) {
+      assert.equal(isAbsoluteTarget(target), false, target);
     }
   });
 });

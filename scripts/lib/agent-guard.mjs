@@ -1,6 +1,6 @@
 import { existsSync, readFileSync, statSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
-import { resolve } from "node:path";
+import { posix, resolve } from "node:path";
 
 const INTERPRETERS = /^(python3?|node|perl|ruby)$/u;
 const WRITE_SIGNATURES = [
@@ -211,15 +211,30 @@ export function resolvePath(base, path) {
 
 export const hasDynamicText = (text) => /[$`*?[{]/u.test(text);
 
-const isScratchPath = (path) => {
-  const scratch = tmpdir();
-  return (
-    path.startsWith("/tmp/") ||
-    path.startsWith("/private/tmp/") ||
-    path.startsWith(`${scratch}/`) ||
-    path.startsWith("/dev/")
-  );
-};
+const SCRATCH_PREFIXES = ["/tmp/", "/private/tmp/", "/var/tmp/", "/dev/"];
+const DRIVE_PREFIX = /^[A-Za-z]:(?=[\\/]|$)/u;
+
+const toSlashes = (path) => path.replaceAll("\\", "/");
+
+export function isScratchPath(path, scratchRoot = tmpdir()) {
+  const normalized = toSlashes(path);
+  const root = toSlashes(scratchRoot).replace(/\/+$/u, "");
+  const windowsRoot = DRIVE_PREFIX.test(root);
+  const candidate = windowsRoot ? normalized.toLowerCase() : normalized;
+  const rootPrefix = `${windowsRoot ? root.toLowerCase() : root}/`;
+  if (root.length > 0 && candidate.startsWith(rootPrefix)) return true;
+  return SCRATCH_PREFIXES.some((prefix) => normalized.startsWith(prefix));
+}
+
+export function isScratchDestination(destination, absolute, scratchRoot = tmpdir()) {
+  if (isScratchPath(absolute, scratchRoot)) return true;
+  return destination.startsWith("/") && isScratchPath(posix.normalize(destination), scratchRoot);
+}
+
+export const isGitInternalPath = (path) => /\/\.git\//u.test(toSlashes(path));
+
+export const isAbsoluteTarget = (path) =>
+  path.startsWith("~") || path.startsWith("/") || path.startsWith("\\") || DRIVE_PREFIX.test(path);
 
 function scriptText(segment) {
   const parts = segment.heredocs.map((heredoc) => heredoc.body);
@@ -241,10 +256,9 @@ const hasPerlInPlace = (words) => words.slice(1).some((w) => /^-[nplas0-9]*i/u.t
 
 function isSourceTarget(destination, workdir, workdirKnown) {
   if (hasDynamicText(destination) || !SOURCE_EXTENSIONS.test(destination)) return false;
-  const relative = !destination.startsWith("/") && !destination.startsWith("~");
-  if (relative && !workdirKnown) return false;
+  if (!isAbsoluteTarget(destination) && !workdirKnown) return false;
   const absolute = resolvePath(workdir, destination);
-  return !isScratchPath(absolute) && !/\/\.git\//u.test(absolute);
+  return !isScratchDestination(destination, absolute) && !isGitInternalPath(absolute);
 }
 
 function redirectedSourceTarget(segment, workdir, workdirKnown) {
@@ -317,7 +331,7 @@ export function evaluateBashCommand({ command, cwd, policy, fsApi = createNodeFs
       const destination = target ?? teeTarget;
       if (destination !== undefined && workdirKnown && !hasDynamicText(destination)) {
         const absolute = resolvePath(workdir, destination);
-        if (!isScratchPath(absolute) && fsApi.exists(absolute)) {
+        if (!isScratchDestination(destination, absolute) && fsApi.exists(absolute)) {
           blocks.push({
             rule: "heredoc-overwrite",
             message: `A heredoc would overwrite the existing file ${destination}.`,
