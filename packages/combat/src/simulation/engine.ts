@@ -26,6 +26,8 @@ import type {
   MissileSalvoInFlight,
 } from "../missiles/index.js";
 import type { DamageControlContext } from "../damage/damageControlEngineWiring.js";
+import { applyNavigation, type NavigationMinuteOutput } from "../navigation/engineWiring.js";
+import type { NavigationContext } from "../navigation/model.js";
 import { type AirCombatContext, type AirCombatRecord } from "../air-combat/engineWiring.js";
 import {
   type AirDefenseContext,
@@ -85,6 +87,7 @@ export interface AdvanceMinuteInput {
   airDefense?: AirDefenseContext;
   missiles?: MissileContext;
   formation?: FormationContext;
+  navigation?: NavigationContext;
   collision?: CollisionContext;
 }
 
@@ -112,11 +115,18 @@ export interface MinuteResult {
   missileSalvos?: readonly MissileSalvoInFlight[];
   formationTracks?: Readonly<Record<string, FormationTrack>>;
   formationRecords?: readonly ShipStationRecord[];
+  navigation?: NavigationMinuteOutput;
   collisionRecords?: readonly CollisionRecord[];
   collisionState?: CollisionState;
 }
 
-export function advanceMinute(input: AdvanceMinuteInput): MinuteResult {
+export function advanceMinute(stageInput: AdvanceMinuteInput): MinuteResult {
+  const stage = applyNavigation(stageInput);
+  const result = advanceResolvedMinute(stage.input);
+  return stage.output ? { ...result, navigation: stage.output } : result;
+}
+
+function advanceResolvedMinute(input: AdvanceMinuteInput): MinuteResult {
   const { battleId } = input.state;
   const minute = input.minute;
   const ledger = new BattleLedger();
@@ -197,6 +207,7 @@ export interface AdvanceMinutesInput {
   airDefense?: AirDefenseContext;
   missiles?: MissileContext;
   formation?: FormationContext;
+  navigation?: NavigationContext;
   collision?: CollisionContext;
 }
 export interface AdvanceMinutesResult {
@@ -220,6 +231,7 @@ export function advanceMinutes(input: AdvanceMinutesInput): AdvanceMinutesResult
   let airDefense = input.airDefense;
   let missiles = input.missiles;
   let formation = input.formation;
+  let navigation = input.navigation;
   let collision = input.collision;
   let state: TacticalBattleState = {
     ...input.state,
@@ -244,6 +256,7 @@ export function advanceMinutes(input: AdvanceMinutesInput): AdvanceMinutesResult
       airDefense,
       missiles,
       formation,
+      navigation,
       collision,
     });
     results.push(res);
@@ -329,6 +342,9 @@ export function advanceMinutes(input: AdvanceMinutesInput): AdvanceMinutesResult
           return ns ? { ...d, state: ns } : d;
         }),
       };
+    }
+    if (navigation && res.navigation) {
+      navigation = { ...navigation, machinery: res.navigation.machinery };
     }
     if (formation && res.formationTracks) {
       formation = { ...formation, tracks: res.formationTracks };

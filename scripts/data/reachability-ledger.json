@@ -657,6 +657,19 @@
       "note": "Wired into auto-resolution and the minute engine and unit-tested; no production design carries a launcher yet."
     },
     {
+      "id": "combat-navigation",
+      "player_verb": "Machinery speed effects: fouling, breakdowns, vibration",
+      "status": "dormant-by-decision",
+      "engine_package": "combat",
+      "engine_modules": ["navigation"],
+      "engine_symbols": [],
+      "main_commands": [],
+      "renderer_screen": null,
+      "evidence_test": null,
+      "decision": "RULES.md#dormant-by-decision",
+      "note": "Wired into the minute engine and unit-tested; production content has no navigation ruleset section, so no battle enables it (#937)."
+    },
+    {
       "id": "combat-formation",
       "player_verb": "Formation keeping",
       "status": "dormant-by-decision",

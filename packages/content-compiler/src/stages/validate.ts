@@ -36,10 +36,11 @@ import {
   decodeEventResolutionRules,
   decodeFleetManagementRules,
   decodeGunneryRules,
-  decodeMissilesRules,
   decodePresenceRules,
 } from "@bluewave/content-schema";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
+import { validateMissilesRules } from "./validateMissiles.js";
+import { validateNavigationRules } from "./validateNavigation.js";
 import { validateDiplomacyRules } from "./validateDiplomacyRules.js";
 import { validatePresentation, validateUi } from "./validateObjects.js";
 import { validateTerrain, type TerrainValidated } from "./validateTerrain.js";
@@ -274,6 +275,7 @@ export class ValidateStage implements CompilerStage<ParseOutput, ValidateOutput>
     validateFleetManagementRules(validated["rulesets"] ?? [], collector);
     validateGunneryRules(validated["rulesets"] ?? [], collector);
     validateMissilesRules(validated["rulesets"] ?? [], collector);
+    validateNavigationRules(validated["rulesets"] ?? [], collector);
     validateDiplomacyRules(validated["rulesets"] ?? [], collector);
     validateMissingReferences(validated, collector);
     validateTechnologyGraph(validated, input, collector);
@@ -1431,34 +1433,6 @@ function validateGunneryRules(rulesets: readonly unknown[], collector: Diagnosti
         stage: "validate",
         entityId: rulesetId,
         remediation: `Author every gunnery value in ruleset '${rulesetId}', or remove the section to leave it dormant`,
-      },
-    );
-  }
-}
-
-function validateMissilesRules(rulesets: readonly unknown[], collector: DiagnosticCollector): void {
-  const carriers = rulesets.filter(
-    (ruleset) => (ruleset as Record<string, unknown>)["missiles"] !== undefined,
-  );
-  if (carriers.length > 1)
-    collector.addError(
-      "MISSILES_RULES_AMBIGUOUS",
-      `More than one ruleset carries a missiles section (${carriers.map((r) => String((r as Record<string, unknown>)["id"])).join(", ")}); exactly one may`,
-      { stage: "validate" },
-    );
-  for (const ruleset of rulesets) {
-    const record = ruleset as Record<string, unknown>;
-    if (record["missiles"] === undefined) continue;
-    const rulesetId = String(record["id"]);
-    const decoded = decodeMissilesRules(record["missiles"]);
-    if (decoded.ok) continue;
-    collector.addError(
-      "MISSILES_RULES_INVALID",
-      `Ruleset '${rulesetId}' missiles section is invalid at '${decoded.field}': ${decoded.message}`,
-      {
-        stage: "validate",
-        entityId: rulesetId,
-        remediation: `Author every missiles value in ruleset '${rulesetId}', or remove the section to leave it dormant`,
       },
     );
   }

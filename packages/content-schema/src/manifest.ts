@@ -21,6 +21,7 @@ export const RulesetManifestSchema = Schema.Struct({
   fleetManagement: Schema.optional(Schema.Unknown),
   gunnery: Schema.optional(Schema.Unknown),
   missiles: Schema.optional(Schema.Unknown),
+  navigation: Schema.optional(Schema.Unknown),
   terrain: Schema.optional(Schema.Unknown),
   tensionDrift: Schema.optional(Schema.Unknown),
   fleetMorale: Schema.optional(Schema.Unknown),
