@@ -16,7 +16,7 @@ const PAN_KEY_PIXELS = 48;
 export function TacticalMapCanvas({ children }: { readonly children: ReactNode }) {
   const { viewport, cursor } = useTacticalMap();
   const { camera } = useBattleCameraState();
-  const { changeCamera, selectShip } = useBattleActions();
+  const { changeCamera, selectShip, toggleFollow } = useBattleActions();
   const drag = useRef<{ x: number; y: number; moved: boolean } | null>(null);
   const centre: readonly [number, number] = [viewport.width / 2, viewport.height / 2];
 
@@ -74,6 +74,8 @@ export function TacticalMapCanvas({ children }: { readonly children: ReactNode }
       changeCamera(zoomCameraAt(camera, viewport, PROVISIONAL_ZOOM_STEP, centre));
     } else if (event.key === "-") {
       changeCamera(zoomCameraAt(camera, viewport, 1 / PROVISIONAL_ZOOM_STEP, centre));
+    } else if (event.key === "f" || event.key === "F") {
+      toggleFollow();
     } else if (event.key === "Escape") {
       selectShip(null);
     }

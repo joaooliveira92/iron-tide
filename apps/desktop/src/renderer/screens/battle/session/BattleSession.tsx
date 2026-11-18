@@ -59,6 +59,7 @@ export function BattleSessionProvider({
   const zoomOut = useStableCallback(camera.zoomOut);
   const fit = useStableCallback(camera.fit);
   const focus = useStableCallback(camera.focus);
+  const toggleFollow = useStableCallback(camera.toggleFollow);
   const selectDivision = useStableCallback(selection.selectDivision);
   const setOrder = useStableCallback(battle.setOrder);
   const releaseCourse = useStableCallback(battle.releaseCourse);
@@ -125,8 +126,8 @@ export function BattleSessionProvider({
   );
 
   const cameraState = useMemo<BattleSessionCamera>(
-    () => ({ camera: camera.camera, viewport: camera.viewport }),
-    [camera.camera, camera.viewport],
+    () => ({ camera: camera.camera, following: camera.following, viewport: camera.viewport }),
+    [camera.camera, camera.following, camera.viewport],
   );
 
   const { toggleRunning, setScale } = clock;
@@ -142,6 +143,7 @@ export function BattleSessionProvider({
       zoomOut,
       fit,
       focus,
+      toggleFollow,
       changeCamera,
       setViewport,
       setOverlay,
@@ -162,6 +164,7 @@ export function BattleSessionProvider({
       zoomOut,
       fit,
       focus,
+      toggleFollow,
       changeCamera,
       setViewport,
       setOverlay,

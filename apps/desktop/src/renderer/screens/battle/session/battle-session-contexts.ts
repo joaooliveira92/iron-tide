@@ -45,6 +45,7 @@ export interface BattleSessionState {
 
 export interface BattleSessionCamera {
   readonly camera: TacticalCamera;
+  readonly following: boolean;
   readonly viewport: TacticalViewport;
 }
 
@@ -57,6 +58,7 @@ export interface BattleSessionActions {
   readonly zoomOut: () => void;
   readonly fit: () => void;
   readonly focus: () => void;
+  readonly toggleFollow: () => void;
   readonly changeCamera: (camera: TacticalCamera) => void;
   readonly setViewport: (viewport: TacticalViewport) => void;
   readonly setOverlay: (overlay: OverlayKey, on: boolean) => void;
