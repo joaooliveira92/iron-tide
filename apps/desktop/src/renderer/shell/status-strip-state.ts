@@ -423,6 +423,35 @@ function prestigeRow(projection: PlayerProjection): StripRow {
   );
 }
 
+function trainingRow(training: PlayerProjection["training"]): StripRow {
+  const label = "Extra training";
+  const subjects = training?.subjects ?? [];
+  if (training === undefined || subjects.length === 0) {
+    return real(
+      "extra-training",
+      label,
+      translate("shell.training.none"),
+      translate("shell.training.noneNote"),
+    );
+  }
+  const named = subjects.map((entry) =>
+    translate("shell.training.subject", {
+      subject: translate(`fleet.training.subject.${entry.subject}`),
+      months: entry.fundedMonths,
+      unit: translate(entry.fundedMonths === 1 ? "shell.training.month" : "shell.training.months"),
+    }),
+  );
+  return real(
+    "extra-training",
+    label,
+    translate("shell.training.value", {
+      count: subjects.length,
+      percent: training.maintenanceAdderBp / 100,
+    }),
+    translate("shell.training.note", { subjects: named.join(", ") }),
+  );
+}
+
 function careerRow(career: NonNullable<PlayerProjection["career"]>): StripRow {
   const sacked = career.reason === "SACKED";
   return real(
@@ -510,7 +539,7 @@ export function buildStatusStrip(input: StatusStripInput): StatusStripModel {
       "Naval aircraft",
       "Aircraft are tactical-only; no campaign budget line.",
     ),
-    deferred("extra-training", "Extra training", "Training programmes are not modelled."),
+    trainingRow(projection.training),
     deferred("intelligence", "Intelligence", "Intelligence spending is not modelled."),
     real(
       "total-expenses",
