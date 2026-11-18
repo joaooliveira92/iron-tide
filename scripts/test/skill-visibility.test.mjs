@@ -45,25 +45,25 @@ function listingLine(name) {
   return `- ${name}: ${raw.replace(/\s+/g, " ").replace(/^"|"$/g, "").trim()}`;
 }
 
-test("user-only skills disable model invocation", () => {
+void test("user-only skills disable model invocation", () => {
   for (const name of USER_ONLY) {
     assert.match(frontmatter(name), /^disable-model-invocation:\s*true\s*$/m, name);
   }
 });
 
-test("skills kept in standing use stay model-invocable", () => {
+void test("skills kept in standing use stay model-invocable", () => {
   for (const name of MODEL_VISIBLE) {
     assert.doesNotMatch(frontmatter(name), /^disable-model-invocation:\s*true\s*$/m, name);
   }
 });
 
-test("area skills are scoped to the desktop app by paths", () => {
+void test("area skills are scoped to the desktop app by paths", () => {
   for (const name of AREA_PATHS) {
     assert.match(frontmatter(name), /^paths:\s*\n\s+-\s*"?apps\/desktop\/\*\*"?\s*$/m, name);
   }
 });
 
-test("model-visible skill listing stays within the budget", () => {
+void test("model-visible skill listing stays within the budget", () => {
   const total = MODEL_VISIBLE.map(listingLine).join("\n").length;
   assert.ok(
     total <= LISTING_BUDGET_CHARS,
