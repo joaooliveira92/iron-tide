@@ -154,6 +154,15 @@ describe("navigation machinery (#937)", () => {
     expect(levels[15]).toBe("CLEAN");
   });
 
+  it("drains accrued full-speed minutes of a clean ship at cruise speed", () => {
+    const warm = { a1: { ...INITIAL_MACHINERY_STATE, fullSpeedMinutes: 2 } };
+    const result = run(8, 15_000, context({ machinery: warm }));
+    const last = result.results.at(-1)!.navigation!.machinery["a1"]!;
+    expect(last.fouling).toBe("CLEAN");
+    expect(last.fullSpeedMinutes).toBe(0);
+    expect(result.results[6]!.navigation!.machinery["a1"]!.fullSpeedMinutes).toBe(2);
+  });
+
   it("holds the counters between cruise and full speed", () => {
     const worn = {
       a1: { ...INITIAL_MACHINERY_STATE, fouling: "GRATES_FOULED" as const, fullSpeedMinutes: 3 },

@@ -73,7 +73,7 @@ export function stepFouling(
       recoveryMinutes: 0,
     };
   }
-  if (input.atCruiseOrBelow && state.fouling !== "CLEAN") {
+  if (input.atCruiseOrBelow && (state.fouling !== "CLEAN" || state.fullSpeedMinutes > 0)) {
     const recoveryMinutes = state.recoveryMinutes + 1;
     if (recoveryMinutes < rules.recoveryMinutes)
       return { fullSpeedMinutes: state.fullSpeedMinutes, fouling: state.fouling, recoveryMinutes };
