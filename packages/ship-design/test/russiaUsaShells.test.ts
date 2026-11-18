@@ -49,7 +49,7 @@ const SHELLS: Readonly<Record<string, ExpectedShell>> = {
     shellMassG: 159700,
     explosiveFillerG: 5900,
     penetrationBiasBp: 2500,
-    ammunitionCostMicro: 1351791,
+    ammunitionCostMicro: 1442091,
     modelId: "us_dahlgren_15in",
   },
   us_cored_shot_15in_dahlgren: {
