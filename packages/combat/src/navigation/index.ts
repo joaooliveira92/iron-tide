@@ -5,3 +5,5 @@ export * from "./machinery.js";
 export * from "./model.js";
 export * from "./reasonCodes.js";
 export * from "./resolution.js";
+export * from "./separation.js";
+export * from "./separationChance.js";

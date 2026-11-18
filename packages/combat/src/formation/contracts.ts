@@ -21,8 +21,19 @@ export interface FormationTrack {
   points: readonly StationPoint[];
 }
 
+export interface ShipDisorder {
+  readonly toleranceMultiplierBp: number;
+  readonly steeringErrorDeg: number;
+}
+
+export interface FormationSeparation {
+  readonly separated: readonly string[];
+  readonly disordered: Readonly<Record<string, ShipDisorder>>;
+}
+
 export interface FormationContext {
   ruleset: FormationKeepingRuleset;
+  separation?: FormationSeparation;
   turnTogether?: Readonly<Record<string, boolean>>;
   tracks?: Readonly<Record<string, FormationTrack>>;
 }
