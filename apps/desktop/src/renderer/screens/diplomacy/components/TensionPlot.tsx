@@ -11,12 +11,23 @@ import {
   PLOT_WIDTH,
   percentAt,
   plotLayout,
-  pointAt,
   shortNationName,
   tensionRadius,
   type PlotNode,
 } from "../diplomacy-plot.js";
 import { TENSION_TONES } from "../diplomacy-presentation.js";
+import {
+  BEARING_DEGREES,
+  TICK_DEGREES,
+  bearingLabelAt,
+  blockadeMarkerStyle,
+  contactLabelPlacement,
+  linkClass,
+  linkDash,
+  linkWidth,
+  plotFrameStyle,
+  tickSegment,
+} from "../tension-plot-scale.js";
 import type { DiplomacyRelationRow } from "../diplomacy-view-model.js";
 import type { BattleRecord } from "../diplomacy-hover.js";
 import { NationFlag } from "./NationFlag.js";
@@ -31,29 +42,6 @@ export interface TensionPlotProps {
   readonly layers: ReadonlySet<PlotLayer>;
   readonly onSelect: (partnerNationId: string) => void;
 }
-
-const LABEL_GAP = 30;
-const BEARING_STEP = 30;
-const TICK_STEP = 10;
-const MAX_HEIGHT_REM = 28;
-
-function linkClass(row: DiplomacyRelationRow): string {
-  if (row.atWar) return "stroke-destructive";
-  if (row.allied) return "stroke-success";
-  if (row.nap) return "stroke-muted-foreground";
-  return "stroke-border";
-}
-
-function linkWidth(row: DiplomacyRelationRow): number {
-  return row.atWar ? 3 : row.allied ? 2.5 : row.nap ? 1.5 : 1;
-}
-
-function linkDash(row: DiplomacyRelationRow): string | undefined {
-  if (row.atWar || row.allied) return undefined;
-  return row.nap ? "6 5" : "2 5";
-}
-
-const ticks = Array.from({ length: 360 / TICK_STEP }, (_, index) => index * TICK_STEP);
 
 function Backdrop({
   nodes,
@@ -116,10 +104,8 @@ function Backdrop({
             y2={PLOT_CENTER}
             className="stroke-border"
           />
-          {ticks.map((degrees) => {
-            const major = degrees % BEARING_STEP === 0;
-            const from = pointAt(degrees - 90, PLOT_OUTER_RADIUS + 6);
-            const to = pointAt(degrees - 90, PLOT_OUTER_RADIUS + (major ? 20 : 13));
+          {TICK_DEGREES.map((degrees) => {
+            const { from, to } = tickSegment(degrees);
             return (
               <line
                 key={degrees}
@@ -157,21 +143,16 @@ function Backdrop({
 function Annotations() {
   return (
     <>
-      {ticks
-        .filter((degrees) => degrees % BEARING_STEP === 0)
-        .map((degrees) => {
-          const at = pointAt(degrees - 90, PLOT_OUTER_RADIUS + 34);
-          return (
-            <span
-              key={degrees}
-              aria-hidden="true"
-              style={percentAt(at.x, at.y)}
-              className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 text-xs tabular-nums text-muted-foreground"
-            >
-              {String(degrees).padStart(3, "0")}
-            </span>
-          );
-        })}
+      {BEARING_DEGREES.map((degrees) => (
+        <span
+          key={degrees}
+          aria-hidden="true"
+          style={bearingLabelAt(degrees)}
+          className="pointer-events-none absolute -translate-x-1/2 -translate-y-1/2 text-xs tabular-nums text-muted-foreground"
+        >
+          {String(degrees).padStart(3, "0")}
+        </span>
+      ))}
     </>
   );
 }
@@ -207,15 +188,10 @@ function Contact({
   readonly showName: boolean;
   readonly onSelect: (partnerNationId: string) => void;
 }) {
-  const outward = pointAt(node.angle, LABEL_GAP);
-  const dx = outward.x - PLOT_CENTER;
-  const dy = outward.y - PLOT_CENTER;
-  const labelAt = percentAt(node.x + dx, node.y + dy);
-  const shift =
-    Math.abs(dx) < 6 ? "-translate-x-1/2" : dx > 0 ? "translate-x-0" : "-translate-x-full";
+  const label = contactLabelPlacement(node);
   return (
     <>
-      <NationHoverCard row={row} record={record} side={dx > 0 ? "right" : "left"}>
+      <NationHoverCard row={row} record={record} side={label.side}>
         <button
           type="button"
           data-nation-id={node.id}
@@ -237,10 +213,10 @@ function Contact({
       {showName && (
         <span
           aria-hidden="true"
-          style={labelAt}
+          style={label.style}
           className={cn(
             "pointer-events-none absolute -translate-y-1/2 whitespace-nowrap rounded bg-background/80 px-1 text-xs",
-            shift,
+            label.shiftClass,
             selected ? "font-semibold text-foreground" : "text-muted-foreground",
           )}
         >
@@ -267,10 +243,7 @@ export function TensionPlot({
       role="group"
       aria-label="Diplomatic plot"
       data-testid="tension-plot"
-      style={{
-        aspectRatio: `${PLOT_WIDTH} / ${PLOT_HEIGHT}`,
-        maxWidth: `${(MAX_HEIGHT_REM * PLOT_WIDTH) / PLOT_HEIGHT}rem`,
-      }}
+      style={plotFrameStyle()}
       className="relative mx-auto w-full"
     >
       <Backdrop nodes={nodes} rowById={rowById} layers={layers} />
@@ -280,19 +253,16 @@ export function TensionPlot({
       {layers.has("blockades") &&
         nodes
           .filter((node) => rowById.get(node.id)!.blockades.length > 0)
-          .map((node) => {
-            const at = pointAt(node.angle, node.radius * 0.5);
-            return (
-              <span
-                key={`blockade-${node.id}`}
-                aria-hidden="true"
-                style={percentAt(at.x, at.y)}
-                className="pointer-events-none absolute flex size-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-destructive bg-background"
-              >
-                <Anchor className="size-3.5 text-destructive" />
-              </span>
-            );
-          })}
+          .map((node) => (
+            <span
+              key={`blockade-${node.id}`}
+              aria-hidden="true"
+              style={blockadeMarkerStyle(node)}
+              className="pointer-events-none absolute flex size-6 -translate-x-1/2 -translate-y-1/2 items-center justify-center rounded-full border border-destructive bg-background"
+            >
+              <Anchor className="size-3.5 text-destructive" />
+            </span>
+          ))}
 
       <span
         aria-hidden="true"

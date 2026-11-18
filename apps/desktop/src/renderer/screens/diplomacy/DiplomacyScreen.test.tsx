@@ -462,4 +462,41 @@ describe("DiplomacyScreen", () => {
 
     expect(screen.getByTestId("diplomacy-workspace")).not.toBeNull();
   });
+
+  it("collapses and restores the inspector with Ctrl+B", () => {
+    render(<DiplomacyScreen sessionId="ses-1" />);
+    const grid = screen.getByTestId("diplomacy-grid");
+    const open = grid.style.getPropertyValue("--inspector-width");
+    expect(open).not.toBe("36px");
+    fireEvent.keyDown(screen.getByTestId("diplomacy-workspace"), { key: "b", ctrlKey: true });
+    expect(grid.style.getPropertyValue("--inspector-width")).toBe("36px");
+    fireEvent.keyDown(screen.getByTestId("diplomacy-workspace"), { key: "B", metaKey: true });
+    expect(grid.style.getPropertyValue("--inspector-width")).toBe(open);
+  });
+
+  it("keeps the nation selected while switching its inspector tab", () => {
+    render(<DiplomacyScreen sessionId="ses-1" />);
+    selectNation(/^Germany/);
+    openTab("Battles");
+    expect(screen.queryByTestId("nation-dossier")).toBeNull();
+    expect(screen.getAllByText("Germany").length).toBeGreaterThan(0);
+    openTab("Dossier");
+    expect(dossier().getByRole("heading", { name: "Germany" })).not.toBeNull();
+  });
+
+  it("switches overview tabs without selecting a nation", () => {
+    render(<DiplomacyScreen sessionId="ses-1" />);
+    openTab("Not modelled");
+    expect(screen.queryByTestId("overview-summary")).toBeNull();
+    openTab("Summary");
+    expect(screen.getByTestId("overview-summary")).not.toBeNull();
+  });
+
+  it("hides a chart layer when its toggle is cleared", () => {
+    render(<DiplomacyScreen sessionId="ses-1" />);
+    expect(screen.getByLabelText("Tension rings")).not.toBeNull();
+    fireEvent.click(screen.getByRole("button", { name: /Layers/ }));
+    fireEvent.click(screen.getByRole("checkbox", { name: "Range rings and bearings" }));
+    expect(screen.queryByLabelText("Tension rings")).toBeNull();
+  });
 });
