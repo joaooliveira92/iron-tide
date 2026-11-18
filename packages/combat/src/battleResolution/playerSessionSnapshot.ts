@@ -84,6 +84,9 @@ export function playerBattleSessionHash(session: PlayerBattleSession): string {
       airDefense: session.airDefense,
       log: session.log,
       ...(session.force === undefined ? {} : { force: session.force.runtime }),
+      ...(session.waypointArrivals === undefined
+        ? {}
+        : { waypointArrivals: session.waypointArrivals }),
     }),
   );
 }

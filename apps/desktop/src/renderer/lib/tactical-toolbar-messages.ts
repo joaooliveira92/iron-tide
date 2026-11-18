@@ -6,8 +6,13 @@ export const TACTICAL_TOOLBAR_MESSAGES = {
   "tactical.toolbar.fight_to_end": "Fight to end",
   "tactical.toolbar.speed_group": "Simulation speed",
   "tactical.toolbar.speed_option": "{scale}×",
+  "tactical.map.label":
+    "Tactical map. Arrow keys pan, plus and minus or Z and X zoom, shift-drag zooms to a rectangle, Escape cancels it.",
   "tactical.toolbar.zoom_in": "Zoom in",
+  "tactical.toolbar.zoom_in_hint":
+    "Zoom in (Z). Shift-drag on the map to zoom to a rectangle, Escape cancels.",
   "tactical.toolbar.zoom_out": "Zoom out",
+  "tactical.toolbar.zoom_out_hint": "Zoom out (X).",
   "tactical.toolbar.fit": "Fit battle",
   "tactical.toolbar.focus": "Focus selection",
   "tactical.toolbar.focus_disabled": "Select a ship with a known position to focus on it.",

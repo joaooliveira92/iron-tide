@@ -1,6 +1,7 @@
 ---
 name: improve-effect-use
 description: Scan a codebase for gaps against Effect v4 idioms, turn them into tickets via to-tickets, then grill through whichever one you pick.
+disable-model-invocation: true
 ---
 
 # Improve Effect Use

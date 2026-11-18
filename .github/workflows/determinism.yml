@@ -78,3 +78,44 @@ jobs:
       # records or approves a replay.
       - name: Replay corpus
         run: pnpm check:replay-corpus
+
+  determinism-ok:
+    name: determinism-ok
+    if: always()
+    needs: [plan, determinism]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require the plan and every matrix leg to pass
+        env:
+          PLAN: ${{ needs.plan.result }}
+          RESULT: ${{ needs.determinism.result }}
+        run: |
+          if [ "$PLAN" != "success" ] || [ "$RESULT" != "success" ]; then
+            echo "::error::plan=$PLAN determinism=$RESULT"
+            exit 1
+          fi
+
+  notify-failure:
+    name: notify-failure
+    if: always() && github.event_name == 'schedule' && needs.determinism-ok.result == 'failure'
+    needs: determinism-ok
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Open or update the nightly failure issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          TITLE: "CI: nightly determinism run failing"
+        run: |
+          existing=$(gh issue list --state open --search "\"$TITLE\" in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "Failed again: $RUN_URL"
+          else
+            gh issue create --title "$TITLE" --body "The scheduled determinism run failed: $RUN_URL"
+          fi

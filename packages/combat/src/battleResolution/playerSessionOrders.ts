@@ -8,6 +8,7 @@ import { BATTLE_AUTO_RESOLUTION_FAILED } from "./reasonCodes.js";
 import {
   DIVISION_ORDER_MAX_HEADING_DEG,
   DIVISION_ORDER_MAX_KNOTS,
+  WAYPOINT_MAX_METRES,
   compileDivisionOrders,
   divisionOrdersFromLegacy,
   type DivisionNavigation,
@@ -15,9 +16,11 @@ import {
   type DivisionSpeed,
 } from "../orders/index.js";
 import type {
+  PlayerBattleDivisionOrder,
   PlayerBattleOrders,
   PlayerBattleSession,
   PlayerBattleStance,
+  PlayerBattleWaypoint,
 } from "./playerSessionTypes.js";
 
 function clampSpeedPercent(value: number): number {
@@ -42,7 +45,22 @@ function requireInteger(field: string, value: number, minimum: number, maximum: 
   return value;
 }
 
+export function validatedWaypoint(order: PlayerBattleDivisionOrder): PlayerBattleWaypoint | null {
+  const waypoint = order.waypoint;
+  if (waypoint === undefined) return null;
+  if (order.courseDeg !== undefined) {
+    throw new BluewaveError(BATTLE_AUTO_RESOLUTION_FAILED, {
+      code: BATTLE_AUTO_RESOLUTION_FAILED,
+      reason: "a division order carries a course or a waypoint, not both",
+    });
+  }
+  requireInteger("waypoint.xMetres", waypoint.xMetres, -WAYPOINT_MAX_METRES, WAYPOINT_MAX_METRES);
+  requireInteger("waypoint.yMetres", waypoint.yMetres, -WAYPOINT_MAX_METRES, WAYPOINT_MAX_METRES);
+  return waypoint;
+}
+
 function divisionOrderSet(
+  session: PlayerBattleSession,
   orders: PlayerBattleOrders,
   divisions: readonly TacticalDivision[],
 ): DivisionOrderSet {
@@ -58,18 +76,34 @@ function divisionOrderSet(
     ...base,
     divisions: base.divisions.map((entry) => {
       const requested = orders.divisions[entry.divisionId]!;
-      const navigation: DivisionNavigation =
-        requested.courseDeg === undefined
-          ? entry.navigation
+      const waypoint = validatedWaypoint(requested);
+      const arrival = session.waypointArrivals?.[entry.divisionId];
+      const consumed =
+        waypoint !== null &&
+        arrival !== undefined &&
+        arrival.xMetres === waypoint.xMetres &&
+        arrival.yMetres === waypoint.yMetres;
+      let navigation: DivisionNavigation = entry.navigation;
+      if (requested.courseDeg !== undefined) {
+        navigation = {
+          kind: "COURSE",
+          headingDeg: requireInteger(
+            "courseDeg",
+            requested.courseDeg,
+            0,
+            DIVISION_ORDER_MAX_HEADING_DEG,
+          ),
+        };
+      } else if (waypoint !== null) {
+        navigation = consumed
+          ? { kind: "COURSE", headingDeg: arrival.headingDeg }
           : {
-              kind: "COURSE",
-              headingDeg: requireInteger(
-                "courseDeg",
-                requested.courseDeg,
-                0,
-                DIVISION_ORDER_MAX_HEADING_DEG,
-              ),
+              kind: "WAYPOINT",
+              xMetres: waypoint.xMetres,
+              yMetres: waypoint.yMetres,
+              pauseOnArrival: waypoint.pauseOnArrival,
             };
+      }
       const speed: DivisionSpeed =
         requested.speedKnots === undefined
           ? entry.speed
@@ -121,7 +155,7 @@ export function resolveOrders(
   orders: PlayerBattleOrders,
   adjust?: (set: DivisionOrderSet) => DivisionOrderSet,
 ): Record<string, UnitOrders> {
-  const base = divisionOrderSet(orders, session.state.divisions);
+  const base = divisionOrderSet(session, orders, session.state.divisions);
   const pursuit = pursuitOrders({
     battleId: session.battleId,
     battleState: session.state,

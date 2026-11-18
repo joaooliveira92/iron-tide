@@ -101,6 +101,8 @@ export const TacticalToolbar = memo(function TacticalToolbar(props: TacticalTool
         size="sm"
         variant="outline"
         data-testid="tactical-zoom-in"
+        aria-keyshortcuts="Z"
+        title={translate("tactical.toolbar.zoom_in_hint")}
         onClick={props.onZoomIn}
       >
         {translate("tactical.toolbar.zoom_in")}
@@ -110,6 +112,8 @@ export const TacticalToolbar = memo(function TacticalToolbar(props: TacticalTool
         size="sm"
         variant="outline"
         data-testid="tactical-zoom-out"
+        aria-keyshortcuts="X"
+        title={translate("tactical.toolbar.zoom_out_hint")}
         onClick={props.onZoomOut}
       >
         {translate("tactical.toolbar.zoom_out")}

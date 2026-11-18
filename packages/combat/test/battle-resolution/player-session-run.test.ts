@@ -234,7 +234,7 @@ describe("battle run and pause control", () => {
       { mode: { kind: "RUN_N", minutes: 100 }, pauseOn: [] },
       { mode: { kind: "RUN_N", minutes: 1.5 }, pauseOn: [] },
       { mode: { kind: "SPRINT" }, pauseOn: [] },
-      { mode: { kind: "TURN" }, pauseOn: ["WAYPOINT_REACHED"] },
+      { mode: { kind: "TURN" }, pauseOn: ["OBJECTIVE_COMPLETED"] },
       { mode: { kind: "TURN" }, pauseOn: [], extra: true },
       { mode: { kind: "TURN" } },
       { mode: { kind: "RUN_UNTIL_EVENT" }, pauseOn: [], runCapMinutes: 0 },
@@ -247,5 +247,8 @@ describe("battle run and pause control", () => {
       mode: { kind: "RUN_N", minutes: 99 },
       pauseOn: ["SHIP_SUNK"],
     });
+    expect(
+      decodeRunRequest({ mode: { kind: "TURN" }, pauseOn: ["WAYPOINT_REACHED"] }).pauseOn,
+    ).toEqual(["WAYPOINT_REACHED"]);
   });
 });

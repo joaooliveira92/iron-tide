@@ -275,6 +275,23 @@ describe("division order compilation", () => {
     expect(result.unitOrders.u1?.orderedSpeedBp).toBe(30_000);
   });
 
+  it("compares a metre waypoint with a micrometre position at metre scale", () => {
+    const result = compileDivisionOrders({
+      orders: set([
+        order(
+          "div",
+          { kind: "WAYPOINT", xMetres: 100_000, yMetres: 0, pauseOnArrival: false },
+          { kind: "PERCENT", percent: 100 },
+        ),
+      ]),
+      units: [unit("u1")],
+      divisions: [division("div", ["u1"])],
+      baseOrders: { u1: base },
+      movement: { u1: movement([50_000_000_000, 0]) },
+    });
+    expect(result.unitOrders.u1?.orderedHeading).toBe(0);
+  });
+
   it("reports a waypoint it cannot place and keeps the base heading", () => {
     const result = compileDivisionOrders({
       orders: set([

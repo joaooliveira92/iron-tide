@@ -7,6 +7,7 @@ import { planTorpedoCommands } from "./torpedoDoctrine.js";
 import { withNightTraining } from "./trainingEffects.js";
 import { advancePlayerForce } from "./playerSessionForce.js";
 import { resolveOrders } from "./playerSessionOrders.js";
+import { settleWaypointArrivals } from "./playerSessionWaypoints.js";
 import { resultOf } from "./playerSessionSnapshot.js";
 import {
   assignTargetContactIds,
@@ -202,7 +203,7 @@ export function advancePlayerBattleMinute(
     ),
   };
 
-  const next: PlayerBattleSession = {
+  const advanced: PlayerBattleSession = {
     ...session,
     minute,
     state,
@@ -226,6 +227,7 @@ export function advancePlayerBattleMinute(
     ],
   };
 
+  const next = settleWaypointArrivals(advanced, orders);
   const decision = decideBattleEnd(combatantsDamage(next), minute, next.maxMinutes);
   if (!decision.ended) return next;
 

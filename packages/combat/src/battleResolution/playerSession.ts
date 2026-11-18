@@ -131,5 +131,6 @@ export function createPlayerBattleSession(input: CreatePlayerBattleInput): Playe
     baseOrders: projection.orders,
     log: [],
     result: null,
+    ...(input.waypointRules === undefined ? {} : { waypointRules: input.waypointRules }),
   };
 }

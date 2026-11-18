@@ -56,3 +56,27 @@ jobs:
       - uses: github/codeql-action/analyze@9b3254085494b55a0f7c4c2b3d2d52cc712ce370 # v4.39.1
         with:
           category: "/language:javascript-typescript"
+
+  notify-failure:
+    name: notify-failure
+    if: always() && github.event_name == 'schedule' && (needs.audit.result == 'failure' || needs.codeql.result == 'failure')
+    needs: [audit, codeql]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - name: Open or update the scheduled scan failure issue
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          TITLE: "CI: scheduled security scan failing"
+        run: |
+          existing=$(gh issue list --state open --search "\"$TITLE\" in:title" --json number --jq '.[0].number // empty')
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "Failed again: $RUN_URL"
+          else
+            gh issue create --title "$TITLE" --body "The scheduled security scan failed: $RUN_URL"
+          fi

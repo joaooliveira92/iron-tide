@@ -27,11 +27,27 @@ import {
 export const PLAYER_BATTLE_STANCES = DIVISION_STANCES;
 export type PlayerBattleStance = DivisionStance;
 
+export interface PlayerBattleWaypoint {
+  readonly xMetres: number;
+  readonly yMetres: number;
+  readonly pauseOnArrival: boolean;
+}
+
+export interface PlayerBattleWaypointArrival extends PlayerBattleWaypoint {
+  readonly headingDeg: number;
+  readonly minute: number;
+}
+
+export interface WaypointRules {
+  readonly arrivalToleranceMetres: number;
+}
+
 export interface PlayerBattleDivisionOrder {
   readonly stance: PlayerBattleStance;
   readonly speedPercent: number;
   readonly courseDeg?: number;
   readonly speedKnots?: number;
+  readonly waypoint?: PlayerBattleWaypoint;
 }
 
 export interface PlayerBattleOrders {
@@ -133,6 +149,7 @@ export interface CreatePlayerBattleInput {
   readonly gunQuality?: GunQualityRules;
   readonly missilesRules?: MissileRules;
   readonly maxMinutes?: number;
+  readonly waypointRules?: WaypointRules;
 }
 
 export interface PlayerBattleSession {
@@ -168,4 +185,6 @@ export interface PlayerBattleSession {
   readonly log: readonly PlayerBattleEvent[];
   readonly result: PlayerBattleResult | null;
   readonly force?: PlayerForceSession;
+  readonly waypointRules?: WaypointRules;
+  readonly waypointArrivals?: Readonly<Record<string, PlayerBattleWaypointArrival>>;
 }
