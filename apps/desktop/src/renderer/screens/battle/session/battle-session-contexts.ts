@@ -17,6 +17,7 @@ import type {
   StandingCourse,
 } from "../tactical/tactical-map-types.js";
 import type { Trails } from "../tactical/tactical-model.js";
+import type { ScreenRectangle } from "../tactical/tactical-rectangle.js";
 import type { TacticalTimeScale } from "../tactical/tactical-time.js";
 import type { BattleResume } from "../usePlayerBattle.js";
 
@@ -56,6 +57,7 @@ export interface BattleSessionActions {
   readonly fightToEnd: () => void;
   readonly zoomIn: () => void;
   readonly zoomOut: () => void;
+  readonly zoomToRectangle: (rect: ScreenRectangle) => void;
   readonly fit: () => void;
   readonly focus: () => void;
   readonly toggleFollow: () => void;

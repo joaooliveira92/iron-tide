@@ -32,6 +32,10 @@
       "types": "./src/coastal-defense/index.ts",
       "default": "./dist/coastal-defense/index.js"
     },
+    "./collision": {
+      "types": "./src/collision/index.ts",
+      "default": "./dist/collision/index.js"
+    },
     "./contact": {
       "types": "./src/contact/index.ts",
       "default": "./dist/contact/index.js"

@@ -381,7 +381,6 @@ export const EN_US_MESSAGES = {
   "battle.explanation.none": "No modifiers apply.",
   "battle.ship_motion.summary": "Speed {value}",
   "battle.ship_motion.orderedSpeed": "Ordered speed",
-  "tactical.map.label": "Tactical map. Arrow keys pan, plus and minus zoom.",
   "tactical.side.own": "own ship",
   "tactical.side.hostile": "hostile contact",
   "tactical.status.operational": "operational",

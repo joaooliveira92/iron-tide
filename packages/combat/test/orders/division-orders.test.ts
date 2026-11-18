@@ -3,6 +3,7 @@ import { BluewaveError, KNOTS_TO_UMS, SafeInt, isBluewaveError } from "@bluewave
 import type { TacticalDivision } from "@bluewave/combat/tactical";
 import type { TacticalShipUnit } from "@bluewave/combat/tactical";
 import type { MovementState } from "@bluewave/combat/movement";
+import type { TerrainView } from "@bluewave/combat/terrain";
 import {
   DIVISION_ORDER_INVALID,
   DIVISION_ORDER_LEAD_UNKNOWN,
@@ -275,6 +276,23 @@ describe("division order compilation", () => {
     expect(result.unitOrders.u1?.orderedSpeedBp).toBe(30_000);
   });
 
+  it("compares a metre waypoint with a micrometre position at metre scale", () => {
+    const result = compileDivisionOrders({
+      orders: set([
+        order(
+          "div",
+          { kind: "WAYPOINT", xMetres: 100_000, yMetres: 0, pauseOnArrival: false },
+          { kind: "PERCENT", percent: 100 },
+        ),
+      ]),
+      units: [unit("u1")],
+      divisions: [division("div", ["u1"])],
+      baseOrders: { u1: base },
+      movement: { u1: movement([50_000_000_000, 0]) },
+    });
+    expect(result.unitOrders.u1?.orderedHeading).toBe(0);
+  });
+
   it("reports a waypoint it cannot place and keeps the base heading", () => {
     const result = compileDivisionOrders({
       orders: set([
@@ -349,5 +367,47 @@ describe("division order compilation", () => {
       DIVISION_ORDER_LEAD_UNKNOWN,
       DIVISION_ORDER_UNKNOWN_DIVISION,
     ]);
+  });
+});
+
+describe("withdraw heading and land", () => {
+  const terrain: TerrainView = {
+    land: [
+      {
+        id: "wall",
+        vertices: [
+          { xM: 600, yM: -3000 },
+          { xM: 700, yM: -3000 },
+          { xM: 700, yM: 3000 },
+          { xM: 600, yM: 3000 },
+        ],
+      },
+    ],
+    shallows: [],
+    exclusions: [],
+  };
+  const input = {
+    orders: set([
+      order("div", { kind: "STANCE", stance: "WITHDRAW" }, { kind: "PERCENT", percent: 100 }),
+    ]),
+    units: [unit("u1")],
+    divisions: [division("div", ["u1"])],
+    baseOrders: { u1: base },
+    movement: { u1: movement([0, 0]) },
+    headingAway: () => 0,
+  };
+
+  it("keeps the retreat heading when no terrain is supplied", () => {
+    expect(compileDivisionOrders(input).unitOrders.u1?.orderedHeading).toBe(0);
+  });
+
+  it("turns a retreat away from land inside the look-ahead", () => {
+    const heading = compileDivisionOrders({ ...input, terrain }).unitOrders.u1?.orderedHeading;
+    expect(heading).not.toBe(0);
+  });
+
+  it("keeps a retreat heading that already clears the land", () => {
+    const clear = compileDivisionOrders({ ...input, terrain, headingAway: () => 180 });
+    expect(clear.unitOrders.u1?.orderedHeading).toBe(180);
   });
 });

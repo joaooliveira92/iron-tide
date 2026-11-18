@@ -8,6 +8,7 @@ export const RUN_PAUSE_KINDS = [
   "FRIENDLY_HIT",
   "SHIP_SUNK",
   "TORPEDO",
+  "WAYPOINT_REACHED",
 ] as const;
 
 export const RUN_PAUSE_PRECEDENCE = [
@@ -17,6 +18,7 @@ export const RUN_PAUSE_PRECEDENCE = [
   "TORPEDO",
   "ENEMY_SIGHTED",
   "CONTACT_LOST",
+  "WAYPOINT_REACHED",
 ] as const;
 
 export const FRIENDLY_HIT_EVENT_TYPES = [

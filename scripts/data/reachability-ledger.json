@@ -667,7 +667,7 @@
       "renderer_screen": null,
       "evidence_test": null,
       "decision": "RULES.md#dormant-by-decision",
-      "note": "Wired into the minute engine and unit-tested; the ruleset navigation section is absent from production content, so no battle enables it yet (#937)."
+      "note": "Wired into the minute engine and unit-tested; production content has no navigation ruleset section, so no battle enables it (#937)."
     },
     {
       "id": "combat-formation",
@@ -698,13 +698,13 @@
       "player_verb": "Coast, shoals and base exclusion zones in battle",
       "status": "dormant-by-decision",
       "engine_package": "combat",
-      "engine_modules": ["terrain"],
+      "engine_modules": ["terrain", "collision"],
       "engine_symbols": [],
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
       "decision": "RULES.md#dormant-by-decision",
-      "note": "Four pure queries on compiled terrain; movement blocking and battle placement are the follow-up (#324)."
+      "note": "Terrain queries and the optional collision input (#940); session wiring and battle placement follow (#324)."
     },
     {
       "id": "combat-coastal-defense",

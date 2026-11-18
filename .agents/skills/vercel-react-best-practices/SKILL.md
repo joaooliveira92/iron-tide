@@ -1,6 +1,8 @@
 ---
 name: vercel-react-best-practices
 description: Vercel's React and Next.js performance rules. Use when writing, reviewing, or refactoring React components, data fetching, or bundles.
+paths:
+  - "apps/desktop/**"
 license: MIT
 metadata:
   author: vercel

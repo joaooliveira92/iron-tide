@@ -11,6 +11,6 @@
 - Integer or fixed-point maths only; record every random outcome through the ledger.
 - Outcome changes need [replay approvals](../../docs/agents/replay-corpus.md).
 - The root export is `resolve`, `advance`, `generate` and the root contract; other modules are subpath seams.
-- `formation` and `navigation` are optional minute-loop inputs; `missiles` (surface-to-surface only) is an optional ruleset block. Each is dormant when absent: every hash is unchanged.
+- Optional minute-loop inputs `formation`, `navigation`, `missiles` (surface-to-surface only) and `collision` (ships, terrain; PROVISIONAL rules) change no hash when absent.
 
 Root rules in [AGENTS.md](../../AGENTS.md) apply. Package map: [packages/README.md](../README.md). Test: `pnpm --filter @bluewave/combat test`.

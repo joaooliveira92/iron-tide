@@ -193,13 +193,3 @@ export function onStation(
   const distSq = dx * dx + dy * dy;
   return distSq <= distanceToleranceUm * distanceToleranceUm;
 }
-
-export interface CollisionGroundingResult {
-  phase: "resolve_collisions_grounding";
-  success: boolean;
-  empty: boolean;
-  records: unknown[];
-}
-export function resolveCollisionsGrounding(): CollisionGroundingResult {
-  return { phase: "resolve_collisions_grounding", success: true, empty: true, records: [] };
-}

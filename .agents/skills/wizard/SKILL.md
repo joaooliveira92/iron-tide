@@ -1,6 +1,7 @@
 ---
 name: wizard
 description: Generate a bash wizard for steps only a human can perform, such as credentials, CI secrets, dashboards, or one-off cutovers.
+disable-model-invocation: true
 ---
 
 # Wizard

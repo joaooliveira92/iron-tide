@@ -13,7 +13,13 @@ export * from "./gunQualityRules.js";
 export * from "./causeOfLoss.js";
 
 export * from "./playerSession.js";
+export * from "./playerSessionForce.js";
 export * from "./runConstants.js";
+export {
+  WAYPOINT_ARRIVAL_TOLERANCE_METRES,
+  WAYPOINT_MAX_METRES,
+  WAYPOINT_REACHED_EVENT_TYPE,
+} from "../orders/constants.js";
 export * from "./runRequest.js";
 export * from "./playerSessionPause.js";
 export * from "./playerSessionRun.js";

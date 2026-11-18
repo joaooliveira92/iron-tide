@@ -1,6 +1,12 @@
 import { describe, expect, it } from "vite-plus/test";
 import type { TacticalCamera, WorldPoint } from "../tactical/tactical-geometry.js";
-import { applyCameraChange, trackFocus, type CameraFollow } from "./camera-follow.js";
+import { rectangleCamera } from "../tactical/tactical-rectangle.js";
+import {
+  applyCameraChange,
+  frameRectangle,
+  trackFocus,
+  type CameraFollow,
+} from "./camera-follow.js";
 
 const CAMERA: TacticalCamera = { centreX: 0, centreY: 0, metresPerPixel: 400 };
 const FOLLOWING: CameraFollow = { camera: CAMERA, following: true };
@@ -44,6 +50,27 @@ describe("camera follow transition", () => {
 
   it("keeps follow on when a zoom is clamped and the camera does not change", () => {
     expect(applyCameraChange(FOLLOWING, { ...CAMERA }, AT)).toBe(FOLLOWING);
+  });
+
+  it("frames a rectangle on the chosen area and stops following", () => {
+    const viewport = { width: 800, height: 480 };
+    const rect = { left: 600, top: 40, width: 100, height: 60 };
+    const next = frameRectangle(FOLLOWING, viewport, rect);
+    expect(next.following).toBe(false);
+    expect(next.camera).toEqual(rectangleCamera(CAMERA, viewport, rect));
+    expect(next.camera.metresPerPixel).toBeLessThan(CAMERA.metresPerPixel);
+  });
+
+  it("frames a rectangle with follow already off", () => {
+    const off: CameraFollow = { camera: CAMERA, following: false };
+    const rect = { left: 200, top: 120, width: 400, height: 240 };
+    const next = frameRectangle(off, { width: 800, height: 480 }, rect);
+    expect(next).toEqual({ camera: { ...CAMERA, metresPerPixel: 200 }, following: false });
+  });
+
+  it("ignores a rectangle that is too small to be a deliberate selection", () => {
+    const rect = { left: 10, top: 10, width: 2, height: 2 };
+    expect(frameRectangle(FOLLOWING, { width: 800, height: 480 }, rect)).toBe(FOLLOWING);
   });
 
   it("applies a camera change verbatim when follow is off", () => {

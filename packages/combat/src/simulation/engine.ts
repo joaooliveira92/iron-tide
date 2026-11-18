@@ -55,6 +55,7 @@ import {
   type UnitRun,
 } from "./minuteStages.js";
 import { buildMinuteResult } from "./minuteResult.js";
+import type { CollisionContext, CollisionRecord, CollisionState } from "../collision/index.js";
 import type {
   FormationContext,
   FormationTrack,
@@ -87,6 +88,7 @@ export interface AdvanceMinuteInput {
   missiles?: MissileContext;
   formation?: FormationContext;
   navigation?: NavigationContext;
+  collision?: CollisionContext;
 }
 
 export interface MinuteResult {
@@ -114,6 +116,8 @@ export interface MinuteResult {
   formationTracks?: Readonly<Record<string, FormationTrack>>;
   formationRecords?: readonly ShipStationRecord[];
   navigation?: NavigationMinuteOutput;
+  collisionRecords?: readonly CollisionRecord[];
+  collisionState?: CollisionState;
 }
 
 export function advanceMinute(stageInput: AdvanceMinuteInput): MinuteResult {
@@ -204,6 +208,7 @@ export interface AdvanceMinutesInput {
   missiles?: MissileContext;
   formation?: FormationContext;
   navigation?: NavigationContext;
+  collision?: CollisionContext;
 }
 export interface AdvanceMinutesResult {
   results: MinuteResult[];
@@ -227,6 +232,7 @@ export function advanceMinutes(input: AdvanceMinutesInput): AdvanceMinutesResult
   let missiles = input.missiles;
   let formation = input.formation;
   let navigation = input.navigation;
+  let collision = input.collision;
   let state: TacticalBattleState = {
     ...input.state,
     contacts: [...(input.state.contacts ?? [])],
@@ -251,6 +257,7 @@ export function advanceMinutes(input: AdvanceMinutesInput): AdvanceMinutesResult
       missiles,
       formation,
       navigation,
+      collision,
     });
     results.push(res);
     state = {
@@ -342,6 +349,7 @@ export function advanceMinutes(input: AdvanceMinutesInput): AdvanceMinutesResult
     if (formation && res.formationTracks) {
       formation = { ...formation, tracks: res.formationTracks };
     }
+    if (collision && res.collisionState) collision = { ...collision, state: res.collisionState };
     if (missiles && (res.missileStates || res.missileSalvos)) {
       missiles = {
         ...missiles,

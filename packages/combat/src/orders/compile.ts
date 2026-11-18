@@ -5,7 +5,9 @@ import type { MovementState } from "../movement/neighbour.js";
 import { KNOTS_TO_UM_S, SPEED_BP_SCALE } from "../movement/neighbour.js";
 import type { UnitOrders } from "../simulation/engine.js";
 import { foldHeading, headingToward } from "../battleResolution/engagement.js";
-import { TWO_KNOTS_SPEED_BP } from "./constants.js";
+import { steerClearOfLand } from "../collision/steering.js";
+import type { TerrainView } from "../terrain/index.js";
+import { TWO_KNOTS_SPEED_BP, UM_PER_METRE } from "./constants.js";
 import type {
   DivisionOrder,
   DivisionOrderSet,
@@ -42,6 +44,7 @@ export interface CompileDivisionOrdersInput {
   readonly pursuit?: Readonly<Record<string, DivisionBaseOrder>>;
   readonly headingAway?: (unit: TacticalShipUnit) => number | null;
   readonly cruiseSpeedBp?: number;
+  readonly terrain?: TerrainView;
 }
 
 export interface CompileDivisionOrdersResult {
@@ -170,9 +173,15 @@ export function compileDivisionOrders(
         if (order.navigation.stance === "HOLD") {
           unitOrders[unit.assetId] = { orderedHeading: base.orderedHeading, orderedSpeedBp: 0 };
         } else if (order.navigation.stance === "WITHDRAW") {
+          const speedBp = speedForOrder();
+          const away = input.headingAway?.(unit) ?? base.orderedHeading;
+          const position = input.movement[unit.assetId]?.position;
           unitOrders[unit.assetId] = {
-            orderedHeading: input.headingAway?.(unit) ?? base.orderedHeading,
-            orderedSpeedBp: speedForOrder(),
+            orderedHeading:
+              input.terrain && position
+                ? steerClearOfLand({ terrain: input.terrain, position, heading: away, speedBp })
+                : away,
+            orderedSpeedBp: speedBp,
           };
         } else {
           unitOrders[unit.assetId] = {
@@ -204,8 +213,8 @@ export function compileDivisionOrders(
         } else {
           unitOrders[unit.assetId] = {
             orderedHeading: headingToward(
-              order.navigation.xMetres - movement.position[0],
-              order.navigation.yMetres - movement.position[1],
+              order.navigation.xMetres - Math.trunc(movement.position[0] / UM_PER_METRE),
+              order.navigation.yMetres - Math.trunc(movement.position[1] / UM_PER_METRE),
             ),
             orderedSpeedBp: speedForOrder(),
           };

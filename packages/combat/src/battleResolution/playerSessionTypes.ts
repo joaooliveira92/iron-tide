@@ -14,20 +14,53 @@ import type { GunneryRadarRules } from "./gunneryRadar.js";
 import type { GunQualityRules } from "./gunQualityRules.js";
 import type { AutoResolverNation } from "./project.js";
 import type { TrainingEffectsBySide } from "./trainingEffects.js";
-import { DIVISION_STANCES, type DivisionStance } from "../orders/index.js";
+import {
+  DIVISION_STANCES,
+  type DivisionStance,
+  type ForceOrderIssue,
+  type ForceOrderRuleset,
+  type ForceOrderSet,
+  type ForceRuntime,
+  type RealismMode,
+} from "../orders/index.js";
 
 export const PLAYER_BATTLE_STANCES = DIVISION_STANCES;
 export type PlayerBattleStance = DivisionStance;
+
+export interface PlayerBattleWaypoint {
+  readonly xMetres: number;
+  readonly yMetres: number;
+  readonly pauseOnArrival: boolean;
+}
+
+export interface PlayerBattleWaypointArrival extends PlayerBattleWaypoint {
+  readonly headingDeg: number;
+  readonly minute: number;
+}
+
+export interface WaypointRules {
+  readonly arrivalToleranceMetres: number;
+}
 
 export interface PlayerBattleDivisionOrder {
   readonly stance: PlayerBattleStance;
   readonly speedPercent: number;
   readonly courseDeg?: number;
   readonly speedKnots?: number;
+  readonly waypoint?: PlayerBattleWaypoint;
 }
 
 export interface PlayerBattleOrders {
   readonly divisions: Readonly<Record<string, PlayerBattleDivisionOrder>>;
+  readonly forceOrders?: ForceOrderSet;
+}
+
+export interface PlayerForceSession {
+  readonly forceId: string;
+  readonly realismMode: RealismMode;
+  readonly ruleset: ForceOrderRuleset;
+  readonly runtime: ForceRuntime;
+  readonly lastIssues: readonly ForceOrderIssue[];
 }
 
 export interface PlayerBattleEvent {
@@ -116,6 +149,7 @@ export interface CreatePlayerBattleInput {
   readonly gunQuality?: GunQualityRules;
   readonly missilesRules?: MissileRules;
   readonly maxMinutes?: number;
+  readonly waypointRules?: WaypointRules;
 }
 
 export interface PlayerBattleSession {
@@ -150,4 +184,7 @@ export interface PlayerBattleSession {
   >;
   readonly log: readonly PlayerBattleEvent[];
   readonly result: PlayerBattleResult | null;
+  readonly force?: PlayerForceSession;
+  readonly waypointRules?: WaypointRules;
+  readonly waypointArrivals?: Readonly<Record<string, PlayerBattleWaypointArrival>>;
 }
