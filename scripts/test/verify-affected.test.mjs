@@ -131,7 +131,10 @@ void test("verify:affected routes docs, scripts, goldens and content to their ow
     scripts.units.map((unit) => unit.kind),
     ["scripts"],
   );
-  const golden = planAffected({ paths: ["golden/replay-approvals.json"], workspaces: WORKSPACES });
+  const golden = planAffected({
+    paths: ["golden/replay-approvals/legacy.json"],
+    workspaces: WORKSPACES,
+  });
   assert.deepEqual(
     golden.units.map((unit) => unit.kind),
     ["golden"],

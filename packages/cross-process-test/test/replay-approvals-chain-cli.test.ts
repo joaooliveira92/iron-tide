@@ -6,7 +6,12 @@ import { fileURLToPath } from "node:url";
 import { Result } from "effect";
 import { afterAll, beforeAll, describe, expect, it } from "vite-plus/test";
 
-import { proposeApprovals, recordReplay, type CorpusState } from "../src/replay-corpus/index.js";
+import {
+  proposeApprovalFile,
+  proposeApprovals,
+  recordReplay,
+  type CorpusState,
+} from "../src/replay-corpus/index.js";
 
 const cli = resolve(
   dirname(fileURLToPath(import.meta.url)),
@@ -135,6 +140,38 @@ describe("replay-approvals check-chain", () => {
     const outcome = run("--main", "moved", "--head", "dev", "--tree", "dev");
     expect(outcome.status).toBe(1);
     expect(outcome.stdout).toContain("EndpointBinding");
+  });
+
+  it("reads a hop that moves the legacy file into the approvals directory and adds a file", () => {
+    git("checkout", "-q", "-b", "per-file", "main");
+    const A: CorpusState = {
+      replays: new Map([[NAME, RECORDED]]),
+      approvals: '{"schema":"replay-approvals/2","entries":[]}\n',
+    };
+    const head: CorpusState = {
+      replays: new Map([[NAME, perturbed("f")]]),
+      approvals: A.approvals!,
+    };
+    const proposal = proposeApprovalFile(A, head, {
+      cause: "intended rebalance",
+      migrationAssessment: "none",
+      changeClass: "EXPECTED_GAMEPLAY_CHANGE",
+    });
+    if (Result.isFailure(proposal) || proposal.success === undefined)
+      throw new Error("no proposal");
+    mkdirSync(join(repo, "golden", "replay-approvals"), { recursive: true });
+    git("mv", "golden/replay-approvals.json", "golden/replay-approvals/legacy.json");
+    writeFileSync(
+      join(repo, "golden", "replay-approvals", proposal.success.name),
+      proposal.success.text,
+    );
+    writeFileSync(join(repo, "golden", "replays", NAME), head.replays.get(NAME)!);
+    git("add", "-A");
+    git("commit", "-q", "-m", "per-file approval");
+    const outcome = run("--main", "main", "--head", "per-file", "--tree", "per-file");
+    expect(outcome.stdout).toContain("1 first-parent hops");
+    expect(outcome.stdout).toContain("every promotion hop is fully approved");
+    expect(outcome.status).toBe(0);
   });
 
   it("prints usage and exits 2 without both refs", () => {

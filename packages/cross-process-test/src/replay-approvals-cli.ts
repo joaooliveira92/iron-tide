@@ -1,20 +1,25 @@
 import { execFileSync } from "node:child_process";
-import { existsSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
-import { readChainInput } from "./replay-approvals-chain-git.js";
+import { Result } from "effect";
+
+import { readApprovalsAt, readChainInput } from "./replay-approvals-chain-git.js";
 import {
+  APPROVALS_DIR,
+  APPROVAL_FILE_SUFFIX,
+  LEGACY_APPROVALS_FILE,
   approvalsCommand,
   checkApprovalChain,
   formatChainFailures,
+  mergeApprovalFiles,
   type ApprovalsIo,
   type CorpusState,
 } from "./replay-corpus/index.js";
 
 const ROOT = resolve(fileURLToPath(new URL(".", import.meta.url)), "..", "..", "..");
 const REPLAYS = "golden/replays";
-const APPROVALS = "golden/replay-approvals.json";
 const SUFFIX = ".replay.json";
 
 const git = (...args: string[]): string =>
@@ -37,13 +42,26 @@ function readBase(ref: string): CorpusState {
   for (const path of listing.filter((p) => p.endsWith(SUFFIX))) {
     replays.set(path.slice(REPLAYS.length + 1), git("show", `${commit}:${path}`));
   }
-  let approvals: string | undefined;
-  try {
-    approvals = git("show", `${commit}:${APPROVALS}`);
-  } catch {
-    approvals = undefined;
-  }
+  const approvals = readApprovalsAt(git, commit);
   return approvals === undefined ? { replays } : { replays, approvals };
+}
+
+function headApprovalFiles(): Map<string, string> {
+  const files = new Map<string, string>();
+  const legacy = resolve(ROOT, LEGACY_APPROVALS_FILE);
+  if (existsSync(legacy)) files.set(LEGACY_APPROVALS_FILE, readFileSync(legacy, "utf8"));
+  const dir = resolve(ROOT, APPROVALS_DIR);
+  if (existsSync(dir)) {
+    for (const name of readdirSync(dir).filter((n) => n.endsWith(APPROVAL_FILE_SUFFIX))) {
+      files.set(`${APPROVALS_DIR}/${name}`, readFileSync(resolve(dir, name), "utf8"));
+    }
+  }
+  return files;
+}
+
+function writeApprovalFile(name: string, text: string): void {
+  mkdirSync(resolve(ROOT, APPROVALS_DIR), { recursive: true });
+  writeFileSync(resolve(ROOT, APPROVALS_DIR, name), text, "utf8");
 }
 
 function readHead(): CorpusState {
@@ -54,8 +72,9 @@ function readHead(): CorpusState {
       replays.set(name, readFileSync(resolve(dir, name), "utf8"));
     }
   }
-  const file = resolve(ROOT, APPROVALS);
-  return existsSync(file) ? { replays, approvals: readFileSync(file, "utf8") } : { replays };
+  const merged = mergeApprovalFiles(headApprovalFiles());
+  if (Result.isFailure(merged)) throw merged.failure;
+  return merged.success === undefined ? { replays } : { replays, approvals: merged.success };
 }
 
 function optionOf(argv: readonly string[], name: string): string | undefined {
@@ -95,7 +114,7 @@ const io: ApprovalsIo = {
   gateBase,
   readBase: () => readBase(base),
   readHead,
-  writeApprovals: (text) => writeFileSync(resolve(ROOT, APPROVALS), text, "utf8"),
+  writeApprovalFile,
   print: (line) => process.stdout.write(line),
 };
 

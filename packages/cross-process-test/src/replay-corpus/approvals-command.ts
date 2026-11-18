@@ -5,16 +5,16 @@ import {
   CHANGE_CLASSES,
   formatApprovalFailures,
   isChangeClass,
-  proposeApprovals,
   type CorpusState,
 } from "./approvals.js";
+import { proposeApprovalFile } from "./approvals-files.js";
 
 export interface ApprovalsIo {
   readonly base: string;
   readonly gateBase: string;
   readBase(): CorpusState;
   readHead(): CorpusState;
-  writeApprovals(text: string): void;
+  writeApprovalFile(name: string, text: string): void;
   print(line: string): void;
 }
 
@@ -68,18 +68,23 @@ export function approvalsCommand(
       io.print(`propose needs --class, one of ${CHANGE_CLASSES.join(", ")}\n`);
       return 2;
     }
-    const head = io.readHead();
-    const text = proposeApprovals(io.readBase(), head, { changeClass, cause, migrationAssessment });
-    if (Result.isFailure(text)) {
-      io.print(`rejected: ${text.failure.message}\n`);
+    const proposal = proposeApprovalFile(io.readBase(), io.readHead(), {
+      changeClass,
+      cause,
+      migrationAssessment,
+    });
+    if (Result.isFailure(proposal)) {
+      io.print(`rejected: ${proposal.failure.message}\n`);
       return 2;
     }
-    if (text.success === head.approvals) {
+    if (proposal.success === undefined) {
       io.print("nothing to propose: every delta already has an entry\n");
       return 0;
     }
-    io.writeApprovals(text.success);
-    io.print("approval entries written; review and commit them with the corpus change\n");
+    io.writeApprovalFile(proposal.success.name, proposal.success.text);
+    io.print(
+      `approval file ${proposal.success.name} written; review and commit it with the corpus change\n`,
+    );
     return 0;
   }
   io.print(

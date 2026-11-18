@@ -42,6 +42,14 @@ export type {
   CorpusState,
   ProposalInput,
 } from "./approvals.js";
+export {
+  APPROVALS_DIR,
+  APPROVAL_FILE_SUFFIX,
+  LEGACY_APPROVALS_FILE,
+  mergeApprovalFiles,
+  proposeApprovalFile,
+} from "./approvals-files.js";
+export type { ApprovalFileProposal } from "./approvals-files.js";
 export { checkApprovalChain, formatChainFailures } from "./approvals-chain.js";
 export type { ChainCheck, ChainFailure, ChainInput, ChainStep } from "./approvals-chain.js";
 export { approvalsCommand } from "./approvals-command.js";

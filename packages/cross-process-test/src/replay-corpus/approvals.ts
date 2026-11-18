@@ -90,7 +90,9 @@ function upgradeEmptyLegacy(raw: unknown): unknown {
   return raw;
 }
 
-function decodeApprovals(text: string | undefined): Result.Result<ApprovalsFile, ApprovalsError> {
+export function decodeApprovals(
+  text: string | undefined,
+): Result.Result<ApprovalsFile, ApprovalsError> {
   if (text === undefined) return Result.succeed({ schema: REPLAY_APPROVALS_SCHEMA, entries: [] });
   let raw: unknown;
   try {
