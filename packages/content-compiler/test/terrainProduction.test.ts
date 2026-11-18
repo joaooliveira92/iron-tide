@@ -15,7 +15,7 @@ function compileProduction(withTerrain: boolean) {
   const input = buildFullSurfaceInput(manifestPath, contentDir, collector);
   const compiled = withTerrain ? input : { ...input!, terrainFiles: [] };
   const output = new Compiler().compile(compiled!, new AbortController().signal, collector);
-  expect(collector.diagnostics.map((d) => `${d.code}: ${d.message}`)).toEqual([]);
+  expect(collector.all.map((d) => `${d.code}: ${d.message}`)).toEqual([]);
   return output!;
 }
 

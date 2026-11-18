@@ -127,7 +127,7 @@ function compile(terrain: readonly unknown[], rulesets: readonly unknown[] = [ru
   };
   const collector = new DiagnosticCollector();
   const output = new Compiler().compile(input, new AbortController().signal, collector);
-  return { output, codes: collector.diagnostics.map((d) => d.code) };
+  return { output, codes: collector.all.map((d) => d.code) };
 }
 
 function rulesetWith(...terrain: readonly unknown[]) {

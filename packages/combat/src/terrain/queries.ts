@@ -1,5 +1,5 @@
 import { CombatInvariantError } from "../errors.js";
-import { onSegment, pointInPolygon, positionMetres, segmentsIntersect } from "./geometry.js";
+import { pointInPolygon, positionMetres, segmentsIntersect } from "./geometry.js";
 import {
   TERRAIN_COORDINATE_LIMIT_M,
   TERRAIN_QUERY_LIMIT_M,
