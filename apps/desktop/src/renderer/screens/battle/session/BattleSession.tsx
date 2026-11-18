@@ -57,6 +57,7 @@ export function BattleSessionProvider({
   });
   const zoomIn = useStableCallback(camera.zoomIn);
   const zoomOut = useStableCallback(camera.zoomOut);
+  const zoomToRectangle = useStableCallback(camera.zoomToRectangle);
   const fit = useStableCallback(camera.fit);
   const focus = useStableCallback(camera.focus);
   const toggleFollow = useStableCallback(camera.toggleFollow);
@@ -141,6 +142,7 @@ export function BattleSessionProvider({
       fightToEnd,
       zoomIn,
       zoomOut,
+      zoomToRectangle,
       fit,
       focus,
       toggleFollow,
@@ -162,6 +164,7 @@ export function BattleSessionProvider({
       fightToEnd,
       zoomIn,
       zoomOut,
+      zoomToRectangle,
       fit,
       focus,
       toggleFollow,

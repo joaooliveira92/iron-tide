@@ -10,6 +10,7 @@ import {
 } from "./battle-session-harness.js";
 import { fitCamera } from "../tactical/tactical-geometry.js";
 import { knownPositions } from "../tactical/tactical-model.js";
+import { rectangleCamera } from "../tactical/tactical-rectangle.js";
 
 let session: BattleSessionSnapshot | null = null;
 
@@ -69,6 +70,40 @@ describe("battle camera follow", () => {
     expect(current().state.camera.centreX).toBe(-NM_UM / 4);
     act(() => current().actions.toggleFollow());
     expect(current().state.following).toBe(false);
+  });
+});
+
+describe("battle camera rectangle zoom", () => {
+  afterEach(() => {
+    cleanup();
+    session = null;
+  });
+
+  const RECTANGLE = { left: 300, top: 100, width: 200, height: 120 };
+
+  it("frames the rectangle and stops following the selected division", async () => {
+    mountSession(<Probe />);
+    await waitFor(() => expect(current().state.view).not.toBeNull());
+    act(() => current().actions.selectDivision("d1"));
+    act(() => current().actions.toggleFollow());
+    await waitFor(() => expect(current().state.following).toBe(true));
+    const before = current().state.camera;
+
+    act(() => current().actions.zoomToRectangle(RECTANGLE));
+    expect(current().state.following).toBe(false);
+    expect(current().state.camera.centreY).not.toBe(before.centreY);
+    expect(current().state.camera).toEqual(
+      rectangleCamera(before, current().state.viewport, RECTANGLE),
+    );
+  });
+
+  it("keeps the camera the player framed through a viewport change", async () => {
+    mountSession(<Probe />);
+    await waitFor(() => expect(current().state.view).not.toBeNull());
+    act(() => current().actions.zoomToRectangle(RECTANGLE));
+    const framed = current().state.camera;
+    act(() => current().actions.setViewport(MEASURED));
+    expect(current().state.camera).toEqual(framed);
   });
 });
 
