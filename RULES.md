@@ -110,6 +110,12 @@ contract wins; fix this file in the same change.
   `pnpm content:lock` first, and `pnpm content:verify:release` (main-bound
   quality workflow) requires it. On dev, `pnpm content:verify` checks version,
   algorithm and two identical builds, so content PRs never conflict on the hash.
+- Terrain (`terrain` collection, #935) compiles to the sidecar
+  `terrain-artifact.json` (hash domain `bluewave.terrain.v1`), never into
+  `ContentBundle`: the bundle content hash seeds technology variation, so a
+  bundle change would move replays. The ruleset `terrain` section and
+  `files.terrain` are stripped from the bundle identity. Polygons and the
+  exclusion radius are PROVISIONAL content and ruleset data.
 
 ## Scope and values
 
