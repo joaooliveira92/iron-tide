@@ -38,3 +38,19 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm preflight
       - run: pnpm test:scripts
+
+  gates-ok:
+    name: gates-ok
+    if: always()
+    needs: gates
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require every matrix leg to pass
+        env:
+          RESULT: ${{ needs.gates.result }}
+        run: |
+          if [ "$RESULT" != "success" ]; then
+            echo "::error::gates finished as $RESULT"
+            exit 1
+          fi

@@ -44,3 +44,19 @@ jobs:
             echo "COMMIT_RANGE=${PUSH_BEFORE_SHA}..${PUSH_HEAD_SHA}" >> "$GITHUB_ENV"
           fi
           node scripts/check-commit-msgs.cjs
+
+  commit-convention-ok:
+    name: commit-convention-ok
+    if: always()
+    needs: commit-msgs
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require the commit check to pass
+        env:
+          RESULT: ${{ needs.commit-msgs.result }}
+        run: |
+          if [ "$RESULT" != "success" ]; then
+            echo "::error::commit-msgs finished as $RESULT"
+            exit 1
+          fi

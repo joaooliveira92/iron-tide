@@ -8,10 +8,6 @@ on:
       - "content/production/1880/**"
       - ".github/workflows/desktop-e2e.yml"
   pull_request:
-    paths:
-      - "apps/desktop/**"
-      - "content/production/1880/**"
-      - ".github/workflows/desktop-e2e.yml"
   workflow_dispatch:
 
 permissions:
@@ -22,7 +18,34 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  scope:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      run: ${{ steps.diff.outputs.run }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - id: diff
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          PATTERN: '^(apps/desktop/|content/production/1880/|\.github/workflows/desktop-e2e\.yml$)'
+        run: |
+          if [ "$EVENT_NAME" != "pull_request" ]; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          elif git diff --name-only "$BASE_SHA...$HEAD_SHA" | grep -Eq "$PATTERN"; then
+            echo "run=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "run=false" >> "$GITHUB_OUTPUT"
+          fi
+
   desktop-e2e:
+    needs: scope
+    if: needs.scope.outputs.run == 'true'
     runs-on: macos-latest
     timeout-minutes: 40
     steps:
@@ -74,3 +97,25 @@ jobs:
         with:
           name: desktop-e2e-test-results
           path: apps/desktop/test-results
+
+  desktop-e2e-ok:
+    name: desktop-e2e-ok
+    if: always()
+    needs: [scope, desktop-e2e]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Require the scope decision and, when in scope, the E2E run
+        env:
+          SCOPE: ${{ needs.scope.result }}
+          RUN: ${{ needs.scope.outputs.run }}
+          RESULT: ${{ needs.desktop-e2e.result }}
+        run: |
+          if [ "$SCOPE" != "success" ]; then
+            echo "::error::scope finished as $SCOPE"
+            exit 1
+          fi
+          if [ "$RUN" = "true" ] && [ "$RESULT" != "success" ]; then
+            echo "::error::desktop-e2e finished as $RESULT"
+            exit 1
+          fi

@@ -25,13 +25,20 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: ".node-version"
+          package-manager-cache: false
       # Refuses a branch ref, a tag that is not a version, a tag that disagrees
       # with apps/desktop/package.json, and a commit that is not on main.
       - name: Verify the release ref
         run: node scripts/verify-release-ref.mjs
 
-  mac:
+  quality:
     needs: verify
+    permissions:
+      contents: read
+    uses: ./.github/workflows/quality.yml
+
+  mac:
+    needs: [verify, quality]
     runs-on: macos-latest
     timeout-minutes: 45
     environment: release-macos
@@ -43,7 +50,7 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: ".node-version"
-          cache: "pnpm"
+          package-manager-cache: false
       - run: pnpm install --frozen-lockfile
       # Fail fast with a precise message: an empty CSC_LINK makes electron-builder
       # try to import a certificate from an empty path ("not a file") — a cryptic
@@ -74,13 +81,15 @@ jobs:
           APPLE_APP_SPECIFIC_PASSWORD: ${{ secrets.APPLE_APP_SPECIFIC_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
         run: pnpm --filter @bluewave/desktop run pack:mac
+      - name: Smoke the packaged app
+        run: pnpm --filter @bluewave/desktop run smoke:packaged
       - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: mac-artifacts
           path: apps/desktop/dist-electron/*.{dmg,zip}
 
   win:
-    needs: verify
+    needs: [verify, quality]
     runs-on: windows-latest
     timeout-minutes: 45
     environment: release-windows
@@ -92,7 +101,7 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: ".node-version"
-          cache: "pnpm"
+          package-manager-cache: false
       - run: pnpm install --frozen-lockfile
       # Fail fast with a precise message rather than an electron-builder error.
       - name: Require Windows signing credentials
@@ -121,7 +130,7 @@ jobs:
           path: apps/desktop/dist-electron/*.exe
 
   linux:
-    needs: verify
+    needs: [verify, quality]
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
@@ -132,7 +141,7 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: ".node-version"
-          cache: "pnpm"
+          package-manager-cache: false
       - run: pnpm install --frozen-lockfile
       - run: pnpm build
       - run: pnpm --filter @bluewave/desktop run pack:linux
@@ -145,6 +154,8 @@ jobs:
     needs: [verify, mac, win, linux]
     permissions:
       contents: write
+      id-token: write
+      attestations: write
     runs-on: ubuntu-latest
     environment: publish-github
     timeout-minutes: 10
@@ -153,7 +164,17 @@ jobs:
         with:
           path: artifacts
           merge-multiple: true
-      - uses: softprops/action-gh-release@efb35369e0ad2afab669f228072c1b0d510eae64 # v3.0.3
+      - name: Write SHA256 checksums
+        working-directory: artifacts
+        run: |
+          sha256sum -- * > SHA256SUMS.txt
+          cat SHA256SUMS.txt
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8 # v4.2.2
         with:
-          draft: true
-          files: artifacts/*
+          subject-path: artifacts/*
+      - name: Create the draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          TAG: ${{ github.ref_name }}
+        run: gh release create "$TAG" --draft --verify-tag --title "$TAG" --generate-notes artifacts/*

@@ -1,8 +1,14 @@
 import {
   centreCameraOn,
   type TacticalCamera,
+  type TacticalViewport,
   type WorldPoint,
 } from "../tactical/tactical-geometry.js";
+import {
+  isUsableRectangle,
+  rectangleCamera,
+  type ScreenRectangle,
+} from "../tactical/tactical-rectangle.js";
 
 export interface CameraFollow {
   readonly camera: TacticalCamera;
@@ -12,6 +18,15 @@ export interface CameraFollow {
 export function trackFocus(state: CameraFollow, focusPoint: WorldPoint | null): CameraFollow {
   if (!state.following || focusPoint === null) return state;
   return { camera: centreCameraOn(state.camera, focusPoint), following: true };
+}
+
+export function frameRectangle(
+  state: CameraFollow,
+  viewport: TacticalViewport,
+  rect: ScreenRectangle,
+): CameraFollow {
+  if (!isUsableRectangle(rect)) return state;
+  return { camera: rectangleCamera(state.camera, viewport, rect), following: false };
 }
 
 export function applyCameraChange(
