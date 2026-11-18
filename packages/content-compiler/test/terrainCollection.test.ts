@@ -23,6 +23,55 @@ const terrainRules = {
   provenance,
 };
 
+const nation = {
+  id: "uk",
+  tag: "GBR",
+  name: "United Kingdom",
+  displayNameKey: "nation.uk",
+  isPlayable: false,
+  homeArea: "a_coast",
+  slot: null,
+  presentation: { colorBg: "#C8102E", colorFg: "#FFFFFF" },
+  identity: { oneSentence: "x", fullIdentity: "x", strategicProblem: "x" },
+  traits: [],
+  regime: {
+    type: "monarchy",
+    politicalSystem: "constitutional_monarchy",
+    governmentType: "limited_democracy",
+    headOfState: "x",
+    headOfGovernment: "x",
+    leaderTitle: "x",
+    navalPolicyActors: [],
+    governmentModifiers: [],
+    stabilityProfile: { level: "high", factors: [] },
+    description: "x",
+  },
+  strategicObjectives: { primary: "x", secondary: "x" },
+  baseResources: {
+    gdpTier: "great_power",
+    gdpDescription: "x",
+    population: "x",
+    industrialization: "industrial",
+    industrializationDescription: "x",
+  },
+  navalAppropriation: { budgetLevel: "moderate", justification: "x" },
+  economy: {
+    description: "x",
+    character: "x",
+    strengths: [],
+    weaknesses: [],
+    industrialBase: "mature_global",
+  },
+  navalInstitution: { description: "x", character: [], seniority: "senior_service" },
+  doctrine: { summary: "x", schools: [] },
+  shipDesign: { summary: "x", principles: [], favoredTypes: [] },
+  ai: { archetype: "status_quo_maritime_hegemon", behavior: [] },
+  navalPurpose: "sustain_global_empire",
+  coreAnxiety: "loss_of_sea_control_overstretch",
+  gameplayFeel: "manage_supremacy",
+  historicalAssumptions: [],
+};
+
 const square = (id: string, layer: "LAND" | "SHALLOWS", x: number, y: number, size: number) => ({
   id,
   layer,
@@ -51,14 +100,15 @@ function compile(terrain: readonly unknown[], rulesets: readonly unknown[] = [ru
       type: "fixture",
       files: { terrain: ["terrain.ts"] },
     },
+    "countries.ts": [nation],
     "rulesets.ts": rulesets,
     "areas.ts": [
       { id: "a_coast", name: "Coast", type: "coastal" },
       { id: "a_other", name: "Other", type: "sea" },
     ],
     "ports.ts": [
-      { id: "p_one", name: "One", areaId: "a_coast", nationId: "n" },
-      { id: "p_far", name: "Far", areaId: "a_other", nationId: "n" },
+      { id: "p_one", name: "One", areaId: "a_coast", nationId: "uk" },
+      { id: "p_far", name: "Far", areaId: "a_other", nationId: "uk" },
     ],
     "terrain.ts": terrain,
   };
@@ -66,7 +116,7 @@ function compile(terrain: readonly unknown[], rulesets: readonly unknown[] = [ru
     manifestPath: "pack.json",
     contentDir: "/virtual",
     rulesetFiles: ["rulesets.ts"],
-    countryFiles: [],
+    countryFiles: ["countries.ts"],
     areaFiles: ["areas.ts"],
     routeFiles: [],
     possessionFiles: [],
@@ -80,8 +130,14 @@ function compile(terrain: readonly unknown[], rulesets: readonly unknown[] = [ru
   return { output, codes: collector.diagnostics.map((d) => d.code) };
 }
 
-function rulesetWith(terrain: unknown = terrainRules) {
-  return { id: "r", name: "R", version: "1.0.0", ...(terrain === undefined ? {} : { terrain }) };
+function rulesetWith(...terrain: readonly unknown[]) {
+  const section = terrain.length === 0 ? terrainRules : terrain[0];
+  return {
+    id: "r",
+    name: "R",
+    version: "1.0.0",
+    ...(section === undefined ? {} : { terrain: section }),
+  };
 }
 
 describe("terrain collection", () => {
