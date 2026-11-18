@@ -37,6 +37,7 @@
       "ship-building/components/guns/french.ts",
       "ship-building/components/guns/german-krupp.ts",
       "ship-building/components/guns/italian.ts",
+      "ship-building/components/guns/russian.ts",
       "ship-building/components/guns/soviet.ts",
       "ship-building/components/guns/united-states.ts",
       "ship-building/components/torpedo-tubes/british.ts",

@@ -7,11 +7,12 @@ const PROMOTED: Readonly<Record<string, { readonly nationId: string; readonly fa
     ru_12in30_obr1877: { nationId: "russia", familyId: "gun_bl_12in_25" },
     ru_11in_obr1867: { nationId: "russia", familyId: "gun_rml_11in_25ton" },
     ru_8in_obr1867: { nationId: "russia", familyId: "gun_rml_8in_9ton" },
+    ru_6in_obr1867: { nationId: "russia", familyId: "gun_bl_6in_obr1867" },
     us_dahlgren_15in: { nationId: "usa", familyId: "gun_sb_15in_dahlgren" },
     us_parrott_100pdr: { nationId: "usa", familyId: "gun_rml_64in_parrott" },
   };
 
-const UNSOURCED = ["ru_6in_obr1867", "us_parrott_300pdr", "us_dahlgren_8in"] as const;
+const UNSOURCED = ["us_parrott_300pdr", "us_dahlgren_8in"] as const;
 
 describe("Russian and US 1880s gun models (issue #880)", () => {
   const findings = lintArmamentContent(armamentCoverageInput);

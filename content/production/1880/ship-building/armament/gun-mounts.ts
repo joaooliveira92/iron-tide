@@ -874,6 +874,31 @@ export default collection("gunMounts", GunMountSchema, [
     },
   },
   {
+    id: "gun_bl_6in_obr1867_deck_open",
+    mountType: "DECK_OPEN",
+    compatibleGunFamilies: ["gun_bl_6in_obr1867"],
+    gunCount: 1,
+    baseInstallationMassKg: 1500,
+    perGunInstallationMassKg: 3000,
+    firingArcDeg: 140,
+    introductionMonth: "1880-01",
+    retirementMonth: null,
+    requiredTechnologyIds: [],
+    provenance: {
+      sourceStatus: "ESTIMATE",
+      confidence: "LOW",
+      kind: "historical_fact",
+      note: "issue #892. Mount masses and arc are copied from the 64-pdr 71-cwt deck mount. The sourced 866 kg carriage and 678 kg pivot platform are not applied.",
+      sources: [
+        {
+          title: "navy.su 6.03-inch and 6-inch guns obr.1867",
+          archiveOrUrl: "http://www.navy.su/navyarms/bronen/1867/6-6.03/6-6.03.htm",
+          section: "Research discussion #916",
+        },
+      ],
+    },
+  },
+  {
     id: "gun_rml_64in_parrott_deck_open",
     mountType: "DECK_OPEN",
     compatibleGunFamilies: ["gun_rml_64in_parrott"],

@@ -1013,13 +1013,13 @@ describe("armour materials out of the balance tables (ship-part-model 05)", () =
 });
 
 describe("ammunition patterns as parts (ship-part-model 05)", () => {
-  it("reads the twenty-three patterns as national ammunition parts", () => {
+  it("reads the twenty-five patterns as national ammunition parts", () => {
     expect(ammunitionModel.unread).toEqual([]);
     const read = ammunitionModel.records.map(
       (r) => `${r.part.id}:${r.part.nation}:${r.part.spec.shellType}`,
     );
     expect(read.join(" ")).toBe(
-      "de_ap_krupp:germany:AP de_he_common:germany:HE fr_apc:france:APC fr_melinite_he:france:MELINITE ru_ap_steel:russia:AP ru_cast_iron_11in:russia:HE ru_cast_iron_8in:russia:HE ru_chilled_iron_11in:russia:AP ru_chilled_iron_8in:russia:AP ru_he_130mm_50:russia:HE uk_ap_6in_50:uk:AP uk_ap_palliser:uk:AP uk_cpc:uk:CPC uk_he_45in_45:uk:HE us_ap_16in_50:usa:AP us_ap_6in_47:usa:AP us_ap_8in_55:usa:AP us_common_shell:usa:AP us_cored_shot_15in_dahlgren:usa:AP us_he_5in_38:usa:HE us_he_5in_54:usa:HE us_shell_15in_dahlgren:usa:HE us_solid_shot_64in_parrott:usa:AP",
+      "de_ap_krupp:germany:AP de_he_common:germany:HE fr_apc:france:APC fr_melinite_he:france:MELINITE ru_ap_steel:russia:AP ru_cast_iron_11in:russia:HE ru_cast_iron_6in:russia:HE ru_cast_iron_8in:russia:HE ru_chilled_iron_11in:russia:AP ru_chilled_iron_6in:russia:AP ru_chilled_iron_8in:russia:AP ru_he_130mm_50:russia:HE uk_ap_6in_50:uk:AP uk_ap_palliser:uk:AP uk_cpc:uk:CPC uk_he_45in_45:uk:HE us_ap_16in_50:usa:AP us_ap_6in_47:usa:AP us_ap_8in_55:usa:AP us_common_shell:usa:AP us_cored_shot_15in_dahlgren:usa:AP us_he_5in_38:usa:HE us_he_5in_54:usa:HE us_shell_15in_dahlgren:usa:HE us_solid_shot_64in_parrott:usa:AP",
     );
     for (const { part } of ammunitionModel.records)
       expect(decodeStrict(FlattenedPartSchema, part), part.id).toEqual(part);
