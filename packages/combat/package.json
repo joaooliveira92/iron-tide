@@ -48,6 +48,10 @@
       "types": "./src/damage/index.ts",
       "default": "./dist/damage/index.js"
     },
+    "./division-ai": {
+      "types": "./src/division-ai/index.ts",
+      "default": "./dist/division-ai/index.js"
+    },
     "./formation": {
       "types": "./src/formation/index.ts",
       "default": "./dist/formation/index.js"
