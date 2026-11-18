@@ -19,6 +19,7 @@ function view(): BattleView {
     version: "battle_view_v1",
     battleId: "b1",
     areaId: "area",
+    campaignMonth: "1880-02",
     side: "ATTACKER",
     playerNationId: "n-uk",
     ended: false,

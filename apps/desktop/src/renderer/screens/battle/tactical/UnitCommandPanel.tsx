@@ -1,9 +1,7 @@
-import type { PlayerBattleView } from "@bluewave/combat/battleResolution";
 import { memo, useEffect, useState } from "react";
 import {
   MAX_SPEED_KNOTS,
   MIN_SPEED_KNOTS,
-  playerSideOf,
   type DivisionOrder,
 } from "../../../../shared/player-battle-orders.js";
 import type { FormattingLocale } from "../../../../shared/preferences-contract.js";
@@ -14,9 +12,10 @@ import { BattleExplanationDisclosure } from "../BattleExplanationDisclosure.js";
 import { compassFromHeading, headingFromCompass } from "./tactical-geometry.js";
 import { divisionOfShip, selectedShip, shortDivisionId } from "./tactical-model.js";
 import { courseOrderState, parseCourse, parseSpeedKnots } from "./tactical-orders.js";
+import type { TacticalView } from "./tactical-view.js";
 
 export interface UnitCommandPanelProps {
-  readonly view: PlayerBattleView;
+  readonly view: TacticalView;
   readonly locale: FormattingLocale;
   readonly selectedShipId: string | null;
   readonly orderFor: (divisionId: string) => DivisionOrder;
@@ -40,7 +39,7 @@ export const UnitCommandPanel = memo(function UnitCommandPanel(props: UnitComman
   const { view, selectedShipId, orderFor, acceptedOrders, onPreviewCourse } = props;
   const ship = selectedShip(view, selectedShipId);
   const divisionId = ship === null ? null : divisionOfShip(view, ship.shipId);
-  const own = ship !== null && ship.sideId === playerSideOf(view);
+  const own = ship !== null && ship.own;
   const division = divisionId === null ? undefined : orderFor(divisionId);
   const accepted = divisionId === null ? undefined : acceptedOrders[divisionId];
 
@@ -78,7 +77,8 @@ export const UnitCommandPanel = memo(function UnitCommandPanel(props: UnitComman
   }
 
   const heading = ship.headingDeg === null ? null : compassFromHeading(ship.headingDeg);
-  const knotsNow = ship.speedBp === null ? null : ship.speedBp / MILLI_KNOTS_PER_KNOT;
+  const knotsNow =
+    ship.speedMilliKnots === null ? null : ship.speedMilliKnots / MILLI_KNOTS_PER_KNOT;
   const course = parseCourse(courseText);
   const speed = parseSpeedKnots(speedText);
   const canApply = course.ok && speed.ok && !view.ended;

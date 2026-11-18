@@ -1,6 +1,6 @@
 import { act, cleanup, fireEvent, screen, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
-import type { PlayerBattleView } from "@bluewave/combat/battleResolution";
+import type { TacticalView } from "../tactical/tactical-view.js";
 import { translate } from "../../../lib/strings.js";
 import { BattleBoard } from "../BattleBoard.js";
 import { AccuracyDisclosure } from "../AccuracyDisclosure.js";
@@ -19,7 +19,7 @@ vi.mock("../../../lib/strings.js", async (importOriginal) => {
 
 vi.mock("../AccuracyDisclosure.js", () => ({ AccuracyDisclosure: vi.fn(() => null) }));
 
-const VIEW: PlayerBattleView = {
+const VIEW: TacticalView = {
   ...BASE_VIEW,
   ships: BASE_VIEW.ships.map((entry) =>
     entry.shipId === "a1"

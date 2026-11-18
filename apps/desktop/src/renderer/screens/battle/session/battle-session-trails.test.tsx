@@ -1,6 +1,6 @@
 import { act, cleanup, waitFor } from "@testing-library/react";
 import { afterEach, describe, expect, it } from "vite-plus/test";
-import type { PlayerBattleView } from "@bluewave/combat/battleResolution";
+import type { TacticalView } from "../tactical/tactical-view.js";
 import {
   BASE_VIEW,
   mountSession,
@@ -32,7 +32,7 @@ const current = (): BattleSessionSnapshot => {
   return session;
 };
 
-const MOVED: PlayerBattleView = {
+const MOVED: TacticalView = {
   ...BASE_VIEW,
   minute: 1,
   ships: BASE_VIEW.ships.map((entry) =>

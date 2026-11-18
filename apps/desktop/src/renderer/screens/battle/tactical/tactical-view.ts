@@ -12,6 +12,7 @@ export interface TacticalShip {
   readonly shipId: string;
   readonly name: string;
   readonly own: boolean;
+  readonly shipType: string | null;
   readonly divisionId: string | null;
   readonly hitPoints: number | null;
   readonly maxHitPoints: number | null;
@@ -85,6 +86,7 @@ function ownShip(ship: BattleViewOwnShip): TacticalShip {
     shipId: ship.shipId,
     name: ship.name,
     own: true,
+    shipType: ship.shipType,
     divisionId: ship.divisionId,
     hitPoints: ship.hitPoints,
     maxHitPoints: ship.maxHitPoints,
@@ -110,6 +112,7 @@ function contactShip(contact: BattleViewContact): TacticalShip {
     shipId: contact.handle,
     name: contactName(contact),
     own: false,
+    shipType: null,
     divisionId: null,
     hitPoints: null,
     maxHitPoints: null,

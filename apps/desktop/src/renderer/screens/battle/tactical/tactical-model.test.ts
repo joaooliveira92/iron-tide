@@ -1,4 +1,3 @@
-import type { PlayerBattleShipView, PlayerBattleView } from "@bluewave/combat/battleResolution";
 import { describe, expect, it } from "vite-plus/test";
 import {
   PROVISIONAL_TRAIL_LENGTH,
@@ -8,31 +7,28 @@ import {
   selectedShip,
   shipStatus,
 } from "./tactical-model.js";
+import type { TacticalShip, TacticalView } from "./tactical-view.js";
 
-const ship = (patch: Partial<PlayerBattleShipView>): PlayerBattleShipView => ({
+const ship = (patch: Partial<TacticalShip>): TacticalShip => ({
   shipId: "s1",
   name: "HMS One",
-  className: "c",
+  own: true,
   shipType: "ironclad",
-  sideId: "ATTACKER",
   divisionId: "d1",
   hitPoints: 10,
   maxHitPoints: 10,
   damageState: "NORMAL",
   position: [0, 0],
   headingDeg: 0,
-  speedBp: 0,
+  speedMilliKnots: 0,
   contactConfidenceBp: null,
   ...patch,
 });
 
-const viewOf = (ships: PlayerBattleShipView[]): PlayerBattleView => ({
+const viewOf = (ships: TacticalShip[]): TacticalView => ({
   battleId: "b",
   campaignMonth: "1880-02",
-  playerNationId: "uk",
   areaId: "channel",
-  attackerId: "uk",
-  defenderId: "fr",
   minute: 0,
   maxMinutes: 10,
   ended: false,
@@ -40,7 +36,7 @@ const viewOf = (ships: PlayerBattleShipView[]): PlayerBattleView => ({
   winnerId: null,
   loserId: null,
   objectives: [],
-  weather: { seaState: "CALM", visibilityNm: 10, precipitation: "CLEAR", daylight: true },
+  weather: { seaState: "CALM", visibilityM: 18_520, precipitation: "CLEAR", daylight: true },
   ships,
   divisions: [],
   log: [],
