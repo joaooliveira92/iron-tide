@@ -11,6 +11,8 @@ export {
   COLLISION_SHIP_DIMENSION_INVALID,
   PROVISIONAL_COLLISION_RULES,
   collisionRadiusM,
+  projectShipCollisionContext,
+  type DesignHullMm,
 } from "./rules.js";
 export { COLLISION_HIT_LOCATION, COLLISION_WEAPON_ID, buildCollisionImpact } from "./impact.js";
 export {
