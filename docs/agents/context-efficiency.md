@@ -9,7 +9,7 @@ All thresholds live in `scripts/data/agent-context-policy.json`; hooks, tests an
 
 | Control | Enforces | Where |
 | --- | --- | --- |
-| Bash guard | blocks `cat` above the line limit, `sed -i`, write-mode script heredocs, heredoc overwrite of existing files | `scripts/hooks/pre-tool-use-bash.mjs` |
+| Bash guard | blocks `cat` over the line limit and source writes (`sed -i`, `perl -i`, scripts, redirects, `cp`); two blocks lock mutations until `agent:map`/`rg` | `scripts/hooks/pre-tool-use-*.mjs` |
 | Context hook | advises at 100k, warns at 150k, blocks a resume or post-idle prompt above 200k | `scripts/hooks/user-prompt-context.mjs` |
 | Stop gate | blocks a stop with dirty tree or unpushed commits | `scripts/hooks/stop-gate.mjs` |
 | Resume hook | on compact or resume, prints branch, status, brief, handoff | `scripts/hooks/session-start-resume.mjs` |
