@@ -1,10 +1,11 @@
 import type { MovementState } from "../movement/neighbour.js";
+import { advancePosition, resolvePropulsion, resolveTurning } from "../movement/neighbour.js";
 import {
-  advancePosition,
-  resolveCollisionsGrounding,
-  resolvePropulsion,
-  resolveTurning,
-} from "../movement/neighbour.js";
+  createMovementHazards,
+  type CollisionRecord,
+  type CollisionState,
+  type MovementHazards,
+} from "../collision/index.js";
 import { SUBSTEPS_PER_MINUTE } from "../core/tacticalTime.js";
 import {
   resolveSensorsSpotting,
@@ -84,6 +85,10 @@ export interface MinuteRun {
   orders: Record<string, UnitOrders>;
   resolvedMovements: Record<string, MovementState>;
   collisionRecord: { empty: boolean };
+  hazards?: MovementHazards;
+  collisionRecords?: readonly CollisionRecord[];
+  collisionState?: CollisionState;
+  collisionImpacts?: Readonly<Record<string, readonly GunneryImpact[]>>;
   smokeClouds?: SmokeCloud[];
   smokeRecords?: SmokeEventRecord[];
   weatherComponents?: BattleWeatherComponents;
@@ -189,6 +194,8 @@ export function resolvePropulsionStage(run: MinuteRun): void {
     : undefined;
   const movements: Record<string, MovementState> = {};
   for (const u of run.run) movements[u.assetId] = u.movement;
+  const hazards = createMovementHazards(run.input.collision, run.battleId, run.minute);
+  run.hazards = hazards;
   const sources: Record<string, FormationShipSource> = {};
   for (const unit of run.units) {
     sources[unit.assetId] = { assetId: unit.assetId, designedSpeedUms: unit.designedSpeedUms };
@@ -199,16 +206,19 @@ export function resolvePropulsionStage(run: MinuteRun): void {
       runtime && context
         ? planFormationSubstep(runtime, context, movements, run.orders, sources)
         : undefined;
+    hazards?.beginSubstep(movements);
     for (const u of run.run) {
       const ord = run.orders[u.assetId];
       const steer = plan?.overrides[u.assetId];
       const m = u.movement;
       if (steer) m.orderedSpeed = steer.orderedSpeedBp;
+      const speedBefore = m.currentSpeed;
+      const attainable = ord?.attainableMaxBp ?? m.orderedSpeed;
       m.currentSpeed = resolvePropulsion({
         currentSpeed: m.currentSpeed,
         orderedSpeed: m.orderedSpeed,
         dtSeconds: 1,
-        attainableMaxBpKnots: ord?.attainableMaxBp ?? m.orderedSpeed,
+        attainableMaxBpKnots: hazards ? hazards.limitSpeed(u.assetId, attainable) : attainable,
       });
       m.heading = resolveTurning({
         heading: m.heading,
@@ -216,11 +226,13 @@ export function resolvePropulsionStage(run: MinuteRun): void {
         dtSeconds: 1,
         turningRateMdegS: m.turningRate,
       });
-      m.position = advancePosition({
+      const next = advancePosition({
         state: { ...m, currentSpeed: m.currentSpeed, heading: m.heading },
         dtSeconds: 1,
       });
+      m.position = hazards ? hazards.admit(u.assetId, m, next, speedBefore, sub) : next;
     }
+    hazards?.endSubstep(sub, movements);
     if (runtime && context) recordFlagshipTracks(runtime, context, movements);
   }
   if (runtime && context) {
@@ -240,7 +252,16 @@ export function resolvePropulsionStage(run: MinuteRun): void {
 }
 
 export function resolveCollisionsStage(run: MinuteRun): void {
-  run.collisionRecord = resolveCollisionsGrounding();
+  if (run.hazards) {
+    const outcome = run.hazards.finish();
+    for (const e of outcome.events) run.ledger.append(e);
+    run.collisionState = outcome.state;
+    if (outcome.records.length > 0) {
+      run.collisionRecords = outcome.records;
+      run.collisionImpacts = outcome.impacts;
+      run.collisionRecord = { empty: false };
+    }
+  }
   run.ledger.append(
     evt(run.minute, 0, "resolve_collisions_grounding", 7, "pipeline", run.battleId),
   );
@@ -396,8 +417,20 @@ export function resolveMissileStage(run: MinuteRun): void {
   if (Object.keys(result.impactsByTarget).length > 0) run.missileImpacts = result.impactsByTarget;
 }
 
+function mergeImpacts(
+  first: Readonly<Record<string, readonly GunneryImpact[]>> | undefined,
+  second: Readonly<Record<string, readonly GunneryImpact[]>> | undefined,
+): Readonly<Record<string, readonly GunneryImpact[]>> | undefined {
+  if (first === undefined) return second;
+  if (second === undefined) return first;
+  const merged: Record<string, readonly GunneryImpact[]> = { ...first };
+  for (const [id, list] of Object.entries(second)) merged[id] = [...(merged[id] ?? []), ...list];
+  return merged;
+}
+
 export function resolveDamageStage(run: MinuteRun): void {
   if (!run.input.damage) return;
+  const extraImpacts = mergeImpacts(run.missileImpacts, run.collisionImpacts);
   const dmgResult = resolveMinuteDamage({
     battleId: run.battleId,
     minute: run.minute,
@@ -406,7 +439,7 @@ export function resolveDamageStage(run: MinuteRun): void {
     targets: run.input.damage.targets,
     engine: run.input.damage.engine,
     randomLedger: run.input.damage.randomLedger,
-    ...(run.missileImpacts === undefined ? {} : { extraImpacts: run.missileImpacts }),
+    ...(extraImpacts === undefined ? {} : { extraImpacts }),
   });
   for (const de of dmgResult.events) run.ledger.append(de);
   if (Object.keys(dmgResult.states).length > 0) run.damageStates = dmgResult.states;
