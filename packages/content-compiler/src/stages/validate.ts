@@ -20,7 +20,6 @@ import {
   PlatformSchema,
   PortSchema,
   PossessionSchema,
-  PresentationContentSchema,
   PropulsionPlantSchema,
   ReferenceDesignSchema,
   ReferenceDesignLoadoutSchema,
@@ -31,7 +30,6 @@ import {
   ShipTypeRecordSchema,
   SlotTemplateSchema,
   TechnologyPrerequisiteChainSchema,
-  UiCatalogueSchema,
   validateAgainstSchema,
   type ContentSchema,
   decodeBattleOfferRules,
@@ -43,6 +41,8 @@ import {
 } from "@bluewave/content-schema";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { validateDiplomacyRules } from "./validateDiplomacyRules.js";
+import { validatePresentation, validateUi } from "./validateObjects.js";
+import { validateTerrain, type TerrainValidated } from "./validateTerrain.js";
 
 import type { CampaignCollections, CompilerStage } from "../index.js";
 import type { ParseOutput } from "./parse.js";
@@ -82,6 +82,7 @@ export interface ValidateOutput {
   divisions?: unknown[];
   events?: unknown[];
   constructionEvents?: unknown[];
+  terrain?: TerrainValidated;
   presentation?: unknown;
   ui?: unknown;
 }
@@ -285,6 +286,14 @@ export class ValidateStage implements CompilerStage<ParseOutput, ValidateOutput>
     const campaign = validateCampaignCollections(validated, input, collector);
     validateEventResolutionRules(validated["rulesets"] ?? [], campaign.events ?? [], collector);
 
+    const terrain = validateTerrain(
+      input,
+      validated["rulesets"] ?? [],
+      validated["areas"] ?? [],
+      validated["ports"] ?? [],
+      collector,
+    );
+
     const presentation = validatePresentation(input, collector);
     validatePresentationRegions(validated, presentation, input, collector);
 
@@ -321,30 +330,11 @@ export class ValidateStage implements CompilerStage<ParseOutput, ValidateOutput>
       divisions: [...(campaign.divisions ?? [])],
       events: [...(campaign.events ?? [])],
       constructionEvents: [...(campaign.constructionEvents ?? [])],
+      ...(terrain !== undefined ? { terrain } : {}),
       ...(presentation !== undefined ? { presentation } : {}),
       ...(ui !== undefined ? { ui } : {}),
     };
   }
-}
-
-function validatePresentation(input: ParseOutput, collector: DiagnosticCollector): unknown {
-  const raw = input.objectDocs.get("presentation");
-  if (raw === undefined) return undefined;
-  const sourcePath = input.objectSourcePaths.get("presentation") ?? "presentation.ts";
-  return validateAgainstSchema(
-    raw,
-    PresentationContentSchema,
-    "PresentationContent",
-    sourcePath,
-    collector,
-  );
-}
-
-function validateUi(input: ParseOutput, collector: DiagnosticCollector): unknown {
-  const raw = input.objectDocs.get("ui");
-  if (raw === undefined) return undefined;
-  const sourcePath = input.objectSourcePaths.get("ui") ?? "ui/en-US.json";
-  return validateAgainstSchema(raw, UiCatalogueSchema, "UiCatalogue", sourcePath, collector);
 }
 
 function validatePresentationRegions(

@@ -1,5 +1,6 @@
 import type {
   CompiledPartModel,
+  CompiledTerrain,
   ContentPack,
   PresentationContent,
   UiCatalogue,
@@ -44,6 +45,7 @@ export interface CompilerInput {
   eventFiles?: string[];
   constructionEventFiles?: string[];
   presentationFiles?: string[];
+  terrainFiles?: string[];
   uiFiles?: string[];
 }
 
@@ -98,6 +100,7 @@ export interface CompilerOutput {
   envelopeHash: string;
   bundle: ContentBundle;
   contentVersion: string;
+  terrain?: CompiledTerrain;
 }
 
 export interface CompilerStage<I, O> {
@@ -152,6 +155,14 @@ export {
   loadContentModule,
   type ContentModuleLoad,
 } from "./contentModule.js";
+export {
+  TERRAIN_ARTIFACT_FILENAME,
+  buildTerrainArtifact,
+  verifyTerrainArtifact,
+  type TerrainArtifact,
+  type TerrainEnvelope,
+  type TerrainVerification,
+} from "./terrainArtifact.js";
 export {
   CONTENT_ARTIFACT_FILENAME,
   CONTENT_BUNDLE_ARTIFACT_KIND,

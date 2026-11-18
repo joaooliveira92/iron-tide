@@ -25,7 +25,7 @@
   "packages/combat/test/torpedo/detonation.test.ts": { "lines": 627 },
   "packages/combat/test/torpedo/eligibility.test.ts": { "lines": 694 },
   "packages/commands/test/commands.test.ts": { "lines": 709 },
-  "packages/content-compiler/src/stages/validate.ts": { "lines": 1512 },
+  "packages/content-compiler/src/stages/validate.ts": { "lines": 1503 },
   "packages/content-compiler/test/compiler.test.ts": { "lines": 1048 },
   "packages/content-compiler/test/partIndex.test.ts": { "lines": 774 },
   "packages/content-schema/src/ship-parts.ts": { "lines": 971 },
