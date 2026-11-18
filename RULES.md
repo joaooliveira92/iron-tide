@@ -48,6 +48,9 @@ contract wins; fix this file in the same change.
   unit types, checked arithmetic, explicit bounds and rounding; reject
   non-integers and unsafe integers at construction. Add `bigint` only after
   documented bound analysis.
+- Ship positions are micrometres: compare distances at metre scale (squared
+  micrometre differences overflow beyond about 95 km). Waypoint arrival
+  tolerance is PROVISIONAL ruleset data, overridable via `waypointRules`.
 - Use a versioned canonical serializer with defined key/collection ordering,
   Unicode normalization, and integer representation. SHA-256 with
   domain-separated envelopes. Never treat JavaScript insertion order as canon.

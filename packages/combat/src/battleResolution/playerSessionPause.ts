@@ -1,3 +1,4 @@
+import { WAYPOINT_REACHED_EVENT_TYPE } from "../orders/constants.js";
 import type { BattleSide } from "./viability.js";
 import type { PlayerBattleEvent, PlayerBattleSession } from "./playerSessionTypes.js";
 import {
@@ -57,6 +58,13 @@ export function minutePauseKinds(
       raised.add("FRIENDLY_HIT");
     }
     if (torpedo.includes(event.eventType)) raised.add("TORPEDO");
+    if (
+      event.eventType === WAYPOINT_REACHED_EVENT_TYPE &&
+      ownIds.has(event.actorId) &&
+      after.waypointArrivals?.[event.targetId]?.pauseOnArrival === true
+    ) {
+      raised.add("WAYPOINT_REACHED");
+    }
   }
 
   const heldBefore = enemyContactIds(before);
