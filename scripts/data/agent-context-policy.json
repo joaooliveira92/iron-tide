@@ -20,6 +20,8 @@
   "handoffExemptPromptPrefixes": ["/handoff", "/compact", "/clear"],
   "resumePromptPattern": "^\\s*(continue|resume|keep going|go on)\\b",
   "guardAuditLogEnv": "AGENT_GUARD_AUDIT_LOG",
+  "mutationLockAt": 2,
+  "guardStateDirEnv": "AGENT_GUARD_STATE_DIR",
   "telemetryDirEnv": "CLAUDE_TELEMETRY_DIR",
   "hookStderrMaxChars": 600,
   "resumeContextMaxChars": 600,

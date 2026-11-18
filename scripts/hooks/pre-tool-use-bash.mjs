@@ -4,6 +4,7 @@ import { homedir } from "node:os";
 import { basename, dirname, resolve } from "node:path";
 
 import { evaluateBashCommand, parseOverride } from "../lib/agent-guard.mjs";
+import { isReassessmentCommand, lockedMessage, openStreak } from "../lib/mutation-streak.mjs";
 import { isPollCommand, trailingPollLength } from "../lib/poll-chain.mjs";
 import { rangeReadTargets, trailingChainLength } from "../lib/read-chain.mjs";
 import { readTail } from "../lib/transcript-context.mjs";
@@ -55,7 +56,16 @@ function main() {
     process.stderr.write("agent-guard: skipped (evaluation error)\n");
     return 0;
   }
+  const streak = openStreak({ policy, env: process.env, sessionId: payload.session_id });
+  if (streak !== null && isReassessmentCommand(command)) streak.reset();
+  if (streak !== null && verdict.mutation && streak.count() > 0) {
+    streak.recordBlock();
+    const message = streak.locked() ? lockedMessage(policy) : verdict.message;
+    process.stderr.write(`agent-guard: ${message.slice(0, policy.hookStderrMaxChars)}\n`);
+    return 2;
+  }
   if (verdict.decision === "block") {
+    if (streak !== null && verdict.mutation) streak.recordBlock();
     process.stderr.write(`agent-guard: ${verdict.message.slice(0, policy.hookStderrMaxChars)}\n`);
     return 2;
   }

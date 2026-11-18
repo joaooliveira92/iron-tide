@@ -13,6 +13,9 @@ contract wins; fix this file in the same change.
   narrow and Conventional.
 - Use one production owner for overlapping files. Review agents are read-only:
   they must not edit code, tests, commits, branches, or PR state.
+- After a guard-blocked Bash mutation the next one must use Edit or Write, never
+  a retry through another mechanism; two blocks lock mutations until `pnpm agent:map`
+  or an `rg` search.
 
 ## Authority and docs
 
