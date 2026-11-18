@@ -79,6 +79,7 @@ export class ParseStage implements CompilerStage<CompilerInput, ParseOutput> {
       events: input.eventFiles ?? [],
       constructionEvents: input.constructionEventFiles ?? [],
       presentation: input.presentationFiles ?? [],
+      terrain: input.terrainFiles ?? [],
       ui: input.uiFiles ?? [],
     };
 

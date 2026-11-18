@@ -201,6 +201,7 @@ export function buildFullSurfaceInput(
     eventFiles: (files.events ?? []).map(toAbsolute),
     constructionEventFiles: (files.constructionEvents ?? []).map(toAbsolute),
     presentationFiles: (files.presentation ?? []).map(toAbsolute),
+    terrainFiles: (files.terrain ?? []).map(toAbsolute),
     uiFiles: (files.ui ?? []).map(toAbsolute),
   };
 }

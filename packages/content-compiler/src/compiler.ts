@@ -90,6 +90,7 @@ function withFileContents(input: CompilerInput): CompilerInput {
     ...(input.eventFiles ?? []),
     ...(input.constructionEventFiles ?? []),
     ...(input.presentationFiles ?? []),
+    ...(input.terrainFiles ?? []),
     ...(input.uiFiles ?? []),
   ];
   const documents = input.documents ?? {};
