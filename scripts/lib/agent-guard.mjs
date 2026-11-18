@@ -10,11 +10,19 @@ const WRITE_SIGNATURES = [
   /\.write\s*\(/u,
   /\b(?:writeFileSync|appendFileSync|writeFile|appendFile)\b/u,
   /\bos\.(?:rename|replace|remove|unlink)\s*\(/u,
-  /\bshutil\.(?:move|copy|copyfile|rmtree)\s*\(/u,
+  /\bshutil\.(?:move|copy|copy2|copyfile|copytree|rmtree)\s*\(/u,
+  /\b(?:createWriteStream|copyFileSync|copyFile|cpSync|renameSync|rmSync|unlinkSync|truncateSync)\s*\(/u,
+  /\bPath\s*\([^)]*\)\s*\.(?:touch|unlink|rename|replace)\s*\(/u,
+  /\bFile\s*\.\s*(?:write|binwrite|open|delete|rename)\b/u,
+  /\bopen\s*\([^)]*["'`]\s*\+?\s*>/u,
 ];
+const SOURCE_EXTENSIONS = /\.(?:tsx?|mts|cts|jsx?|mjs|cjs|json|md|ya?ml|css|html|sh|py)$/u;
+const CONTENT_PROGRAMS = new Set(["echo", "printf", "cat", "sed", "awk", "tee"]);
+const COPY_PROGRAMS = new Set(["cp", "mv", "install"]);
+const NEXT_MUTATION =
+  "The next mutation must use Edit (Write for a new file); do not retry via Bash, an interpreter, redirection, or an equivalent.";
 const safeAlternativeRead = (policy) =>
   `Use the Read tool with offset/limit (at most ${policy.readRangeMaxLines} lines), or \`rg -n -C3 <pattern> <path> | head -${policy.readRangeMaxLines}\`.`;
-const SAFE_ALTERNATIVE_EDIT = "Use the Edit tool (or Write for a new file).";
 
 const REDIRECT = /^(\d*)(>>?)(.*)$/u;
 const escapeRegExp = (text) => text.replace(/[.*+?^${}()|[\]\\]/gu, "\\$&");
@@ -229,6 +237,34 @@ function hasSedInPlace(words) {
   return words.slice(1).some((w) => w === "--in-place" || /^-(?!-)[A-Za-z]*i/u.test(w));
 }
 
+const hasPerlInPlace = (words) => words.slice(1).some((w) => /^-[nplas0-9]*i/u.test(w));
+
+function isSourceTarget(destination, workdir, workdirKnown) {
+  if (hasDynamicText(destination) || !SOURCE_EXTENSIONS.test(destination)) return false;
+  const relative = !destination.startsWith("/") && !destination.startsWith("~");
+  if (relative && !workdirKnown) return false;
+  const absolute = resolvePath(workdir, destination);
+  return !isScratchPath(absolute) && !/\/\.git\//u.test(absolute);
+}
+
+function redirectedSourceTarget(segment, workdir, workdirKnown) {
+  const program = segment.words[0];
+  if (!CONTENT_PROGRAMS.has(program)) return undefined;
+  const targets = stdoutRedirects(segment).map((r) => r.target);
+  if (program === "tee") {
+    targets.push(...segment.words.slice(1).filter((w) => !w.startsWith("-")));
+  }
+  return targets.find((target) => isSourceTarget(target, workdir, workdirKnown));
+}
+
+function copiedSourceTarget(segment, workdir, workdirKnown) {
+  if (!COPY_PROGRAMS.has(segment.words[0])) return undefined;
+  const operands = segment.words.slice(1).filter((w) => !w.startsWith("-"));
+  if (operands.length < 2) return undefined;
+  const destination = operands[operands.length - 1];
+  return isSourceTarget(destination, workdir, workdirKnown) ? destination : undefined;
+}
+
 export function evaluateBashCommand({ command, cwd, policy, fsApi = createNodeFs() }) {
   const override = parseOverride(command, policy);
   const segments = tokenizeCommand(command);
@@ -250,7 +286,16 @@ export function evaluateBashCommand({ command, cwd, policy, fsApi = createNodeFs
     if (program === "sed" && hasSedInPlace(segment.words)) {
       blocks.push({
         rule: "sed-in-place",
-        message: `sed -i rewrites files in place. ${SAFE_ALTERNATIVE_EDIT}`,
+        message: "sed -i rewrites files in place.",
+        mutation: true,
+      });
+      continue;
+    }
+    if (program === "perl" && hasPerlInPlace(segment.words)) {
+      blocks.push({
+        rule: "perl-in-place",
+        message: "perl -i rewrites files in place.",
+        mutation: true,
       });
       continue;
     }
@@ -259,7 +304,8 @@ export function evaluateBashCommand({ command, cwd, policy, fsApi = createNodeFs
       if (text.length > 0 && WRITE_SIGNATURES.some((signature) => signature.test(text))) {
         blocks.push({
           rule: "script-write",
-          message: `An interpreter script writes files. ${SAFE_ALTERNATIVE_EDIT} Read-only scripts are allowed.`,
+          message: "An interpreter script writes files. Read-only scripts are allowed.",
+          mutation: true,
         });
         continue;
       }
@@ -274,10 +320,30 @@ export function evaluateBashCommand({ command, cwd, policy, fsApi = createNodeFs
         if (!isScratchPath(absolute) && fsApi.exists(absolute)) {
           blocks.push({
             rule: "heredoc-overwrite",
-            message: `A heredoc would overwrite the existing file ${destination}. ${SAFE_ALTERNATIVE_EDIT}`,
+            message: `A heredoc would overwrite the existing file ${destination}.`,
+            mutation: true,
           });
+          continue;
         }
       }
+      continue;
+    }
+    const redirected = redirectedSourceTarget(segment, workdir, workdirKnown);
+    if (redirected !== undefined) {
+      blocks.push({
+        rule: "redirect-write",
+        message: `${program} writes the source file ${redirected}.`,
+        mutation: true,
+      });
+      continue;
+    }
+    const copied = copiedSourceTarget(segment, workdir, workdirKnown);
+    if (copied !== undefined) {
+      blocks.push({
+        rule: "copy-write",
+        message: `${program} writes the source file ${copied}.`,
+        mutation: true,
+      });
       continue;
     }
     if (program === "cat" && !segment.pipedOut && stdoutRedirects(segment).length === 0) {
@@ -309,16 +375,23 @@ export function evaluateBashCommand({ command, cwd, policy, fsApi = createNodeFs
     }
   }
 
-  if (blocks.length === 0) return { decision: "allow", rule: null, message: "", override: null };
-  const first = blocks[0];
-  if (override !== null) {
-    return { decision: "allow", rule: first.rule, message: first.message, override };
+  if (blocks.length === 0) {
+    return { decision: "allow", rule: null, message: "", override: null, mutation: false };
   }
-  const hint = `Override (audited): append \`# ${policy.overrideToken} <reason>\` to the command.`;
+  const first = blocks[0];
+  const mutation = first.mutation === true;
+  const message = mutation ? `${first.message} ${NEXT_MUTATION}` : first.message;
+  if (override !== null) {
+    return { decision: "allow", rule: first.rule, message, override, mutation };
+  }
+  const hint = mutation
+    ? ""
+    : ` Override (audited): append \`# ${policy.overrideToken} <reason>\` to the command.`;
   return {
     decision: "block",
     rule: first.rule,
-    message: `${first.message} ${hint}`,
+    message: `${message}${hint}`,
     override: null,
+    mutation,
   };
 }

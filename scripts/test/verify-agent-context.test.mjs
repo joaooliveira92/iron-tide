@@ -27,6 +27,7 @@ const FILES = [
   "apps/desktop/scripts/snap-args.ts",
   "scripts/data/agent-context-policy.json",
   "scripts/hooks/pre-tool-use-bash.mjs",
+  "scripts/hooks/pre-tool-use-edit.mjs",
   "scripts/hooks/user-prompt-context.mjs",
   "scripts/hooks/session-telemetry.mjs",
   "scripts/hooks/stop-gate.mjs",
@@ -34,6 +35,7 @@ const FILES = [
   "scripts/lib/session-resume.mjs",
   "scripts/lib/agent-guard.mjs",
   "scripts/lib/hook-telemetry.mjs",
+  "scripts/lib/mutation-streak.mjs",
   "scripts/lib/transcript-context.mjs",
 ];
 const created = [];
