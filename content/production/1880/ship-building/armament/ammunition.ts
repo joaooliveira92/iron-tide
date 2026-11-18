@@ -481,18 +481,26 @@ export default collection("ammunition", AmmunitionPatternSchema, [
     compatibleGunModelIds: ["ru_11in_obr1867"],
     shellMassG: 225200,
     explosiveFillerG: 3280,
+    penetrationBiasBp: 9000,
+    ammunitionCostMicro: 2033556,
     introductionMonth: "1880-01",
     retirementMonth: null,
     provenance: {
-      sourceStatus: "ESTIMATE",
+      sourceStatus: "BALANCE_TARGET",
       confidence: "LOW",
-      kind: "historical_fact",
-      note: "issue #880. Chilled-iron (armour-piercing) shell 225.2 kg with 3.28 kg black powder, from one secondary Russian reference page (SINGLE-SOURCE). Shell type AP because it is the armour-piercing round; scoped to the model, never the family, so no starter resolution moves. No penetration bias or cost is sourced.",
+      kind: "balance_adjustment",
+      note: "issues #880, #898. Mass 225.2 kg and filler 3.28 kg black powder: one secondary Russian reference page (SINGLE-SOURCE). Shell type AP; scoped to the model, never the family, so no starter resolution moves. penetrationBiasBp 9000: BALANCE_TARGET copied from the nearest sourced AP sibling uk_ap_palliser (chilled iron, DERIVED/MEDIUM); no Russian penetration figure exists. ammunitionCostMicro 2,033,556 micro-GBP: BALANCE_TARGET, mass 225.2 kg x 9,030 micro-GBP/kg, the Holley 1862 trial price of a hollow cast-iron 32-pdr shell ($438.50 per 1000 of 22 lb) at par $4.8665 per GBP; no chilled-iron premium is sourced so the cast shell rate is a lower bound; filler and fuze excluded.",
       sources: [
         {
           title: "navy.su 11-inch gun obr.1867",
           archiveOrUrl: "http://www.navy.su/navyarms/bronen/1867/11/11.htm",
           section: "Research discussion #890 section 2",
+        },
+        {
+          title: "Holley, A Treatise on Ordnance and Armor (1865), para 593 projectile prices",
+          archiveOrUrl:
+            "https://civilwarnavy.com/wp-content/uploads/2020/06/Holley_A-Treatise-on-Ordnance-and-Armor.pdf",
+          section: "Research discussion #890 section 4",
         },
       ],
     },
@@ -504,18 +512,26 @@ export default collection("ammunition", AmmunitionPatternSchema, [
     compatibleGunModelIds: ["ru_11in_obr1867"],
     shellMassG: 222000,
     explosiveFillerG: 7450,
+    penetrationBiasBp: 2500,
+    ammunitionCostMicro: 2004660,
     introductionMonth: "1880-01",
     retirementMonth: null,
     provenance: {
-      sourceStatus: "ESTIMATE",
+      sourceStatus: "BALANCE_TARGET",
       confidence: "LOW",
-      kind: "historical_fact",
-      note: "issue #880. Common cast-iron shell 222 kg with 7.45 kg black powder, from one secondary Russian reference page (SINGLE-SOURCE). Shell type HE because it is the percussion-fuzed bursting shell; scoped to the model. No penetration bias or cost is sourced.",
+      kind: "balance_adjustment",
+      note: "issues #880, #898. Mass 222 kg and filler 7.45 kg black powder: one secondary Russian reference page (SINGLE-SOURCE). Shell type HE (percussion-fuzed bursting shell); scoped to the model. penetrationBiasBp 2500: BALANCE_TARGET copied from the nearest sourced HE siblings uk_he_45in_45 and de_he_common (both 2500). ammunitionCostMicro 2,004,660 micro-GBP: BALANCE_TARGET, mass 222 kg x 9,030 micro-GBP/kg, the Holley 1862 trial price of a hollow cast-iron 32-pdr shell ($438.50 per 1000 of 22 lb) at par $4.8665 per GBP; filler and fuze excluded.",
       sources: [
         {
           title: "navy.su 11-inch gun obr.1867",
           archiveOrUrl: "http://www.navy.su/navyarms/bronen/1867/11/11.htm",
           section: "Research discussion #890 section 2",
+        },
+        {
+          title: "Holley, A Treatise on Ordnance and Armor (1865), para 593 projectile prices",
+          archiveOrUrl:
+            "https://civilwarnavy.com/wp-content/uploads/2020/06/Holley_A-Treatise-on-Ordnance-and-Armor.pdf",
+          section: "Research discussion #890 section 4",
         },
       ],
     },
@@ -526,18 +542,32 @@ export default collection("ammunition", AmmunitionPatternSchema, [
     nationId: "russia",
     compatibleGunModelIds: ["ru_8in_obr1867"],
     shellMassG: 84800,
+    explosiveFillerG: 550,
+    penetrationBiasBp: 9000,
+    ammunitionCostMicro: 765744,
     introductionMonth: "1880-01",
     retirementMonth: null,
     provenance: {
-      sourceStatus: "ESTIMATE",
+      sourceStatus: "BALANCE_TARGET",
       confidence: "LOW",
-      kind: "historical_fact",
-      note: "issue #880. Lead-coated chilled-iron shell 84.8 kg, the heaviest of the 73.7 to 84.8 kg range, from one secondary Russian reference page (SINGLE-SOURCE). The page gives no filler for it. Scoped to the model. No penetration bias or cost is sourced.",
+      kind: "balance_adjustment",
+      note: "issues #880, #898. Lead-coated chilled-iron shell 84.8 kg, the heaviest of the 73.7 to 84.8 kg range, from one secondary Russian reference page (SINGLE-SOURCE). explosiveFillerG 550: ESTIMATE, the page gives none; rule is the filler mass fraction of the nearest-calibre sourced chilled shell (9-inch obr.1867, 0.8 kg in 122-124 kg = 0.650 percent, navy.su 9.htm) times 84.8 kg. The 11-inch chilled fraction (1.456 percent) would give 1,235 g; listed for owner review. penetrationBiasBp 9000: BALANCE_TARGET copied from the nearest sourced AP sibling uk_ap_palliser. ammunitionCostMicro 765,744 micro-GBP: BALANCE_TARGET, mass 84.8 kg x 9,030 micro-GBP/kg (Holley 1862 hollow cast-iron shell price at par $4.8665 per GBP; no chilled premium sourced, so a lower bound).",
       sources: [
         {
           title: "navy.su 8-inch gun obr.1867",
           archiveOrUrl: "http://www.navy.su/navyarms/bronen/1867/8/8.htm",
           section: "Research discussion #890 section 2",
+        },
+        {
+          title: "navy.su 9-inch gun obr.1867 (chilled-iron filler fraction)",
+          archiveOrUrl: "http://www.navy.su/navyarms/bronen/1867/9/9.htm",
+          section: "Research discussion #890 section 2",
+        },
+        {
+          title: "Holley, A Treatise on Ordnance and Armor (1865), para 593 projectile prices",
+          archiveOrUrl:
+            "https://civilwarnavy.com/wp-content/uploads/2020/06/Holley_A-Treatise-on-Ordnance-and-Armor.pdf",
+          section: "Research discussion #890 section 4",
         },
       ],
     },
@@ -549,18 +579,26 @@ export default collection("ammunition", AmmunitionPatternSchema, [
     compatibleGunModelIds: ["ru_8in_obr1867"],
     shellMassG: 73700,
     explosiveFillerG: 2640,
+    penetrationBiasBp: 2500,
+    ammunitionCostMicro: 665511,
     introductionMonth: "1880-01",
     retirementMonth: null,
     provenance: {
-      sourceStatus: "ESTIMATE",
+      sourceStatus: "BALANCE_TARGET",
       confidence: "LOW",
-      kind: "historical_fact",
-      note: "issue #880. Common cast-iron shell 73.7 kg with the normal 2.64 kg black-powder filling, from one secondary Russian reference page (SINGLE-SOURCE). Scoped to the model. No penetration bias or cost is sourced.",
+      kind: "balance_adjustment",
+      note: "issues #880, #898. Common cast-iron shell 73.7 kg with the normal 2.64 kg black-powder filling, from one secondary Russian reference page (SINGLE-SOURCE). Scoped to the model. penetrationBiasBp 2500: BALANCE_TARGET copied from the nearest sourced HE siblings uk_he_45in_45 and de_he_common. ammunitionCostMicro 665,511 micro-GBP: BALANCE_TARGET, mass 73.7 kg x 9,030 micro-GBP/kg (Holley 1862 hollow cast-iron shell price at par $4.8665 per GBP); filler and fuze excluded.",
       sources: [
         {
           title: "navy.su 8-inch gun obr.1867",
           archiveOrUrl: "http://www.navy.su/navyarms/bronen/1867/8/8.htm",
           section: "Research discussion #890 section 2",
+        },
+        {
+          title: "Holley, A Treatise on Ordnance and Armor (1865), para 593 projectile prices",
+          archiveOrUrl:
+            "https://civilwarnavy.com/wp-content/uploads/2020/06/Holley_A-Treatise-on-Ordnance-and-Armor.pdf",
+          section: "Research discussion #890 section 4",
         },
       ],
     },
@@ -616,19 +654,28 @@ export default collection("ammunition", AmmunitionPatternSchema, [
     nationId: "usa",
     compatibleGunModelIds: ["us_dahlgren_15in"],
     shellMassG: 149700,
+    explosiveFillerG: 5900,
+    penetrationBiasBp: 2500,
+    ammunitionCostMicro: 1351791,
     introductionMonth: "1880-01",
     retirementMonth: null,
     provenance: {
-      sourceStatus: "DERIVED",
-      confidence: "MEDIUM",
-      kind: "historical_fact",
-      note: "issue #880. XV-inch shell 330 lb (149,685 g, authored as 149,700 g like the component) from the 1866 Ordnance Instructions proof table, SINGLE-SOURCE primary. The conflicting 352 lb figure is absent from that text. Shell type HE for the cast-iron bursting shell; scoped to the model, so the nation default pattern still resolves for starters. No filler, penetration bias or cost is sourced.",
+      sourceStatus: "BALANCE_TARGET",
+      confidence: "LOW",
+      kind: "balance_adjustment",
+      note: "issues #880, #898. Mass: XV-inch shell 330 lb (149,685 g, authored as 149,700 g like the component), two sources (Ordnance Instructions 1866 proof table and Holley Table XXIII Navy). The 352 lb figure is the same 1866 text's filled-and-sabotted weight (gauge table), so 330 lb is the empty casting weight; the mass is kept for compatibility and flagged in the PR. explosiveFillerG 5,900: Ordnance Instructions 1866 para 105, XV-inch bursting or service charge 13 lb (5,897 g), primary; the Army 15-inch figure of 17 lb (Holley Table XXII) is listed for owner review and 352 minus 330 = 22 lb of filler, fuze and sabot is consistent. Shell type HE; scoped to the model. penetrationBiasBp 2500: BALANCE_TARGET copied from the nearest sourced HE siblings. ammunitionCostMicro 1,351,791 micro-GBP: BALANCE_TARGET, mass 149.7 kg x 9,030 micro-GBP/kg (Holley 1862 hollow cast-iron shell price at par $4.8665 per GBP); filler and fuze excluded.",
       sources: [
         {
           title:
-            "US Navy, Ordnance Instructions 1866 (4th ed.), Part III para 31 powder-proof table",
-          archiveOrUrl: "https://archive.org/details/ordnanceinstruc01ordngoog",
+            "US Navy, Ordnance Instructions 1866 (4th ed.), Part III para 31 powder-proof table (page image n251) and para 105 bursting charge (page image n279)",
+          archiveOrUrl: "https://archive.org/details/ordnanceinstruct00unit/page/n279",
           section: "Research discussion #890 section 1",
+        },
+        {
+          title: "Holley, A Treatise on Ordnance and Armor (1865), Tables XXII and XXIII, para 593",
+          archiveOrUrl:
+            "https://civilwarnavy.com/wp-content/uploads/2020/06/Holley_A-Treatise-on-Ordnance-and-Armor.pdf",
+          section: "Research discussion #890 section 4",
         },
       ],
     },
@@ -639,19 +686,28 @@ export default collection("ammunition", AmmunitionPatternSchema, [
     nationId: "usa",
     compatibleGunModelIds: ["us_dahlgren_15in"],
     shellMassG: 181400,
+    explosiveFillerG: 0,
+    penetrationBiasBp: 9000,
+    ammunitionCostMicro: 1102368,
     introductionMonth: "1880-01",
     retirementMonth: null,
     provenance: {
-      sourceStatus: "ESTIMATE",
+      sourceStatus: "BALANCE_TARGET",
       confidence: "LOW",
-      kind: "historical_fact",
-      note: "issue #880. 400 lb (181,437 g, rounded to 181,400 g) from the same proof table, whose OCR label reads 'Cored sh.' and is read as cored shot; hence ESTIMATE/LOW. Shell type AP because it is solid shot against armour; scoped to the model. No penetration bias or cost is sourced.",
+      kind: "balance_adjustment",
+      note: "issues #880, #898. Mass: 400 lb (181,437 g, rounded to 181,400 g). The page image of the proof table prints the label 'Cored sh. 400 lbs.' (an abbreviation, not an OCR truncation) and the same book's shot gauge table lists XV-inch (Cored.) shot at 400 lb; Holley Table XXIII (Navy) gives a 400 lb cored shot for the 15-inch gun. Three agreeing readings of one cored shot. Shell type AP (solid shot against armour); scoped to the model. explosiveFillerG 0: ESTIMATE, the para 105 bursting-charge table lists spherical shell only and Holley treats cored shot as solid shot with a plugged core hole. penetrationBiasBp 9000: BALANCE_TARGET copied from the nearest sourced AP sibling uk_ap_palliser; the shot is unchilled cast iron so this is likely high, alternative 5000 (us_common_shell) listed for owner review. ammunitionCostMicro 1,102,368 micro-GBP: BALANCE_TARGET, mass 181.4 kg x 6,077 micro-GBP/kg, the Holley 1862 trial price of a cast-iron 32-pdr shot ($429.25 per 1000 of 32 lb) at par $4.8665 per GBP.",
       sources: [
         {
           title:
-            "US Navy, Ordnance Instructions 1866 (4th ed.), Part III para 31 powder-proof table",
-          archiveOrUrl: "https://archive.org/details/ordnanceinstruc01ordngoog",
+            "US Navy, Ordnance Instructions 1866 (4th ed.), Part III para 31 proof table (page image n251) and shot and shell gauge table (page image n274)",
+          archiveOrUrl: "https://archive.org/details/ordnanceinstruct00unit/page/n251",
           section: "Research discussion #890 section 1",
+        },
+        {
+          title: "Holley, A Treatise on Ordnance and Armor (1865), Table XXIII and para 593",
+          archiveOrUrl:
+            "https://civilwarnavy.com/wp-content/uploads/2020/06/Holley_A-Treatise-on-Ordnance-and-Armor.pdf",
+          section: "Research discussion #890 section 4",
         },
       ],
     },

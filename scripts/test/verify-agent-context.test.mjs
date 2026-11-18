@@ -30,6 +30,8 @@ const FILES = [
   "scripts/hooks/user-prompt-context.mjs",
   "scripts/hooks/session-telemetry.mjs",
   "scripts/hooks/stop-gate.mjs",
+  "scripts/hooks/session-start-resume.mjs",
+  "scripts/lib/session-resume.mjs",
   "scripts/lib/agent-guard.mjs",
   "scripts/lib/hook-telemetry.mjs",
   "scripts/lib/transcript-context.mjs",
@@ -63,6 +65,14 @@ void describe("checkRepo", () => {
     const dir = copyTree();
     mutate(dir, ".claude/settings.json", (t) => t.replace("pre-tool-use-bash.mjs", "other.mjs"));
     assert.match(checkRepo(dir).join("\n"), /PreToolUse does not run/u);
+  });
+  void test("fails when the resume hook is not wired for compact and resume", () => {
+    const dir = copyTree();
+    mutate(dir, ".claude/settings.json", (t) => t.replace("session-start-resume.mjs", "other.mjs"));
+    assert.match(
+      checkRepo(dir).join("\n"),
+      /SessionStart does not run scripts\/hooks\/session-start-resume\.mjs/u,
+    );
   });
   void test("fails when an agent lacks a model or is missing", () => {
     const dir = copyTree();

@@ -10,11 +10,10 @@ import type { GunneryRadarRules } from "@bluewave/combat/battleResolution";
 import type { MissilesRules } from "@bluewave/content-schema";
 import type { ShipBuildingContent } from "@bluewave/ship-design";
 import { gunQualityRulesForBattle } from "./battleGunQuality.js";
+import { resolveBattleManifest } from "./battles.js";
 import { computeManifestHash } from "@bluewave/combat/generation";
 import { canonicalSerialize } from "@bluewave/deterministic";
 import { RandomLedger } from "@bluewave/random";
-
-type AutoResolutionManifest = Parameters<typeof resolve>[0]["manifest"];
 
 type RecordedBattleSurface = Pick<
   BattleResult,
@@ -48,16 +47,6 @@ const COMPARISON_FIELDS: TacticalDivergenceField[] = [
   "defenderLosses",
   "damageReport",
 ];
-
-function resolveBattleManifest(
-  snapshot: CampaignSnapshot,
-  battle: BattleInstance,
-): AutoResolutionManifest | null {
-  if (battle["manifestHash"] === undefined) return null;
-  const manifests = snapshot["wars"]["battleManifests"] ?? [];
-  const found = manifests.find((m) => m["manifestHash"] === battle["manifestHash"]);
-  return found ? (found as unknown as AutoResolutionManifest) : null;
-}
 
 function firstDivergence(
   recorded: RecordedBattleSurface,

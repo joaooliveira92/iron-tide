@@ -139,6 +139,10 @@ export default defineConfig({
         command: "node scripts/assert-boundary-decode.mjs --scope persistence",
         dependsOn: ["gate:boundary-decode-self-test"],
       },
+      "gate:boundary-decode-replay": {
+        command: "node scripts/assert-boundary-decode.mjs --scope replay",
+        dependsOn: ["gate:boundary-decode-self-test"],
+      },
       "gate:boundary-decode-options": {
         command: "node scripts/assert-boundary-decode.mjs --scope decode-options",
         dependsOn: ["gate:boundary-decode-self-test"],
@@ -312,6 +316,7 @@ export default defineConfig({
           "gate:boundary-decode-desktop",
           "gate:boundary-decode-cli",
           "gate:boundary-decode-persistence",
+          "gate:boundary-decode-replay",
           "gate:boundary-decode-options",
           "gate:stage-io",
           "gate:canonical-serialization",
