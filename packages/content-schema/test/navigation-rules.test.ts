@@ -121,3 +121,49 @@ describe("navigation rules section (#937)", () => {
     );
   });
 });
+
+const separation = {
+  formationBaseBp: { LINE_ABREAST: 40, SEARCH_LINE: 60, SCREEN: 50 },
+  nightFactorBp: 20_000,
+  poorVisibilityFactorBp: 30_000,
+  poorVisibilityThresholdUm: 4_000_000_000,
+  cohesionReferenceBp: 10_000,
+  heavyShipTypes: ["BB", "BC", "B", "CA"],
+  drift: { thresholdMinutes: 30, toleranceMultiplierBp: 30_000, steeringErrorDeg: 5 },
+};
+
+describe("navigation separation block (#941)", () => {
+  it("leaves a section without a separation block valid and unchanged", () => {
+    const decoded = decodeNavigationRules(section);
+    expect(decoded.ok && "separation" in decoded.value).toBe(false);
+  });
+
+  it("decodes a complete separation block", () => {
+    const decoded = decodeNavigationRules({ ...section, separation });
+    expect(decoded.ok && decoded.value.separation?.formationBaseBp.SEARCH_LINE).toBe(60);
+    expect(decoded.ok && decoded.value.separation?.heavyShipTypes).toEqual(["BB", "BC", "B", "CA"]);
+  });
+
+  it("rejects excess keys, a missing formation, bad basis points and an empty heavy list", () => {
+    const bad = (patch: object) =>
+      decodeNavigationRules({ ...section, separation: { ...separation, ...patch } }).ok;
+    expect(bad({ extra: 1 })).toBe(false);
+    expect(bad({ formationBaseBp: { LINE_ABREAST: 40, SEARCH_LINE: 60 } })).toBe(false);
+    expect(bad({ formationBaseBp: { ...separation.formationBaseBp, SCREEN: 10_001 } })).toBe(false);
+    expect(bad({ cohesionReferenceBp: 0 })).toBe(false);
+    expect(bad({ heavyShipTypes: [] })).toBe(false);
+    expect(bad({ drift: { ...separation.drift, thresholdMinutes: 0 } })).toBe(false);
+    expect(bad({ drift: { ...separation.drift, steeringErrorDeg: 1.5 } })).toBe(false);
+  });
+
+  it("flags a drift tolerance multiplier below neutral", () => {
+    const decoded = decodeNavigationRules({
+      ...section,
+      separation: { ...separation, drift: { ...separation.drift, toleranceMultiplierBp: 9_999 } },
+    });
+    if (!decoded.ok) throw new Error(decoded.message);
+    expect(navigationOrderingIssues(decoded.value).map((issue) => issue.field)).toContain(
+      "separation.drift.toleranceMultiplierBp",
+    );
+  });
+});

@@ -23,6 +23,37 @@ export const NavigationFoulingClassSchema = Schema.Struct({
   recoveryMinutes: positiveInt,
 });
 
+const factorBp = Schema.Finite.check(
+  Schema.isInt(),
+  Schema.isBetween({ minimum: 1, maximum: 1_000_000 }),
+);
+const referenceBp = Schema.Finite.check(
+  Schema.isInt(),
+  Schema.isBetween({ minimum: 1, maximum: 10_000 }),
+);
+const steeringDegrees = Schema.Finite.check(
+  Schema.isInt(),
+  Schema.isBetween({ minimum: 1, maximum: 45 }),
+);
+
+export const NavigationSeparationSchema = Schema.Struct({
+  formationBaseBp: Schema.Struct({
+    LINE_ABREAST: basisPoints,
+    SEARCH_LINE: basisPoints,
+    SCREEN: basisPoints,
+  }),
+  nightFactorBp: factorBp,
+  poorVisibilityFactorBp: factorBp,
+  poorVisibilityThresholdUm: positiveInt,
+  cohesionReferenceBp: referenceBp,
+  heavyShipTypes: Schema.NonEmptyArray(Schema.NonEmptyString),
+  drift: Schema.Struct({
+    thresholdMinutes: positiveInt,
+    toleranceMultiplierBp: factorBp,
+    steeringErrorDeg: steeringDegrees,
+  }),
+});
+
 export const NavigationRulesSchema = Schema.Struct({
   sectionVersion: Schema.Literal(1),
   fouling: Schema.Struct({
@@ -44,9 +75,11 @@ export const NavigationRulesSchema = Schema.Struct({
     thresholdKnots: positiveInt,
     gunneryMultiplierBp: basisPoints,
   }),
+  separation: Schema.optionalKey(NavigationSeparationSchema),
   provenance: ProvenanceSchema,
 });
 
+export type NavigationSeparationRules = typeof NavigationSeparationSchema.Type;
 export type NavigationFoulingClassRules = typeof NavigationFoulingClassSchema.Type;
 export type NavigationRules = typeof NavigationRulesSchema.Type;
 
@@ -77,6 +110,8 @@ export function decodeNavigationRules(input: unknown): NavigationRulesDecoded {
     message: first?.message ?? "is invalid",
   };
 }
+
+const NEUTRAL_BP = 10_000;
 
 const SENSITIVITY_ORDER = [
   ["OIL", "COAL"],
@@ -120,6 +155,11 @@ export function navigationOrderingIssues(
     issues.push({
       field: "breakdown.maxChancePpm",
       message: "must be at least baseChancePpm",
+    });
+  if (rules.separation && rules.separation.drift.toleranceMultiplierBp < NEUTRAL_BP)
+    issues.push({
+      field: "separation.drift.toleranceMultiplierBp",
+      message: "must widen the station tolerance (at least 10000)",
     });
   return issues;
 }

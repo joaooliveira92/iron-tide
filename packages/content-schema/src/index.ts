@@ -259,11 +259,13 @@ export type {
   NavigationOrderingIssue,
   NavigationRules,
   NavigationRulesDecoded,
+  NavigationSeparationRules,
 } from "./navigation-rules.js";
 export {
   NAVIGATION_MACHINERY_CLASSES,
   NavigationFoulingClassSchema,
   NavigationRulesSchema,
+  NavigationSeparationSchema,
   decodeNavigationRules,
   navigationOrderingIssues,
 } from "./navigation-rules.js";

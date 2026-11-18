@@ -20,8 +20,26 @@ export interface NavigationFoulingClassRules {
   readonly recoveryMinutes: number;
 }
 
+export const SEPARABLE_FORMATIONS = ["LINE_ABREAST", "SEARCH_LINE", "SCREEN"] as const;
+export type SeparableFormation = (typeof SEPARABLE_FORMATIONS)[number];
+
+export interface NavigationSeparationRules {
+  readonly formationBaseBp: Readonly<Record<SeparableFormation, number>>;
+  readonly nightFactorBp: number;
+  readonly poorVisibilityFactorBp: number;
+  readonly poorVisibilityThresholdUm: number;
+  readonly cohesionReferenceBp: number;
+  readonly heavyShipTypes: readonly string[];
+  readonly drift: {
+    readonly thresholdMinutes: number;
+    readonly toleranceMultiplierBp: number;
+    readonly steeringErrorDeg: number;
+  };
+}
+
 export interface NavigationRules {
   readonly sectionVersion: 1;
+  readonly separation?: NavigationSeparationRules;
   readonly fouling: {
     readonly cruiseSpeedPercent: number;
     readonly classes: Readonly<Record<NavigationMachineryClass, NavigationFoulingClassRules>>;
@@ -53,6 +71,17 @@ export const INITIAL_MACHINERY_STATE: MachineryState = {
   breakdownMinutesLeft: 0,
 };
 
+export const NAVIGATION_SEPARATION_STREAM = "navigation.separation" as const;
+
+export interface SeparationState {
+  readonly formation: string;
+  readonly separated: boolean;
+  readonly heldHeading: number;
+  readonly heldSpeedBp: number;
+  readonly driftMinutes: number;
+  readonly disordered: boolean;
+}
+
 export interface NavigationShipInput {
   readonly shipId: string;
   readonly machineryClass: NavigationMachineryClass;
@@ -64,5 +93,6 @@ export interface NavigationContext {
   readonly rules: NavigationRules;
   readonly ships: readonly NavigationShipInput[];
   readonly machinery?: Readonly<Record<string, MachineryState>>;
+  readonly separation?: Readonly<Record<string, SeparationState>>;
   readonly randomLedger?: RandomLedger;
 }
