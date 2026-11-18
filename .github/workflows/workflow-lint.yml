@@ -37,7 +37,7 @@ jobs:
       - name: Install zizmor
         run: python3 -m pip install --user "zizmor==${ZIZMOR_VERSION}"
       - name: zizmor
-        run: python3 -m zizmor --offline --min-severity medium .github
+        run: '"$HOME/.local/bin/zizmor" --offline --min-severity medium .github'
 
   lint-ok:
     name: workflow-lint-ok
