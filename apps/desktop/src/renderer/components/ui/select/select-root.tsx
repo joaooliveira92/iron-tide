@@ -1,9 +1,11 @@
 "use client";
 
 import { useReducedMotion } from "motion/react";
-import { type ReactNode, useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+import { type ReactNode, useCallback, useId, useMemo, useRef, useState } from "react";
 
 import { cn } from "@/lib/utils";
+import { useWindowEvent } from "@/lib/use-window-event";
+import { useExternalSync } from "@/shell/useExternalSync";
 
 import { SelectContext } from "./context.js";
 import type { Placement, SelectContextValue, SelectValue } from "./types.js";
@@ -133,39 +135,31 @@ export function SelectRoot({
     handleTypeahead,
   });
 
-  useEffect(() => {
+  useWindowEvent("pointerdown", (event) => {
     if (!currentOpen) {
       return;
     }
 
-    const handlePointerDown = (event: PointerEvent): void => {
-      const path = event.composedPath();
+    const path = event.composedPath();
 
-      if (triggerRef.current && path.includes(triggerRef.current)) {
-        return;
-      }
+    if (triggerRef.current && path.includes(triggerRef.current)) {
+      return;
+    }
 
-      if (floatingRef.current && path.includes(floatingRef.current)) {
-        return;
-      }
+    if (floatingRef.current && path.includes(floatingRef.current)) {
+      return;
+    }
 
-      updateOpen(false);
-    };
+    updateOpen(false);
+  });
 
-    window.addEventListener("pointerdown", handlePointerDown);
-
-    return () => {
-      window.removeEventListener("pointerdown", handlePointerDown);
-    };
-  }, [currentOpen, updateOpen]);
-
-  useEffect(() => {
+  useExternalSync(() => {
     if (disabled && currentOpen) {
       updateOpen(false);
     }
   }, [currentOpen, disabled, updateOpen]);
 
-  useEffect(() => {
+  useExternalSync(() => {
     onActiveValueChange?.(activeValue);
   }, [activeValue, onActiveValueChange]);
 

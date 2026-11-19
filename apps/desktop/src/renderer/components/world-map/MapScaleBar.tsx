@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
+import { useExternalSync } from "../../shell/useExternalSync.js";
 import { usePresentationFormat } from "../../shell/usePresentationFormat.js";
 import { formatNauticalMiles, niceScaleBar, pixelsPerNauticalMile } from "./map-scale.js";
 import type { MapCamera } from "./useMapCamera.js";
@@ -16,7 +17,7 @@ export function MapScaleBar({
   const labelRef = useRef<HTMLSpanElement | null>(null);
   const format = usePresentationFormat();
 
-  useEffect(() => {
+  useExternalSync(() => {
     const update = () => {
       const bar = barRef.current;
       const label = labelRef.current;

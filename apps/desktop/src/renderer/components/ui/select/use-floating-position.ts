@@ -1,5 +1,6 @@
-import { type RefObject, useCallback, useLayoutEffect, useRef, useState } from "react";
+import { type RefObject, useCallback, useRef, useState } from "react";
 
+import { useExternalLayoutSync } from "@/shell/useExternalSync";
 import type { FloatingPosition, Placement, SelectMeta } from "./types.js";
 
 interface FloatingPositionInput {
@@ -112,7 +113,7 @@ export function useFloatingPosition({
     });
   }, [updatePosition]);
 
-  useLayoutEffect(() => {
+  useExternalLayoutSync(() => {
     if (!mounted) {
       return;
     }
@@ -120,7 +121,7 @@ export function useFloatingPosition({
     updatePosition();
   }, [content, open, mounted, updatePosition]);
 
-  useLayoutEffect(() => {
+  useExternalLayoutSync(() => {
     if (!mounted) {
       return;
     }

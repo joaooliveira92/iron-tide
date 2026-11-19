@@ -1,7 +1,27 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import { sortByDocumentPosition } from "./options.js";
 import type { SelectOptionRecord, SelectValue } from "./types.js";
+
+function warnOnDuplicateValues(options: readonly SelectOptionRecord[]): void {
+  if (process.env.NODE_ENV === "production") {
+    return;
+  }
+
+  const seen = new Set<string>();
+
+  for (const option of options) {
+    if (seen.has(option.value)) {
+      console.warn(
+        `Select contains duplicate value "${option.value}". ` +
+          "Every SelectItem value must be unique.",
+      );
+      return;
+    }
+
+    seen.add(option.value);
+  }
+}
 
 export interface OptionRegistry {
   getOptions: () => SelectOptionRecord[];
@@ -13,25 +33,12 @@ export interface OptionRegistry {
 export function useOptionRegistry(): OptionRegistry {
   const [options, setOptions] = useState<SelectOptionRecord[]>([]);
 
-  useEffect(() => {
-    if (process.env.NODE_ENV === "production") {
-      return;
-    }
+  const checkedOptions = useRef<SelectOptionRecord[] | null>(null);
 
-    const seen = new Set<string>();
-
-    for (const option of options) {
-      if (seen.has(option.value)) {
-        console.warn(
-          `Select contains duplicate value "${option.value}". ` +
-            "Every SelectItem value must be unique.",
-        );
-        return;
-      }
-
-      seen.add(option.value);
-    }
-  }, [options]);
+  if (checkedOptions.current !== options) {
+    checkedOptions.current = options;
+    warnOnDuplicateValues(options);
+  }
 
   const getOptions = useCallback(
     (): SelectOptionRecord[] => sortByDocumentPosition(options),

@@ -5,14 +5,16 @@ import {
   type HTMLAttributes,
   forwardRef,
   useCallback,
-  useEffect,
   useId,
   useMemo,
-  useRef,
   useState,
+  useSyncExternalStore,
 } from "react";
 
 import { cn } from "@/lib/utils";
+import { NO_SUBSCRIPTION } from "@/lib/value-store";
+
+const readUnsupported = (): boolean => false;
 
 type MapGeometry = {
   width: number;
@@ -139,55 +141,53 @@ export const LiquidGlass = forwardRef<HTMLDivElement, LiquidGlassProps>(function
   const rawId = useId();
   const filterId = useMemo(() => `liquid-glass-${rawId.replace(/:/g, "")}`, [rawId]);
 
-  const localRef = useRef<HTMLDivElement | null>(null);
-  const setRefs = useCallback(
-    (node: HTMLDivElement | null) => {
-      localRef.current = node;
-      if (typeof ref === "function") ref(node);
-      else if (ref) ref.current = node;
-    },
-    [ref],
-  );
-
   const [geometry, setGeometry] = useState<MapGeometry | null>(null);
 
-  useEffect(() => {
-    const el = localRef.current;
-    if (!el) return;
-    const measure = () => {
-      const rect = el.getBoundingClientRect();
-      const width = Math.round(rect.width);
-      const height = Math.round(rect.height);
-      if (!width || !height) return;
-      const parsed = Number.parseFloat(getComputedStyle(el).borderTopLeftRadius);
-      const radius = Math.min(
-        Number.isFinite(parsed) ? parsed : Math.min(width, height) / 2,
-        width / 2,
-        height / 2,
-      );
-      setGeometry((prev) =>
-        prev &&
-        prev.width === width &&
-        prev.height === height &&
-        prev.radius === radius &&
-        prev.bezel === bezel
-          ? prev
-          : { width, height, radius, bezel },
-      );
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(el);
-    return () => observer.disconnect();
-  }, [bezel]);
+  const setRefs = useCallback(
+    (el: HTMLDivElement | null) => {
+      if (!el) return;
+      if (typeof ref === "function") ref(el);
+      else if (ref) ref.current = el;
+      const measure = () => {
+        const rect = el.getBoundingClientRect();
+        const width = Math.round(rect.width);
+        const height = Math.round(rect.height);
+        if (!width || !height) return;
+        const parsed = Number.parseFloat(getComputedStyle(el).borderTopLeftRadius);
+        const radius = Math.min(
+          Number.isFinite(parsed) ? parsed : Math.min(width, height) / 2,
+          width / 2,
+          height / 2,
+        );
+        setGeometry((prev) =>
+          prev &&
+          prev.width === width &&
+          prev.height === height &&
+          prev.radius === radius &&
+          prev.bezel === bezel
+            ? prev
+            : { width, height, radius, bezel },
+        );
+      };
+      measure();
+      const observer = new ResizeObserver(measure);
+      observer.observe(el);
+      return () => {
+        observer.disconnect();
+        if (typeof ref === "function") ref(null);
+        else if (ref) ref.current = null;
+      };
+    },
+    [ref, bezel],
+  );
 
   const mapUrl = useMemo(() => (geometry ? createDisplacementMap(geometry) : ""), [geometry]);
 
-  const [supported, setSupported] = useState(false);
-
-  useEffect(() => {
-    setSupported(supportsSvgBackdropFilter());
-  }, []);
+  const supported = useSyncExternalStore(
+    NO_SUBSCRIPTION,
+    supportsSvgBackdropFilter,
+    readUnsupported,
+  );
 
   const refractionActive = supported && mapUrl !== "";
   const backdropFilter = refractionActive
