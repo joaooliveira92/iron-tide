@@ -2,7 +2,7 @@ import { SafeInt } from "@bluewave/contracts";
 
 import { divisionAggregateHash, type PermanentDivision } from "./division.js";
 
-export const DIVISION_EXPERIENCE_REASONS = ["BATTLE_PARTICIPATION"] as const;
+export const DIVISION_EXPERIENCE_REASONS = ["BATTLE_PARTICIPATION", "SERVICE_TIME"] as const;
 export type DivisionExperienceReason = (typeof DIVISION_EXPERIENCE_REASONS)[number];
 
 export interface DivisionExperienceRequest {

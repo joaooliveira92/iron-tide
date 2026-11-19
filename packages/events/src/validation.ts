@@ -248,7 +248,7 @@ export const DivisionExperienceChangedSchema = Schema.Struct({
   nationId: nonEmptyString,
   divisionId: nonEmptyString,
   sourceId: nonEmptyString,
-  reasonCode: Schema.Literals(["BATTLE_PARTICIPATION"]),
+  reasonCode: Schema.Literals(["BATTLE_PARTICIPATION", "SERVICE_TIME"]),
   before: nonNegativeSafeInt,
   after: nonNegativeSafeInt,
   delta: nonNegativeSafeInt,

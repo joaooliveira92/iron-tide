@@ -261,6 +261,10 @@ export default list(RulesetManifestSchema, [
       divisionExperience: {
         perBattle: 3,
         perExercise: 5,
+        service: {
+          monthlyGrowth: 1,
+          cap: 40,
+        },
       },
       reorganisationPenalty: {
         roleChange: {
@@ -323,7 +327,7 @@ export default list(RulesetManifestSchema, [
               "Special training takes twelve months, at most two subjects, with maintenance surcharges; an annual fleet exercise costs twice the active maintenance (p.53) and large exercises can raise tensions (pp.53, 60); division experience has a slight impact on crew quality in battle",
           },
         ],
-        note: "ADR-0283. The manual gives the twelve-month proficiency, the limit of two subjects, the training maintenance percentages and the doubled exercise cost; the cohesion and experience rates, the reorganisation penalties and the effect sizes of the unsourced subjects are Bluewave balance targets adopted by the owner's delegation (Research discussion #442). ADR-0303: the manual (p.53) says Japan pays less for training and gives no figure; nationCostMultiplierBp is generic nation-keyed data, bounded to 5000-10000, and the japan entry of 8000 (a fifth off the added maintenance only) is a conservative balance target with LOW confidence. Exercise tension (#586): the manual says only that large exercises can raise tensions (pp.53, 60) with no threshold or size, so minShips 4, increase 1 and ceiling 5 (the tension-drift ceiling) are PROVISIONAL Bluewave balance targets with LOW confidence.",
+        note: "ADR-0283. The manual gives the twelve-month proficiency, the limit of two subjects, the training maintenance percentages and the doubled exercise cost; the cohesion and experience rates, the reorganisation penalties and the effect sizes of the unsourced subjects are Bluewave balance targets adopted by the owner's delegation (Research discussion #442). Service experience (#583): the manual (p.55) says experience generally goes up over time and gives no rate, so monthlyGrowth 1 and cap 40 are PROVISIONAL Bluewave balance targets with LOW confidence; the cap only stops this passive growth, never an exercise or battle gain, and removing divisionExperience.service restores the exercise-and-battle-only behaviour. ADR-0303: the manual (p.53) says Japan pays less for training and gives no figure; nationCostMultiplierBp is generic nation-keyed data, bounded to 5000-10000, and the japan entry of 8000 (a fifth off the added maintenance only) is a conservative balance target with LOW confidence. Exercise tension (#586): the manual says only that large exercises can raise tensions (pp.53, 60) with no threshold or size, so minShips 4, increase 1 and ceiling 5 (the tension-drift ceiling) are PROVISIONAL Bluewave balance targets with LOW confidence.",
       },
     },
     // The gunnery radar section (#292). The manual (pp.121, 127) grounds fire-control radar, blind fire from level 3, and the
