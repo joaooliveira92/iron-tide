@@ -1,5 +1,7 @@
-import { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useMemo, useState } from "react";
 
+import { useWindowEvent } from "../../lib/use-window-event.js";
+import { useExternalSync } from "../../shell/useExternalSync.js";
 import { WorldMapChart, type WorldMapChartProps } from "../world-map/WorldMapChart.js";
 import { EMPTY_LIVE_OVERLAY } from "../world-map/campaign-map-join.js";
 import {
@@ -64,18 +66,12 @@ export function MapSurface({
   const [failure, setFailure] = useState<string | null>(null);
   const graphics = useMemo<GraphicsSupport>(() => detectGraphicsSupport(), []);
 
-  useEffect(() => {
-    const update = () => {
-      setRequested(preference(enableGlobe));
-      setFailure(null);
-    };
-    window.addEventListener("hashchange", update);
-    window.addEventListener("storage", update);
-    return () => {
-      window.removeEventListener("hashchange", update);
-      window.removeEventListener("storage", update);
-    };
-  }, [enableGlobe]);
+  const update = () => {
+    setRequested(preference(enableGlobe));
+    setFailure(null);
+  };
+  useWindowEvent("hashchange", update);
+  useWindowEvent("storage", update);
 
   const graphicsFailure = graphics.supported ? null : graphics.reason;
   const fallbackReason = failure ?? graphicsFailure;
@@ -86,7 +82,7 @@ export function MapSurface({
     GlobeAdapters !== null;
   const activeRenderer: OverviewRenderer = adapterActive ? "globe" : "legacy";
 
-  useEffect(() => {
+  useExternalSync(() => {
     if (fallbackReason === null) {
       recordRendererDiagnostic({ renderer: activeRenderer, event: "started" });
       return;

@@ -1,7 +1,8 @@
 import { Map as MapLibreMap, removeProtocol, setWorkerUrl, type GeoJSONSource } from "maplibre-gl";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
-import { useEffect, type Dispatch, type MutableRefObject, type SetStateAction } from "react";
+import { type Dispatch, type MutableRefObject, type SetStateAction } from "react";
 import { formatFixed } from "../../lib/presentation-format/format.js";
+import { useExternalSync } from "../../shell/useExternalSync.js";
 import { BAKED_PROTOCOL } from "../globe-spike/baked-tiles.js";
 import { hasRenderableSize } from "../globe-spike/map-container.js";
 import type { LandPlan } from "../globe-spike/use-land-plan.js";
@@ -101,7 +102,7 @@ export function useMapInstance({
   onSelect,
   onRuler,
 }: MapInstanceInput): void {
-  useEffect(() => {
+  useExternalSync(() => {
     const container = refs.container.current;
     if (container === null) return;
     if (plan.kind === "loading") return;
