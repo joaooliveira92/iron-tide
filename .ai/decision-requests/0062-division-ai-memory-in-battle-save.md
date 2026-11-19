@@ -2,7 +2,7 @@
 
 ## Status
 
-Decided by the coordinator ruling on #961 (not a hard stop): implemented as Option A below. Reversible: the sidecar field is optional and the session field is dormant.
+Decided by the coordinator ruling on #961 (not a hard stop): implemented as Option A below, without a compat bump. Reversible: the sidecar field is optional and the session field is dormant.
 
 ## Trigger
 
@@ -27,7 +27,7 @@ The format decides whether a stale or edited memory can silently steer a resumed
 - Behavior: `PlayerBattleSession` gains an optional `divisionAi: { memory }`, absent unless an AI stage supplies it, and folded into `playerBattleSessionHash` only when present. The sidecar moves to `schemaVersion` `1.1.0` with `divisionAi: { minute, memoryHash, memory } | null`. On resume the steps replay first; then the checkpoint is verified (memory decodes strictly, its hash equals `memoryHash`, `minute` equals the replayed session minute) and restored into the session. Any failure takes the existing `resume-failed` path and clears the sidecar.
 - Advantages: works today with the AI dormant; pins the memory version and hash; a stale, truncated or edited checkpoint is refused rather than followed; when an AI stage later runs inside the step pipeline, the same checkpoint becomes a verify-after-replay assertion without a format change.
 - Risks: two sources of truth until the AI stage is wired (guarded by the minute and hash checks).
-- Compatibility impact: `CURRENT_COMPATIBILITY_VERSION` 5.4.0 to 5.5.0; a 5.4.0 save is refused, not migrated (BW-PER-001); new `save-corpus/5.5.0/` fixture.
+- Compatibility impact: none. `CURRENT_COMPATIBILITY_VERSION` stays 5.4.0 (see Dropped compat bump below).
 - Migration impact: a `1.0.0` sidecar decodes through the same schema (the `1.0.0` literal admits no `divisionAi` field) to `divisionAi: null`. No existing save can hold non-default memory because the AI never ran in production, so the default is exact, not lossy. An absent checkpoint leaves the session without `divisionAi`, so every existing hash and replay is unchanged.
 - Scope and effort: small; combat helpers, one sidecar schema, plumbing in start and step.
 
@@ -64,4 +64,10 @@ Option A. Wiring `decideDivisionOrders` into the player battle step pipeline is 
 
 ## Work safely completed while blocked
 
-Nothing was blocked. Implemented in this change: session field and checkpoint helpers, sidecar `1.1.0`, resume verification, compat 5.5.0 with its corpus fixture, tests at combat and desktop level.
+Nothing was blocked. Implemented in this change: session field and checkpoint helpers, sidecar `1.1.0`, resume verification, a frozen `1.0.0` sidecar fixture, tests at combat and desktop level.
+
+## Dropped compat bump
+
+The coordinator dropped the 5.4.0 to 5.5.0 campaign compatibility bump. The sidecar is self-versioned (`player-battle.json` 1.0.0 to 1.1.0, old files default to `null`) and the session hash binds memory only when present, so the bump only refused every existing 5.4.0 save and moved 17 golden replays. It was reverted with `git revert` (no history rewrite).
+
+To reinstate: revert the revert commit (the one titled `Revert "feat(persistence): move save compatibility to 5.5.0 ..."`). That restores `CURRENT_COMPATIBILITY_VERSION` 5.5.0, the desktop package version, the pinned test literals and the `save-corpus/5.5.0/` fixture. Then re-record the 17 golden replays as their own commit, mirroring c8f52a06 (`pnpm replay:record`, then `pnpm replay:approve` with class `EXPECTED_GAMEPLAY_CHANGE`), and confirm `pnpm check:replay-corpus` and `pnpm check:replay-approvals` pass.
