@@ -1,0 +1,23 @@
+{
+  "schemaVersion": "1.0.0",
+  "turnId": "turn-fixture",
+  "battleId": "battle-fixture",
+  "steps": [
+    {
+      "mode": "minute",
+      "divisions": [{ "divisionId": "div-a", "stance": "ENGAGE", "speedPercent": 60 }]
+    },
+    {
+      "mode": "minute",
+      "divisions": [
+        {
+          "divisionId": "div-a",
+          "stance": "ENGAGE",
+          "speedPercent": 100,
+          "courseDeg": 90,
+          "speedKnots": 12
+        }
+      ]
+    }
+  ]
+}
