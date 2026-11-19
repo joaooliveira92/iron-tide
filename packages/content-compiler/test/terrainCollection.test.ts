@@ -88,6 +88,7 @@ const record = (overrides: Record<string, unknown> = {}) => ({
   box: { minXM: -5000, minYM: -5000, maxXM: 5000, maxYM: 5000 },
   polygons: [square("land_b", "LAND", 0, 0, 1000), square("land_a", "LAND", 2000, 0, 500)],
   bases: [{ portId: "p_one", xM: 1500, yM: 1500 }],
+  battleOrigin: { xM: -2000, yM: -3000 },
   provenance,
   ...overrides,
 });
@@ -150,6 +151,31 @@ describe("terrain collection", () => {
     expect(compiled?.records[0]?.exclusions).toEqual([
       { id: "exclusion.p_one", portId: "p_one", xM: 1500, yM: 1500, radiusM: 400 },
     ]);
+  });
+
+  it("carries the battle origin into the compiled record", () => {
+    const { output } = compile([record()]);
+    expect(output?.terrain?.records[0]?.battleOrigin).toEqual({ xM: -2000, yM: -3000 });
+  });
+
+  it("blocks a battle origin outside the area box or missing at the schema", () => {
+    expect(compile([record({ battleOrigin: { xM: 9000, yM: 0 } })]).codes).toContain(
+      "TERRAIN-ORIGIN-OUTSIDE-BOX",
+    );
+    const { battleOrigin: _omitted, ...withoutOrigin } = record();
+    expect(compile([withoutOrigin]).output).toBeUndefined();
+  });
+
+  it("refuses an artifact written before the battle origin existed", () => {
+    const compiled = compile([record()]).output?.terrain;
+    if (compiled === undefined) throw new Error("terrain missing");
+    const legacy = JSON.parse(buildTerrainArtifact(compiled).artifactJson);
+    delete legacy.terrain.records[0].battleOrigin;
+    legacy.envelope.compatibilityVersion = "0.1.0";
+    expect(verifyTerrainArtifact(legacy)).toMatchObject({
+      ok: false,
+      code: "TERRAIN_ARTIFACT_INVALID",
+    });
   });
 
   it("is absent without records and strips the terrain section from the bundle", () => {

@@ -1,5 +1,5 @@
 import { lazy, Suspense, type ReactNode } from "react";
-import { useLifecycle } from "../../../lib/use-lifecycle.js";
+import { useLifecycle } from "../../../shell/useExternalSync.js";
 import { Skeleton } from "../../../components/ui/skeleton.js";
 import { useWorldMapController } from "../../../components/world-map/useWorldMapController.js";
 import { fixtureAreaId, nationHomeArea } from "../../../content/presentationContent.js";

@@ -1,6 +1,7 @@
 import type { CampaignSnapshot, CompiledDesignVersion, Ship } from "@bluewave/campaign";
 import { resolve } from "@bluewave/combat";
 import { BATTLE_AUTO_RESOLUTION_FAILED } from "@bluewave/combat/battleResolution";
+import type { TerrainView } from "@bluewave/combat/terrain";
 import { INVALID_BATTLE_WEATHER_INITIALIZATION } from "@bluewave/combat/weather";
 import type { MissilesRules } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
@@ -10,6 +11,7 @@ import { describe, expect, it } from "vite-plus/test";
 import { MonthExecutor } from "../src/index.js";
 import {
   ATTACKER_NATION,
+  BATTLE_AREA,
   buildBattleManifest,
   CAMPAIGN_SEED,
   DEFENDER_NATION,
@@ -24,7 +26,10 @@ type AutoResolutionManifest = Parameters<typeof resolve>[0]["manifest"];
 
 function runMonth(
   snapshot: CampaignSnapshot,
-  engineOptions?: { readonly missilesRules?: MissilesRules },
+  engineOptions?: {
+    readonly missilesRules?: MissilesRules;
+    readonly terrain?: Readonly<Record<string, TerrainView>>;
+  },
 ) {
   const collector = new DiagnosticCollector();
   const result = new MonthExecutor().execute(
@@ -315,6 +320,36 @@ describe("battle_resolution phase (AC-8): tactical auto-resolution wiring", () =
       b.result.finalSnapshot.wars.battles[0]!.result,
     );
     expect(a.result.randomLedger.hash()).toBe(b.result.randomLedger.hash());
+  });
+
+  it("threads the placed terrain of the battle area into battle_resolution", () => {
+    const wall: TerrainView = {
+      land: [
+        {
+          id: "wall",
+          vertices: [
+            { xM: 9_000, yM: -1_000 },
+            { xM: 11_000, yM: -1_000 },
+            { xM: 11_000, yM: 11_000 },
+            { xM: 9_000, yM: 11_000 },
+          ],
+        },
+      ],
+      shallows: [],
+      exclusions: [],
+    };
+    const open = runMonth(makeBattleSnapshot());
+    const walled = runMonth(makeBattleSnapshot(), { terrain: { [BATTLE_AREA]: wall } });
+    const elsewhere = runMonth(makeBattleSnapshot(), { terrain: { "other-area": wall } });
+
+    expect(walled.collector.errors).toHaveLength(0);
+    expect(walled.result.finalSnapshot.wars.battles[0]!.result!.damageReport).not.toEqual(
+      open.result.finalSnapshot.wars.battles[0]!.result!.damageReport,
+    );
+    expect(elsewhere.result.randomLedger.hash()).toBe(open.result.randomLedger.hash());
+    expect(elsewhere.result.finalSnapshot.wars.battles[0]!.result).toEqual(
+      open.result.finalSnapshot.wars.battles[0]!.result,
+    );
   });
 
   it("threads missilesRules into battle_resolution so a launcher design changes the resolved damage", () => {

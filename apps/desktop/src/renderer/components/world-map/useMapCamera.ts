@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
+import { useExternalSync } from "../../shell/useExternalSync.js";
 import { useFrameMeter } from "./useFrameMeter.js";
 import { useMapCameraGestures } from "./useMapCameraGestures.js";
 
@@ -241,11 +242,11 @@ export function useMapCamera(
     sampleFrame,
   });
 
-  useEffect(() => {
+  useExternalSync(() => {
     reset();
   }, [reset]);
 
-  useEffect(() => {
+  useExternalSync(() => {
     const svg = svgRef.current;
     if (svg === null || typeof ResizeObserver === "undefined") return;
     const observer = new ResizeObserver(() => {

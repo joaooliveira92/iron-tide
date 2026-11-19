@@ -17,6 +17,7 @@ import type {
   PresentationContentDto,
   UiCatalogueDto,
 } from "../../shared/content-contract.js";
+import { loadBattleTerrain, type BattleTerrainByArea } from "../battleTerrain.js";
 import { compileProductionCampaignFromArtifact } from "../compiler.js";
 import { ContentArtifactError } from "../contentArtifact.js";
 import { resolveGeneratedContentDir } from "../contentPack.js";
@@ -76,6 +77,7 @@ export class ContentArtifact extends Context.Service<
     >;
     readonly loadGunneryRules: () => Effect.Effect<GunneryRules | undefined, CommandFailed>;
     readonly loadMissilesRules: () => Effect.Effect<MissilesRules | undefined, CommandFailed>;
+    readonly loadBattleTerrain: () => Effect.Effect<BattleTerrainByArea | undefined, CommandFailed>;
     readonly loadFleetMoraleRules: () => Effect.Effect<FleetMoraleRules | undefined, CommandFailed>;
     readonly loadTensionDriftRules: () => Effect.Effect<
       TensionDriftRules | undefined,
@@ -141,6 +143,8 @@ export function contentArtifactLayer(
       Effect.try({ try: () => loadGunneryRules(), catch: contentUnavailable }),
     loadMissilesRules: () =>
       Effect.try({ try: () => loadMissilesRules(), catch: contentUnavailable }),
+    loadBattleTerrain: () =>
+      Effect.try({ try: () => loadBattleTerrain(), catch: contentUnavailable }),
     loadFleetMoraleRules: () =>
       Effect.try({ try: () => loadFleetMoraleRules(), catch: contentUnavailable }),
     loadTensionDriftRules: () =>

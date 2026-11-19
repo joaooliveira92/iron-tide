@@ -1,43 +1,43 @@
-import { useEffect, useState } from "react";
 import { useBridge } from "../lib/bridge-context.js";
+import { useStoreLifecycle } from "../lib/use-store-lifecycle.js";
 import { hasPresentationContent, setPresentationContent } from "./presentationContent.js";
 
 export type PresentationContentStatus = "loading" | "ready" | "error";
 
 export function usePresentationContentSource(): PresentationContentStatus {
   const bridge = useBridge();
-  const [status, setStatus] = useState<PresentationContentStatus>(() =>
-    hasPresentationContent() ? "ready" : "loading",
+  const [status] = useStoreLifecycle<PresentationContentStatus>(
+    () => (hasPresentationContent() ? "ready" : "loading"),
+    (target) => {
+      if (hasPresentationContent()) {
+        target.set("ready");
+        return;
+      }
+      if (bridge === undefined) {
+        target.set("error");
+        return;
+      }
+      let active = true;
+      void bridge.campaign
+        .execute("inspectPresentationContent", undefined)
+        .then((result) => {
+          if (!active) return;
+          if (result.outcome === "success") {
+            setPresentationContent(result.value);
+            target.set("ready");
+          } else {
+            target.set("error");
+          }
+        })
+        .catch(() => {
+          if (active) target.set("error");
+        });
+      return () => {
+        active = false;
+      };
+    },
+    [bridge],
   );
-
-  useEffect(() => {
-    if (hasPresentationContent()) {
-      setStatus("ready");
-      return;
-    }
-    if (bridge === undefined) {
-      setStatus("error");
-      return;
-    }
-    let active = true;
-    void bridge.campaign
-      .execute("inspectPresentationContent", undefined)
-      .then((result) => {
-        if (!active) return;
-        if (result.outcome === "success") {
-          setPresentationContent(result.value);
-          setStatus("ready");
-        } else {
-          setStatus("error");
-        }
-      })
-      .catch(() => {
-        if (active) setStatus("error");
-      });
-    return () => {
-      active = false;
-    };
-  }, [bridge]);
 
   return status;
 }

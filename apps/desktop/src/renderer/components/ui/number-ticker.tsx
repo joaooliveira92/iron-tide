@@ -1,9 +1,10 @@
 "use client";
 
 import { animate, motion, useInView, useReducedMotion } from "motion/react";
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import { EASE_OUT } from "@/lib/ease";
 import { cn } from "@/lib/utils";
+import { useExternalSync } from "@/shell/useExternalSync";
 import { formatCount } from "../../lib/presentation-format/format.js";
 
 export interface NumberTickerProps {
@@ -42,9 +43,7 @@ export function NumberTicker({
   const inView = useInView(containerRef, { once: true, amount: 0.6 });
   const [armed, setArmed] = useState(!startOnView);
 
-  useEffect(() => {
-    if (startOnView && inView) setArmed(true);
-  }, [startOnView, inView]);
+  if (!armed && startOnView && inView) setArmed(true);
 
   const text = useMemo(() => {
     const rounded = Math.round(value);
@@ -58,7 +57,7 @@ export function NumberTicker({
   const readableText = `${prefix ?? ""}${text}${suffix ?? ""}`;
 
   const [entered, setEntered] = useState(false);
-  useEffect(() => {
+  useExternalSync(() => {
     if (!armed || entered) return;
     const total = (duration + glyphs.length * stagger) * 1000;
     const t = window.setTimeout(() => setEntered(true), total);
@@ -113,7 +112,7 @@ function Digit({
   const reduce = useReducedMotion();
   const columnRef = useRef<HTMLSpanElement>(null);
 
-  useEffect(() => {
+  useExternalSync(() => {
     if (reduce || !blur || !columnRef.current || !Number.isFinite(digit)) {
       return;
     }

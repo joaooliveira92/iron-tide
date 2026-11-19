@@ -1,10 +1,12 @@
 "use client";
 
 import { motion } from "motion/react";
-import { type ReactNode, useEffect, useLayoutEffect, useState } from "react";
+import { type ReactNode, useSyncExternalStore } from "react";
 import { createPortal } from "react-dom";
 
 import { cn } from "@/lib/utils";
+import { NO_SUBSCRIPTION } from "@/lib/value-store";
+import { useExternalLayoutSync } from "@/shell/useExternalSync";
 
 import { FLOATING_LAYER } from "../menu-styles.js";
 import { useSelectContext } from "./context.js";
@@ -14,6 +16,9 @@ import { useFloatingPosition } from "./use-floating-position.js";
 const DEFAULT_SIDE_OFFSET = 8;
 const DEFAULT_VIEWPORT_PADDING = 8;
 const DEFAULT_MAX_HEIGHT = 320;
+
+const readMounted = (): boolean => true;
+const readServerMounted = (): boolean => false;
 
 export interface SelectContentProps {
   className?: string;
@@ -37,11 +42,7 @@ export function SelectContent({
 }: SelectContentProps) {
   const { state, actions, meta } = useSelectContext("SelectContent");
 
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  const mounted = useSyncExternalStore(NO_SUBSCRIPTION, readMounted, readServerMounted);
 
   const { viewportRef, position, contentHeight } = useFloatingPosition({
     triggerRef: meta.triggerRef,
@@ -55,7 +56,7 @@ export function SelectContent({
     minBelow,
   });
 
-  useLayoutEffect(() => {
+  useExternalLayoutSync(() => {
     if (!state.open || state.activeValue === null) {
       return;
     }

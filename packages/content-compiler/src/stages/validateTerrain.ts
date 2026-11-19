@@ -115,6 +115,14 @@ function validatePolygons(
       );
     }
   }
+  if (!inBox(area.battleOrigin)) {
+    fail(
+      collector,
+      "TERRAIN-ORIGIN-OUTSIDE-BOX",
+      `${where} battle origin lies outside the area box`,
+      "Move the battle origin inside the box or widen the box",
+    );
+  }
   for (const base of area.bases) {
     if (!inBox(base)) {
       fail(

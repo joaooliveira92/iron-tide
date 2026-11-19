@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { useExternalSync } from "../../shell/useExternalSync.js";
 import {
   COASTLINE_TIER_TOLERANCES,
   coastlineTierFor,
@@ -161,17 +162,15 @@ export function CoastlineCanvas({
     () => bordersByTier(snapBordersToIslands(borders ?? [], polygons), projection, centre),
     [borders, polygons, projection, centre],
   );
-  useEffect(() => {
+  useExternalSync(() => {
     bordersRef.current = builtBorders;
     redrawRef.current();
   }, [builtBorders]);
   const cameraRef = useRef(camera);
-  useEffect(() => {
-    cameraRef.current = camera;
-  });
+  cameraRef.current = camera;
   const [supported, setSupported] = useState(true);
 
-  useEffect(() => {
+  useExternalSync(() => {
     const canvas = canvasRef.current;
     if (canvas === null) return;
     const context = typeof Path2D === "undefined" ? null : canvas.getContext("2d");

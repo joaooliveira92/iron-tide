@@ -1,5 +1,6 @@
-import { useCallback, useEffect, useRef } from "react";
+import { useCallback, useRef } from "react";
 
+import { useLifecycle } from "@/shell/useExternalSync";
 import { findTypeaheadMatch } from "./options.js";
 import type { SelectOptionRecord, SelectValue } from "./types.js";
 
@@ -68,13 +69,14 @@ export function useTypeahead({
     [activeValue, currentValue, getOptions, setActiveValue],
   );
 
-  useEffect(() => {
-    return () => {
+  useLifecycle(
+    () => () => {
       if (typeaheadTimeoutRef.current) {
         clearTimeout(typeaheadTimeoutRef.current);
       }
-    };
-  }, []);
+    },
+    [],
+  );
 
   return { handleTypeahead, resetTypeahead };
 }

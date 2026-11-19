@@ -696,15 +696,41 @@
     {
       "id": "combat-terrain",
       "player_verb": "Coast, shoals and base exclusion zones in battle",
+      "status": "internal",
+      "engine_package": "combat",
+      "engine_modules": ["terrain", "collision"],
+      "engine_symbols": [],
+      "main_commands": [],
+      "renderer_screen": null,
+      "evidence_test": null,
+      "decision": null,
+      "note": "Automatic (#982): the desktop loader places each area's terrain record in the battle frame for auto and player battles. Ship collision stays inactive until content authors hull data."
+    },
+    {
+      "id": "battle-terrain-placement",
+      "player_verb": "Area terrain handed to battle resolution by campaign area",
+      "status": "internal",
+      "engine_package": "phase-engine",
+      "engine_modules": ["battleTerrain"],
+      "engine_symbols": [],
+      "main_commands": [],
+      "renderer_screen": null,
+      "evidence_test": null,
+      "decision": null,
+      "note": "Automatic (#982): the battle area id selects the placed terrain view; areas without a record pass none."
+    },
+    {
+      "id": "combat-division-ai",
+      "player_verb": "Division AI orders in battle",
       "status": "dormant-by-decision",
       "engine_package": "combat",
-      "engine_modules": ["terrain", "collision", "division-ai"],
+      "engine_modules": ["division-ai"],
       "engine_symbols": [],
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
       "decision": "RULES.md#dormant-by-decision",
-      "note": "Terrain, collision (#940, #959), division AI (#943); no caller supplies terrain until battle placement is decided."
+      "note": "Division AI (#943) stays dormant."
     },
     {
       "id": "combat-coastal-defense",

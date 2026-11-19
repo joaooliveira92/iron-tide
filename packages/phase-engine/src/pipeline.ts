@@ -6,6 +6,7 @@ import type {
   CommandLedger,
   CommandLifecycle,
 } from "@bluewave/commands";
+import type { TerrainView } from "@bluewave/combat/terrain";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import type { EventLedger } from "@bluewave/events";
 import { RandomEngine, type RandomLedger } from "@bluewave/random";
@@ -69,6 +70,7 @@ export interface MonthExecutorEngineOptions {
   readonly fleetManagement?: FleetManagementRules;
   readonly gunneryRules?: GunneryRules;
   readonly missilesRules?: MissilesRules;
+  readonly terrain?: Readonly<Record<string, TerrainView>>;
   readonly tensionDrift?: TensionDriftRules;
   readonly fleetMorale?: FleetMoraleRules;
   readonly peaceBehaviour?: PeaceBehaviourRules;

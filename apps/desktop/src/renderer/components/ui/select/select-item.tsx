@@ -2,9 +2,10 @@
 
 import { Check } from "lucide-react";
 import { motion } from "motion/react";
-import { type ReactNode, useId, useLayoutEffect, useRef } from "react";
+import { type ReactNode, useId, useRef } from "react";
 
 import { cn } from "@/lib/utils";
+import { useExternalLayoutSync } from "@/shell/useExternalSync";
 
 import { useSelectContext } from "./context.js";
 import { ITEM_VARIANTS } from "./motion.js";
@@ -44,7 +45,7 @@ export function SelectItem({
   const active = state.activeValue === value;
   const effectivelyDisabled = state.disabled || disabled;
 
-  useLayoutEffect(() => {
+  useExternalLayoutSync(() => {
     if (process.env.NODE_ENV !== "production" && !resolvedTextValue) {
       console.warn(
         `SelectItem with value "${value}" has non-text children. ` +

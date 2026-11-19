@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
 import { decodeCoastline } from "../../lib/coastline-codec.js";
+import { useStoreLifecycle } from "../../lib/use-store-lifecycle.js";
 import type { FlatPolygon } from "../../lib/simplify-geometry.js";
 
 let decoded: readonly FlatPolygon[] | null = null;
@@ -22,25 +22,28 @@ export type CoastlineState =
   | { readonly status: "error"; readonly message: string };
 
 export function useCoastline(): CoastlineState {
-  const [state, setState] = useState<CoastlineState>({ status: "loading" });
-  useEffect(() => {
-    let active = true;
-    load().then(
-      (polygons) => {
-        if (active) setState({ status: "ready", polygons });
-      },
-      (error: unknown) => {
-        if (active) {
-          setState({
-            status: "error",
-            message: error instanceof Error ? error.message : "Coastline failed to load",
-          });
-        }
-      },
-    );
-    return () => {
-      active = false;
-    };
-  }, []);
+  const [state] = useStoreLifecycle<CoastlineState>(
+    () => ({ status: "loading" }),
+    (target) => {
+      let active = true;
+      load().then(
+        (polygons) => {
+          if (active) target.set({ status: "ready", polygons });
+        },
+        (error: unknown) => {
+          if (active) {
+            target.set({
+              status: "error",
+              message: error instanceof Error ? error.message : "Coastline failed to load",
+            });
+          }
+        },
+      );
+      return () => {
+        active = false;
+      };
+    },
+    [],
+  );
   return state;
 }

@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useExternalSync } from "../../shell/useExternalSync.js";
 import type { FlatPolygon } from "../../lib/simplify-geometry.js";
 import { BORDERS_1880 } from "./borders-1880-data.js";
 import { homeFocusPoint } from "./campaign-map-join.js";
@@ -63,7 +63,7 @@ export function useInitialFocusArea(
   centre: number,
   nationId: string | null = null,
 ): void {
-  useEffect(() => {
+  useExternalSync(() => {
     const point = homeFocusPoint(campaignAreaId);
     if (point === null) return;
     const target = nationFocusPoint(point, nationId);

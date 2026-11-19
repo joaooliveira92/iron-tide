@@ -5,7 +5,7 @@ const provenance = (place: string) => ({
   confidence: "LOW" as const,
   kind: "balance_adjustment" as const,
   sources: [],
-  note: `PROVISIONAL: the ${place} coastline is a schematic convex outline in whole metres, not a survey. It exists to exercise the terrain queries (#935); replace it with surveyed outlines once battle placement and movement consume terrain.`,
+  note: `PROVISIONAL: the ${place} coastline is a schematic convex outline in whole metres, not a survey. It exists to exercise the terrain queries (#935); replace it with surveyed outlines. The battle origin is the area-local point that maps to the battle box corner (0, 0); it is a PROVISIONAL placement chosen so no spawn point lies on land.`,
 });
 
 export default list(TerrainAreaSchema, [
@@ -38,6 +38,7 @@ export default list(TerrainAreaSchema, [
       },
     ],
     bases: [{ portId: "gbr_cyprus", xM: 2_000, yM: 1_000 }],
+    battleOrigin: { xM: -10_000, yM: -8_000 },
     provenance: provenance("Cyprus"),
   },
   {
@@ -57,6 +58,7 @@ export default list(TerrainAreaSchema, [
       },
     ],
     bases: [{ portId: "gbr_gibraltar", xM: 2_800, yM: -3_000 }],
+    battleOrigin: { xM: -10_000, yM: -5_000 },
     provenance: provenance("Gibraltar"),
   },
   {
@@ -89,6 +91,7 @@ export default list(TerrainAreaSchema, [
       },
     ],
     bases: [{ portId: "gbr_valletta", xM: 8_800, yM: 2_000 }],
+    battleOrigin: { xM: -10_000, yM: -6_000 },
     provenance: provenance("Malta"),
   },
 ]);
