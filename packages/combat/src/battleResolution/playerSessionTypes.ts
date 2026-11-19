@@ -1,4 +1,3 @@
-import type { ExplanationTree } from "@bluewave/events";
 import type { GunneryBattery } from "../gunnery/resolve.js";
 import type { TacticalBattleState } from "../tactical/state.js";
 import type { TacticalShipUnit } from "../tactical/unit.js";
