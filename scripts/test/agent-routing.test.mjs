@@ -89,6 +89,18 @@ void describe("read routing", () => {
     }
   });
 
+  void test("denies reads whose range is unbounded or above the cap", () => {
+    for (const file_path of denied) {
+      for (const range of [{ offset: 1 }, { limit: 5000 }, { offset: 1, limit: 121 }]) {
+        assert.equal(
+          evaluateReadRouting({ input: { file_path, ...range }, policy: POLICY }).decision,
+          "block",
+          `${file_path} ${JSON.stringify(range)}`,
+        );
+      }
+    }
+  });
+
   void test("allows ordinary files and look-alike paths", () => {
     for (const file_path of [
       "/repo/golden/replay-approvals/legacy.json",
