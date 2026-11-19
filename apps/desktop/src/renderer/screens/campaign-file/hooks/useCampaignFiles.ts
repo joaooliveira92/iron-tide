@@ -1,5 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
 import { useBridge } from "../../../lib/bridge-context.js";
+import { createTimedValue } from "../../../lib/timed-value.js";
+import { createValueStore, subscribeWithLifecycle } from "../../../lib/value-store.js";
 
 import type { RecentCampaignEntry } from "../../../../shared/continuity-contract.js";
 import type { OperationKind, OperationResult } from "../types.js";
@@ -9,6 +11,8 @@ import {
   replayResultFromBridge,
   verificationResultFromBridge,
 } from "../utils/package-operations.js";
+
+const RESULT_LIFETIME_MS = 15_000;
 
 interface UseCampaignFilesOptions {
   readonly onOpenCampaign: (sessionId: string) => void;
@@ -30,35 +34,31 @@ export function useCampaignFiles({
   onOpenCampaign,
 }: UseCampaignFilesOptions): UseCampaignFilesResult {
   const bridge = useBridge();
-  const [recentFiles, setRecentFiles] = useState<readonly RecentCampaignEntry[]>([]);
-  const [result, setResult] = useState<OperationResult | null>(null);
+  const [recents] = useState(() => createValueStore<readonly RecentCampaignEntry[]>([]));
+  const [results] = useState(() =>
+    createTimedValue<OperationResult>((value) =>
+      value.kind === "error" ? null : RESULT_LIFETIME_MS,
+    ),
+  );
   const [pendingOperation, setPendingOperation] = useState<OperationKind | null>(null);
   const [pendingLabel, setPendingLabel] = useState<string | null>(null);
-  const resultTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  useEffect(
-    () => () => {
-      if (resultTimerRef.current !== null) clearTimeout(resultTimerRef.current);
-    },
-    [],
-  );
-
-  const showResult = useCallback((nextResult: OperationResult) => {
-    setResult(nextResult);
-    if (resultTimerRef.current !== null) clearTimeout(resultTimerRef.current);
-    resultTimerRef.current =
-      nextResult.kind === "error" ? null : setTimeout(() => setResult(null), 15_000);
-  }, []);
+  const result = useSyncExternalStore(results.subscribe, results.get);
+  const showResult = results.show;
 
   const refreshRecents = useCallback(async () => {
     if (bridge === undefined) return;
     const listed = await bridge.campaign.execute("listRecentCampaigns", undefined);
-    if (listed.outcome === "success") setRecentFiles(listed.value);
-  }, [bridge]);
+    if (listed.outcome === "success") recents.set(listed.value);
+  }, [bridge, recents]);
 
-  useEffect(() => {
-    void refreshRecents();
-  }, [refreshRecents]);
+  const subscribeRecents = useMemo(
+    () =>
+      subscribeWithLifecycle(recents, () => {
+        void refreshRecents();
+      }),
+    [recents, refreshRecents],
+  );
+  const recentFiles = useSyncExternalStore(subscribeRecents, recents.get);
 
   const openCampaign = useCallback(async () => {
     if (bridge === undefined) return;
@@ -108,9 +108,9 @@ export function useCampaignFiles({
     async (packagePath: string) => {
       if (bridge === undefined) return;
       const removed = await bridge.campaign.execute("removeRecentCampaign", { packagePath });
-      if (removed.outcome === "success") setRecentFiles(removed.value);
+      if (removed.outcome === "success") recents.set(removed.value);
     },
-    [bridge],
+    [bridge, recents],
   );
 
   const runPackageOperation = useCallback(
@@ -134,7 +134,7 @@ export function useCampaignFiles({
     [bridge, refreshRecents, showResult],
   );
 
-  const dismissResult = useCallback(() => setResult(null), []);
+  const dismissResult = results.dismiss;
 
   return {
     recentFiles,

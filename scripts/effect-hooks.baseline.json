@@ -58,8 +58,6 @@
   "apps/desktop/src/renderer/lib/use-min-width.ts": 2,
   "apps/desktop/src/renderer/lib/use-mobile.ts": 1,
   "apps/desktop/src/renderer/lib/use-read.ts": 2,
-  "apps/desktop/src/renderer/screens/campaign-file/hooks/useCampaignFiles.ts": 3,
-  "apps/desktop/src/renderer/screens/campaign-preferences/hooks/useDisplayPreferences.ts": 2,
   "apps/desktop/src/renderer/screens/construction/order/useOrderDialog.ts": 2,
   "apps/desktop/src/renderer/screens/fleet/components/FleetMap.tsx": 2,
   "apps/desktop/src/renderer/screens/fleet/hooks/useFleetHotkeys.ts": 3,

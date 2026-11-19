@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 import {
   decodeCampaignPreferences,
@@ -23,6 +23,9 @@ function takeLegacy(): CampaignPreferences | null {
   localStorage.removeItem(LEGACY_STORAGE_KEY);
   return parseLegacy(raw);
 }
+
+const NO_UNSUBSCRIBE = (): void => undefined;
+const LOAD_SNAPSHOT = (): number => 0;
 
 export interface UseDisplayPreferencesReturn {
   readonly displayPrefs: CampaignPreferences;
@@ -50,21 +53,28 @@ export function useDisplayPreferences(sessionId?: string): UseDisplayPreferences
     setSession(next);
   }, []);
 
-  useEffect(() => {
-    if (sessionId === undefined || bridge === undefined || loadedFor.current === sessionId) return;
-    loadedFor.current = sessionId;
-    const legacy = takeLegacy();
-    if (legacy !== null) {
-      commitCampaign(legacy);
-      void bridge.preferences.writeCampaign(sessionId, { campaign: legacy });
-      return;
-    }
-    void bridge.preferences.readCampaign(sessionId).then((result) => {
-      if (result.outcome !== "success") return;
-      if (locallyCommittedFor.current === sessionId) return;
-      commitCampaign(result.value.campaign);
-    });
-  }, [bridge, commitCampaign, sessionId]);
+  const subscribeLoad = useMemo(
+    () => (): (() => void) => {
+      if (sessionId === undefined || bridge === undefined || loadedFor.current === sessionId) {
+        return NO_UNSUBSCRIBE;
+      }
+      loadedFor.current = sessionId;
+      const legacy = takeLegacy();
+      if (legacy !== null) {
+        commitCampaign(legacy);
+        void bridge.preferences.writeCampaign(sessionId, { campaign: legacy });
+        return NO_UNSUBSCRIBE;
+      }
+      void bridge.preferences.readCampaign(sessionId).then((result) => {
+        if (result.outcome !== "success") return;
+        if (locallyCommittedFor.current === sessionId) return;
+        commitCampaign(result.value.campaign);
+      });
+      return NO_UNSUBSCRIBE;
+    },
+    [bridge, commitCampaign, sessionId],
+  );
+  useSyncExternalStore(subscribeLoad, LOAD_SNAPSHOT);
 
   const togglePref = useCallback(
     (key: keyof CampaignPreferences) => {
