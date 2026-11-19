@@ -354,6 +354,8 @@ export const replayCampaignProgram: CommandHandler<"replayCampaign"> = withPacka
           input === null ? undefined : yield* contentArtifact.loadTensionDriftRules();
         const fleetMorale =
           input === null ? undefined : yield* contentArtifact.loadFleetMoraleRules();
+        const tradeProtection =
+          input === null ? undefined : yield* contentArtifact.loadTradeProtectionRules();
         const peaceBehaviour =
           input === null ? undefined : yield* contentArtifact.loadPeaceBehaviourRules();
         const events = input === null ? undefined : yield* contentArtifact.loadEventContent();
@@ -374,6 +376,9 @@ export const replayCampaignProgram: CommandHandler<"replayCampaign"> = withPacka
                 ...(tensionDrift !== undefined ? { tensionDrift } : {}),
                 ...(fleetMorale !== undefined
                   ? { fleetMorale, playerNationId: metadata.playerSlotId }
+                  : {}),
+                ...(tradeProtection !== undefined
+                  ? { tradeProtection, playerNationId: metadata.playerSlotId }
                   : {}),
                 ...(peaceBehaviour !== undefined
                   ? { peaceBehaviour, playerNationId: metadata.playerSlotId }

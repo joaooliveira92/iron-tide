@@ -5,6 +5,7 @@ import type {
   GunneryRules,
   MissilesRules,
   PeaceBehaviourRules,
+  TradeProtectionRules,
   TensionDriftRules,
 } from "@bluewave/content-schema";
 import type { LegacyFleetInput } from "@bluewave/campaign";
@@ -37,6 +38,7 @@ import {
   loadFleetMoraleRules,
   loadPeaceBehaviourRules,
   loadTensionDriftRules,
+  loadTradeProtectionRules,
   shipBuildingContentHash,
 } from "../shipBuildingContent.js";
 import { CommandFailed } from "./commandError.js";
@@ -79,6 +81,10 @@ export class ContentArtifact extends Context.Service<
     readonly loadMissilesRules: () => Effect.Effect<MissilesRules | undefined, CommandFailed>;
     readonly loadBattleTerrain: () => Effect.Effect<BattleTerrainByArea | undefined, CommandFailed>;
     readonly loadFleetMoraleRules: () => Effect.Effect<FleetMoraleRules | undefined, CommandFailed>;
+    readonly loadTradeProtectionRules: () => Effect.Effect<
+      TradeProtectionRules | undefined,
+      CommandFailed
+    >;
     readonly loadTensionDriftRules: () => Effect.Effect<
       TensionDriftRules | undefined,
       CommandFailed
@@ -147,6 +153,8 @@ export function contentArtifactLayer(
       Effect.try({ try: () => loadBattleTerrain(), catch: contentUnavailable }),
     loadFleetMoraleRules: () =>
       Effect.try({ try: () => loadFleetMoraleRules(), catch: contentUnavailable }),
+    loadTradeProtectionRules: () =>
+      Effect.try({ try: () => loadTradeProtectionRules(), catch: contentUnavailable }),
     loadTensionDriftRules: () =>
       Effect.try({ try: () => loadTensionDriftRules(), catch: contentUnavailable }),
     loadPeaceBehaviourRules: () =>
