@@ -22,4 +22,18 @@ export {
   type HazardOutcome,
   type MovementHazards,
 } from "./runtime.js";
-export { LAND_LOOKAHEAD_SECONDS, steerClearOfLand } from "./steering.js";
+export {
+  KNOWN_MINEFIELD_VIEW_INVALID,
+  KnownMinefieldViewSchema,
+  decodeKnownMinefieldView,
+  segmentCrossesMinefield,
+  type KnownMinefield,
+  type KnownMinefieldView,
+} from "./minefields.js";
+export {
+  LAND_LOOKAHEAD_SECONDS,
+  steerClearOfHazards,
+  steerClearOfLand,
+  type SteerClearOfHazardsInput,
+  type SteerClearOfLandInput,
+} from "./steering.js";

@@ -5,7 +5,8 @@ import type { MovementState } from "../movement/neighbour.js";
 import { KNOTS_TO_UM_S, SPEED_BP_SCALE } from "../movement/neighbour.js";
 import type { UnitOrders } from "../simulation/engine.js";
 import { foldHeading, headingToward } from "../battleResolution/engagement.js";
-import { steerClearOfLand } from "../collision/steering.js";
+import type { KnownMinefieldView } from "../collision/minefields.js";
+import { steerClearOfHazards } from "../collision/steering.js";
 import type { TerrainView } from "../terrain/index.js";
 import { TWO_KNOTS_SPEED_BP, UM_PER_METRE } from "./constants.js";
 import type {
@@ -45,6 +46,7 @@ export interface CompileDivisionOrdersInput {
   readonly headingAway?: (unit: TacticalShipUnit) => number | null;
   readonly cruiseSpeedBp?: number;
   readonly terrain?: TerrainView;
+  readonly minefields?: KnownMinefieldView;
 }
 
 export interface CompileDivisionOrdersResult {
@@ -178,8 +180,14 @@ export function compileDivisionOrders(
           const position = input.movement[unit.assetId]?.position;
           unitOrders[unit.assetId] = {
             orderedHeading:
-              input.terrain && position
-                ? steerClearOfLand({ terrain: input.terrain, position, heading: away, speedBp })
+              (input.terrain || input.minefields) && position
+                ? steerClearOfHazards({
+                    ...(input.terrain ? { terrain: input.terrain } : {}),
+                    ...(input.minefields ? { minefields: input.minefields } : {}),
+                    position,
+                    heading: away,
+                    speedBp,
+                  })
                 : away,
             orderedSpeedBp: speedBp,
           };
