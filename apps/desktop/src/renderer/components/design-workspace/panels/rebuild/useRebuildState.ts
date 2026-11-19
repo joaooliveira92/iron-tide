@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
+import { useLifecycle } from "../../../../lib/use-lifecycle.js";
 import type { DesignDraft } from "@bluewave/ship-design";
 import { envelopeOf, stampCommand } from "../../../../lib/command-envelope.js";
 import type { BluewaveDesktopBridge } from "../../../../../preload/index.js";
@@ -44,7 +45,7 @@ export function useRebuildState({
   const rebuildKind = action === "BULGE" ? "BULGE" : undefined;
   const checkedDraftKey = useMemo(() => JSON.stringify(checkedDraft), [checkedDraft]);
 
-  useEffect(() => {
+  useLifecycle(() => {
     setShips([]);
     if (!bridge || sessionId === undefined) return;
     let live = true;
@@ -56,7 +57,7 @@ export function useRebuildState({
     };
   }, [bridge, sessionId, revision]);
 
-  useEffect(() => {
+  useLifecycle(() => {
     setCheck(null);
     if (!bridge || sessionId === undefined || shipId === undefined) return;
     if (loaded?.shipId !== shipId || checkedDraft === null) return;

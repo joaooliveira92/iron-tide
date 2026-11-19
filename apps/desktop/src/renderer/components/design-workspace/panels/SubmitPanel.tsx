@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useLifecycle } from "../../../lib/use-lifecycle.js";
 import { useDesignPriceView } from "../design-price-view.js";
 import { envelopeOf, stampCommand } from "../../../lib/command-envelope.js";
 import { useBridge } from "../../../lib/bridge-context.js";
@@ -65,7 +66,7 @@ export function useStudyPreview(
   valid: boolean,
 ): DesignStudyPreviewOutcome | undefined {
   const [outcome, setOutcome] = useState<DesignStudyPreviewOutcome | undefined>(undefined);
-  useEffect(() => {
+  useLifecycle(() => {
     if (!bridge || !valid || className === "") {
       setOutcome(undefined);
       return;
