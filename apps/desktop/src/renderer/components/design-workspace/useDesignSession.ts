@@ -1,5 +1,5 @@
 import { useCallback, useMemo, useState } from "react";
-import { useLifecycle } from "../../lib/use-lifecycle.js";
+import { useLifecycle } from "../../shell/useExternalSync.js";
 import { armourMaterialOptions, type DesignDraft, type DraftEdit } from "@bluewave/ship-design";
 import { usePresentationFormat } from "../../shell/usePresentationFormat.js";
 import { batteryCards } from "./batteryView.js";

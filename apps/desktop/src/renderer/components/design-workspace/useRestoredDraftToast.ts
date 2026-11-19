@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { useLifecycle } from "../../lib/use-lifecycle.js";
+import { useLifecycle } from "../../shell/useExternalSync.js";
 import { resolveMessage } from "../../content/uiCatalogue.js";
 import { formatTimestamp } from "../../lib/presentation-format/dates.js";
 import { dismissToast, toast } from "../ui/toast.js";

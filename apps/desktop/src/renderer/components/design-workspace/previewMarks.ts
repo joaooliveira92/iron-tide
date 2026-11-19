@@ -1,5 +1,5 @@
 import { createContext, useContext, useRef, useSyncExternalStore } from "react";
-import { useLifecycle } from "../../lib/use-lifecycle.js";
+import { useLifecycle } from "../../shell/useExternalSync.js";
 import type { PartKind } from "./panels/hull-plan/anatomy/anatomy-types.js";
 
 export type PreviewKinds = ReadonlySet<PartKind>;

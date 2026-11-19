@@ -1,5 +1,5 @@
 import { useCallback, useRef, useState } from "react";
-import { useLifecycle } from "../../lib/use-lifecycle.js";
+import { useLifecycle } from "../../shell/useExternalSync.js";
 import type { BoardFinding } from "./validation/boardFindings.js";
 
 const SERIOUS = new Set(["BLOCKING", "CRITICAL"]);

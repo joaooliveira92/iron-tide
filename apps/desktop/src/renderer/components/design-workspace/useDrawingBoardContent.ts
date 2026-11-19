@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLifecycle } from "../../lib/use-lifecycle.js";
+import { useLifecycle } from "../../shell/useExternalSync.js";
 import { useBridge } from "../../lib/bridge-context.js";
 import { hasDrawingBoardContent, setDrawingBoardContent } from "./content.js";
 

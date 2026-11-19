@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { useLifecycle } from "../../../../lib/use-lifecycle.js";
+import { useLifecycle } from "../../../../shell/useExternalSync.js";
 import type { DesignDraft } from "@bluewave/ship-design";
 import { envelopeOf, stampCommand } from "../../../../lib/command-envelope.js";
 import type { BluewaveDesktopBridge } from "../../../../../preload/index.js";

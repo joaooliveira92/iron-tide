@@ -1,5 +1,5 @@
 import { useRef, useState } from "react";
-import { useLifecycle } from "../../../lib/use-lifecycle.js";
+import { useLifecycle } from "../../../shell/useExternalSync.js";
 import { ArrowRight, ListChecks } from "lucide-react";
 import { Badge } from "../../ui/badge.js";
 import { Button } from "../../ui/button.js";
