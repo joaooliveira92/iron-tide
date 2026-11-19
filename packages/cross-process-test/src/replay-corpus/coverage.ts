@@ -19,6 +19,7 @@ export const SUBSYSTEMS = [
   { id: "resolve_carrier_operations", label: "Carrier operations" },
   { id: "battle_generation", label: "Battle generation" },
   { id: "battle_resolution", label: "Battle resolution" },
+  { id: "unrest", label: "Unrest" },
   { id: "closing_validation", label: "Closing validation" },
 ] as const;
 
@@ -46,6 +47,15 @@ const EVENT_SUBSYSTEM: Readonly<Record<string, string>> = {
   ForeignStationShipMoved: "battle_resolution",
   ForeignStationNoRoute: "battle_resolution",
   PossessionTransferred: "command_collection",
+  UnrestChanged: "unrest",
+  UnrestConsequence: "unrest",
+};
+
+const UNREST_REASON_SUBSYSTEM: Readonly<Record<string, string | null>> = {
+  EVENT: null,
+  DEFEAT: "battle_resolution",
+  VICTORY: "battle_resolution",
+  PRESENCE_SHORTFALL: "battle_resolution",
 };
 
 const NEUTRAL_EVENT_TYPES: ReadonlySet<string> = new Set(["NationBudgetChanged"]);
@@ -70,6 +80,11 @@ export function monthCoverage(result: MonthResult): MonthCoverage {
   for (const entry of result.eventLedger.all) {
     const type = entry.eventType;
     if (entry.body.kind === "PrestigeChanged" && eventPrestige.has(entry.body.reasonCode)) {
+      continue;
+    }
+    if (entry.body.kind === "UnrestChanged" && entry.body.reasonCode in UNREST_REASON_SUBSYSTEM) {
+      const owner = UNREST_REASON_SUBSYSTEM[entry.body.reasonCode];
+      if (owner !== null && owner !== undefined) add(owner);
       continue;
     }
     const subsystem = EVENT_SUBSYSTEM[type];

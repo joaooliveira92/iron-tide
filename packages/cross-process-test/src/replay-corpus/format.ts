@@ -8,6 +8,7 @@ export const REPLAY_SETUP_IDS = [
   "armed-adriatic-war",
   "armed-malta-war",
   "certain-construction-events",
+  "unrest-phase",
 ] as const;
 export type ReplaySetupId = (typeof REPLAY_SETUP_IDS)[number];
 
