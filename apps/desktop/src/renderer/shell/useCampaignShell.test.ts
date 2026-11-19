@@ -6,42 +6,9 @@ import type { CampaignCommandClient } from "../../shared/campaign-contract.js";
 import type { PlayerProjection } from "@bluewave/campaign-engine";
 import { setUiCatalogue } from "../content/uiCatalogue.js";
 import { useCampaignShell } from "./useCampaignShell.js";
+import { projection } from "./useCampaignShell.fixtures.js";
 
 type CampaignExecute = CampaignCommandClient["execute"];
-
-const projection: PlayerProjection = {
-  prestige: { current: 20, sackingThreshold: 16, dismissalRisk: false },
-  fleetMorale: { current: 100, max: 100 },
-  campaignIdentity: "campaign_1",
-  snapshotHash: "hash_abc",
-  revision: 3,
-  month: { year: 1900, month: 1 },
-  playerNationId: "uk",
-  nationName: "United Kingdom",
-  projectedSurplusDeficit: 1_250_000,
-  economy: {
-    treasury: 24_500_000,
-    monthlyAppropriation: 2_000_000,
-    shipyardCapacity: 50,
-    constructionSpend: 400_000,
-    researchSpend: 350_000,
-    maintenanceCost: 250_000,
-    obligations: 0,
-    researchRequested: 350_000,
-    researchCap: 240_000,
-    plannedConstruction: 400_000,
-    projectedNet: 1_250_000,
-    shortfall: 0,
-    status: "healthy",
-    monthEndTreasury: 25_750_000,
-  },
-  fleet: [],
-  ports: [],
-  knownTechnologyIds: [],
-  strategicAreas: [],
-  knownEnemyNations: [],
-  commandWorkspace: { commands: [], movementCommands: [] },
-};
 
 const monthResolveSuccess = {
   outcome: "success" as const,

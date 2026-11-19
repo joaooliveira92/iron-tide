@@ -7,7 +7,6 @@ import {
   type SetStateAction,
   use,
   useCallback,
-  useEffect,
   useMemo,
   useState,
 } from "react";
@@ -47,6 +46,7 @@ import {
   headerTitleFor,
 } from "./site-header-state.js";
 import { useGuidedInspection } from "./useGuidedInspection.js";
+import { useLoadedWindowState } from "./useWindowState.js";
 import { WindowContextProvider } from "./WindowContext.js";
 
 const EMPTY_SEARCH_TARGETS: readonly {
@@ -119,26 +119,8 @@ export function ShellWindow({
   readonly children: ReactNode;
 }) {
   const headerCampaign = useHeaderCampaign();
-  const [windowState, setWindowState] = useState<WindowState | null>(initialWindowState ?? null);
-
-  useEffect(() => {
-    if (initialWindowState !== undefined) {
-      setWindowState(initialWindowState);
-      return;
-    }
-    let active = true;
-    async function loadWindowState(): Promise<void> {
-      if (bridge === undefined) return;
-      try {
-        const state = await bridge.getWindowState();
-        if (active) setWindowState(state);
-      } catch {}
-    }
-    void loadWindowState();
-    return () => {
-      active = false;
-    };
-  }, [bridge, initialWindowState]);
+  const loadedWindowState = useLoadedWindowState(bridge, initialWindowState !== undefined);
+  const windowState = initialWindowState ?? loadedWindowState;
 
   const platform = bridge?.platform ?? "darwin";
   const value = useMemo(
