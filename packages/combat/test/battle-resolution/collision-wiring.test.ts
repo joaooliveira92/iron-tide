@@ -1,3 +1,4 @@
+import { SafeInt } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
 import {
   advancePlayerBattleMinute,
@@ -37,7 +38,7 @@ const wall: TerrainView = {
 function hulled(nations: ReturnType<typeof makeNations>): ReturnType<typeof makeNations> {
   for (const designs of [nations.attackerDesigns, nations.defenderDesigns]) {
     for (const [id, design] of designs) {
-      designs.set(id, { ...design, hullLengthMm: 120_000, hullBeamMm: 14_000 });
+      designs.set(id, { ...design, hullLengthMm: SafeInt(120_000), hullBeamMm: SafeInt(14_000) });
     }
   }
   return nations;
