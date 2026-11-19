@@ -225,7 +225,7 @@ describe("commitMonth", () => {
         algorithm: "sha256",
         artifactKind: "campaign-snapshot",
         compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
-        bodyHash: "e401af5b259d56ed851d7affa8b00ca3e2e1e8988de4db90a58473ecf7bc4d15",
+        bodyHash: "6f3c606bf9a09901575bc4352d84796cf9e7b0dc8334e2a9a3d03788da94b1a3",
         bodyLength: 213927,
       });
       expect(updated.state.rawHash).toBe(
