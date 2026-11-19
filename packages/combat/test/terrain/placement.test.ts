@@ -33,7 +33,7 @@ const record: BattleTerrainRecord = {
       ],
     },
   ],
-  exclusions: [{ id: "exclusion.p", portId: "p", xM: 1500, yM: 1500, radiusM: 400 }],
+  exclusions: [{ id: "exclusion.p", xM: 1500, yM: 1500, radiusM: 400 }],
 };
 
 const at = (xM: number, yM: number): Position => [xM * M, yM * M];
