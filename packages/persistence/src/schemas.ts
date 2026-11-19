@@ -167,7 +167,7 @@ const StorablePrestigeValueSetSchema = Schema.Struct({
 const StorableCareerResultSchema = Schema.Struct({
   nationId: Schema.String,
   score: Schema.Finite,
-  reason: Schema.Literals(["SACKED", "CAMPAIGN_END"]),
+  reason: Schema.Literals(["SACKED", "CAMPAIGN_END", "REVOLUTION"]),
   month: Schema.Struct({ year: Schema.Finite, month: Schema.Finite }),
 });
 

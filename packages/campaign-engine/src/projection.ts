@@ -151,7 +151,7 @@ export interface PlayerProjectionPrestige {
 }
 
 export interface PlayerProjectionCareer {
-  readonly reason: "SACKED" | "CAMPAIGN_END";
+  readonly reason: "SACKED" | "CAMPAIGN_END" | "REVOLUTION";
   readonly score: number;
   readonly month: PlayerProjectionMonth;
 }

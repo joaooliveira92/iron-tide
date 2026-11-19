@@ -11,6 +11,7 @@ export type { FleetState };
 import type { BudgetModifier, NationEventHistory } from "./eventState.js";
 import type { FleetExerciseRecord } from "./fleetExercise.js";
 import type { FleetMoraleLastChange } from "./fleetMorale.js";
+import type { UnrestLastChange } from "./unrest.js";
 import type { TrainingSubjectEntry } from "./specialTraining.js";
 import type { WarOptionalRecords } from "./warRecords.js";
 import type { PermanentDivision } from "./division.js";
@@ -358,6 +359,7 @@ export interface NationState {
   traits?: NationTrait[];
   eventHistory?: NationEventHistory;
   unrest?: number;
+  unrestLastChange?: UnrestLastChange;
   fleetMorale?: number;
   fleetMoraleLastChange?: FleetMoraleLastChange;
   budgetModifiers?: BudgetModifier[];

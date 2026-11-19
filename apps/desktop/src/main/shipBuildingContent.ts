@@ -5,6 +5,7 @@ import {
   eventResolutionFromRulesets,
   fleetManagementFromRulesets,
   fleetMoraleFromRulesets,
+  unrestFromRulesets,
   gunneryFromRulesets,
   missilesFromRulesets,
   peaceBehaviourFromRulesets,
@@ -138,6 +139,26 @@ export function loadFleetMoraleRules(): FleetMoraleRules | undefined {
     );
   fleetMorale = { rules: decoded?.value };
   return fleetMorale.rules;
+}
+
+type UnrestRules = Extract<
+  NonNullable<ReturnType<typeof unrestFromRulesets>>,
+  { readonly ok: true }
+>["value"];
+
+let unrest: { readonly rules: UnrestRules | undefined } | null = null;
+
+export function loadUnrestRules(): UnrestRules | undefined {
+  if (unrest !== null) return unrest.rules;
+  const { bundle } = readContentArtifact(resolveGeneratedContentDir());
+  const decoded = unrestFromRulesets(bundle.rulesets);
+  if (decoded !== undefined && !decoded.ok)
+    throw new ContentArtifactError(
+      "CONTENT_ARTIFACT_INVALID",
+      `ruleset unrest section is invalid at '${decoded.field}': ${decoded.message}`,
+    );
+  unrest = { rules: decoded?.value };
+  return unrest.rules;
 }
 
 type PeaceBehaviourRules = Extract<
