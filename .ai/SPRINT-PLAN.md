@@ -129,7 +129,7 @@ from authoritative state, and the output is reviewed. It is a new baseline, not 
 | --- | ---------------------- | ---- | ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | T-1 | Battle offer flow      | M    | S-1        | Force estimate, accept or decline with VP and prestige cost, support force, mission types. Battle-offer values G1-G7 are owner-decided balance targets (ADR-0254, decisions 0028-0034 resolved). **Done 2026-10-21** (spec #109; report `.ai/reports/t-1-battle-offer-flow.md`): offer, accept, delegate, decline with VP and prestige cost, unavoidable refusal, enemy decline and support force are live on the production pack under the ADR-0254 balance targets (ADR-0263); the report lists R1-R16 coverage and the open observations. |
 | T-2 | Player-fought battle   | L    | T-1, U-4   | Sandbox promoted: OOB, formations, roles, speed, targeting, force orders, three realism modes, log, objectives, mid-battle save; overlays honour preferences and non-colour palettes; result through `battle_resolution`.                                                                                                                                                                                                                                                                                                                    |
-| T-3 | Tactical fidelity pass | M    | T-2        | Grates fouled, stokers exhausted, minefields, MTBs, land targets, survivors, glare, hidden sinking state.                                                                                                                                                                                                                                                                                                                                                                                                                                    |
+| T-3 | Tactical fidelity pass | M    | T-2        | Minefields, MTBs, land targets, survivors, glare, hidden sinking state. Grates fouled and stokers exhausted moved into the tactical-navigation work (#324) and shipped there (#937); see `.ai/briefs/t-2-tactical-navigation.md`.                                                                                                                                                                                                                                                                                                            |
 
 ### Phase 5 — A world that reacts
 
@@ -219,13 +219,16 @@ goldens and all 13 replays are unchanged because no production part uses a new f
 #295 and the #278 catalogue-technology tickets now have the seam they need; #296 still waits on
 the W-2 submarine wiring assigned by ADR-0300.
 
-**T-2 engine foundation (2026-10-27): division orders.** The first T-2 slice landed (#324 map,
-#329 decision; ADR-0321): a strict versioned `DivisionOrderSet` and pure compiler in
-`@bluewave/combat/orders`, with the existing stance wire shape converted losslessly so player
-battles keep their exact behaviour. No golden, replay or compatibility version moved. Course,
-waypoint and speed-preset controls, formation keeping, realism gating, force orders and the
-battle-map screen are still open; `CRUISE` needs a sourced ruleset fraction before it is exposed
-to the player. Next dependency-ordered slice: formation keeping (#328).
+**T-2 tactical navigation (map #324, engine slices done 2026-11-19).** Division orders (ADR-0321),
+the realism matrix (ADR-0322) and formation keeping (#397) landed first. Then terrain #935,
+waypoint arrival #936, machinery speed #937 (grates and stokers moved here from T-3), battle view
+DTO #938, collision #940, separation #941, force orders #942, AI division roles #943 and the
+legacy `playerBattleView` retirement #954. All of it is dormant in production battle resolution, so
+no golden, replay or compatibility version moved. Open follow-ups: #957 route-crosses-land flag,
+#958 minefield avoidance, #959 wire `collision` and `terrain` into production battle resolution
+(moves goldens; needs replay approvals), #961 persist AI memory in saved battle state. The
+battle-map screen is a separate milestone. Spec: `.ai/briefs/t-2-tactical-navigation.md`;
+`CRUISE` still needs a sourced ruleset fraction before it is exposed to the player.
 
 **F-1 strategic map (2026-10-27): done.** #222/#231 are closed; the Map screen reads compiled
 campaign state, orders the same `MoveFleet` body as the Fleet screen, and the fixture world is
@@ -236,9 +239,7 @@ invasion range are deferred by DR-0039.
 0047 (air and AA values) and the W-2 submarine wiring (ADR-0300); #281 has the SSM model and
 remains open only for SAM/ASM. E-1 content #256/#258 wait on decision request 0044; #254 has the
 US 1945 destroyer and 1948 cruisers and still lacks the 1940s battleship and other-nation
-slices. #249/#260 follow those content slices. The T-2 build map is not yet sliced into tickets
-beyond slice 1.
-
+slices. #249/#260 follow those content slices.
 **E-1 air decision (2026-11-05).** Decision request 0047 is resolved as Option A, research-first,
 and the research pass is published in discussion 592. It narrows the #280/#295 block and moves part
 of it: the carrier and jet rules are `manual`-grounded and already shipped as
