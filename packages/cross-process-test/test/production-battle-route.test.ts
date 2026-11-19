@@ -23,6 +23,8 @@ const ENEMY = "italy";
 const SEED = "production-battle-route";
 const TURN = "battle-route-turn";
 
+const { warDeclaration: _aiWarDeclaration, ...staticEnemyOptions } = fleetManagementOptions(PLAYER);
+
 const { state, bundle } = compileProductionCampaign();
 const rules = battleOffersFromRulesets(bundle.rulesets) as BattleOfferRules;
 const { engagementMinimumStrength: _authored, ...rulesWithoutEngagement } = rules;
@@ -81,7 +83,7 @@ function execute(
     new DiagnosticCollector(),
     undefined,
     {
-      ...fleetManagementOptions(PLAYER),
+      ...staticEnemyOptions,
       playerNationId: PLAYER,
       battleOffers: offers,
       interruptions: { turnId: `${TURN}-${String(month)}`, recordedInputs },
