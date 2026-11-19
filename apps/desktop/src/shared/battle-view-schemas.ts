@@ -42,6 +42,7 @@ const OrderSchema = Schema.Struct({
       crossesLand: nullable(Schema.Boolean),
     }),
   ),
+  routeCrossesLand: nullable(Schema.Boolean),
 });
 
 const OwnShipSchema = Schema.Struct({
