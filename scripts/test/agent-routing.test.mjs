@@ -19,7 +19,7 @@ const runHook = (payload) =>
   });
 
 void describe("agent routing", () => {
-  test("denies the general-purpose subagent type", () => {
+  void test("denies the general-purpose subagent type", () => {
     const verdict = evaluateAgentRouting({
       input: { subagent_type: "general-purpose", prompt: "look around" },
       policy: POLICY,
@@ -28,12 +28,12 @@ void describe("agent routing", () => {
     assert.match(verdict.message, /general-purpose/u);
   });
 
-  test("denies an Agent call without subagent_type, which defaults to general-purpose", () => {
+  void test("denies an Agent call without subagent_type, which defaults to general-purpose", () => {
     const verdict = evaluateAgentRouting({ input: { prompt: "look around" }, policy: POLICY });
     assert.equal(verdict.decision, "block");
   });
 
-  test("allows named specialised agents and fork", () => {
+  void test("allows named specialised agents and fork", () => {
     for (const subagent_type of [
       "search",
       "grep",
@@ -51,7 +51,7 @@ void describe("agent routing", () => {
     }
   });
 
-  test("ignores a subagent_type that only contains the denied name", () => {
+  void test("ignores a subagent_type that only contains the denied name", () => {
     assert.deepEqual(
       evaluateAgentRouting({ input: { subagent_type: "general-purpose-lite" }, policy: POLICY }),
       { decision: "allow" },
@@ -66,7 +66,7 @@ void describe("read routing", () => {
     "/repo/pnpm-lock.yaml",
   ];
 
-  test("denies full reads of replays, reports and the lockfile", () => {
+  void test("denies full reads of replays, reports and the lockfile", () => {
     for (const file_path of denied) {
       const verdict = evaluateReadRouting({ input: { file_path }, policy: POLICY });
       assert.equal(verdict.decision, "block", file_path);
@@ -74,7 +74,7 @@ void describe("read routing", () => {
     }
   });
 
-  test("allows ranged reads of the same files", () => {
+  void test("allows ranged reads of the same files", () => {
     for (const file_path of denied) {
       assert.deepEqual(
         evaluateReadRouting({ input: { file_path, offset: 10, limit: 40 }, policy: POLICY }),
@@ -89,7 +89,7 @@ void describe("read routing", () => {
     }
   });
 
-  test("allows ordinary files and look-alike paths", () => {
+  void test("allows ordinary files and look-alike paths", () => {
     for (const file_path of [
       "/repo/golden/replay-approvals/legacy.json",
       "/repo/src/reports.ts",
@@ -106,13 +106,13 @@ void describe("read routing", () => {
     }
   });
 
-  test("allows a read without a file_path", () => {
+  void test("allows a read without a file_path", () => {
     assert.deepEqual(evaluateReadRouting({ input: {}, policy: POLICY }), { decision: "allow" });
   });
 });
 
 void describe("routing hook", () => {
-  test("blocks the general-purpose agent with exit 2 and a stderr message", () => {
+  void test("blocks the general-purpose agent with exit 2 and a stderr message", () => {
     const result = runHook({
       tool_name: "Agent",
       tool_input: { subagent_type: "general-purpose", prompt: "x" },
@@ -121,7 +121,7 @@ void describe("routing hook", () => {
     assert.match(result.stderr, /general-purpose/u);
   });
 
-  test("allows a named agent", () => {
+  void test("allows a named agent", () => {
     const result = runHook({
       tool_name: "Agent",
       tool_input: { subagent_type: "search", prompt: "x" },
@@ -129,7 +129,7 @@ void describe("routing hook", () => {
     assert.equal(result.status, 0);
   });
 
-  test("blocks a full read of the lockfile and allows a ranged one", () => {
+  void test("blocks a full read of the lockfile and allows a ranged one", () => {
     const full = runHook({
       tool_name: "Read",
       tool_input: { file_path: "/repo/pnpm-lock.yaml" },
@@ -142,7 +142,7 @@ void describe("routing hook", () => {
     assert.equal(ranged.status, 0);
   });
 
-  test("fails open on unreadable input", () => {
+  void test("fails open on unreadable input", () => {
     assert.equal(runHook("not json").status, 0);
   });
 });
