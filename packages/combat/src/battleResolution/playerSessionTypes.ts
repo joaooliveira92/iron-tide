@@ -1,3 +1,5 @@
+import type { CollisionContext, CollisionRules } from "../collision/index.js";
+import type { TerrainView } from "../terrain/index.js";
 import type { GunneryBattery } from "../gunnery/resolve.js";
 import type { SeparationState } from "../navigation/model.js";
 import type { TacticalBattleState } from "../tactical/state.js";
@@ -95,6 +97,8 @@ export interface CreatePlayerBattleInput {
   readonly missilesRules?: MissileRules;
   readonly maxMinutes?: number;
   readonly waypointRules?: WaypointRules;
+  readonly terrain?: TerrainView;
+  readonly collisionRules?: CollisionRules;
 }
 
 export interface PlayerBattleSession {
@@ -133,4 +137,5 @@ export interface PlayerBattleSession {
   readonly waypointRules?: WaypointRules;
   readonly waypointArrivals?: Readonly<Record<string, PlayerBattleWaypointArrival>>;
   readonly separation?: Readonly<Record<string, SeparationState>>;
+  readonly collision?: CollisionContext;
 }

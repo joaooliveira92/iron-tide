@@ -704,7 +704,7 @@
       "renderer_screen": null,
       "evidence_test": null,
       "decision": "RULES.md#dormant-by-decision",
-      "note": "Terrain queries, collision input (#940), division role AI (#943); wiring and battle placement follow (#324)."
+      "note": "Terrain, collision (#940, #959), division AI (#943); no caller supplies terrain until battle placement is decided."
     },
     {
       "id": "combat-coastal-defense",

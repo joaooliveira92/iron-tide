@@ -5,9 +5,11 @@ What the T-2N slices shipped in `@bluewave/combat`, where the seams are, and wha
 
 ## Contract
 
-- **Dormant.** No production battle resolution supplies `navigation`, `collision`, `terrain`, force orders or division AI,
-  so every optional input changes no hash when absent and no golden, replay or compatibility version moved. The
-  reachability rows `combat-navigation` and `combat-terrain` in `scripts/data/reachability-ledger.json` records it.
+- **Dormant in production.** `resolveBattleAuto` and the player session accept `terrain` and `collisionRules` (#959) and
+  project `collision` from design hull length and beam, but no production caller supplies terrain and production template
+  designs carry no hull data, so `navigation`, force orders and division AI stay unsupplied and every optional input
+  changes no hash when absent. The reachability rows `combat-navigation` and `combat-terrain` in
+  `scripts/data/reachability-ledger.json` record it.
 - **One order path.** Player, force and AI orders are `DivisionOrder`s compiled by `compileDivisionOrders` to per-ship
   `UnitOrders`. The engine has no second input.
 - **Pure seams.** Each module is a pure function of explicit inputs; state returns to the caller (`MachineryState`,
@@ -15,7 +17,7 @@ What the T-2N slices shipped in `@bluewave/combat`, where the seams are, and wha
 - **Random draws** use the seeded ledger with a named stream: `NAVIGATION_BREAKDOWN_STREAM`, `NAVIGATION_SEPARATION_STREAM`.
 - **Values** are PROVISIONAL ruleset or content data (`PROVISIONAL_COLLISION_RULES`, `PROVISIONAL_DIVISION_AI_RULES`, the
   `navigation` section), never code constants a player could see as fact.
-- **Moving a golden** needs the [replay approvals](../../docs/agents/replay-corpus.md); #959 is that decision.
+- **Moving a golden** needs the [replay approvals](../../docs/agents/replay-corpus.md); #959 moved the corpus once, for compatibility 5.4.0.
 
 ## Modules
 
@@ -46,8 +48,13 @@ engine feeds `machinery`, `separation` and collision `state` back each minute.
 
 ## Decisions
 
-- Production wiring is **#959**: it supplies `collision` (terrain, hull length and beam) to battle resolution, moves goldens, and
-  needs replay-corpus approvals and a deliberate go. Until then nothing above is reachable from a player battle.
+- **#959** wired the plumbing: `CompiledDesignVersion` carries optional `hullLengthMm` and `hullBeamMm` (compatibility 5.4.0),
+  `projectBattleCollision` builds the `CollisionContext`, and `resolve`, `playerSessionAdvance` and `playerSessionOrders`
+  pass `collision` and `terrain`. `collisionActivity` on the result is outside the `resultHash` body. Template designs have
+  no hull data and stay exempt until content supplies it.
+- Still open: the battle terrain source (no runtime loader reads `terrain-artifact.json`) and battle placement (battles start
+  in `DEFAULT_AREA_BBOX`). See the decision request `.ai/decision-requests/0959-battle-terrain-source.md` and its follow-up issue.
+  Until then no player battle supplies terrain.
 - AI memory is an explicit input and output of `decideDivisionOrders`; saving it in battle state is **#961**.
 - Grates and stokers belong to this work, not SPRINT-PLAN T-3.
 
@@ -57,7 +64,7 @@ engine feeds `machinery`, `separation` and collision `state` back each minute.
 | ----- | ------------------------------------------------------------------------ |
 | #957  | Read-model flag when a planned route crosses land (`segmentCrossesLand`) |
 | #958  | Steer AI and compiled orders clear of known minefields                   |
-| #959  | Wire `collision` and `terrain` into production battle resolution         |
+| #959  | Supply a battle terrain source and placement (plumbing shipped)          |
 | #961  | Persist the division AI memory in saved battle state                     |
 
 Also open and unticketed: gunnery use of `vibrationBp` and the battle-map screen.

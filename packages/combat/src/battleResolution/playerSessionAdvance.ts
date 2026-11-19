@@ -3,6 +3,7 @@ import { ageContact, isStale } from "../contact/neighbour.js";
 import type { TacticalBattleState } from "../tactical/state.js";
 import type { TorpedoContext } from "../torpedoes/index.js";
 import { advanceMinute } from "../simulation/engine.js";
+import { carryCollisionState, withCollision } from "./collisionWiring.js";
 import { planTorpedoCommands } from "./torpedoDoctrine.js";
 import { withNightTraining } from "./trainingEffects.js";
 import { advancePlayerForce } from "./playerSessionForce.js";
@@ -135,6 +136,7 @@ export function advancePlayerBattleMinute(
     smoke: session.smoke,
     airCombat: session.airCombat,
     airDefense: session.airDefense,
+    ...withCollision(session.collision),
   });
 
   let damage: DamageContext = session.damage;
@@ -216,6 +218,7 @@ export function advancePlayerBattleMinute(
     ...(nextTorpedoes === undefined ? {} : { torpedoes: nextTorpedoes }),
     ...(nextMissiles === undefined ? {} : { missiles: nextMissiles }),
     ...(force === undefined ? {} : { force }),
+    ...withCollision(carryCollisionState(session.collision, result.collisionState)),
     log: [
       ...session.log,
       ...result.events.map((event) => ({
