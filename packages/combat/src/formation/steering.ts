@@ -1,6 +1,7 @@
 import type {
   FormationDivisionView,
   FormationKeepingRuleset,
+  FormationSeparation,
   FormationShipView,
   FormationTrack,
   ShipOrderOverride,
@@ -17,6 +18,7 @@ export interface DivisionSteeringInput {
   ruleset: FormationKeepingRuleset;
   turnTogether: boolean;
   track: FormationTrack | undefined;
+  separation?: FormationSeparation;
 }
 
 export interface DivisionSteeringPlan {
@@ -30,13 +32,21 @@ const UM_PER_M = 1_000_000;
 export function divisionSpeedBp(
   division: FormationDivisionView,
   ships: Readonly<Record<string, FormationShipView>>,
+  separated: readonly string[] = [],
 ): number {
   const flagship = ships[division.flagshipId]!;
   let speed = flagship.orderedSpeedBp;
   for (const id of division.memberIds) {
+    if (separated.includes(id)) continue;
     speed = Math.min(speed, ships[id]!.attainableMaxBp);
   }
   return speed;
+}
+
+const HEADING_DEGREES = 360;
+
+function offsetHeading(heading: number, errorDeg: number): number {
+  return (((heading + errorDeg) % HEADING_DEGREES) + HEADING_DEGREES) % HEADING_DEGREES;
 }
 
 function catchUpSpeedBp(
@@ -55,8 +65,9 @@ function catchUpSpeedBp(
 
 export function planDivisionSteering(input: DivisionSteeringInput): DivisionSteeringPlan {
   const { division, ships, ruleset, turnTogether, track } = input;
+  const separated = input.separation?.separated ?? [];
   const flagship = ships[division.flagshipId]!;
-  const speedBp = divisionSpeedBp(division, ships);
+  const speedBp = divisionSpeedBp(division, ships, separated);
   const overrides: Record<string, ShipOrderOverride> = {
     [division.flagshipId]: { orderedHeading: flagship.orderedHeading, orderedSpeedBp: speedBp },
   };
@@ -73,6 +84,8 @@ export function planDivisionSteering(input: DivisionSteeringInput): DivisionStee
   ];
   const followers = division.memberIds.filter((id) => id !== division.flagshipId);
   followers.forEach((assetId, index) => {
+    if (separated.includes(assetId)) return;
+    const disorder = input.separation?.disordered[assetId];
     const ship = ships[assetId]!;
     const ordinal = index + 1;
     const station = stationPoint(
@@ -113,7 +126,11 @@ export function planDivisionSteering(input: DivisionSteeringInput): DivisionStee
 
     const errorUm = alongHeadingUm(ship.heading, ship.position, target);
     const distanceToTargetUm = distanceM(ship.position, target) * UM_PER_M;
-    const offStation = distanceToTargetUm > ruleset.stationToleranceUm;
+    const toleranceUm =
+      disorder === undefined
+        ? ruleset.stationToleranceUm
+        : Math.floor((ruleset.stationToleranceUm * disorder.toleranceMultiplierBp) / 10_000);
+    const offStation = distanceToTargetUm > toleranceUm;
     let orderedHeading: number;
     if (turning) {
       orderedHeading = flagship.orderedHeading;
@@ -127,6 +144,8 @@ export function planDivisionSteering(input: DivisionSteeringInput): DivisionStee
         ? bearingDeg(target[0] - ship.position[0], target[1] - ship.position[1])
         : flagship.heading;
     }
+    if (disorder !== undefined && !turning)
+      orderedHeading = offsetHeading(orderedHeading, disorder.steeringErrorDeg);
     overrides[assetId] = {
       orderedHeading,
       orderedSpeedBp: turning

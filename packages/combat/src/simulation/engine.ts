@@ -28,6 +28,7 @@ import type {
 import type { DamageControlContext } from "../damage/damageControlEngineWiring.js";
 import { applyNavigation, type NavigationMinuteOutput } from "../navigation/engineWiring.js";
 import type { NavigationContext } from "../navigation/model.js";
+import type { SeparationRecord } from "../navigation/separation.js";
 import { type AirCombatContext, type AirCombatRecord } from "../air-combat/engineWiring.js";
 import {
   type AirDefenseContext,
@@ -37,6 +38,7 @@ import {
 import {
   buildShipPositions,
   cloneMovementState,
+  evt,
   resolveAirCombatStage,
   resolveAirDefenseStage,
   resolveCollisionsStage,
@@ -122,14 +124,26 @@ export interface MinuteResult {
 
 export function advanceMinute(stageInput: AdvanceMinuteInput): MinuteResult {
   const stage = applyNavigation(stageInput);
-  const result = advanceResolvedMinute(stage.input);
+  const result = advanceResolvedMinute(stage.input, stage.output?.separationRecords);
   return stage.output ? { ...result, navigation: stage.output } : result;
 }
 
-function advanceResolvedMinute(input: AdvanceMinuteInput): MinuteResult {
+const SEPARATION_EVENT_TYPES = {
+  SEPARATED: "ship_separated",
+  REJOINED: "ship_rejoined",
+  DISORDERED: "ship_disordered",
+} as const;
+
+function advanceResolvedMinute(
+  input: AdvanceMinuteInput,
+  separationRecords: readonly SeparationRecord[] = [],
+): MinuteResult {
   const { battleId } = input.state;
   const minute = input.minute;
   const ledger = new BattleLedger();
+  for (const record of separationRecords) {
+    ledger.append(evt(minute, 0, SEPARATION_EVENT_TYPES[record.kind], 6, record.shipId, battleId));
+  }
   const units = input.state.units ?? [];
 
   const movement: Record<string, MovementState> = {};
@@ -344,7 +358,13 @@ export function advanceMinutes(input: AdvanceMinutesInput): AdvanceMinutesResult
       };
     }
     if (navigation && res.navigation) {
-      navigation = { ...navigation, machinery: res.navigation.machinery };
+      navigation = {
+        ...navigation,
+        machinery: res.navigation.machinery,
+        ...(res.navigation.separation === undefined
+          ? {}
+          : { separation: res.navigation.separation }),
+      };
     }
     if (formation && res.formationTracks) {
       formation = { ...formation, tracks: res.formationTracks };

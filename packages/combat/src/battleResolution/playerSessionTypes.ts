@@ -1,4 +1,5 @@
 import type { GunneryBattery } from "../gunnery/resolve.js";
+import type { SeparationState } from "../navigation/model.js";
 import type { TacticalBattleState } from "../tactical/state.js";
 import type { TacticalShipUnit } from "../tactical/unit.js";
 import type { StrategicWeatherState, WeatherEngineContext } from "../weather/neighbour.js";
@@ -131,4 +132,5 @@ export interface PlayerBattleSession {
   readonly force?: PlayerForceSession;
   readonly waypointRules?: WaypointRules;
   readonly waypointArrivals?: Readonly<Record<string, PlayerBattleWaypointArrival>>;
+  readonly separation?: Readonly<Record<string, SeparationState>>;
 }

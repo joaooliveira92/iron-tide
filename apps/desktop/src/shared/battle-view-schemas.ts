@@ -68,6 +68,7 @@ const OwnShipSchema = Schema.Struct({
   }),
   carriesMines: nullable(Schema.Boolean),
   machinery: nullable(Schema.Struct({ label: nonEmptyString })),
+  separation: nullable(Schema.Literals(["SEPARATED", "DISORDERED"])),
   turrets: Schema.Array(
     Schema.Struct({
       turretId: nonEmptyString,
