@@ -21,6 +21,7 @@ import { Result } from "effect";
 
 import {
   PRODUCTION_PACK_DIR,
+  compileProductionBattleTerrain,
   compileProductionCampaign,
   type ContentInputPerturbation,
 } from "../production-pack.js";
@@ -97,6 +98,12 @@ let productionCampaign: ReturnType<typeof compileProductionCampaign> | undefined
 function production(): ReturnType<typeof compileProductionCampaign> {
   productionCampaign ??= compileProductionCampaign();
   return productionCampaign;
+}
+
+let productionTerrain: ReturnType<typeof compileProductionBattleTerrain> | null = null;
+function productionBattleTerrain() {
+  if (productionTerrain === null) productionTerrain = compileProductionBattleTerrain();
+  return productionTerrain;
 }
 
 function productionFleetManagement() {
@@ -273,7 +280,9 @@ export function fleetManagementOptions(playerNationId?: string, setup?: ReplaySe
   const peaceBehaviour = productionPeaceBehaviour();
   const events = productionEvents();
   const constructionEvents = productionConstructionEvents(setup);
+  const terrain = productionBattleTerrain();
   return {
+    ...(terrain === undefined ? {} : { terrain }),
     ...(fleetManagement === undefined ? {} : { fleetManagement }),
     ...(tensionDrift === undefined ? {} : { tensionDrift }),
     ...(peaceBehaviour === undefined ? {} : { peaceBehaviour }),
