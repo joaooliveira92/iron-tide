@@ -26,6 +26,7 @@ import {
 } from "./economy-explanations.js";
 import { explainPresenceShortfall } from "./fleet-explanations.js";
 import { buildFleetMorale, type PlayerProjectionFleetMorale } from "./fleet-morale-projection.js";
+import { unrestChangeField, type PlayerProjectionUnrestChange } from "./unrest-projection.js";
 import { explainPrestigeChange } from "./prestige-explanations.js";
 
 export type { PlayerProjectionFleetMorale } from "./fleet-morale-projection.js";
@@ -177,6 +178,7 @@ export interface PlayerProjection {
   readonly economy: PlayerProjectionEconomy;
   readonly prestige: PlayerProjectionPrestige;
   readonly unrest?: number;
+  readonly unrestChange?: PlayerProjectionUnrestChange;
   readonly fleetMorale: PlayerProjectionFleetMorale;
   readonly training?: PlayerProjectionTraining;
   readonly career?: PlayerProjectionCareer;
@@ -357,6 +359,7 @@ export function buildPlayerProjection(
     },
     prestige: buildPrestige(snapshot.prestigeRules.sackingThreshold, nation),
     ...(nation.unrest === undefined ? {} : { unrest: nation.unrest }),
+    ...unrestChangeField(nation),
     fleetMorale: buildFleetMorale(nation),
     training: buildTraining(nation),
     ...(snapshot.careerResult === undefined

@@ -11,6 +11,7 @@ import {
   buildFleetMoraleRow,
   type FleetMoraleGauge,
 } from "./fleet-morale-strip.js";
+import { buildUnrestRow } from "./unrest-strip.js";
 
 export const FOREIGN_STATION_RULE_V1 = "controlled-by-another-nation";
 
@@ -452,14 +453,18 @@ function trainingRow(training: PlayerProjection["training"]): StripRow {
   );
 }
 
+const CAREER_VALUE_KEY = {
+  SACKED: "shell.prestige.careerSacked",
+  CAMPAIGN_END: "shell.prestige.careerCampaignEnd",
+  REVOLUTION: "shell.prestige.careerRevolution",
+} as const;
+
 function careerRow(career: NonNullable<PlayerProjection["career"]>): StripRow {
-  const sacked = career.reason === "SACKED";
+  const sacked = career.reason !== "CAMPAIGN_END";
   return real(
     "career",
     translate("shell.career.label"),
-    translate(sacked ? "shell.prestige.careerSacked" : "shell.prestige.careerCampaignEnd", {
-      score: career.score,
-    }),
+    translate(CAREER_VALUE_KEY[career.reason], { score: career.score }),
     translate("shell.career.note", {
       score: career.score,
       month: monthName(career.month.month) ?? String(career.month.month),
@@ -512,12 +517,7 @@ export function buildStatusStrip(input: StatusStripInput): StatusStripModel {
       String(economy.shipyardCapacity),
       "Sum of your ports' levels, a stand-in for RTW3 shipyard capacity.",
     ),
-    real(
-      "unrest",
-      "Unrest level",
-      `${projection.unrest ?? 0} / 10`,
-      "National unrest, 0 to 10. A presence shortfall that costs prestige also raises it, and answers to events move it. No revolt follows yet.",
-    ),
+    buildUnrestRow(projection),
     deferred("build-requirement", "Build requirement", "No required building programme exists."),
     deferred("treaty-limits", "Treaty limits", "Naval treaties are not wired into the campaign."),
   ];

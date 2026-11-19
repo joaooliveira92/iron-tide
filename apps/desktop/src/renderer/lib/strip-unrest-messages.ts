@@ -1,0 +1,21 @@
+export const STRIP_UNREST_MESSAGES = {
+  "shell.prestige.careerRevolution": "{score} — overthrown",
+  "shell.career.reason.REVOLUTION": "unrest toppled the government during a war",
+  "shell.unrest.label": "Unrest level",
+  "shell.unrest.value": "{current} / 10",
+  "shell.unrest.description":
+    "National unrest, 0 to 10. Heavy naval appropriations, long wars, blockades, cramped ships, defeats, uncovered stations and event answers raise it; cuts and victories lower it. Strikes force the appropriation rate down, and a revolution can end a government at war.",
+  "shell.unrest.lastChange": "Last change: {delta} ({reasons}, {month}).",
+  "shell.unrest.reason.MILITARY_SPENDING": "military spending",
+  "shell.unrest.reason.SPENDING_CUT": "spending cut",
+  "shell.unrest.reason.WAR_OUTBREAK": "war outbreak",
+  "shell.unrest.reason.WAR_DURATION": "long war",
+  "shell.unrest.reason.BLOCKADE": "blockade",
+  "shell.unrest.reason.DEFEAT": "defeat",
+  "shell.unrest.reason.VICTORY": "victory",
+  "shell.unrest.reason.CRAMPED_ACCOMMODATION": "cramped ships",
+  "shell.unrest.reason.PRESENCE_SHORTFALL": "uncovered stations",
+  "shell.unrest.reason.EVENT": "an event answer",
+  "shell.unrest.reason.SOCIAL_PROGRAMME": "social programme",
+  "shell.unrest.reason.REVOLUTION_AFTERMATH": "revolution aftermath",
+} as const;

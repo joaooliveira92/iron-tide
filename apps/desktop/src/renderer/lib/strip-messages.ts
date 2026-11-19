@@ -1,9 +1,11 @@
 import { PRESTIGE_REASON_MESSAGES } from "./prestige-reason-messages.js";
 import { STRIP_TRAINING_MESSAGES } from "./strip-training-messages.js";
+import { STRIP_UNREST_MESSAGES } from "./strip-unrest-messages.js";
 
 export const STATUS_STRIP_MESSAGES = {
   ...PRESTIGE_REASON_MESSAGES,
   ...STRIP_TRAINING_MESSAGES,
+  ...STRIP_UNREST_MESSAGES,
   "shell.fleetMorale.label": "Fleet morale",
   "shell.fleetMorale.value": "{current} / {max}",
   "shell.fleetMorale.description":
