@@ -78,11 +78,14 @@ describe("#996: battle results move unrest", () => {
     const after = result.finalSnapshot.nations;
     const reasons = (id: string) =>
       after.get(id)?.unrestLastChange?.contributions.map((c) => c.reasonCode);
-    const values = [after.get(ATTACKER_NATION)?.unrest, after.get(DEFENDER_NATION)?.unrest].sort();
+    const values = [after.get(ATTACKER_NATION)?.unrest, after.get(DEFENDER_NATION)?.unrest].sort(
+      (a, b) => (a ?? 0) - (b ?? 0),
+    );
     expect(values).toEqual([4, 7]);
-    expect([reasons(ATTACKER_NATION), reasons(DEFENDER_NATION)].flat().sort()).toEqual([
-      "DEFEAT",
-      "VICTORY",
-    ]);
+    expect(
+      [reasons(ATTACKER_NATION), reasons(DEFENDER_NATION)]
+        .flat()
+        .sort((a, b) => (a === b ? 0 : a === undefined || (b !== undefined && a < b) ? -1 : 1)),
+    ).toEqual(["DEFEAT", "VICTORY"]);
   });
 });
