@@ -15,7 +15,7 @@ export function createValueStore<T>(initial: T): ValueStore<T> {
       const resolved = typeof next === "function" ? (next as (current: T) => T)(value) : next;
       if (Object.is(resolved, value)) return;
       value = resolved;
-      for (const listener of [...listeners]) listener();
+      for (const listener of Array.from(listeners)) listener();
     },
     subscribe: (listener) => {
       listeners.add(listener);

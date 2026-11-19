@@ -69,7 +69,9 @@ describe("useAstInspector", () => {
   it("does not raise the copied flag without a selected record", () => {
     vi.useFakeTimers();
     const view = mount();
-    act(() => fireEvent.click(view.getByText("copy")));
+    act(() => {
+      fireEvent.click(view.getByText("copy"));
+    });
     expect(view.getByTestId("copied").textContent).toBe("false");
   });
 });
