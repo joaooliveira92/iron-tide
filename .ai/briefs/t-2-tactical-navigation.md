@@ -1,128 +1,67 @@
-# Milestone T-2N: Tactical navigation (plan)
+# Tactical battle navigation: spec (map #324)
 
-Plan for the manoeuvring half of SPRINT-PLAN T-2 ("Sandbox promoted: OOB, formations, roles, speed, targeting, force
-orders, three realism modes"). Slice 1 (the division order model) is implemented under ADR-0321; every other slice
-below is still a plan, and no screen is in scope for this brief except slice 7, which only names the contract.
-Reference: Rule the Waves 3 manual pp. 78-88 and 98-101 (battle map, manoeuvring, formations, roles, speed, turns,
-realism, force orders). Evidence read from `feat/e1-air-missiles`.
+What the T-2N slices shipped in `@bluewave/combat`, where the seams are, and what stays open. Verified against `dev` on
+2026-11-19. Reference: Rule the Waves 3 manual pp. 78-88 and 98-101. Role decisions: #332 resolution and Discussion #939.
 
-## What navigation means in RTW3
+## Contract
 
-The player is an admiral: orders go to **divisions**, never ships (unless a division holds one). Per division: speed,
-course (typed, or picked on the map), "go to point and pause on arrival", formation, role, lead division, AI/manual
-control, "turn together". Per force: flotilla attack, rally, disengage, change lead division, battle turn away. The
-game runs in one-minute turns. Realism (Admiral / Rear Admiral / Captain) limits who can be ordered. Speed has costs
-(grates fouled -1 kn, stokers exhausted -2 kn, breakdowns, gunnery vibration above 25 kn). Non-line-ahead formations
-lose ships in poor visibility and at night; heavy ships in line abreast disorder over time.
+- **Dormant.** No production battle resolution supplies `navigation`, `collision`, `terrain`, force orders or division AI,
+  so every optional input changes no hash when absent and no golden, replay or compatibility version moved. The
+  reachability rows `combat-navigation` and `combat-terrain` in `scripts/data/reachability-ledger.json` records it.
+- **One order path.** Player, force and AI orders are `DivisionOrder`s compiled by `compileDivisionOrders` to per-ship
+  `UnitOrders`. The engine has no second input.
+- **Pure seams.** Each module is a pure function of explicit inputs; state returns to the caller (`MachineryState`,
+  `SeparationState`, `CollisionState`, `ForceState`, `DivisionAiMemory`), none lives in a module.
+- **Random draws** use the seeded ledger with a named stream: `NAVIGATION_BREAKDOWN_STREAM`, `NAVIGATION_SEPARATION_STREAM`.
+- **Values** are PROVISIONAL ruleset or content data (`PROVISIONAL_COLLISION_RULES`, `PROVISIONAL_DIVISION_AI_RULES`, the
+  `navigation` section), never code constants a player could see as fact.
+- **Moving a golden** needs the [replay approvals](../../docs/agents/replay-corpus.md); #959 is that decision.
 
-## Starting state (verified)
+## Modules
 
-- `packages/combat/src/movement`: integer kinematics at one-second substeps (60 per minute): `advancePosition`,
-  `resolvePropulsion` (flat accel/decel), `resolveTurning` (flat rate, shortest arc), direction table, station
-  contract constants. Deterministic and tested.
-- `computeDesiredStation` and `helmSteerToStation` (LINE_AHEAD, LINE_ABREAST, SEARCH_LINE, SCREEN) exist but only
-  `test/movement/formation-station.test.ts` calls them. The engine never steers a ship to a station.
-- `simulation/minuteStages.ts`: each unit gets one `UnitOrders { orderedHeading, orderedSpeedBp, attainableMaxBp }`.
-  `resolveCollisionsGrounding` is a stub that returns an empty record. There is no land, depth, or map in battle.
-- `tactical/division.ts`: formation legality and role eligibility (matches manual p.85, including the 1500 t
-  destroyer scout rule), division effects (`formationCohesion`, `signaling`).
-- Player battle: `battleResolution/playerSession.ts` compiles the legacy stance plus speed percent through
-  `@bluewave/combat/orders` (`DivisionOrderSet` -> `UnitOrders`, ADR-0321). The UI (`PlayerBattleScreen.tsx`) is a paced
-  tactical map that orders stance, speed and a course in knots per division; waypoint, formation, role and force
-  orders have no control.
-- Campaign side is separate: F-1 strategic map covers one-hop fleet moves and is out of scope here.
+| Seam                                           | Owns                                                                                                                                                                                                                                                           |
+| ---------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `@bluewave/combat/orders`                      | `DivisionOrderSet`, `compileDivisionOrders`, realism matrix, waypoint orders (`WAYPOINT_ARRIVAL_TOLERANCE_METRES`, event `WAYPOINT_REACHED_EVENT_TYPE`), force orders (`ForceOrderKind`, `createForceRuntime`, `advanceForce`, `ForceState`)                   |
+| `@bluewave/combat/terrain`, #935               | `TerrainView`; queries `pointInLand`, `pointInNoGoZone`, `segmentCrossesLand`, `nearestCoastPoint`. Compiled to the sidecar `terrain-artifact.json` (`buildTerrainArtifact`, `@bluewave/content-compiler`), never into the bundle ([RULES.md](../../RULES.md)) |
+| `@bluewave/combat/navigation`, #937, #941      | `resolveNavigation`, `applyNavigation`: fouling (`FoulingLevel` GRATES_FOULED then STOKERS_EXHAUSTED), breakdown, per-ship `vibrationBp`, speed-limit `explainAttainableMax`; `resolveSeparation` for heavy and non-line-ahead formations                      |
+| `@bluewave/combat/collision`, #940             | `CollisionContext` (`terrain`, `shipCollision`, `state`), `createMovementHazards`, `steerClearOfLand`; records `COLLISION` and `TERRAIN_BLOCKED`, speed caps through `CollisionState`                                                                          |
+| `@bluewave/combat/division-ai`, #943           | `decideDivisionOrders(view, memory)` returns orders, new `DivisionAiMemory` and reasons; role behaviours CORE, SUPPORT, SCOUT, SCREEN, PATROL, INDEPENDENT; `flotillaDelayMinutes`                                                                             |
+| `@bluewave/combat/battleResolution`, #936-#954 | `battleView` (fog-aware `BattleView` DTO, strict decode, `BattleViewOwnShip.machinery` and `.separation`), `enablePlayerForceOrders`, `advancePlayerForce`, waypoint settling and pause kinds; the legacy `playerBattleView` is retired                        |
 
-## Progress
+Wiring: `AdvanceMinuteInput` carries `navigation` and `collision`; `advanceMinute` runs `applyNavigation` first and the
+engine feeds `machinery`, `separation` and collision `state` back each minute.
 
-**Slice 1: division order model (2026-10-27, ADR-0321).** `@bluewave/combat/orders` now owns a strict,
-versioned `DivisionOrderSet` (stance, course or waypoint; percent, knots or the five presets; formation, role,
-lead division, control, turn-together, issued minute) and a pure compiler to the existing per-ship
-`UnitOrders` with typed issue codes. The legacy stance wire shape converts losslessly, so the player battle
-session compiles through the new model while the rendered controls stay unchanged; stance parity is proven by
-the existing player-battle/auto-resolver byte-for-byte test. `CRUISE` takes an explicit ruleset value and
-reports `DIVISION_ORDER_SPEED_PRESET_UNAVAILABLE` when absent rather than inventing a fraction. Formation, role,
-lead and turn-together fields are carried but not yet applied. No golden, replay or compatibility version
-moved. The next dependency-ordered slice is formation keeping (slice 2, #328).
+## Behaviour that shipped
 
-## Gaps against the manual
+- **Waypoint.** Arrival inside the tolerance records `waypoint_reached` and can pause the run; `WAYPOINT_MAX_METRES` bounds it.
+- **Machinery.** Ruleset-driven grates fouled (-1 kn) and stokers exhausted (-2 kn) by class (`OIL`, `COAL`, `VTE`), breakdown
+  chance by speed with a repair cap, and a vibration level at full speed. `vibrationBp` is reported; no gunnery stage consumes it yet.
+- **Separation.** A seeded draw per non-line-ahead formation, raised at night and in poor visibility; drift, rejoin, and the
+  `SEPARATED` or `DISORDERED` flag on `BattleViewOwnShip`.
+- **Collision.** Ship hull contact applies a speed cap and impact damage; land and no-go zones block movement.
+- **Force orders.** Flotilla attack or recall, rally, disengage, change lead division, battle turn away, behind the opt-in
+  `enablePlayerForceOrders`.
+- **AI roles.** Role-aware tiers: OPEN below 4000 bp force morale, WITHDRAW below 2000 bp (`openRangeBelowBp`,
+  `withdrawBelowBp`); CORE does not withdraw while the lead is player-controlled. `decideDivisionOrders` orders only `control: AI` divisions other than the lead division.
 
-| Manual feature                                      | State                                                |
-| --------------------------------------------------- | ---------------------------------------------------- |
-| Division course and speed orders                    | Stance, knots and course ordered on the tactical map |
-| Formation keeping (4 formations)                    | Station maths only, not wired                        |
-| Roles and lead division behaviour (AI)              | Eligibility only; no behaviour                       |
-| Turn together vs follow-the-leader turns            | Absent                                               |
-| Go-to-point with pause on arrival                   | Absent                                               |
-| AI vs manual division control and realism gating    | Absent                                               |
-| Speed penalties (grates, stokers, breakdown, flood) | Absent (T-3 lists grates and stokers)                |
-| Separation of ships in poor visibility or at night  | Absent                                               |
-| Collision, grounding, land targets                  | Stub                                                 |
-| Force orders (flotilla attack, rally, disengage...) | Absent                                               |
-| Pause-on-event, run N minutes                       | Not specified at engine level                        |
+## Decisions
 
-## Principles
+- Production wiring is **#959**: it supplies `collision` (terrain, hull length and beam) to battle resolution, moves goldens, and
+  needs replay-corpus approvals and a deliberate go. Until then nothing above is reachable from a player battle.
+- AI memory is an explicit input and output of `decideDivisionOrders`; saving it in battle state is **#961**.
+- Grates and stokers belong to this work, not SPRINT-PLAN T-3.
 
-1. Navigation stays inside the existing minute pipeline: orders in, `MovementState` out, ledger events recorded. No
-   new clock, no wall time, integer maths only (ADR-0268 comment rule applies).
-2. One order model. Division orders compile to the existing per-unit `UnitOrders`; the engine does not learn a
-   second input path. AI divisions produce the same orders a player would.
-3. Any random outcome (separation, breakdown) uses a domain-separated stream with a recorded reason code.
-4. Every tunable (turn rate by ship class, accel, station tolerance, grate timers, separation odds) is content or
-   ruleset data marked PROVISIONAL until sourced (ADR-0252). Today these are constants in `movement/constants.ts`.
-5. Anything that changes outcomes moves goldens: re-pin deliberately (docs/agents/golden-repinning.md).
+## Open follow-ups
 
-## Slices (each shippable, in dependency order)
+| Issue | Work                                                                     |
+| ----- | ------------------------------------------------------------------------ |
+| #957  | Read-model flag when a planned route crosses land (`segmentCrossesLand`) |
+| #958  | Steer AI and compiled orders clear of known minefields                   |
+| #959  | Wire `collision` and `terrain` into production battle resolution         |
+| #961  | Persist the division AI memory in saved battle state                     |
 
-**0. Spec and decisions.** Write the order-model spec and record ADRs. Decision requests needed before slice 2:
-(a) is the battle map flat or does it need land/shoal data (affects slice 5 and scenario content); (b) which
-realism modes ship in T-2 (the manual has three; the sprint plan says three); (c) whether turns follow the manual's
-"each ship follows the leader's track" or a simpler station-chase.
-
-**1. Division order model (engine, no UI).** `DivisionOrders { course | waypoint(point, pauseOnArrival), speed,
-formation, role, leadDivisionId, control: PLAYER | AI, turnTogether }` as a strict Schema with a frozen wire
-format and parity test from existing fixtures. A compiler maps division orders to per-unit `UnitOrders` each
-minute. Replaces stance-only orders in `playerSession.ts` while keeping stance as a derived preset so existing
-goldens stay valid.
-
-**2. Formation keeping.** Wire `computeDesiredStation` and `helmSteerToStation` into the movement stage: flagship
-leads, others steer to station, speed trimmed to the slowest ship, `offStation` recorded. Turn-together vs
-follow-the-leader track. Per-class turn rate and accel from design data instead of the flat constants.
-
-**3. Roles and AI divisions.** Behaviour for CORE, SUPPORT, SCOUT, SCREEN, PATROL, INDEPENDENT relative to the lead
-division, using manual p.85 definitions. AI control toggles by realism rules. This produces orders only, so it is
-testable as a pure function from battle state to `DivisionOrders`.
-
-**4. Speed and machinery effects.** Grates fouled, stokers exhausted (coal and VTE sensitivity), breakdowns,
-flooding speed cap (10 kn safe), vibration gunnery penalty above 25 kn. Overlaps T-3; take only the speed-limiting
-part here and leave T-3 the rest.
-
-**5. Collision, grounding, separation.** Replace the stub with real collision and, if decision (a) allows,
-grounding. Separation of non-line-ahead formations in bad visibility/night using the existing weather visibility.
-
-**6. Force orders and realism gating.** Flotilla attack, rally, disengage, change lead division (once per battle),
-battle turn away (tech-gated). Realism modes restrict which divisions accept orders. Also the pause rules: run N
-minutes, pause on arrival, pause on configurable events, as an engine-level request/response so the UI is thin.
-
-**7. Screen contract (planning only).** Define the read model the later battle map consumes: positions, headings,
-division flags (square = player, triangle = AI), planned course lines, ranges, track chart. The screen itself is a
-separate milestone.
-
-## Acceptance (per slice)
-
-- A failing test first (red, green, refactor), exercising production composition.
-- Determinism: same seed and orders give identical hashes across OSes; golden changes explained.
-- Explainable: every player-visible speed or course limit traces to an explanation tree entry.
-- `pnpm preflight`, `pnpm test:scripts`, `pnpm check` green on the final commit (heavy-wrapped, once per branch).
-
-## Risks
-
-- Moving to coordinated formation movement shifts every battle hash, so auto-resolution goldens and the fuzz corpus
-  will need re-pinning. Land slice 1 behind the stance-derived preset to prove zero drift first.
-- AI role behaviour (slice 3) is the largest unknown and the main source of "dumb division" bugs; budget for a
-  scenario-based test bed rather than unit tests only.
-- Doc budget: add this brief to `scripts/doc-budgets.manifest.json` if briefs are budgeted.
+Also open and unticketed: gunnery use of `vibrationBp` and the battle-map screen.
 
 ## Out of scope
 
-Strategic one-hop movement (F-1), air and carrier operations, submarine navigation, the battle map screen,
-mid-battle save format changes.
+Strategic one-hop movement (F-1), air and carrier operations, submarine navigation, the battle map screen.
