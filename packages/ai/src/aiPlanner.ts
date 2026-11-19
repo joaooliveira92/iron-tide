@@ -20,6 +20,7 @@ import {
   AI_COMMAND_TYPE_RESEARCH,
   AiCommandGenerator,
 } from "./aiCommandGenerator.js";
+import { type AiWarOptions, planWar } from "./aiWarPlanner.js";
 import { AiError } from "./errors.js";
 
 export const AI_RNG_STREAM_PREFIX = "ai/planning:" as const;
@@ -59,6 +60,7 @@ export class AiPlanner {
     slot: CampaignSlot,
     idempotencyMap: CommandIdempotencyMap,
     researchAllocation?: Readonly<Record<string, number>>,
+    warOptions?: AiWarOptions,
   ): AiPlanningResult {
     const envelopes: CommandEnvelope<CommandBody>[] = [];
     const accepted: CommandEnvelope<CommandBody>[] = [];
@@ -192,6 +194,31 @@ export class AiPlanner {
         message: `Research planning failed: ${e instanceof Error ? e.message : String(e)}`,
         entityId: nationId,
       });
+    }
+
+    if (warOptions !== undefined) {
+      try {
+        const war = planWar(
+          generator,
+          snapshot,
+          lifecycle,
+          slot,
+          idempotencyMap,
+          nationId,
+          warOptions,
+        );
+        envelopes.push(...war.envelopes);
+        accepted.push(...war.accepted);
+        diagnostics.push(...war.diagnostics);
+      } catch (e) {
+        diagnostics.push({
+          code: "AI_WAR_FAILED" as Diagnostic["code"],
+          severity: "error",
+          stage: "ai_planning",
+          message: `War planning failed: ${e instanceof Error ? e.message : String(e)}`,
+          entityId: nationId,
+        });
+      }
     }
 
     return { envelopes, accepted, diagnostics };

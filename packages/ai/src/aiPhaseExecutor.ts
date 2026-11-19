@@ -8,6 +8,7 @@ import type {
 import type { Diagnostic } from "@bluewave/diagnostics";
 import type { RandomEngine } from "@bluewave/random";
 import { AiPlanner } from "./aiPlanner.js";
+import type { AiWarOptions } from "./aiWarPlanner.js";
 
 export interface AiExecutionResult {
   readonly commands: readonly CommandEnvelope<CommandBody>[];
@@ -29,6 +30,7 @@ export class AiPhaseExecutor {
     lifecycle: CommandLifecycle,
     idempotencyMap: CommandIdempotencyMap,
     researchAllocation?: Readonly<Record<string, number>>,
+    warOptions?: AiWarOptions,
   ): AiExecutionResult {
     try {
       const result = this.planner.generate(
@@ -38,6 +40,7 @@ export class AiPhaseExecutor {
         slot,
         idempotencyMap,
         researchAllocation,
+        warOptions,
       );
       return {
         commands: Object.freeze([...result.accepted]),

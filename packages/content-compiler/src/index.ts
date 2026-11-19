@@ -142,6 +142,7 @@ export { battleOffersFromRulesets } from "./battleOfferRules.js";
 export { fleetMoraleFromRulesets } from "./fleetMoraleRules.js";
 export { tensionDriftFromRulesets } from "./tensionDriftRules.js";
 export { peaceBehaviourFromRulesets } from "./peaceBehaviourRules.js";
+export { warDeclarationFromRulesets } from "./warDeclarationRules.js";
 export { eventResolutionFromRulesets } from "./eventResolutionRules.js";
 export { gunneryFromRulesets } from "./gunneryRules.js";
 export { missilesFromRulesets } from "./missilesRules.js";

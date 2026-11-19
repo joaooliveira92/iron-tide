@@ -1,6 +1,8 @@
 import type {
   BudgetProjectCommand,
   CommandEnvelope,
+  DeclareWarCommand,
+  MoveFleetCommand,
   SetResearchPriorityCommand,
   SubmitDesignCommand,
 } from "@bluewave/commands";
@@ -11,6 +13,9 @@ import { AiError } from "./errors.js";
 export const AI_ENVELOPE_VERSION = "0.1.0" as const;
 export const AI_COMMAND_TYPE_BUDGET = "budget_project" as const;
 export const AI_COMMAND_TYPE_RESEARCH = "SetResearchPriority" as const;
+
+export const AI_COMMAND_TYPE_DECLARE_WAR = "DeclareWar" as const;
+export const AI_COMMAND_TYPE_MOVE_FLEET = "MoveFleet" as const;
 
 export type AiCommandType = typeof AI_COMMAND_TYPE_BUDGET | typeof AI_COMMAND_TYPE_RESEARCH;
 
@@ -154,6 +159,48 @@ export class AiCommandGenerator {
       issuerParticipantId: nationId,
     };
     return Object.freeze(envelope) as CommandEnvelope<SetResearchPriorityCommand>;
+  }
+
+  buildDeclareWarCommand(
+    nationId: string,
+    targetNationId: string,
+  ): CommandEnvelope<DeclareWarCommand> {
+    assertNonEmptyString(nationId, "nationId");
+    assertNonEmptyString(targetNationId, "targetNationId");
+    const key = this.idempotencyKeyFor(nationId, AI_COMMAND_TYPE_DECLARE_WAR);
+    const envelope: CommandEnvelope<DeclareWarCommand> = {
+      commandId: this.commandIdFromKey(key),
+      version: AI_ENVELOPE_VERSION,
+      expectedSnapshotHash: this.expectedSnapshotHash,
+      idempotencyKey: key,
+      timestamp: this.deterministicTimestamp(),
+      body: { type: AI_COMMAND_TYPE_DECLARE_WAR, nationId, targetNationId },
+      issuerClass: "AI",
+      issuerParticipantId: nationId,
+    };
+    return Object.freeze(envelope) as CommandEnvelope<DeclareWarCommand>;
+  }
+
+  buildMoveFleetCommand(
+    nationId: string,
+    fleetId: string,
+    toAreaId: string,
+  ): CommandEnvelope<MoveFleetCommand> {
+    assertNonEmptyString(nationId, "nationId");
+    assertNonEmptyString(fleetId, "fleetId");
+    assertNonEmptyString(toAreaId, "toAreaId");
+    const key = this.idempotencyKeyFor(nationId, `${AI_COMMAND_TYPE_MOVE_FLEET}:${fleetId}`);
+    const envelope: CommandEnvelope<MoveFleetCommand> = {
+      commandId: this.commandIdFromKey(key),
+      version: AI_ENVELOPE_VERSION,
+      expectedSnapshotHash: this.expectedSnapshotHash,
+      idempotencyKey: key,
+      timestamp: this.deterministicTimestamp(),
+      body: { type: AI_COMMAND_TYPE_MOVE_FLEET, nationId, fleetId, toAreaId },
+      issuerClass: "AI",
+      issuerParticipantId: nationId,
+    };
+    return Object.freeze(envelope) as CommandEnvelope<MoveFleetCommand>;
   }
 
   buildSubmitDesignCommand(

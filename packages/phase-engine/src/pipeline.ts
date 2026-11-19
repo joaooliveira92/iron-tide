@@ -19,6 +19,7 @@ import type {
   MissilesRules,
   PeaceBehaviourRules,
   TensionDriftRules,
+  WarDeclarationRules,
   EventResolutionRules,
   GameEvent,
 } from "@bluewave/content-schema";
@@ -74,6 +75,7 @@ export interface MonthExecutorEngineOptions {
   readonly tensionDrift?: TensionDriftRules;
   readonly fleetMorale?: FleetMoraleRules;
   readonly peaceBehaviour?: PeaceBehaviourRules;
+  readonly warDeclaration?: WarDeclarationRules;
   readonly events?: EventEngineContent;
   readonly constructionEvents?: readonly ConstructionEvent[];
 }
