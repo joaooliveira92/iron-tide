@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 
-import type { SetPrimaryAction } from "../../shell/primary-action.js";
+import type { PrimaryAction, SetPrimaryAction } from "../../shell/primary-action.js";
+import { usePrimaryAction } from "../../shell/usePrimaryAction.js";
 import {
   OPENING_BRIEFING_PAGE_COUNT,
   forwardLabel,
@@ -38,15 +39,18 @@ export function useBriefingPager({
 
   const isLastPage = pageIndex === OPENING_BRIEFING_PAGE_COUNT - 1;
 
-  useEffect(() => {
-    if (!ready) return;
-    onPrimaryActionChange({
-      label: forwardLabel(pageIndex),
-      disabled: false,
-      onTrigger: isLastPage ? onTakeCommand : () => setPageIndex(nextPageIndex(pageIndex)),
-    });
-    return () => onPrimaryActionChange(null);
-  }, [ready, isLastPage, pageIndex, onTakeCommand, onPrimaryActionChange]);
+  const primaryAction = useMemo<PrimaryAction | null>(
+    () =>
+      ready
+        ? {
+            label: forwardLabel(pageIndex),
+            disabled: false,
+            onTrigger: isLastPage ? onTakeCommand : () => setPageIndex(nextPageIndex(pageIndex)),
+          }
+        : null,
+    [ready, isLastPage, pageIndex, onTakeCommand],
+  );
+  usePrimaryAction(primaryAction, onPrimaryActionChange);
 
   const goBack = useCallback(() => {
     setPageIndex(previousPageIndex(pageIndex));

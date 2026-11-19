@@ -1,12 +1,10 @@
-import { type JSX, useEffect, useMemo, useState } from "react";
+import { type JSX, useMemo, useState } from "react";
 import type { PlayableSlotCountryId } from "@/content/nationAssetManifest.js";
 import { getCountryCode, resolveNationShip } from "./nationArtwork.js";
 
 export function DossierCover({ countryId }: { countryId: PlayableSlotCountryId }): JSX.Element {
   const [imageFailed, setImageFailed] = useState(false);
   const ship = useMemo(() => resolveNationShip(countryId), [countryId]);
-
-  useEffect(() => setImageFailed(false), []);
 
   return (
     <>

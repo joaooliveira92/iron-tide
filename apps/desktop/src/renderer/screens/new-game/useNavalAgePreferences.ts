@@ -1,8 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState, useSyncExternalStore } from "react";
 
 import type { BluewaveDesktopBridge } from "../../../preload/index.js";
 import { useBridge } from "../../lib/bridge-context.js";
 import { readBridge } from "../../lib/bridge-read.js";
+import { createValueStore, subscribeWithLifecycle } from "../../lib/value-store.js";
 import type { NewGameOptions } from "../../../shared/new-game-contract.js";
 import type { AdmiralPresetValues } from "./admiral-preset.js";
 import {
@@ -44,45 +45,53 @@ export function useNavalAgePreferences(
 ): UseNavalAgePreferencesReturn {
   const contextBridge = useBridge();
   const port = portOption ?? contextBridge;
-  const [state, setState] = useState<NewGamePreferencesScreenState>(
-    initialNewGamePreferencesScreenState,
+  const [store] = useState(() =>
+    createValueStore<NewGamePreferencesScreenState>(initialNewGamePreferencesScreenState()),
   );
   const recommendedPresetRef = useRef(recommendedPreset);
 
-  useEffect(() => {
-    async function loadOptions(): Promise<void> {
-      const read = await readBridge(port, (p) =>
-        p.campaign.execute("listNewGameOptions", undefined),
-      );
-      if (read.status !== "ready") {
-        setState((current) => applyOptionsFailed(current, read.reason));
-        return;
-      }
-      setState((current) =>
-        applyOptionsLoaded(
-          current,
-          read.value,
-          defaultCampaignSeed(),
-          recommendedPresetRef.current,
-        ),
-      );
-    }
-    void loadOptions();
-  }, [port]);
+  const subscribe = useMemo(
+    () =>
+      subscribeWithLifecycle(store, (target) => {
+        async function loadOptions(): Promise<void> {
+          const read = await readBridge(port, (p) =>
+            p.campaign.execute("listNewGameOptions", undefined),
+          );
+          if (read.status !== "ready") {
+            target.set((current) => applyOptionsFailed(current, read.reason));
+            return;
+          }
+          target.set((current) =>
+            applyOptionsLoaded(
+              current,
+              read.value,
+              defaultCampaignSeed(),
+              recommendedPresetRef.current,
+            ),
+          );
+        }
+        void loadOptions();
+      }),
+    [store, port],
+  );
+  const state = useSyncExternalStore(subscribe, store.get);
 
   const setPreference = useCallback(
     <K extends keyof DraftPreferences>(field: K, value: DraftPreferences[K]) => {
-      setState((current) => updatePreference(current, field, value));
+      store.set((current) => updatePreference(current, field, value));
     },
-    [],
+    [store],
   );
 
-  const selectPreset = useCallback((presetId: PresetId) => {
-    setState((current) => ({
-      ...current,
-      preferences: applyPreset(current.preferences, presetId),
-    }));
-  }, []);
+  const selectPreset = useCallback(
+    (presetId: PresetId) => {
+      store.set((current) => ({
+        ...current,
+        preferences: applyPreset(current.preferences, presetId),
+      }));
+    },
+    [store],
+  );
 
   return {
     state,

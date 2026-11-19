@@ -1,4 +1,4 @@
-import { renderHook, waitFor } from "@testing-library/react";
+import { act, renderHook, waitFor } from "@testing-library/react";
 import type { OpeningBriefingProjection } from "@bluewave/campaign-engine";
 import { describe, expect, it, vi } from "vite-plus/test";
 
@@ -42,5 +42,38 @@ describe("useOpeningBriefing", () => {
 
     await waitFor(() => expect(result.current.error).toBe("SESSION_NOT_FOUND"));
     expect(result.current.projection).toBeNull();
+  });
+
+  it("resets on a session change and ignores the stale session's late result", async () => {
+    const resolvers = new Map<
+      string,
+      (result: BridgeResult<InspectOpeningBriefingResult>) => void
+    >();
+    const load = vi.fn(
+      (sessionId: string) =>
+        new Promise<BridgeResult<InspectOpeningBriefingResult>>((resolve) => {
+          resolvers.set(sessionId, resolve);
+        }),
+    );
+    const ok = (value: OpeningBriefingProjection): BridgeResult<InspectOpeningBriefingResult> => ({
+      outcome: "success",
+      value: { projection: value },
+      diagnostics: [],
+    });
+    const second: OpeningBriefingProjection = Object.assign({}, projection);
+
+    const { result, rerender } = renderHook(
+      ({ sessionId }: { sessionId: string }) => useOpeningBriefing(sessionId, load),
+      { initialProps: { sessionId: "s1" } },
+    );
+    await act(async () => resolvers.get("s1")?.(ok(projection)));
+    expect(result.current.projection).toBe(projection);
+
+    rerender({ sessionId: "s2" });
+    expect(result.current.projection).toBeNull();
+
+    await act(async () => resolvers.get("s2")?.(ok(second)));
+    expect(result.current.projection).toBe(second);
+    expect(load).toHaveBeenCalledTimes(2);
   });
 });
