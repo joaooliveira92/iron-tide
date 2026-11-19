@@ -166,7 +166,10 @@ and `scripts/verify-reachability-ledger.mjs` fails when a row drifts.
   banned in `apps/` and `packages/` (tests exempt). Derive during render, react in
   event handlers, subscribe with `useSyncExternalStore`, reset with `key`, attach
   DOM and external instances with ref callbacks (React 19 cleanup return), and keep
-  async work in Effect services. `scripts/effect-hooks.baseline.json` lists the
+  async work in Effect services. Only what none of these can express (syncing
+  state to the document root, registering with a parent while mounted) goes in
+  `apps/desktop/src/renderer/shell/useExternalSync.ts`, the one path the gate
+  exempts. `scripts/effect-hooks.baseline.json` lists the
   files not yet migrated; `gate:effect-hooks` fails any new use and any entry that
   could be lowered, so the list only shrinks (#930).
 
