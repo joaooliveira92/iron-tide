@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { useLifecycle } from "../../shell/useExternalSync.js";
 import { decodeLog, encodeLog, type EditLog } from "@bluewave/ship-design";
 import { registerAppFlush } from "../../lib/app-flush.js";
 import { useBridge } from "../../lib/bridge-context.js";
@@ -51,14 +52,14 @@ export function useDraftAutosave({
   const inFlight = useRef<Promise<void> | null>(null);
   const retryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  useEffect(
+  useLifecycle(
     () => () => {
       mounted.current = false;
     },
     [],
   );
 
-  useEffect(() => {
+  useLifecycle(() => {
     if (!enabled) return;
     let live = true;
     void bridge.campaign
@@ -150,21 +151,21 @@ export function useDraftAutosave({
   writeRef.current = write;
 
   const name = className.trim();
-  useEffect(() => {
+  useLifecycle(() => {
     if (!enabled || !loaded) return;
     pending.current = { presetId, log, className: name };
     scheduleRetry(AUTOSAVE_DELAY_MS);
     return clearRetry;
   }, [enabled, loaded, presetId, log, name]);
 
-  useEffect(
+  useLifecycle(
     () => () => {
       void writeRef.current();
     },
     [],
   );
 
-  useEffect(() => {
+  useLifecycle(() => {
     if (!enabled) return;
     return registerAppFlush(() => writeRef.current());
   }, [enabled]);

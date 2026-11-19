@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useLifecycle } from "../../../shell/useExternalSync.js";
 import { envelopeOf, stampCommand } from "../../../lib/command-envelope.js";
 import { useBridge } from "../../../lib/bridge-context.js";
 import {
@@ -71,7 +72,7 @@ export function RevisionPanel({
   const projectId = project?.projectId;
   const revisable = project?.revisable === true;
 
-  useEffect(() => {
+  useLifecycle(() => {
     setReal(null);
     setResult(null);
     if (!bridge || sessionId === undefined || projectId === undefined || !revisable) return;

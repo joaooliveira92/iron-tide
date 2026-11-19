@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
+import { useLifecycle } from "../../shell/useExternalSync.js";
 import type { BoardFinding } from "./validation/boardFindings.js";
 
 const SERIOUS = new Set(["BLOCKING", "CRITICAL"]);
@@ -29,7 +30,7 @@ export function useChoiceCheck(findings: readonly BoardFinding[]) {
   const [problem, setProblem] = useState<ChoiceProblem | null>(null);
   const [open, setOpen] = useState(false);
 
-  useEffect(() => {
+  useLifecycle(() => {
     latest.current = findings;
     const p = pending.current;
     if (p === null || findings === p.base) return;

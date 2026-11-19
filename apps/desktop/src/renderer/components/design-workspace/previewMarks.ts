@@ -1,4 +1,5 @@
-import { createContext, useContext, useEffect, useRef, useSyncExternalStore } from "react";
+import { createContext, useContext, useRef, useSyncExternalStore } from "react";
+import { useLifecycle } from "../../shell/useExternalSync.js";
 import type { PartKind } from "./panels/hull-plan/anatomy/anatomy-types.js";
 
 export type PreviewKinds = ReadonlySet<PartKind>;
@@ -55,7 +56,7 @@ export function usePreviewKinds(): PreviewKinds {
 export function usePublishPreviewKinds(kinds: PreviewKinds): void {
   const marks = useContext(PreviewMarksContext);
   const owner = useRef({});
-  useEffect(() => {
+  useLifecycle(() => {
     if (marks === null) return;
     const mine = owner.current;
     marks.set(mine, kinds);

@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
+import { useLifecycle } from "../../shell/useExternalSync.js";
 import { armourMaterialOptions, type DesignDraft, type DraftEdit } from "@bluewave/ship-design";
 import { usePresentationFormat } from "../../shell/usePresentationFormat.js";
 import { batteryCards } from "./batteryView.js";
@@ -59,8 +60,11 @@ export function useDesignSession(fixedMonth: string | null) {
     format,
   );
   const [selection] = useState(createSelectionStore);
-  useEffect(() => selection.prune((e) => entityExists(e, draft, zones)), [selection, draft, zones]);
-  useEffect(
+  useLifecycle(
+    () => selection.prune((e) => entityExists(e, draft, zones)),
+    [selection, draft, zones],
+  );
+  useLifecycle(
     () => selection.pruneFinding((key) => findings.some((f) => f.key === key)),
     [selection, findings],
   );
