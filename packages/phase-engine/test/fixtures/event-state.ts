@@ -9,7 +9,17 @@ export const EVENT_STATE_FIXTURE: Pick<
   | "fleetMorale"
   | "fleetMoraleLastChange"
   | "budgetModifiers"
+  | "tradeProtection"
 > = {
+  tradeProtection: {
+    month: "1880-03",
+    quota: 4,
+    assigned: 2,
+    shortfall: 2,
+    shortfallBp: 5000,
+    merchantPoolBp: 9000,
+    lastLossMonth: "1880-02",
+  },
   governmentType: "liberal_democracy",
   traits: ["cautious"],
   eventHistory: {
