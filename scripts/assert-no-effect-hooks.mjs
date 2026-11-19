@@ -1,29 +1,19 @@
 #!/usr/bin/env node
-// Ban React effect hooks (`useEffect`, `useLayoutEffect`, `useInsertionEffect`)
-// from authored source, while retiring the recorded existing uses (issue #930).
+// Zero-tolerance ban on React effect hooks (`useEffect`, `useLayoutEffect`,
+// `useInsertionEffect`) in authored source outside tests and EXTERNAL_SYNC_MODULE.
+// Named, aliased, namespace (`React.useEffect`), default-import member and
+// re-export forms are all counted.
 //
-// The gate freezes the current inventory as a ratchet in
-// scripts/effect-hooks.baseline.json: a file maps to its count of hook bindings
-// and references. A file may not gain a use, an unlisted file may not use a hook,
-// and a listed file whose count fell must lower its entry (`--write` only ever
-// lowers). Test files and the single external-sync module (EXTERNAL_SYNC_MODULE,
-// the one sanctioned home for effects with no ref-callback replacement) are
-// exempt. Named, aliased, namespace (`React.useEffect`),
-// default-import member and re-export forms are all counted.
-//
-// Usage: `node scripts/assert-no-effect-hooks.mjs [--write] [--self-test]`
-//   (default)  fail on any new use, stale or loosened baseline entry
-//   --write    seed the baseline when absent; afterwards only lower or remove entries
+// Usage: `node scripts/assert-no-effect-hooks.mjs [--self-test]`
 //
 // Wired into `pnpm preflight` as gate:effect-hooks.
 
 import { execFileSync } from "node:child_process";
-import { existsSync, lstatSync, readFileSync, writeFileSync } from "node:fs";
+import { lstatSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { parseSync } from "oxc-parser";
 
 const root = resolve(import.meta.dirname, "..");
-const BASELINE_PATH = "scripts/effect-hooks.baseline.json";
 
 export const BANNED_HOOKS = new Set(["useEffect", "useLayoutEffect", "useInsertionEffect"]);
 
@@ -192,57 +182,14 @@ export function measureEffectHooks(repoRoot) {
 }
 
 /**
- * Compare measured counts with the baseline.
+ * List every guarded file that uses a banned hook.
  * @param {Record<string, number>} measured
- * @param {Record<string, number>} baseline
- * @returns {{violations: string[], tighten: string[]}}
+ * @returns {string[]}
  */
-export function evaluateEffectHooks(measured, baseline) {
-  const violations = [];
-  const tighten = [];
-  for (const file of Object.keys(measured).sort(byCodeUnit)) {
-    const allowed = baseline[file];
-    if (allowed === undefined) {
-      violations.push(
-        `${file}: ${String(measured[file])} effect hook use(s), file is not baselined`,
-      );
-    } else if (measured[file] > allowed) {
-      violations.push(
-        `${file}: grew from ${String(allowed)} to ${String(measured[file])} effect hook uses`,
-      );
-    } else if (measured[file] < allowed) {
-      tighten.push(
-        `${file}: fell from ${String(allowed)} to ${String(measured[file])}; run --write`,
-      );
-    }
-  }
-  for (const file of Object.keys(baseline).sort(byCodeUnit)) {
-    if (measured[file] === undefined)
-      tighten.push(`${file}: no longer uses an effect hook; run --write`);
-  }
-  return { violations, tighten };
-}
-
-function readBaseline(repoRoot) {
-  const path = resolve(repoRoot, BASELINE_PATH);
-  if (!existsSync(path)) return undefined;
-  const parsed = JSON.parse(readFileSync(path, "utf8"));
-  if (parsed === null || typeof parsed !== "object" || Array.isArray(parsed)) {
-    throw new Error("assert-no-effect-hooks: baseline must be a file-to-count object");
-  }
-  for (const [file, count] of Object.entries(parsed)) {
-    if (!Number.isInteger(count) || count < 1) {
-      throw new Error(`assert-no-effect-hooks: invalid baseline entry: ${file}`);
-    }
-  }
-  return parsed;
-}
-
-function writeBaseline(repoRoot, baseline) {
-  const rows = Object.keys(baseline)
+export function evaluateEffectHooks(measured) {
+  return Object.keys(measured)
     .sort(byCodeUnit)
-    .map((file) => `  ${JSON.stringify(file)}: ${String(baseline[file])}`);
-  writeFileSync(resolve(repoRoot, BASELINE_PATH), `{\n${rows.join(",\n")}\n}\n`);
+    .map((file) => `${file}: ${String(measured[file])} effect hook use(s)`);
 }
 
 const FIXTURES = [
@@ -331,44 +278,15 @@ function main() {
     return;
   }
 
-  const measured = measureEffectHooks(root);
-  const baseline = readBaseline(root);
-
-  if (process.argv.includes("--write")) {
-    if (baseline === undefined) {
-      writeBaseline(root, measured);
-      console.log(
-        `assert-no-effect-hooks: seeded baseline (${String(Object.keys(measured).length)} files)`,
-      );
-      return;
-    }
-    const { violations } = evaluateEffectHooks(measured, baseline);
-    if (violations.length > 0) {
-      throw new Error(
-        `--write only lowers the baseline; it cannot accept new uses\n  ${violations.join("\n  ")}`,
-      );
-    }
-    writeBaseline(root, measured);
-    console.log(
-      `assert-no-effect-hooks: baseline updated (${String(Object.keys(measured).length)} files)`,
-    );
-    return;
-  }
-
-  if (baseline === undefined) {
-    throw new Error(`${BASELINE_PATH} is missing; seed it with --write`);
-  }
-  const { violations, tighten } = evaluateEffectHooks(measured, baseline);
-  if (violations.length > 0 || tighten.length > 0) {
+  const violations = evaluateEffectHooks(measureEffectHooks(root));
+  if (violations.length > 0) {
     throw new Error(
       "React effect hooks are banned (issue #930); use render-time derivation, event handlers, " +
-        "useSyncExternalStore, key resets or ref callbacks instead. The baseline may only shrink.\n  " +
-        [...violations, ...tighten].join("\n  "),
+        "useSyncExternalStore, key resets or ref callbacks instead.\n  " +
+        violations.join("\n  "),
     );
   }
-  console.log(
-    `assert-no-effect-hooks: ok (${String(Object.keys(measured).length)} baselined files, none grew)`,
-  );
+  console.log("assert-no-effect-hooks: ok (no effect hooks outside the external-sync module)");
 }
 
 function isEntrypoint() {

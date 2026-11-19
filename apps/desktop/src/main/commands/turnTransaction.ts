@@ -148,6 +148,7 @@ export const runTurnTransaction = (
     const terrain = yield* contentArtifact.loadBattleTerrain();
     const tensionDrift = yield* contentArtifact.loadTensionDriftRules();
     const fleetMorale = yield* contentArtifact.loadFleetMoraleRules();
+    const unrest = yield* contentArtifact.loadUnrestRules();
     const peaceBehaviour = yield* contentArtifact.loadPeaceBehaviourRules();
     const warDeclaration = yield* contentArtifact.loadWarDeclarationRules();
     const events = yield* contentArtifact.loadEventContent();
@@ -190,6 +191,7 @@ export const runTurnTransaction = (
         ...(terrain !== undefined ? { terrain } : {}),
         ...(tensionDrift !== undefined ? { tensionDrift } : {}),
         ...(fleetMorale !== undefined ? { fleetMorale, playerNationId: record.playerSlotId } : {}),
+        ...(unrest !== undefined ? { unrest, playerNationId: record.playerSlotId } : {}),
         ...(peaceBehaviour !== undefined
           ? { peaceBehaviour, playerNationId: record.playerSlotId }
           : {}),

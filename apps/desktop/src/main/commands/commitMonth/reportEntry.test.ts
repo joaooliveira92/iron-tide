@@ -10,6 +10,7 @@ import {
   newlyActiveProjectIds,
   presenceFromEvents,
   researchProgressFromEvents,
+  unrestFromEvents,
   type FleetSnapshot,
   type ProjectSnapshot,
 } from "./reportEntry.js";
@@ -243,6 +244,56 @@ describe("fleetExerciseFromEvents", () => {
     expect(fleetExerciseFromEvents([scheduled("uk")], "uk")).toEqual({
       scheduled: { month: "1880-03", shipIds: ["s1", "s2"] },
       tension: [],
+    });
+  });
+});
+
+describe("unrestFromEvents", () => {
+  const changed = (nationId: string, reasonCode: string, before: number, after: number) =>
+    envelope({
+      kind: "UnrestChanged",
+      nationId,
+      reasonCode,
+      before: SafeInt(before),
+      after: SafeInt(after),
+      delta: SafeInt(after - before),
+      rulesetVersion: "0.1.0",
+    });
+  const consequence = (nationId: string, kind: "STRIKE" | "REVOLUTION") =>
+    envelope({
+      kind: "UnrestConsequence",
+      nationId,
+      consequence: kind,
+      unrest: SafeInt(8),
+      rateBeforeBp: SafeInt(10000),
+      rateAfterBp: SafeInt(8000),
+      careerEnded: kind === "REVOLUTION",
+      rulesetVersion: "0.1.0",
+    });
+
+  it("is absent when the player's unrest did not move", () => {
+    expect(unrestFromEvents([changed("france", "BUDGET_PRESSURE", 1, 2)], "uk")).toBeUndefined();
+  });
+
+  it("carries the opening and closing unrest, the reasons and the consequence", () => {
+    expect(
+      unrestFromEvents(
+        [
+          changed("uk", "BUDGET_PRESSURE", 3, 5),
+          changed("france", "BUDGET_PRESSURE", 1, 2),
+          changed("uk", "BATTLE_LOST", 5, 7),
+          consequence("uk", "STRIKE"),
+        ],
+        "uk",
+      ),
+    ).toEqual({
+      before: 3,
+      after: 7,
+      changes: [
+        { reasonCode: "BUDGET_PRESSURE", delta: 2 },
+        { reasonCode: "BATTLE_LOST", delta: 2 },
+      ],
+      consequences: [{ consequence: "STRIKE", careerEnded: false }],
     });
   });
 });

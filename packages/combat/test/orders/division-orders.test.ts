@@ -412,22 +412,32 @@ describe("withdraw heading and land", () => {
     expect(clear.unitOrders.u1?.orderedHeading).toBe(180);
   });
 
-  const minefields = decodeKnownMinefieldView({
+  const view = decodeKnownMinefieldView({
     minefields: [{ id: "mf", xM: 650, yM: 0, radiusM: 100 }],
   });
+  const minefieldsBySide = { ATTACKER: view };
 
   it("turns a retreat away from a known minefield inside the look-ahead", () => {
-    const heading = compileDivisionOrders({ ...input, minefields }).unitOrders.u1?.orderedHeading;
+    const heading = compileDivisionOrders({ ...input, minefieldsBySide }).unitOrders.u1
+      ?.orderedHeading;
     expect(heading).not.toBe(0);
   });
 
   it("keeps a retreat heading that already clears the known minefield", () => {
-    const clear = compileDivisionOrders({ ...input, minefields, headingAway: () => 180 });
+    const clear = compileDivisionOrders({ ...input, minefieldsBySide, headingAway: () => 180 });
     expect(clear.unitOrders.u1?.orderedHeading).toBe(180);
   });
 
+  it("ignores a minefield only the other side knows", () => {
+    const heading = compileDivisionOrders({
+      ...input,
+      minefieldsBySide: { OTHER_SIDE: view },
+    }).unitOrders.u1?.orderedHeading;
+    expect(heading).toBe(0);
+  });
+
   it("steers clear of land and minefields together", () => {
-    const heading = compileDivisionOrders({ ...input, terrain, minefields }).unitOrders.u1
+    const heading = compileDivisionOrders({ ...input, terrain, minefieldsBySide }).unitOrders.u1
       ?.orderedHeading;
     expect(heading).not.toBe(0);
   });

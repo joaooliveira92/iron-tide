@@ -101,6 +101,45 @@ export default list(RulesetManifestSchema, [
         note: "PROVISIONAL. The manual names the two movers but gives no scale, magnitude, threshold for a long war or recovery rate. The meter runs 0 to 100 and starts full; all four values are Bluewave balance targets awaiting a sourcing pass. The meter has no downstream effect yet (#884).",
       },
     },
+    // The unrest consequences section (#996, ADR-0240). Every value is a Bluewave balance target: manual p.62 names the
+    // drivers and brakes, strikes and revolution but gives no scale or thresholds. Removing this section leaves unrest inert.
+    unrest: {
+      sectionVersion: 1,
+      referenceRateBp: 2_000,
+      spendingStepBp: 500,
+      spendingMaxRise: 2,
+      spendingMaxCut: 1,
+      warOutbreakRelief: 1,
+      warDurationMonths: 12,
+      warDurationRise: 1,
+      blockadeRise: 1,
+      defeatRise: 1,
+      victoryRelief: 1,
+      crampedWarRise: 1,
+      crampedBlockadeRise: 1,
+      strikeThreshold: 7,
+      strikeRateStepBp: 250,
+      revolutionThreshold: 9,
+      revolutionProbabilityBp: 1_500,
+      liberalDemocracyDampingBp: 4_000,
+      aftermathUnrest: 5,
+      provenance: {
+        sourceStatus: "BALANCE_TARGET",
+        confidence: "LOW",
+        kind: "balance_adjustment",
+        sources: [
+          {
+            title: "Rule the Waves 3 manual",
+            author: "Naval War Simulations / Matrix Games",
+            year: 2023,
+            page: "62",
+            section:
+              "Unrest drivers and brakes; strikes demand lower military budgets; revolution is less likely in liberal democracies",
+          },
+        ],
+        note: "BALANCE_TARGET under ADR-0240 decision 0010. The scale is 0 to 10 as stored; every threshold, magnitude and the revolution chance are tunable balance values, not sourced. A single month can raise unrest by at most a few points, so strikes need sustained pressure.",
+      },
+    },
     // The peace-behaviour section (#777, decisions 0054 and 0055). Every value is a PROVISIONAL Bluewave balance target:
     // the manual (p.66) describes peace but gives no acceptance rule or frequency. The margin is the 0055 placeholder
     // carried over from #554; the per-area cession costs are authored in areas.ts (#816). Removing this section returns AI

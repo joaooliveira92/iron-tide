@@ -148,16 +148,17 @@ function prestigeMetric(campaign: HeaderCampaign | null): HeaderMetric {
   if (campaign === null) return { icon: "prestige", label, value: NO_VALUE, placeholder: true };
   const { career, prestige } = campaign;
   if (career !== undefined) {
-    const key =
-      career.reason === "SACKED"
-        ? "shell.prestige.careerSacked"
-        : "shell.prestige.careerCampaignEnd";
+    const key = {
+      SACKED: "shell.prestige.careerSacked",
+      CAMPAIGN_END: "shell.prestige.careerCampaignEnd",
+      REVOLUTION: "shell.prestige.careerRevolution",
+    } as const;
     return {
       icon: "prestige",
       label,
-      value: translate(key, { score: career.score }),
+      value: translate(key[career.reason], { score: career.score }),
       placeholder: false,
-      alert: career.reason === "SACKED",
+      alert: career.reason !== "CAMPAIGN_END",
     };
   }
   return {

@@ -134,6 +134,7 @@ describe("MonthPipeline", () => {
       "presence_measurement",
       "foreign_station_deployment",
       "base_limits",
+      "unrest",
       "sacking",
       "closing_validation",
     ]);
@@ -159,6 +160,7 @@ describe("MonthPipeline", () => {
       "phase:presence_measurement",
       "phase:foreign_station_deployment",
       "phase:base_limits",
+      "phase:unrest",
       "phase:sacking",
       "phase:closing_validation",
     ]);

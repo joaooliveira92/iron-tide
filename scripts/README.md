@@ -31,7 +31,7 @@ Several gates run embedded `--self-test` fixtures first; the `gate:*` DAG in
 - `assert-no-stage-io.mjs` — no `node:fs`/`node:child_process` in compiler stages.
 - `assert-canonical-serialization.mjs` — no raw `JSON.stringify` in authoritative roots.
 - `assert-no-library-console.mjs` — no `console.*` in library modules.
-- `assert-no-effect-hooks.mjs` — ratchet banning `useEffect`/`useLayoutEffect`/`useInsertionEffect` (`effect-hooks.baseline.json`, `--write` only lowers).
+- `assert-no-effect-hooks.mjs` — zero-tolerance ban on `useEffect`/`useLayoutEffect`/`useInsertionEffect` outside tests and `useExternalSync.ts`.
 - `link-claude-skills.mjs` — recreate the `.claude/skills` → `.agents/skills` symlinks.
 - `docs-check.cjs` — markdown links and anchors.
 - `verify-doc-budgets.mjs` — word ceilings in `doc-budgets.manifest.json` (`--list`).

@@ -17,6 +17,9 @@ import type {
   MonthlyReportPresenceShortfall,
   MonthlyReportResearchProgress,
   MonthlyReportShip,
+  MonthlyReportUnrest,
+  MonthlyReportUnrestChange,
+  MonthlyReportUnrestConsequence,
 } from "../../../shared/reports-contract.js";
 import { sumByCategory } from "./responseMappers.js";
 
@@ -171,6 +174,27 @@ export function fleetExerciseFromEvents(
   };
 }
 
+export function unrestFromEvents(
+  events: readonly DomainEventEnvelope[],
+  nationId: string,
+): MonthlyReportUnrest | undefined {
+  const changes: MonthlyReportUnrestChange[] = [];
+  const consequences: MonthlyReportUnrestConsequence[] = [];
+  let before: number | undefined;
+  let after = 0;
+  for (const { body } of events) {
+    if (body.kind === "UnrestChanged" && body.nationId === nationId) {
+      before ??= Number(body.before);
+      after = Number(body.after);
+      changes.push({ reasonCode: body.reasonCode, delta: Number(body.delta) });
+    } else if (body.kind === "UnrestConsequence" && body.nationId === nationId) {
+      consequences.push({ consequence: body.consequence, careerEnded: body.careerEnded });
+    }
+  }
+  if (before === undefined) return undefined;
+  return { before, after, changes, consequences };
+}
+
 export function activeShipCount(nation: FleetSnapshot): number {
   return nation.fleets.flatMap((fleet) => fleet.ships).filter((ship) => !ship.isUnderConstruction)
     .length;
@@ -210,6 +234,7 @@ export function buildMonthlyReportEntry(input: MonthlyReportEntryInput): Monthly
 
   const presence = presenceFromEvents(input.domainEvents, playerNationId);
   const fleetExercise = fleetExerciseFromEvents(input.domainEvents, playerNationId);
+  const unrest = unrestFromEvents(input.domainEvents, playerNationId);
 
   return {
     reportId: input.reportId,
@@ -267,5 +292,6 @@ export function buildMonthlyReportEntry(input: MonthlyReportEntryInput): Monthly
     })),
     ...(presence === undefined ? {} : { presence }),
     ...(fleetExercise === undefined ? {} : { fleetExercise }),
+    ...(unrest === undefined ? {} : { unrest }),
   };
 }

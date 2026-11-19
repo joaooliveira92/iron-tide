@@ -71,12 +71,13 @@ describe("AI pursuit orders never steer into land", () => {
 });
 
 describe("AI pursuit orders never steer into a known minefield", () => {
-  const minefields = decodeKnownMinefieldView({
+  const view = decodeKnownMinefieldView({
     minefields: [{ id: "mf", xM: 650, yM: 0, radiusM: 100 }],
   });
+  const minefieldsBySide = { ATTACKER: view };
 
   it("turns away from a known minefield inside the 60 second look-ahead", () => {
-    const heading = pursuitOrders({ ...input(), minefields })["a1"]!.orderedHeading;
+    const heading = pursuitOrders({ ...input(), minefieldsBySide })["a1"]!.orderedHeading;
     expect(heading).not.toBe(0);
   });
 
@@ -84,11 +85,25 @@ describe("AI pursuit orders never steer into a known minefield", () => {
     const behind = decodeKnownMinefieldView({
       minefields: [{ id: "mf", xM: -650, yM: 0, radiusM: 100 }],
     });
-    expect(pursuitOrders({ ...input(), minefields: behind })["a1"]!.orderedHeading).toBe(0);
+    expect(
+      pursuitOrders({ ...input(), minefieldsBySide: { ATTACKER: behind } })["a1"]!.orderedHeading,
+    ).toBe(0);
   });
 
   it("steers clear of land and minefields together", () => {
-    const heading = pursuitOrders({ ...input(wall), minefields })["a1"]!.orderedHeading;
+    const heading = pursuitOrders({ ...input(wall), minefieldsBySide })["a1"]!.orderedHeading;
     expect(heading).not.toBe(0);
+  });
+
+  it("never steers a side around a field only the other side knows", () => {
+    const base = pursuitOrders(input());
+    const ahead = decodeKnownMinefieldView({
+      minefields: [{ id: "mf-d", xM: 2_750, yM: 0, radiusM: 100 }],
+    });
+    const otherKnows = pursuitOrders({ ...input(), minefieldsBySide: { DEFENDER: ahead } });
+    expect(otherKnows["a1"]).toEqual(base["a1"]);
+    expect(otherKnows["d1"]).not.toEqual(base["d1"]);
+    const sameSide = pursuitOrders({ ...input(), minefieldsBySide: { ATTACKER: ahead } });
+    expect(sameSide["d1"]).toEqual(base["d1"]);
   });
 });

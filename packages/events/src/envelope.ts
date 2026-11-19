@@ -23,6 +23,8 @@ export type {
   PossessionTransferred,
   PresenceShortfall,
   PrestigeChanged,
+  UnrestChanged,
+  UnrestConsequence,
   PrestigeLossRequested,
   ResearchProgressed,
   RevoltPressureRequested,
