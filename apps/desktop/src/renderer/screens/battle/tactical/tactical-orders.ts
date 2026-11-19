@@ -45,6 +45,7 @@ export function sameDivisionOrder(
     a?.stance === b?.stance &&
     a?.speedPercent === b?.speedPercent &&
     a?.courseDeg === b?.courseDeg &&
-    a?.speedKnots === b?.speedKnots
+    a?.speedKnots === b?.speedKnots &&
+    a?.targetHandle === b?.targetHandle
   );
 }

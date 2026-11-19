@@ -19,6 +19,32 @@ describe("player battle save steps share the wire order schema", () => {
     expect(Result.isSuccess(save(stepWith(speedPercent)))).toBe(Result.isSuccess(wire(order)));
   });
 
+  it("decodes a 1.0.0 save without a target unchanged and keeps an ordered target", () => {
+    const plain = stepWith(50);
+    const decodedPlain = save(plain);
+    expect(Result.isSuccess(decodedPlain)).toBe(true);
+    const targeted = {
+      ...plain,
+      steps: [
+        {
+          mode: "minute",
+          divisions: [
+            { divisionId: "d", stance: "ENGAGE", speedPercent: 50, targetHandle: "ab12" },
+          ],
+        },
+      ],
+    };
+    const decoded = save(targeted);
+    expect(Result.isSuccess(decoded) && decoded.success.steps[0]?.divisions[0]).toMatchObject({
+      targetHandle: "ab12",
+    });
+    expect(
+      Result.isFailure(
+        wire({ divisionId: "d", stance: "HOLD", speedPercent: 1, targetHandle: "" }),
+      ),
+    ).toBe(true);
+  });
+
   it("rejects unknown stances and empty division ids in both", () => {
     expect(Result.isFailure(wire({ divisionId: "", stance: "HOLD", speedPercent: 1 }))).toBe(true);
     expect(Result.isFailure(wire({ divisionId: "d", stance: "RAM", speedPercent: 1 }))).toBe(true);

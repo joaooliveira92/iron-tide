@@ -29,6 +29,7 @@ export interface BattleViewOrder {
   readonly courseDeg: number | null;
   readonly speedKnots: number | null;
   readonly plannedCourse: PlannedCourseLine | null;
+  readonly routeCrossesLand: boolean | null;
 }
 
 export interface BattleViewMachinery {

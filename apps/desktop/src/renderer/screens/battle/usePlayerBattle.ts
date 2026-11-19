@@ -55,6 +55,7 @@ export interface UsePlayerBattleReturn {
   readonly orderFor: (divisionId: string) => DivisionOrder;
   readonly setOrder: (divisionId: string, patch: Partial<DivisionOrder>) => void;
   readonly releaseCourse: (divisionId: string) => void;
+  readonly setTarget: (divisionId: string, targetHandle: string | null) => void;
   readonly advance: (mode: "minute" | "to_end") => void;
   readonly submit: () => void;
 }
@@ -133,6 +134,18 @@ export function usePlayerBattle(
     [updateState],
   );
 
+  const setTarget = useCallback(
+    (divisionId: string, targetHandle: string | null): void => {
+      updateState((current) => {
+        const { targetHandle: _previous, ...rest } =
+          current.orders[divisionId] ?? DEFAULT_DIVISION_ORDER;
+        const next = targetHandle === null ? rest : { ...rest, targetHandle };
+        return { ...current, orders: { ...current.orders, [divisionId]: next } };
+      });
+    },
+    [updateState],
+  );
+
   const advance = useCallback(
     (mode: "minute" | "to_end"): void => {
       if (bridge === undefined || view === null || view.ended) return;
@@ -174,6 +187,7 @@ export function usePlayerBattle(
     orderFor,
     setOrder,
     releaseCourse,
+    setTarget,
     advance,
     submit,
   };

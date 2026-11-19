@@ -6,7 +6,9 @@
 // scripts/effect-hooks.baseline.json: a file maps to its count of hook bindings
 // and references. A file may not gain a use, an unlisted file may not use a hook,
 // and a listed file whose count fell must lower its entry (`--write` only ever
-// lowers). Test files are exempt. Named, aliased, namespace (`React.useEffect`),
+// lowers). Test files and the single external-sync module (EXTERNAL_SYNC_MODULE,
+// the one sanctioned home for effects with no ref-callback replacement) are
+// exempt. Named, aliased, namespace (`React.useEffect`),
 // default-import member and re-export forms are all counted.
 //
 // Usage: `node scripts/assert-no-effect-hooks.mjs [--write] [--self-test]`
@@ -32,8 +34,11 @@ const TEST_RE = /(?:^|\/)(?:test|tests|__tests__)\/|\.(?:test|spec)\.[cm]?[jt]sx
 
 const byCodeUnit = (a, b) => (a < b ? -1 : a > b ? 1 : 0);
 
-function isGuarded(file) {
+export const EXTERNAL_SYNC_MODULE = "apps/desktop/src/renderer/shell/useExternalSync.ts";
+
+export function isGuarded(file) {
   return (
+    file !== EXTERNAL_SYNC_MODULE &&
     SOURCE_RE.test(file) &&
     !TEST_RE.test(file) &&
     AREAS.some((prefix) => file.startsWith(prefix)) &&

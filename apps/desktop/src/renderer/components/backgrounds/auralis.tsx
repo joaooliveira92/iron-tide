@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useCallback } from "react";
 import { cn } from "../../lib/utils.js";
 import { AURALIS_PALETTE } from "../../shell/background-palettes.js";
 import { hexToNormalizedRgb } from "./shader-color.js";
@@ -97,176 +97,175 @@ const Auralis = ({
   height = "100vh",
   className,
 }: AuralisProps) => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const attachCanvas = useCallback(
+    (canvas: HTMLCanvasElement) => {
+      const container = canvas.parentElement;
+      if (!container) return;
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const container = containerRef.current;
-    if (!canvas || !container) return;
+      const gl = canvas.getContext("webgl", { antialias: true });
+      if (!gl) return;
 
-    const gl = canvas.getContext("webgl", { antialias: true });
-    if (!gl) return;
-
-    const colorsVector = new Float32Array(
-      colors
-        .slice(0, 3)
-        .flatMap((color, index) =>
-          hexToNormalizedRgb(color, DEFAULT_COLORS[index] ?? DEFAULT_COLORS[0] ?? color),
-        ),
-    );
-    const colorBackVector = new Float32Array(hexToNormalizedRgb(colorBack, DEFAULT_COLOR_BACK));
-    const reducedMotion = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
-
-    interface Uniforms {
-      resolution: WebGLUniformLocation | null;
-      time: WebGLUniformLocation | null;
-      grain: WebGLUniformLocation | null;
-      colorBack: WebGLUniformLocation | null;
-      colors: WebGLUniformLocation | null;
-    }
-
-    let program: ShaderProgram | null = null;
-    let buffer: WebGLBuffer | null = null;
-    let uniforms: Uniforms | null = null;
-    let frameId = 0;
-
-    const destroyResources = () => {
-      if (buffer !== null) {
-        gl.deleteBuffer(buffer);
-        buffer = null;
-      }
-      program?.dispose();
-      program = null;
-      uniforms = null;
-    };
-
-    const buildResources = () => {
-      const shaderProgram = createShaderProgram(gl, vertexShaderGLSL, fragmentShaderGLSL);
-      if (shaderProgram === null) return false;
-
-      const nextBuffer = gl.createBuffer();
-      if (nextBuffer === null) {
-        shaderProgram.dispose();
-        return false;
-      }
-
-      gl.useProgram(shaderProgram.program);
-      gl.bindBuffer(gl.ARRAY_BUFFER, nextBuffer);
-      gl.bufferData(
-        gl.ARRAY_BUFFER,
-        new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]),
-        gl.STATIC_DRAW,
+      const colorsVector = new Float32Array(
+        colors
+          .slice(0, 3)
+          .flatMap((color, index) =>
+            hexToNormalizedRgb(color, DEFAULT_COLORS[index] ?? DEFAULT_COLORS[0] ?? color),
+          ),
       );
-      const position = gl.getAttribLocation(shaderProgram.program, "position");
-      if (position < 0) {
-        gl.deleteBuffer(nextBuffer);
-        shaderProgram.dispose();
-        return false;
-      }
-      gl.enableVertexAttribArray(position);
-      gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
+      const colorBackVector = new Float32Array(hexToNormalizedRgb(colorBack, DEFAULT_COLOR_BACK));
+      const reducedMotion =
+        window.matchMedia?.("(prefers-reduced-motion: reduce)").matches ?? false;
 
-      program = shaderProgram;
-      buffer = nextBuffer;
-      uniforms = {
-        resolution: gl.getUniformLocation(shaderProgram.program, "u_resolution"),
-        time: gl.getUniformLocation(shaderProgram.program, "u_time"),
-        grain: gl.getUniformLocation(shaderProgram.program, "u_grain"),
-        colorBack: gl.getUniformLocation(shaderProgram.program, "u_colorBack"),
-        colors: gl.getUniformLocation(shaderProgram.program, "u_colors"),
+      interface Uniforms {
+        resolution: WebGLUniformLocation | null;
+        time: WebGLUniformLocation | null;
+        grain: WebGLUniformLocation | null;
+        colorBack: WebGLUniformLocation | null;
+        colors: WebGLUniformLocation | null;
+      }
+
+      let program: ShaderProgram | null = null;
+      let buffer: WebGLBuffer | null = null;
+      let uniforms: Uniforms | null = null;
+      let frameId = 0;
+
+      const destroyResources = () => {
+        if (buffer !== null) {
+          gl.deleteBuffer(buffer);
+          buffer = null;
+        }
+        program?.dispose();
+        program = null;
+        uniforms = null;
       };
-      return true;
-    };
 
-    const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio, 1.5);
-      canvas.width = Math.max(1, Math.floor(container.clientWidth * dpr));
-      canvas.height = Math.max(1, Math.floor(container.clientHeight * dpr));
-      gl.viewport(0, 0, canvas.width, canvas.height);
-    };
+      const buildResources = () => {
+        const shaderProgram = createShaderProgram(gl, vertexShaderGLSL, fragmentShaderGLSL);
+        if (shaderProgram === null) return false;
 
-    const draw = (timeSeconds: number) => {
-      if (program === null || uniforms === null) return;
-      gl.useProgram(program.program);
-      gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
-      gl.uniform1f(uniforms.time, timeSeconds);
-      gl.uniform1f(uniforms.grain, grain);
-      gl.uniform3fv(uniforms.colorBack, colorBackVector);
-      gl.uniform3fv(uniforms.colors, colorsVector);
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
-    };
+        const nextBuffer = gl.createBuffer();
+        if (nextBuffer === null) {
+          shaderProgram.dispose();
+          return false;
+        }
 
-    const frame = (now: number) => {
-      frameId = 0;
-      if (document.hidden || program === null) return;
-      draw(now * 0.001 * speed);
-      frameId = requestAnimationFrame(frame);
-    };
+        gl.useProgram(shaderProgram.program);
+        gl.bindBuffer(gl.ARRAY_BUFFER, nextBuffer);
+        gl.bufferData(
+          gl.ARRAY_BUFFER,
+          new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]),
+          gl.STATIC_DRAW,
+        );
+        const position = gl.getAttribLocation(shaderProgram.program, "position");
+        if (position < 0) {
+          gl.deleteBuffer(nextBuffer);
+          shaderProgram.dispose();
+          return false;
+        }
+        gl.enableVertexAttribArray(position);
+        gl.vertexAttribPointer(position, 2, gl.FLOAT, false, 0, 0);
 
-    const start = () => {
-      if (frameId !== 0 || document.hidden || program === null) return;
-      if (reducedMotion) {
-        draw(0);
-        return;
+        program = shaderProgram;
+        buffer = nextBuffer;
+        uniforms = {
+          resolution: gl.getUniformLocation(shaderProgram.program, "u_resolution"),
+          time: gl.getUniformLocation(shaderProgram.program, "u_time"),
+          grain: gl.getUniformLocation(shaderProgram.program, "u_grain"),
+          colorBack: gl.getUniformLocation(shaderProgram.program, "u_colorBack"),
+          colors: gl.getUniformLocation(shaderProgram.program, "u_colors"),
+        };
+        return true;
+      };
+
+      const resize = () => {
+        const dpr = Math.min(window.devicePixelRatio, 1.5);
+        canvas.width = Math.max(1, Math.floor(container.clientWidth * dpr));
+        canvas.height = Math.max(1, Math.floor(container.clientHeight * dpr));
+        gl.viewport(0, 0, canvas.width, canvas.height);
+      };
+
+      const draw = (timeSeconds: number) => {
+        if (program === null || uniforms === null) return;
+        gl.useProgram(program.program);
+        gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
+        gl.uniform1f(uniforms.time, timeSeconds);
+        gl.uniform1f(uniforms.grain, grain);
+        gl.uniform3fv(uniforms.colorBack, colorBackVector);
+        gl.uniform3fv(uniforms.colors, colorsVector);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      };
+
+      const frame = (now: number) => {
+        frameId = 0;
+        if (document.hidden || program === null) return;
+        draw(now * 0.001 * speed);
+        frameId = requestAnimationFrame(frame);
+      };
+
+      const start = () => {
+        if (frameId !== 0 || document.hidden || program === null) return;
+        if (reducedMotion) {
+          draw(0);
+          return;
+        }
+        frameId = requestAnimationFrame(frame);
+      };
+
+      const stop = () => {
+        if (frameId === 0) return;
+        cancelAnimationFrame(frameId);
+        frameId = 0;
+      };
+
+      const handleVisibility = () => {
+        if (document.hidden) stop();
+        else start();
+      };
+
+      const handleContextLost = (event: Event) => {
+        event.preventDefault();
+        stop();
+        destroyResources();
+      };
+
+      const handleContextRestored = () => {
+        if (!buildResources()) return;
+        resize();
+        start();
+      };
+
+      const resizeObserver = new ResizeObserver(() => {
+        resize();
+        start();
+      });
+      resizeObserver.observe(container);
+      document.addEventListener("visibilitychange", handleVisibility);
+      canvas.addEventListener("webglcontextlost", handleContextLost);
+      canvas.addEventListener("webglcontextrestored", handleContextRestored);
+
+      if (buildResources()) {
+        resize();
+        start();
       }
-      frameId = requestAnimationFrame(frame);
-    };
 
-    const stop = () => {
-      if (frameId === 0) return;
-      cancelAnimationFrame(frameId);
-      frameId = 0;
-    };
-
-    const handleVisibility = () => {
-      if (document.hidden) stop();
-      else start();
-    };
-
-    const handleContextLost = (event: Event) => {
-      event.preventDefault();
-      stop();
-      destroyResources();
-    };
-
-    const handleContextRestored = () => {
-      if (!buildResources()) return;
-      resize();
-      start();
-    };
-
-    const resizeObserver = new ResizeObserver(() => {
-      resize();
-      start();
-    });
-    resizeObserver.observe(container);
-    document.addEventListener("visibilitychange", handleVisibility);
-    canvas.addEventListener("webglcontextlost", handleContextLost);
-    canvas.addEventListener("webglcontextrestored", handleContextRestored);
-
-    if (buildResources()) {
-      resize();
-      start();
-    }
-
-    return () => {
-      stop();
-      resizeObserver.disconnect();
-      document.removeEventListener("visibilitychange", handleVisibility);
-      canvas.removeEventListener("webglcontextlost", handleContextLost);
-      canvas.removeEventListener("webglcontextrestored", handleContextRestored);
-      destroyResources();
-    };
-  }, [colors, colorBack, speed, grain]);
+      return () => {
+        stop();
+        resizeObserver.disconnect();
+        document.removeEventListener("visibilitychange", handleVisibility);
+        canvas.removeEventListener("webglcontextlost", handleContextLost);
+        canvas.removeEventListener("webglcontextrestored", handleContextRestored);
+        destroyResources();
+      };
+    },
+    [colors, colorBack, speed, grain],
+  );
 
   return (
     <div
-      ref={containerRef}
       style={{ height, backgroundColor: colorBack }}
       className={cn("relative w-full overflow-hidden", className)}
     >
-      <canvas ref={canvasRef} className="pointer-events-none absolute inset-0 h-full w-full" />
+      <canvas ref={attachCanvas} className="pointer-events-none absolute inset-0 h-full w-full" />
       <div className="relative z-10 flex h-full w-full flex-col items-center justify-center" />
     </div>
   );

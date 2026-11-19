@@ -70,6 +70,7 @@ export interface BattleSessionActions {
   readonly previewCourse: (headingDeg: number | null) => void;
   readonly setOrder: (divisionId: string, patch: Partial<DivisionOrder>) => void;
   readonly releaseCourse: (divisionId: string) => void;
+  readonly setTarget: (divisionId: string, targetHandle: string | null) => void;
   readonly submit: () => void;
 }
 

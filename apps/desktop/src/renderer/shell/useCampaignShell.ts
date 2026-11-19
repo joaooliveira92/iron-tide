@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer, useRef, useState } from "react";
+import { useCallback, useMemo, useReducer, useRef, useState } from "react";
 
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
 import { resolveMessage } from "../content/uiCatalogue.js";
@@ -27,6 +27,7 @@ import {
 } from "./interruption-answer.js";
 import { canGoBack, canGoForward, goBack, goForward } from "./navigation-history.js";
 import type { PrimaryAction } from "./primary-action.js";
+import { useExternalSync } from "./useExternalSync.js";
 
 const SAVE_MESSAGE_DURATION_MS = 8_000;
 
@@ -154,7 +155,7 @@ export function useCampaignShell(bridge: BluewaveDesktopBridge | undefined) {
     );
   }, [bridge]);
 
-  useEffect(
+  useExternalSync(
     () => () => {
       if (saveTimerRef.current !== null) clearTimeout(saveTimerRef.current);
     },

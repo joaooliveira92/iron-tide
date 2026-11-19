@@ -17,6 +17,7 @@ function panelProps(patch: Partial<UnitCommandPanelProps>): UnitCommandPanelProp
     orderFor: () => DEFAULT_DIVISION_ORDER,
     acceptedOrders: orders,
     setOrder: () => undefined,
+    setTarget: () => undefined,
     releaseCourse: () => undefined,
     onPreviewCourse: () => undefined,
     ...patch,

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useMemo, useRef } from "react";
 import { cn } from "../../lib/utils.js";
 import { createPatternWavesRenderer } from "./pattern-waves-renderer.js";
 import type { PresetOverrides, ResolvedSettings } from "./pattern-waves-presets.js";
@@ -12,6 +12,11 @@ export type { ResolvedSettings } from "./pattern-waves-presets.js";
 export interface PatternWavesProps
   extends PresetOverrides, Omit<React.HTMLAttributes<HTMLDivElement>, "color"> {
   height?: string;
+}
+
+interface SettingsBridge {
+  settings: ResolvedSettings;
+  wake: (() => void) | null;
 }
 
 const PatternWaves = ({
@@ -43,10 +48,6 @@ const PatternWaves = ({
   style,
   ...props
 }: PatternWavesProps) => {
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const settingsRef = useRef<ResolvedSettings | null>(null);
-  const wakeRef = useRef<(() => void) | null>(null);
-
   const settings = useMemo(
     () =>
       resolveSettings({
@@ -101,32 +102,38 @@ const PatternWaves = ({
     ],
   );
 
-  useEffect(() => {
-    settingsRef.current = settings;
-    wakeRef.current?.();
-  }, [settings]);
+  const bridge = useRef<SettingsBridge>({ settings, wake: null });
 
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return undefined;
-    const renderer = createPatternWavesRenderer(container, () => settingsRef.current);
+  const attachContainer = useCallback((container: HTMLDivElement) => {
+    const renderer = createPatternWavesRenderer(container, () => bridge.current.settings);
     if (!renderer) return undefined;
-    wakeRef.current = () => {
+    bridge.current.wake = () => {
       renderer.wake();
     };
     return () => {
-      wakeRef.current = null;
+      bridge.current.wake = null;
       renderer.dispose();
     };
   }, []);
 
+  const pushSettings = useCallback(
+    (marker: HTMLSpanElement | null) => {
+      if (marker === null) return;
+      bridge.current.settings = settings;
+      bridge.current.wake?.();
+    },
+    [settings],
+  );
+
   return (
     <div
-      ref={containerRef}
+      ref={attachContainer}
       className={cn("relative w-full overflow-hidden", className)}
       style={{ height, backgroundColor, ...style }}
       {...props}
-    />
+    >
+      <span hidden ref={pushSettings} />
+    </div>
   );
 };
 
