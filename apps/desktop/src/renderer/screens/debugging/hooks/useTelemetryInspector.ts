@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { WideTelemetryEvent } from "../../../lib/telemetry.js";
 import { clearWideEvents, getRecordedWideEvents } from "../../../lib/telemetry.js";
 import type { OutcomeFilter } from "../types.js";
@@ -17,14 +17,10 @@ export interface UseTelemetryInspectorReturn {
 }
 
 export function useTelemetryInspector(): UseTelemetryInspectorReturn {
-  const [events, setEvents] = useState<readonly WideTelemetryEvent[]>([]);
+  const [events, setEvents] = useState<readonly WideTelemetryEvent[]>(getRecordedWideEvents);
   const [eventSearchTerm, setEventSearchTerm] = useState("");
   const [outcomeFilter, setOutcomeFilter] = useState<OutcomeFilter>("all");
   const [selectedEvent, setSelectedEvent] = useState<WideTelemetryEvent | null>(null);
-
-  useEffect(() => {
-    setEvents(getRecordedWideEvents());
-  }, []);
 
   const clearEvents = useCallback(() => {
     clearWideEvents();

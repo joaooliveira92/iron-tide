@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useId, useRef, useState } from "react";
+import { useCallback, useId, useState } from "react";
 import { normalizeIndex } from "@/components/card-deck/index.js";
 import type { PlayableSlotCountryId } from "@/content/nationAssetManifest.js";
 import { nationPresentationOrNull } from "@/content/presentationContent.js";
@@ -41,13 +41,6 @@ export function NationSelectionScreen({
   const focusedSlotId = slots[normalizedFocusedIndex] as PlayableSlotCountryId;
   const coords = nationPresentationOrNull(focusedSlotId)?.coordinates;
 
-  const onConfirmRef = useRef(onConfirm);
-  const onCancelRef = useRef(onCancel);
-  useEffect(() => {
-    onConfirmRef.current = onConfirm;
-    onCancelRef.current = onCancel;
-  }, [onConfirm, onCancel]);
-
   const navigate = useCallback(
     (delta: number) => {
       onFocusChange((focusedIndex + delta + slotCount) % slotCount);
@@ -59,9 +52,9 @@ export function NationSelectionScreen({
   const confirm = useCallback(
     (index: number) => {
       playMechanicalAcoustic("sonar");
-      onConfirmRef.current(slots[index] as string);
+      onConfirm(slots[index] as string);
     },
-    [slots],
+    [onConfirm, slots],
   );
 
   const handleSlotSelect = useCallback(
@@ -104,7 +97,7 @@ export function NationSelectionScreen({
       case "Escape":
         e.preventDefault();
         playMechanicalAcoustic("abort");
-        onCancelRef.current();
+        onCancel();
         break;
     }
   };

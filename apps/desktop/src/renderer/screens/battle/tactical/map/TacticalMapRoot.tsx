@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useCallback, useMemo, useState, type ReactNode } from "react";
 import { niceScaleBar } from "../../../../components/world-map/map-scale.js";
 import { UM_PER_METRE, UM_PER_NAUTICAL_MILE } from "../../../../lib/presentation-format/units.js";
 import { usePreferences } from "../../../../lib/preferences-context.js";
@@ -43,26 +43,27 @@ function TacticalMapFrame({
   const { camera } = useBattleCameraState();
   const { setViewport: reportViewport } = useBattleActions();
   const { preferences } = usePreferences();
-  const frame = useRef<HTMLDivElement | null>(null);
   const [viewport, setViewport] = useState<TacticalViewport>(FALLBACK_VIEWPORT);
   const [cursor] = useState(createCursorStore);
 
-  useEffect(() => {
-    const element = frame.current;
-    if (element === null || typeof ResizeObserver === "undefined") return undefined;
-    const measure = () => {
-      const { width, height } = element.getBoundingClientRect();
-      if (width > 0 && height > 0) {
-        const next = { width: Math.round(width), height: Math.round(height) };
-        setViewport(next);
-        reportViewport(next);
-      }
-    };
-    measure();
-    const observer = new ResizeObserver(measure);
-    observer.observe(element);
-    return () => observer.disconnect();
-  }, [reportViewport]);
+  const frame = useCallback(
+    (element: HTMLDivElement | null) => {
+      if (element === null || typeof ResizeObserver === "undefined") return undefined;
+      const measure = () => {
+        const { width, height } = element.getBoundingClientRect();
+        if (width > 0 && height > 0) {
+          const next = { width: Math.round(width), height: Math.round(height) };
+          setViewport(next);
+          reportViewport(next);
+        }
+      };
+      measure();
+      const observer = new ResizeObserver(measure);
+      observer.observe(element);
+      return () => observer.disconnect();
+    },
+    [reportViewport],
+  );
 
   const project = useCallback(
     (point: readonly [number, number]) => worldToScreen(camera, viewport, point),

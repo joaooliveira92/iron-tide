@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import {
   PROVISIONAL_ZOOM_STEP,
   centreCameraOn,
@@ -49,8 +49,9 @@ export function useBattleCamera(
     readonly view: TacticalView | null;
     readonly trails: Trails;
   }>({ view: null, trails: {} });
-  const fittedKey = useRef("");
-  const userMoved = useRef(false);
+  const [fittedKey, setFittedKey] = useState("");
+  const [userMoved, setUserMoved] = useState(false);
+  const [tracked, setTracked] = useState({ focusPoint, following: false });
   const focusRef = useRef<WorldPoint | null>(focusPoint);
 
   const setCamera = useCallback((update: (current: TacticalCamera) => TacticalCamera) => {
@@ -62,23 +63,23 @@ export function useBattleCamera(
   }
   const trails = trailed.trails;
 
-  useEffect(() => {
-    if (view === null) return;
-    const points = knownPositions(view);
+  const points = useMemo(() => (view === null ? null : knownPositions(view)), [view]);
+  if (view !== null && points !== null) {
     const key = `${String(points.length)}:${String(view.ended)}:${String(viewport.width)}x${String(viewport.height)}`;
-    if (!userMoved.current && key !== fittedKey.current) {
-      fittedKey.current = key;
+    if (!userMoved && key !== fittedKey) {
+      setFittedKey(key);
       setCamera((current) => fitCamera(points, viewport, current));
     }
-  }, [view, viewport, setCamera]);
+  }
 
-  useEffect(() => {
-    focusRef.current = focusPoint;
+  focusRef.current = focusPoint;
+  if (tracked.focusPoint !== focusPoint || tracked.following !== following) {
+    setTracked({ focusPoint, following });
     setCameraFollow((state) => trackFocus(state, focusPoint));
-  }, [focusPoint, following]);
+  }
 
   const changeCamera = useCallback((next: TacticalCamera) => {
-    userMoved.current = true;
+    setUserMoved(true);
     setCameraFollow((state) => applyCameraChange(state, next, focusRef.current));
   }, []);
 
@@ -94,7 +95,7 @@ export function useBattleCamera(
 
   const zoomToRectangle = useCallback(
     (rect: ScreenRectangle): void => {
-      userMoved.current = true;
+      setUserMoved(true);
       setCameraFollow((state) => frameRectangle(state, viewport, rect));
     },
     [viewport],
@@ -113,7 +114,7 @@ export function useBattleCamera(
   }, [focusPoint, setCamera]);
 
   const toggleFollow = useCallback((): void => {
-    if (!following) userMoved.current = true;
+    if (!following) setUserMoved(true);
     setCameraFollow((state) =>
       state.following
         ? { camera: state.camera, following: false }

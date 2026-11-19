@@ -1,5 +1,5 @@
 import type { ArchetypeSelection } from "@bluewave/campaign-engine";
-import { useEffect, useRef } from "react";
+import { useCallback } from "react";
 import { Button } from "../../components/ui/button.js";
 import type { SetPrimaryAction } from "../../shell/primary-action.js";
 import { usePrimaryAction } from "../../shell/usePrimaryAction.js";
@@ -30,11 +30,13 @@ export function NewGameArchetypeScreen({
 
   usePrimaryAction(primaryAction, onPrimaryActionChange);
 
-  const detailRef = useRef<HTMLElement | null>(null);
-  useEffect(() => {
-    if (allocatorFocusRequest === 0) return;
-    detailRef.current?.querySelector<HTMLInputElement>('input[type="range"]')?.focus();
-  }, [allocatorFocusRequest]);
+  const detailRef = useCallback(
+    (detail: HTMLElement | null) => {
+      if (detail === null || allocatorFocusRequest === 0) return;
+      detail.querySelector<HTMLInputElement>('input[type="range"]')?.focus();
+    },
+    [allocatorFocusRequest],
+  );
 
   return (
     <NewGameScreenLayout variant="bleed">

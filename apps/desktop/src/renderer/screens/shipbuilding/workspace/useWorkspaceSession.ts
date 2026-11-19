@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import type { ComponentCategory } from "@bluewave/ship-design";
 import { useDesignSession } from "../../../components/design-workspace/useDesignSession.js";
 import {
@@ -9,6 +9,7 @@ import { useDraftAutosave } from "../../../components/design-workspace/useDraftA
 import { useRestoredDraftToast } from "../../../components/design-workspace/useRestoredDraftToast.js";
 import { plural } from "../../../components/design-workspace/plural.js";
 import { useBridge } from "../../../lib/bridge-context.js";
+import { useLifecycle } from "../../../lib/use-lifecycle.js";
 import { useStudyPreview } from "../../../components/design-workspace/panels/SubmitPanel.js";
 import { useCampaignMonthId } from "../../../shell/CampaignShellContext.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";
@@ -48,14 +49,14 @@ export function useWorkspaceSession(
   const [nameCursor, setNameCursor] = useState(0);
   const nameInputRef = useRef<HTMLInputElement>(null);
   const [focusName, setFocusName] = useState(false);
-  useEffect(() => {
+  useLifecycle(() => {
     if (!focusName) return;
     nameInputRef.current?.focus();
     setFocusName(false);
   }, [focusName]);
 
   const [returning] = useState(() => enteredSessions.has(sessionId));
-  useEffect(() => {
+  useLifecycle(() => {
     enteredSessions.mark(sessionId);
   }, [sessionId]);
   useRestoredDraftToast({

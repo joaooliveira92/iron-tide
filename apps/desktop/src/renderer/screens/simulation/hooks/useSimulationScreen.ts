@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useReducer, useRef } from "react";
+import { useCallback, useMemo, useReducer, useRef } from "react";
 
 import type {
   BattleManifest,
@@ -15,6 +15,7 @@ import { useBridge } from "../../../lib/bridge-context.js";
 import { envelopeOf, stampCommand } from "../../../lib/command-envelope.js";
 import { auditInputFromDecisions } from "../../../lib/engine-audit.js";
 import { readQuery } from "../../../lib/read-queries.js";
+import { useLifecycle } from "../../../lib/use-lifecycle.js";
 import { SCRIPTED_TACTICAL_ORDERS } from "../simulation-battle-orders.js";
 import {
   commandFailureMessage,
@@ -102,11 +103,11 @@ export function useSimulationScreen(
     dispatch({ type: "load-failed", message: read.reason });
   }, [bridge, sessionId]);
 
-  useEffect(() => {
+  useLifecycle(() => {
     void loadSnapshotData();
   }, [loadSnapshotData]);
 
-  useEffect(() => {
+  useLifecycle(() => {
     if (campaignRevision !== undefined && campaignRevision !== revisionRef.current) {
       void loadSnapshotData();
     }

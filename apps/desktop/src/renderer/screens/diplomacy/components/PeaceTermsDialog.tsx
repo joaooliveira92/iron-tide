@@ -4,7 +4,7 @@ import type {
   DiplomacyPeaceTermRef,
 } from "@bluewave/campaign-engine";
 import { Handshake } from "lucide-react";
-import { useEffect, useId, useState } from "react";
+import { useId, useState } from "react";
 import { ExplanationDisclosure } from "../../../components/shared/ExplanationDisclosure.js";
 import { Badge } from "../../../components/ui/badge.js";
 import { Button } from "../../../components/ui/button.js";
@@ -112,9 +112,11 @@ export function PeaceTermsDialog({
   const format = usePresentationFormat();
   const [selected, setSelected] = useState("StatusQuo");
   const headingId = useId();
-  useEffect(() => {
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
     if (open) setSelected("StatusQuo");
-  }, [open]);
+  }
   const chosen = offer.terms.find((t) => peaceTermKey(t.term) === selected && t.affordable);
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>

@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useMemo, useSyncExternalStore } from "react";
+import { createValueStore, subscribeWithLifecycle } from "../../../lib/value-store.js";
 
 export const GLOBE_TRANSITION_MS = 650;
 
@@ -7,27 +8,27 @@ export function prefersReducedMotion(): boolean {
 }
 
 export function useArmedAfterMount(active: boolean): boolean {
-  const [armed, setArmed] = useState(() => active && prefersReducedMotion());
-
-  useEffect(() => {
-    if (!active) {
-      setArmed(false);
-      return;
-    }
-    if (prefersReducedMotion()) {
-      setArmed(true);
-      return;
-    }
-
-    let raf2 = 0;
-    const raf1 = requestAnimationFrame(() => {
-      raf2 = requestAnimationFrame(() => setArmed(true));
-    });
-    return () => {
-      cancelAnimationFrame(raf1);
-      cancelAnimationFrame(raf2);
+  const { store, subscribe } = useMemo(() => {
+    const created = createValueStore(active && prefersReducedMotion());
+    return {
+      store: created,
+      subscribe: subscribeWithLifecycle(created, (target) => {
+        if (!active) return;
+        if (prefersReducedMotion()) {
+          target.set(true);
+          return;
+        }
+        let raf2 = 0;
+        const raf1 = requestAnimationFrame(() => {
+          raf2 = requestAnimationFrame(() => target.set(true));
+        });
+        return () => {
+          cancelAnimationFrame(raf1);
+          cancelAnimationFrame(raf2);
+        };
+      }),
     };
   }, [active]);
 
-  return armed;
+  return useSyncExternalStore(subscribe, store.get);
 }

@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
+import { useLifecycle } from "../../../lib/use-lifecycle.js";
 import {
   classifyHotkeyTarget,
   fleetHotkeyAction,
@@ -9,10 +10,8 @@ export type FleetHotkeyHandlers = Partial<Readonly<Record<FleetHotkeyAction, () 
 
 export function useFleetHotkeys(handlers: FleetHotkeyHandlers): void {
   const latest = useRef(handlers);
-  useEffect(() => {
-    latest.current = handlers;
-  });
-  useEffect(() => {
+  latest.current = handlers;
+  useLifecycle(() => {
     function onKeyDown(event: KeyboardEvent) {
       const action = fleetHotkeyAction({
         key: event.key,

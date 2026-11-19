@@ -1,5 +1,6 @@
-import { useEffect, useMemo } from "react";
+import { useMemo } from "react";
 import { useDrawingBoardContentSource } from "../../components/design-workspace/useDrawingBoardContent.js";
+import { useLifecycle } from "../../lib/use-lifecycle.js";
 import { useRevisionRequest } from "../../shell/CampaignShellContext.js";
 import { useConstructionScreen } from "../construction/hooks/useConstructionScreen.js";
 import { ShipbuildingWorkspace } from "./ShipbuildingWorkspace.js";
@@ -15,7 +16,7 @@ function LoadedWorkspace({
   readonly projectId: string | null;
 }) {
   const { state, loadScreen } = useConstructionScreen(sessionId);
-  useEffect(() => {
+  useLifecycle(() => {
     void loadScreen();
   }, [loadScreen]);
   const projects = useMemo(
@@ -37,7 +38,7 @@ function LoadedWorkspace({
 export function ShipDesignScreen({ sessionId }: { readonly sessionId: string }) {
   const contentStatus = useDrawingBoardContentSource();
   const { projectId, clear } = useRevisionRequest();
-  useEffect(() => clear, [clear]);
+  useLifecycle(() => clear, [clear]);
   if (contentStatus === "error")
     return (
       <p role="alert" className={`${NOTICE} text-destructive`}>

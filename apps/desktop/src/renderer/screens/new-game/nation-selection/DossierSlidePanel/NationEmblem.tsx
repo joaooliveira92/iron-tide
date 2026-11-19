@@ -1,12 +1,10 @@
-import { type JSX, useEffect, useMemo, useState } from "react";
+import { type JSX, useMemo, useState } from "react";
 import type { PlayableSlotCountryId } from "@/content/nationAssetManifest.js";
 import { resolveNationColours } from "./nationArtwork.js";
 
 export function NationEmblem({ countryId }: { countryId: PlayableSlotCountryId }): JSX.Element {
   const [imageFailed, setImageFailed] = useState(false);
   const colours = useMemo(() => resolveNationColours(countryId), [countryId]);
-
-  useEffect(() => setImageFailed(false), []);
 
   if (colours === null || imageFailed) {
     return (

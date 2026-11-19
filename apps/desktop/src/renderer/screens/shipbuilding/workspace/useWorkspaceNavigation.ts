@@ -1,5 +1,4 @@
 import {
-  useEffect,
   useMemo,
   useRef,
   useState,
@@ -34,6 +33,7 @@ import {
 import type { EntityContext } from "../../../components/design-workspace/selection/facts.js";
 import { useLeaveGuard } from "../../../shell/CampaignShellContext.js";
 import { useScreenHeaderHost } from "../../../shell/screen-header.js";
+import { useLifecycle } from "../../../lib/use-lifecycle.js";
 import { useMinWidth } from "../../../lib/use-min-width.js";
 import { COMMAND_OVERLAY_MIN_WIDTH } from "../../overview/hooks/useOverviewModel.js";
 import { placeForDestination } from "../destination-place.js";
@@ -114,7 +114,7 @@ export function useWorkspaceNavigation({ state, actions: session }: WorkspaceSes
   draftRef.current = draft;
   const contentRef = useRef(content);
   contentRef.current = content;
-  useEffect(
+  useLifecycle(
     () =>
       selection.subscribe(() => {
         const pinned = selection.get().selected;
@@ -131,7 +131,7 @@ export function useWorkspaceNavigation({ state, actions: session }: WorkspaceSes
       }),
     [selection],
   );
-  useEffect(() => {
+  useLifecycle(() => {
     const pinned = pendingFocus.current;
     if (pinned === null) return;
     pendingFocus.current = null;
