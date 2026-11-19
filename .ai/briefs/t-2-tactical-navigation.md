@@ -24,7 +24,7 @@ What the T-2N slices shipped in `@bluewave/combat`, where the seams are, and wha
 | `@bluewave/combat/orders`                      | `DivisionOrderSet`, `compileDivisionOrders`, realism matrix, waypoint orders (`WAYPOINT_ARRIVAL_TOLERANCE_METRES`, event `WAYPOINT_REACHED_EVENT_TYPE`), force orders (`ForceOrderKind`, `createForceRuntime`, `advanceForce`, `ForceState`)                   |
 | `@bluewave/combat/terrain`, #935               | `TerrainView`; queries `pointInLand`, `pointInNoGoZone`, `segmentCrossesLand`, `nearestCoastPoint`. Compiled to the sidecar `terrain-artifact.json` (`buildTerrainArtifact`, `@bluewave/content-compiler`), never into the bundle ([RULES.md](../../RULES.md)) |
 | `@bluewave/combat/navigation`, #937, #941      | `resolveNavigation`, `applyNavigation`: fouling (`FoulingLevel` GRATES_FOULED then STOKERS_EXHAUSTED), breakdown, per-ship `vibrationBp`, speed-limit `explainAttainableMax`; `resolveSeparation` for heavy and non-line-ahead formations                      |
-| `@bluewave/combat/collision`, #940             | `CollisionContext` (`terrain`, `shipCollision`, `state`), `createMovementHazards`, `steerClearOfLand`; records `COLLISION` and `TERRAIN_BLOCKED`, speed caps through `CollisionState`                                                                          |
+| `@bluewave/combat/collision`, #940             | `CollisionContext` (`terrain`, `shipCollision`, `state`), `createMovementHazards`, `steerClearOfHazards` (land and `KnownMinefieldView`, #958), `steerClearOfLand`; records `COLLISION` and `TERRAIN_BLOCKED`, speed caps through `CollisionState`             |
 | `@bluewave/combat/division-ai`, #943           | `decideDivisionOrders(view, memory)` returns orders, new `DivisionAiMemory` and reasons; role behaviours CORE, SUPPORT, SCOUT, SCREEN, PATROL, INDEPENDENT; `flotillaDelayMinutes`                                                                             |
 | `@bluewave/combat/battleResolution`, #936-#954 | `battleView` (fog-aware `BattleView` DTO, strict decode, `BattleViewOwnShip.machinery` and `.separation`), `enablePlayerForceOrders`, `advancePlayerForce`, waypoint settling and pause kinds; the legacy `playerBattleView` is retired                        |
 
@@ -53,12 +53,12 @@ engine feeds `machinery`, `separation` and collision `state` back each minute.
 
 ## Open follow-ups
 
-| Issue | Work                                                                     |
-| ----- | ------------------------------------------------------------------------ |
-| #957  | Read-model flag when a planned route crosses land (`segmentCrossesLand`) |
-| #958  | Steer AI and compiled orders clear of known minefields                   |
-| #959  | Wire `collision` and `terrain` into production battle resolution         |
-| #961  | Persist the division AI memory in saved battle state                     |
+| Issue | Work                                                                                       |
+| ----- | ------------------------------------------------------------------------------------------ |
+| #957  | Read-model flag when a planned route crosses land (`segmentCrossesLand`)                   |
+| #959  | Wire `collision` and `terrain` into production battle resolution                           |
+| #974  | Build `KnownMinefieldView` zones from mine knowledge and supply `minefields` in production |
+| #961  | Persist the division AI memory in saved battle state                                       |
 
 Also open and unticketed: gunnery use of `vibrationBp` and the battle-map screen.
 

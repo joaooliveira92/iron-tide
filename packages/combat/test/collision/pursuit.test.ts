@@ -1,6 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import { createContactTrack } from "@bluewave/combat/contact";
 import type { TerrainView } from "@bluewave/combat/terrain";
+import { decodeKnownMinefieldView } from "@bluewave/combat/collision";
 import { pursuitOrders } from "../../src/battleResolution/pursuit.js";
 import { buildTestState } from "../simulation/advance.test.js";
 
@@ -65,6 +66,29 @@ describe("AI pursuit orders never steer into land", () => {
 
   it("turns away from a wall inside the 60 second look-ahead", () => {
     const heading = pursuitOrders(input(wall))["a1"]!.orderedHeading;
+    expect(heading).not.toBe(0);
+  });
+});
+
+describe("AI pursuit orders never steer into a known minefield", () => {
+  const minefields = decodeKnownMinefieldView({
+    minefields: [{ id: "mf", xM: 650, yM: 0, radiusM: 100 }],
+  });
+
+  it("turns away from a known minefield inside the 60 second look-ahead", () => {
+    const heading = pursuitOrders({ ...input(), minefields })["a1"]!.orderedHeading;
+    expect(heading).not.toBe(0);
+  });
+
+  it("keeps the pursuit heading when the minefield is behind the ship", () => {
+    const behind = decodeKnownMinefieldView({
+      minefields: [{ id: "mf", xM: -650, yM: 0, radiusM: 100 }],
+    });
+    expect(pursuitOrders({ ...input(), minefields: behind })["a1"]!.orderedHeading).toBe(0);
+  });
+
+  it("steers clear of land and minefields together", () => {
+    const heading = pursuitOrders({ ...input(wall), minefields })["a1"]!.orderedHeading;
     expect(heading).not.toBe(0);
   });
 });

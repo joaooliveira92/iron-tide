@@ -4,6 +4,7 @@ import type { TacticalDivision } from "@bluewave/combat/tactical";
 import type { TacticalShipUnit } from "@bluewave/combat/tactical";
 import type { MovementState } from "@bluewave/combat/movement";
 import type { TerrainView } from "@bluewave/combat/terrain";
+import { decodeKnownMinefieldView } from "@bluewave/combat/collision";
 import {
   DIVISION_ORDER_INVALID,
   DIVISION_ORDER_LEAD_UNKNOWN,
@@ -409,5 +410,25 @@ describe("withdraw heading and land", () => {
   it("keeps a retreat heading that already clears the land", () => {
     const clear = compileDivisionOrders({ ...input, terrain, headingAway: () => 180 });
     expect(clear.unitOrders.u1?.orderedHeading).toBe(180);
+  });
+
+  const minefields = decodeKnownMinefieldView({
+    minefields: [{ id: "mf", xM: 650, yM: 0, radiusM: 100 }],
+  });
+
+  it("turns a retreat away from a known minefield inside the look-ahead", () => {
+    const heading = compileDivisionOrders({ ...input, minefields }).unitOrders.u1?.orderedHeading;
+    expect(heading).not.toBe(0);
+  });
+
+  it("keeps a retreat heading that already clears the known minefield", () => {
+    const clear = compileDivisionOrders({ ...input, minefields, headingAway: () => 180 });
+    expect(clear.unitOrders.u1?.orderedHeading).toBe(180);
+  });
+
+  it("steers clear of land and minefields together", () => {
+    const heading = compileDivisionOrders({ ...input, terrain, minefields }).unitOrders.u1
+      ?.orderedHeading;
+    expect(heading).not.toBe(0);
   });
 });
