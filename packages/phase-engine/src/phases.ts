@@ -19,6 +19,7 @@ import { MonthPipeline } from "./pipeline.js";
 import { presenceMeasurementPhase } from "./presenceMeasurement.js";
 import { researchPhase } from "./research.js";
 import { sackingPhase } from "./sackingPhase.js";
+import { unrestPhase } from "./unrestPhase.js";
 import { closingValidationPhase, openingValidationPhase } from "./validationPhases.js";
 import { weatherGenerationPhase } from "./weatherPhase.js";
 
@@ -44,6 +45,7 @@ export const monthPipeline = MonthPipeline.create(
     presenceMeasurementPhase,
     foreignStationDeploymentPhase,
     baseLimitsPhase,
+    unrestPhase,
     sackingPhase,
     closingValidationPhase,
   ],

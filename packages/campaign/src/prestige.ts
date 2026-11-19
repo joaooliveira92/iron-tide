@@ -24,7 +24,7 @@ export type RequiredPrestigeReasonCode = (typeof REQUIRED_PRESTIGE_REASON_CODES)
 export const OPTIONAL_PRESTIGE_REASON_CODES = ["DECLINED_BATTLE", "PRESENCE_SHORTFALL"] as const;
 export type OptionalPrestigeReasonCode = (typeof OPTIONAL_PRESTIGE_REASON_CODES)[number];
 
-export const CAREER_END_REASONS = ["SACKED", "CAMPAIGN_END"] as const;
+export const CAREER_END_REASONS = ["SACKED", "CAMPAIGN_END", "REVOLUTION"] as const;
 export type CareerEndReason = (typeof CAREER_END_REASONS)[number];
 
 export interface ProportionalLossRule {

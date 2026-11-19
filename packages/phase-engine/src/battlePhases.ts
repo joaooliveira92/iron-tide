@@ -33,6 +33,7 @@ import { battleOfferAnsweredEvent } from "./events.js";
 import { applyRecordedBattleResult, consumeBattleResult } from "./interruption.js";
 import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
 import { applyPrestigeChange } from "./prestigeApplication.js";
+import { applyUnrestContributions } from "./unrestApplication.js";
 
 type AutoResolutionManifest = Parameters<typeof resolve>[0]["manifest"];
 
@@ -158,7 +159,31 @@ export function runBattleResolutionPhase(ctx: PhaseContext): PhaseRunOutcome {
   return { status: "continue" };
 }
 
+function scoreBattleUnrest(ctx: PhaseContext, battleIds: readonly string[]): void {
+  const rules = ctx.engineOptions?.unrest;
+  if (rules === undefined) return;
+  const ids = new Set(battleIds);
+  const resolved = ctx.snapshot.current["wars"]["battles"]
+    .filter((b) => ids.has(b["id"]) && b["phase"] === "resolved")
+    .sort((a, b) => (a["id"] < b["id"] ? -1 : a["id"] > b["id"] ? 1 : 0));
+  for (const battle of resolved) {
+    const result = battle["result"];
+    if (result === undefined) continue;
+    if (result.loserId !== null) {
+      applyUnrestContributions(ctx, result.loserId, [
+        { reasonCode: "DEFEAT", delta: rules.defeatRise },
+      ]);
+    }
+    if (result.winnerId !== null) {
+      applyUnrestContributions(ctx, result.winnerId, [
+        { reasonCode: "VICTORY", delta: -rules.victoryRelief },
+      ]);
+    }
+  }
+}
+
 function scoreResolvedBattles(ctx: PhaseContext, battleIds: readonly string[]): void {
+  scoreBattleUnrest(ctx, battleIds);
   const player = ctx.playerNationId;
   if (player === undefined) return;
   const ids = new Set(battleIds);

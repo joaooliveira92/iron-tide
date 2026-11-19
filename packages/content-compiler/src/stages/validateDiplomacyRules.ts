@@ -2,6 +2,7 @@ import {
   decodeFleetMoraleRules,
   decodePeaceBehaviourRules,
   decodeTensionDriftRules,
+  decodeUnrestRules,
 } from "@bluewave/content-schema";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 
@@ -105,4 +106,40 @@ export function validateDiplomacyRules(
   validateTensionDriftRules(rulesets, collector);
   validatePeaceBehaviourRules(rulesets, collector);
   validateFleetMoraleRules(rulesets, collector);
+  validateUnrestRules(rulesets, collector);
+}
+
+function validateUnrestRules(rulesets: readonly unknown[], collector: DiagnosticCollector): void {
+  const carriers = rulesets.filter(
+    (ruleset) => (ruleset as Record<string, unknown>)["unrest"] !== undefined,
+  );
+  if (carriers.length > 1)
+    collector.addError(
+      "UNREST_RULES_AMBIGUOUS",
+      `More than one ruleset carries an unrest section (${carriers.map((r) => String((r as Record<string, unknown>)["id"])).join(", ")}); exactly one may`,
+      { stage: "validate" },
+    );
+  for (const ruleset of carriers) {
+    const record = ruleset as Record<string, unknown>;
+    const rulesetId = String(record["id"]);
+    const decoded = decodeUnrestRules(record["unrest"]);
+    if (decoded.ok) {
+      if (decoded.value.strikeThreshold > decoded.value.revolutionThreshold)
+        collector.addError(
+          "UNREST_RULES_INVALID",
+          `Ruleset '${rulesetId}' unrest strikeThreshold must not exceed revolutionThreshold`,
+          { stage: "validate", entityId: rulesetId },
+        );
+      continue;
+    }
+    collector.addError(
+      "UNREST_RULES_INVALID",
+      `Ruleset '${rulesetId}' unrest section is invalid at '${decoded.field}': ${decoded.message}`,
+      {
+        stage: "validate",
+        entityId: rulesetId,
+        remediation: `Author every unrest value in ruleset '${rulesetId}', or remove the section to leave unrest consequences dormant`,
+      },
+    );
+  }
 }

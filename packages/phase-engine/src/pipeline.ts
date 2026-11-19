@@ -20,6 +20,7 @@ import type {
   MissilesRules,
   PeaceBehaviourRules,
   TensionDriftRules,
+  UnrestRules,
   EventResolutionRules,
   GameEvent,
 } from "@bluewave/content-schema";
@@ -75,6 +76,7 @@ export interface MonthExecutorEngineOptions {
   readonly minefields?: Readonly<Record<string, readonly TacticalMinefieldRecord[]>>;
   readonly tensionDrift?: TensionDriftRules;
   readonly fleetMorale?: FleetMoraleRules;
+  readonly unrest?: UnrestRules;
   readonly peaceBehaviour?: PeaceBehaviourRules;
   readonly events?: EventEngineContent;
   readonly constructionEvents?: readonly ConstructionEvent[];

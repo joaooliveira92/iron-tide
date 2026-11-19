@@ -5,9 +5,11 @@ import {
   type PresenceMeasurementRules,
   PrestigeRule,
   StationPresenceRow,
+  unrestOf,
 } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { applyPrestigeChange, type PrestigeApplicationContext } from "./prestigeApplication.js";
+import { applyUnrestContributions } from "./unrestApplication.js";
 
 const BASIS_POINTS = 10_000;
 
@@ -96,12 +98,9 @@ export function applyShortfallUnrest(
   nationId: string,
   unrestPerShortMonth: number,
 ): void {
-  const nations = ctx.snapshot.read("nations");
-  const nation = nations.get(nationId);
+  const nation = ctx.snapshot.read("nations").get(nationId);
   if (nation === undefined) return;
-  const unrest = applyUnrestDelta(nation.unrest, unrestPerShortMonth);
-  if (unrest === (nation.unrest ?? 0) && nation.unrest !== undefined) return;
-  const updated = new Map(nations);
-  updated.set(nationId, { ...nation, unrest });
-  ctx.snapshot.write("nations", updated);
+  const delta = applyUnrestDelta(nation.unrest, unrestPerShortMonth) - unrestOf(nation);
+  if (delta === 0) return;
+  applyUnrestContributions(ctx, nationId, [{ reasonCode: "PRESENCE_SHORTFALL", delta }]);
 }

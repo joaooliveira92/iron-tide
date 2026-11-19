@@ -1,0 +1,14 @@
+{
+  "formatVersion": 1,
+  "hashVersion": "sha256-hex/v1",
+  "files": [
+    {
+      "name": "campaign.json",
+      "hash": "2d3b5b0c52c4760ac3e2e6c6b39ac89af753fc50ffb8da3b2e03c0ff33f7316e"
+    },
+    {
+      "name": "metadata.json",
+      "hash": "dbf504a9a469e8748d652d0dd61654278e836d620faf7fda80e302c0b306c37b"
+    }
+  ]
+}

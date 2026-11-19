@@ -15,6 +15,8 @@ export type {
   DeclineThresholdReached,
   EnemyDeclinedBattle,
   PrestigeChanged,
+  UnrestChanged,
+  UnrestConsequence,
   DivisionExperienceChanged,
   ExerciseTensionRaised,
   FleetExerciseCompleted,

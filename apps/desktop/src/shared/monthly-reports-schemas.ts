@@ -147,6 +147,18 @@ const MonthlyReportFleetExerciseSchema = Schema.Struct({
   ),
 });
 
+const MonthlyReportUnrestSchema = Schema.Struct({
+  before: nonNegativeInt,
+  after: nonNegativeInt,
+  changes: Schema.Array(Schema.Struct({ reasonCode: nonEmptyString, delta: int })),
+  consequences: Schema.Array(
+    Schema.Struct({
+      consequence: Schema.Literals(["STRIKE", "REVOLUTION"]),
+      careerEnded: Schema.Boolean,
+    }),
+  ),
+});
+
 const StrategicPrioritySchema = Schema.Struct({
   id: nonEmptyString,
   type: strategicPriorityTypeSchema,
@@ -173,6 +185,7 @@ const MonthlyReportEntrySchema = Schema.Struct({
   battleOutcomes: Schema.Array(BattleOutcomeSchema),
   presence: Schema.optional(MonthlyReportPresenceSchema),
   fleetExercise: Schema.optional(MonthlyReportFleetExerciseSchema),
+  unrest: Schema.optional(MonthlyReportUnrestSchema),
 });
 
 export const MonthlyReportsSchema = Schema.Struct({
