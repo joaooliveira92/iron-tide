@@ -1,4 +1,5 @@
-import { lazy, Suspense, useEffect, type ReactNode } from "react";
+import { lazy, Suspense, type ReactNode } from "react";
+import { useLifecycle } from "../../../lib/use-lifecycle.js";
 import { Skeleton } from "../../../components/ui/skeleton.js";
 import { useWorldMapController } from "../../../components/world-map/useWorldMapController.js";
 import { fixtureAreaId, nationHomeArea } from "../../../content/presentationContent.js";
@@ -29,7 +30,7 @@ export function FleetMap({
   const map = useWorldMapController(sessionId);
   const { onSelect } = map;
 
-  useEffect(() => {
+  useLifecycle(() => {
     if (focusAreaId === null) return;
     const fixture = fixtureAreaId(focusAreaId);
     if (fixture !== null) onSelect(fixture);

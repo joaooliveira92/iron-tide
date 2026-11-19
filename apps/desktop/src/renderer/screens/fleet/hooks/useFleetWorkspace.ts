@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useLifecycle } from "../../../lib/use-lifecycle.js";
 import { useMinWidth } from "../../../lib/use-min-width.js";
 import { COMMAND_OVERLAY_MIN_WIDTH } from "../../overview/hooks/useOverviewModel.js";
 import type { FleetDepartment } from "../fleet-departments.js";
@@ -40,7 +41,7 @@ export function useFleetWorkspace(
   const [preferredFlagshipId, setPreferredFlagshipId] = useState<string | null>(null);
 
   const loadedForFocus = state.playerNationId !== null;
-  useEffect(() => {
+  useLifecycle(() => {
     if (focusShipId === null || !loadedForFocus) return;
     const divisionId = divisionIdForShip(focusShipId, state.divisions);
     if (divisionId !== null) setSelectedDivisionId(divisionId);
