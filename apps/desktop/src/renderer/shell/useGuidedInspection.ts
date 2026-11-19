@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useMemo, useSyncExternalStore } from "react";
 import type { UiStateFirstMonthInspection } from "../../shared/ui-state-contract.js";
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
 import { useBridge } from "../lib/bridge-context.js";
@@ -28,6 +28,22 @@ export interface UseGuidedInspectionResult {
   setVisible: (v: boolean) => void;
 }
 
+interface InspectionSnapshot {
+  readonly inspection: UiStateFirstMonthInspection | undefined;
+  readonly stepIndex: number;
+  readonly visible: boolean;
+  readonly loading: boolean;
+}
+
+interface InspectionStore {
+  readonly subscribe: (listener: () => void) => () => void;
+  readonly getSnapshot: () => InspectionSnapshot;
+  readonly advance: (currentIndex: number) => Promise<void>;
+  readonly dismiss: (currentIndex: number) => Promise<void>;
+  readonly restart: () => Promise<void>;
+  readonly setVisible: (visible: boolean) => void;
+}
+
 async function readInspection(
   bridge: BluewaveDesktopBridge | undefined,
   sessionId: string,
@@ -47,100 +63,109 @@ async function writeInspection(
   return uiState?.firstMonthInspection;
 }
 
+function loadedSnapshot(stored: UiStateFirstMonthInspection | undefined): InspectionSnapshot {
+  if (stored === undefined) {
+    return { inspection: emptyInspection(), stepIndex: 0, visible: true, loading: false };
+  }
+  if (stored.status === "completed" || stored.status === "dismissed") {
+    return { inspection: stored, stepIndex: 0, visible: false, loading: false };
+  }
+  if (stored.status === "not_started") {
+    return {
+      inspection: stored,
+      stepIndex: 0,
+      visible: shouldAutoOpen(stored),
+      loading: false,
+    };
+  }
+  return { inspection: stored, stepIndex: resumeStepIndex(stored), visible: true, loading: false };
+}
+
+function createInspectionStore(
+  bridge: BluewaveDesktopBridge | undefined,
+  sessionId: string | null,
+): InspectionStore {
+  const listeners = new Set<() => void>();
+  let snapshot: InspectionSnapshot = {
+    inspection: undefined,
+    stepIndex: 0,
+    visible: false,
+    loading: sessionId !== null,
+  };
+  let generation = 0;
+
+  function update(patch: Partial<InspectionSnapshot>): void {
+    snapshot = { ...snapshot, ...patch };
+    for (const listener of listeners) listener();
+  }
+
+  async function load(token: number, id: string): Promise<void> {
+    const stored = await readInspection(bridge, id);
+    if (token !== generation) return;
+    snapshot = loadedSnapshot(stored);
+    for (const listener of listeners) listener();
+  }
+
+  async function advance(currentIndex: number): Promise<void> {
+    if (sessionId === null) return;
+    const next = nextInspectionState(snapshot.inspection ?? emptyInspection(), currentIndex);
+    const persisted = await writeInspection(bridge, sessionId, next);
+    if (currentIndex >= GUIDED_STEP_COUNT - 1) {
+      update({ inspection: persisted ?? next, visible: false });
+      return;
+    }
+    update({ inspection: persisted ?? next, stepIndex: currentIndex + 1 });
+  }
+
+  async function dismiss(currentIndex: number): Promise<void> {
+    if (sessionId === null) {
+      update({ visible: false });
+      return;
+    }
+    const next = dismissedInspectionState(currentIndex);
+    const persisted = await writeInspection(bridge, sessionId, next);
+    update({ inspection: persisted ?? next, visible: false });
+  }
+
+  async function restart(): Promise<void> {
+    if (sessionId === null) return;
+    const next = restartedInspection();
+    const persisted = await writeInspection(bridge, sessionId, next);
+    update({ inspection: persisted ?? next, stepIndex: 0, visible: true });
+  }
+
+  return {
+    subscribe: (listener) => {
+      listeners.add(listener);
+      if (listeners.size === 1 && sessionId !== null) {
+        snapshot = { ...snapshot, loading: true };
+        void load(generation, sessionId);
+      }
+      return () => {
+        listeners.delete(listener);
+        if (listeners.size === 0) generation += 1;
+      };
+    },
+    getSnapshot: () => snapshot,
+    advance,
+    dismiss,
+    restart,
+    setVisible: (visible) => update({ visible }),
+  };
+}
+
 export function useGuidedInspection(
   options: UseGuidedInspectionOptions,
 ): UseGuidedInspectionResult {
   const { sessionId } = options;
   const bridge = useBridge();
-  const [inspection, setInspection] = useState<UiStateFirstMonthInspection | undefined>(undefined);
-  const [stepIndex, setStepIndex] = useState(0);
-  const [visible, setVisible] = useState(false);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (sessionId === null) {
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-    void (async () => {
-      setLoading(true);
-      const stored = await readInspection(bridge, sessionId);
-      if (cancelled) return;
-      if (stored === undefined) {
-        setInspection(emptyInspection());
-        setStepIndex(0);
-        setVisible(true);
-      } else if (stored.status === "completed" || stored.status === "dismissed") {
-        setInspection(stored);
-        setVisible(false);
-        setStepIndex(0);
-      } else if (stored.status === "not_started") {
-        setInspection(stored);
-        setStepIndex(0);
-        setVisible(shouldAutoOpen(stored));
-      } else {
-        setInspection(stored);
-        setStepIndex(resumeStepIndex(stored));
-        setVisible(true);
-      }
-      setLoading(false);
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [bridge, sessionId]);
-
-  const advance = useCallback(
-    async (currentIndex: number) => {
-      if (sessionId === null) return;
-      const current = inspection ?? emptyInspection();
-      const next = nextInspectionState(current, currentIndex);
-      const isLast = currentIndex >= GUIDED_STEP_COUNT - 1;
-      if (isLast) {
-        const persisted = await writeInspection(bridge, sessionId, next);
-        setInspection(persisted ?? next);
-        setVisible(false);
-        return;
-      }
-      const persisted = await writeInspection(bridge, sessionId, next);
-      setInspection(persisted ?? next);
-      setStepIndex(currentIndex + 1);
-    },
-    [bridge, sessionId, inspection],
-  );
-
-  const dismiss = useCallback(
-    async (currentIndex: number) => {
-      if (sessionId === null) {
-        setVisible(false);
-        return;
-      }
-      const next = dismissedInspectionState(currentIndex);
-      const persisted = await writeInspection(bridge, sessionId, next);
-      setInspection(persisted ?? next);
-      setVisible(false);
-    },
-    [bridge, sessionId],
-  );
-
-  const restart = useCallback(async () => {
-    if (sessionId === null) return;
-    const next = restartedInspection();
-    const persisted = await writeInspection(bridge, sessionId, next);
-    setInspection(persisted ?? next);
-    setStepIndex(0);
-    setVisible(true);
-  }, [sessionId]);
-
+  const store = useMemo(() => createInspectionStore(bridge, sessionId), [bridge, sessionId]);
+  const snapshot = useSyncExternalStore(store.subscribe, store.getSnapshot, store.getSnapshot);
   return {
-    inspection,
-    stepIndex,
-    visible,
-    loading,
-    advance,
-    dismiss,
-    restart,
-    setVisible,
+    ...snapshot,
+    advance: store.advance,
+    dismiss: store.dismiss,
+    restart: store.restart,
+    setVisible: store.setVisible,
   };
 }

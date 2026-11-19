@@ -1,6 +1,9 @@
 import { battleLoss } from "../damage/minuteDamage.js";
 import type { TacticalContact } from "../contact/neighbour.js";
+import type { Position } from "../core/position.js";
+import { UM_PER_METRE } from "../orders/constants.js";
 import type { SeparationState } from "../navigation/model.js";
+import { segmentCrossesLand, type TerrainView } from "../terrain/index.js";
 import type { TacticalDivision } from "../tactical/division.js";
 import type { TacticalShipUnit } from "../tactical/unit.js";
 import { explainShipMotion } from "./battle-explanations.js";
@@ -35,6 +38,7 @@ import {
 } from "./battleViewTypes.js";
 import { playerSideOf } from "./playerSessionPause.js";
 import type { RunPauseReason } from "./playerSessionRun.js";
+import { validatedWaypoint } from "./playerSessionOrders.js";
 import type {
   PlayerBattleDivisionOrder,
   PlayerBattleOrders,
@@ -44,6 +48,7 @@ import type {
 export interface BattleViewInput {
   readonly pauseReason: RunPauseReason | null;
   readonly orders: PlayerBattleOrders | null;
+  readonly terrain?: TerrainView;
 }
 
 export const BATTLE_VIEW_ACCESSIBILITY: BattleViewAccessibility = {
@@ -60,9 +65,22 @@ export const BATTLE_VIEW_ACCESSIBILITY: BattleViewAccessibility = {
   },
 };
 
+function routeCrossesLand(
+  terrain: TerrainView | undefined,
+  order: PlayerBattleDivisionOrder | undefined,
+  leadUm: Position | null,
+): boolean | null {
+  if (terrain === undefined || order === undefined || leadUm === null) return null;
+  const waypoint = validatedWaypoint(order);
+  if (waypoint === null) return null;
+  const target: Position = [waypoint.xMetres * UM_PER_METRE, waypoint.yMetres * UM_PER_METRE];
+  return segmentCrossesLand(terrain, leadUm, target);
+}
+
 function orderView(
   order: PlayerBattleDivisionOrder | undefined,
   from: PointM | null,
+  crossesLand: boolean | null,
 ): BattleViewOrder | null {
   if (order === undefined) return null;
   const courseDeg = order.courseDeg ?? null;
@@ -75,6 +93,7 @@ function orderView(
       courseDeg === null || from === null
         ? null
         : { kind: "RAY", fromM: from, headingDeg: courseDeg, crossesLand: null },
+    routeCrossesLand: crossesLand,
   };
 }
 
@@ -128,6 +147,7 @@ function divisionView(
   division: TacticalDivision,
   order: PlayerBattleDivisionOrder | undefined,
   leadPosition: PointM | null,
+  crossesLand: boolean | null,
 ): BattleViewOwnDivision {
   return {
     divisionId: division.tacticalDivisionId,
@@ -137,7 +157,7 @@ function divisionView(
     leadShipId: division.tacticalFlagshipId,
     control: "PLAYER",
     shipIds: [...division.orderedTacticalUnitIds],
-    order: orderView(order, leadPosition),
+    order: orderView(order, leadPosition, crossesLand),
     offStation: null,
   };
 }
@@ -245,13 +265,16 @@ export function battleView(
     pauseReason: input.pauseReason,
     objectives: [...session.objectives],
     status: statusView(session, visibilityM),
-    divisions: divisions.map((division) =>
-      divisionView(
+    divisions: divisions.map((division) => {
+      const order = input.orders?.divisions[division.tacticalDivisionId];
+      const leadUm = session.state.movementStates?.[division.tacticalFlagshipId]?.position ?? null;
+      return divisionView(
         division,
-        input.orders?.divisions[division.tacticalDivisionId],
+        order,
         ownPositions.get(division.tacticalFlagshipId) ?? null,
-      ),
-    ),
+        routeCrossesLand(input.terrain, order, leadUm),
+      );
+    }),
     ships,
     contacts: [...contactsByAsset.values()].sort((a, b) => (a.handle < b.handle ? -1 : 1)),
     friendlyReports: [],

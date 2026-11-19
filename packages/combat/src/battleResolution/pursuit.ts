@@ -1,7 +1,8 @@
 import type { TacticalBattleState } from "../tactical/state.js";
 import type { TacticalShipUnit } from "../tactical/unit.js";
 import type { DamageContext } from "../damage/minuteDamage.js";
-import { steerClearOfLand } from "../collision/steering.js";
+import type { KnownMinefieldView } from "../collision/minefields.js";
+import { steerClearOfHazards } from "../collision/steering.js";
 import type { TerrainView } from "../terrain/index.js";
 import {
   engagementHeading,
@@ -17,8 +18,9 @@ export function pursuitOrders(input: {
   units: readonly TacticalShipUnit[];
   baseOrders: Readonly<Record<string, { orderedHeading: number; orderedSpeedBp: number }>>;
   terrain?: TerrainView;
+  minefields?: KnownMinefieldView;
 }): Record<string, { orderedHeading: number; orderedSpeedBp: number }> {
-  const { battleId, battleState, damage, units, baseOrders, terrain } = input;
+  const { battleId, battleState, damage, units, baseOrders, terrain, minefields } = input;
   const movement = battleState.movementStates ?? {};
   const contactPos = new Map(
     (battleState.contacts ?? []).map((c) => [c.contactId, c.position] as const),
@@ -59,14 +61,16 @@ export function pursuitOrders(input: {
           })
         : headingToward(best.dx, best.dy);
     out[u.assetId] = {
-      orderedHeading: terrain
-        ? steerClearOfLand({
-            terrain,
-            position: own.position,
-            heading: wanted,
-            speedBp: base.orderedSpeedBp,
-          })
-        : wanted,
+      orderedHeading:
+        terrain || minefields
+          ? steerClearOfHazards({
+              ...(terrain ? { terrain } : {}),
+              ...(minefields ? { minefields } : {}),
+              position: own.position,
+              heading: wanted,
+              speedBp: base.orderedSpeedBp,
+            })
+          : wanted,
       orderedSpeedBp: base.orderedSpeedBp,
     };
   }

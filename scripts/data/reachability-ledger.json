@@ -604,7 +604,7 @@
       "renderer_screen": "screens/battle/PlayerBattleScreen.tsx",
       "evidence_test": "apps/desktop/src/main/commands/battleOfferCommands.test.ts",
       "decision": null,
-      "note": "The player orders stance, speed and course per division; both wire shapes compile through the versioned division order model, and fire control and torpedo doctrine are automatic."
+      "note": "The player orders stance, speed, course and a target per division; both wire shapes compile through the versioned division order model. Targets steer gunnery; torpedoes stay automatic."
     },
     {
       "id": "combat-air-combat",

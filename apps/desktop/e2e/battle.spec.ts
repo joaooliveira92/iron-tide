@@ -65,6 +65,18 @@ test("a declared war raises a battle offer that is accepted, fought to its end a
     await page.getByTestId("battle-advance").click();
     await expect(page.getByTestId("unit-order-state")).toHaveAttribute("data-state", "accepted");
 
+    const target = page.getByTestId("unit-target-select");
+    await expect(target).toBeVisible();
+    await expect(page.getByTestId("unit-target-state")).toHaveAttribute("data-state", "automatic");
+    for (let step = 0; step < 30 && (await target.locator("option").count()) < 2; step += 1) {
+      await page.getByTestId("battle-advance").click();
+    }
+    expect(await target.locator("option").count()).toBeGreaterThan(1);
+    await target.selectOption({ index: 1 });
+    await expect(page.getByTestId("unit-target-state")).toHaveAttribute("data-state", "pending");
+    await page.getByTestId("battle-advance").click();
+    await expect(page.getByTestId("unit-target-state")).toHaveAttribute("data-state", "accepted");
+
     await page.getByTestId("battle-auto").click();
     await expect(page.getByTestId("tactical-run-state")).toHaveText("Battle over", {
       timeout: 90_000,

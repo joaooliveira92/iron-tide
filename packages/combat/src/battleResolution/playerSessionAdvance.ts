@@ -8,6 +8,7 @@ import { planTorpedoCommands } from "./torpedoDoctrine.js";
 import { withNightTraining } from "./trainingEffects.js";
 import { advancePlayerForce } from "./playerSessionForce.js";
 import { resolveOrders } from "./playerSessionOrders.js";
+import { preferredTargets } from "./playerSessionTargets.js";
 import { settleWaypointArrivals } from "./playerSessionWaypoints.js";
 import { resultOf } from "./playerSessionSnapshot.js";
 import {
@@ -95,6 +96,7 @@ export function advancePlayerBattleMinute(
     session.damage,
     session.battleId,
     session.units,
+    preferredTargets(session, orders),
   );
   const batteries = session.batteries.map((battery) => {
     const target = targets[battery.id];

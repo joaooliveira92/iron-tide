@@ -38,11 +38,7 @@ function StarLayer({
   className,
   ...props
 }: StarLayerProps) {
-  const [boxShadow, setBoxShadow] = React.useState<string>("");
-
-  React.useEffect(() => {
-    setBoxShadow(generateStars(count, starColor));
-  }, [count, starColor]);
+  const boxShadow = React.useMemo(() => generateStars(count, starColor), [count, starColor]);
 
   return (
     <motion.div
@@ -102,7 +98,7 @@ function ParallaxLayer({
   );
 }
 
-type StarsBackgroundProps = React.ComponentProps<"div"> & {
+type StarsBackgroundProps = Omit<React.ComponentProps<"div">, "ref"> & {
   factor?: number;
   speed?: number;
   transition?: SpringOptions;
@@ -123,7 +119,7 @@ function StarsBackground({
   const offsetX = useMotionValue(1);
   const offsetY = useMotionValue(1);
 
-  React.useEffect(() => {
+  const trackPointer = React.useCallback(() => {
     const handleMouseMove = (e: MouseEvent) => {
       const centerX = window.innerWidth / 2;
       const centerY = window.innerHeight / 2;
@@ -138,6 +134,7 @@ function StarsBackground({
 
   return (
     <div
+      ref={trackPointer}
       data-slot="stars-background"
       className={cn(
         "relative size-full overflow-hidden bg-background dark:bg-[radial-gradient(ellipse_at_bottom,_var(--sidebar)_0%,_var(--background)_100%)]",

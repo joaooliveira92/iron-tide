@@ -141,9 +141,31 @@ export function planAffected({ paths, workspaces }) {
   for (const name of expanded) {
     if (reasons[name] === undefined) reasons[name] = ["depends on a changed package"];
   }
+  const contentChanged = workspaces.some(
+    (workspace) => workspace.kind === "content" && named.has(workspace.name),
+  );
+  const readers = contentChanged
+    ? workspaces.filter(
+        (workspace) =>
+          (workspace.kind === "package" || workspace.kind === "app") &&
+          typeof workspace.scripts.test === "string" &&
+          !expanded.includes(workspace.name),
+      )
+    : [];
+  for (const reader of readers) reasons[reader.name] = ["reads changed content"];
+  const readerNames = new Set(readers.map((reader) => reader.name));
   const units = workspaces
-    .filter((workspace) => named.has(workspace.name) || expanded.includes(workspace.name))
-    .map((workspace) => ({ ...workspace, kind: workspace.kind }));
+    .filter(
+      (workspace) =>
+        named.has(workspace.name) ||
+        expanded.includes(workspace.name) ||
+        readerNames.has(workspace.name),
+    )
+    .map((workspace) =>
+      readerNames.has(workspace.name)
+        ? { ...workspace, kind: workspace.kind, scripts: { test: workspace.scripts.test } }
+        : { ...workspace, kind: workspace.kind },
+    );
   if (kinds.has("docs")) units.push(emptyUnit("docs", "documentation", "docs"));
   if (kinds.has("scripts")) units.push(emptyUnit("scripts", "repository-scripts", "scripts"));
   if (kinds.has("golden")) units.push(emptyUnit("golden", "golden", "golden"));

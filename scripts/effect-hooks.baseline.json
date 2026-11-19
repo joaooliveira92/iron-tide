@@ -1,10 +1,4 @@
 {
-  "apps/desktop/src/renderer/components/backgrounds/auralis.tsx": 2,
-  "apps/desktop/src/renderer/components/backgrounds/cloudscape.tsx": 2,
-  "apps/desktop/src/renderer/components/backgrounds/lumadrift.tsx": 2,
-  "apps/desktop/src/renderer/components/backgrounds/nebulore.tsx": 2,
-  "apps/desktop/src/renderer/components/backgrounds/pattern-waves.tsx": 3,
-  "apps/desktop/src/renderer/components/backgrounds/starts.tsx": 2,
   "apps/desktop/src/renderer/components/card-deck/CardDeck.tsx": 7,
   "apps/desktop/src/renderer/components/card-deck/DeckMasterPane.tsx": 3,
   "apps/desktop/src/renderer/components/design-workspace/panels/RevisionPanel.tsx": 2,
@@ -91,21 +85,5 @@
   "apps/desktop/src/renderer/screens/shipbuilding/workspace/LastChangeSlot.tsx": 2,
   "apps/desktop/src/renderer/screens/shipbuilding/workspace/useWorkspaceNavigation.ts": 3,
   "apps/desktop/src/renderer/screens/shipbuilding/workspace/useWorkspaceSession.ts": 3,
-  "apps/desktop/src/renderer/screens/simulation/hooks/useSimulationScreen.ts": 3,
-  "apps/desktop/src/renderer/shell/AppFrame.tsx": 2,
-  "apps/desktop/src/renderer/shell/CampaignShellContext.tsx": 2,
-  "apps/desktop/src/renderer/shell/DensityContext.tsx": 2,
-  "apps/desktop/src/renderer/shell/FontContext.tsx": 2,
-  "apps/desktop/src/renderer/shell/GlobalSearch.tsx": 2,
-  "apps/desktop/src/renderer/shell/GuidedInspectionOverlay.tsx": 2,
-  "apps/desktop/src/renderer/shell/MapSheet.tsx": 2,
-  "apps/desktop/src/renderer/shell/PreferencesResetNotice.tsx": 2,
-  "apps/desktop/src/renderer/shell/ThemeContext.tsx": 3,
-  "apps/desktop/src/renderer/shell/display-preferences.tsx": 3,
-  "apps/desktop/src/renderer/shell/header/campaign-menu/useDismissOnOutside.ts": 2,
-  "apps/desktop/src/renderer/shell/screen-header.tsx": 3,
-  "apps/desktop/src/renderer/shell/shell-sections.tsx": 2,
-  "apps/desktop/src/renderer/shell/useCampaignShell.ts": 2,
-  "apps/desktop/src/renderer/shell/useGuidedInspection.ts": 2,
-  "apps/desktop/src/renderer/shell/usePrimaryAction.ts": 2
+  "apps/desktop/src/renderer/screens/simulation/hooks/useSimulationScreen.ts": 3
 }

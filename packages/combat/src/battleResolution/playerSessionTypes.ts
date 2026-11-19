@@ -50,6 +50,7 @@ export interface PlayerBattleDivisionOrder {
   readonly courseDeg?: number;
   readonly speedKnots?: number;
   readonly waypoint?: PlayerBattleWaypoint;
+  readonly targetHandle?: string;
 }
 
 export interface PlayerBattleOrders {
