@@ -8,16 +8,5 @@
   "apps/desktop/src/renderer/components/design-workspace/useDraftAutosave.ts": 6,
   "apps/desktop/src/renderer/components/design-workspace/useDrawingBoardContent.ts": 2,
   "apps/desktop/src/renderer/components/design-workspace/useRestoredDraftToast.ts": 2,
-  "apps/desktop/src/renderer/components/design-workspace/validation/FindingList.tsx": 2,
-  "apps/desktop/src/renderer/components/globe-adapter/GlobeAdapterHost.tsx": 4,
-  "apps/desktop/src/renderer/components/globe-adapter/GlobeAdapterWidgets.tsx": 2,
-  "apps/desktop/src/renderer/components/globe-adapter/GlobeProvider.tsx": 2,
-  "apps/desktop/src/renderer/components/globe-adapter/MapSurface.tsx": 3,
-  "apps/desktop/src/renderer/components/globe-adapter/use-camera-sync.ts": 5,
-  "apps/desktop/src/renderer/components/globe-adapter/use-layer-set.ts": 6,
-  "apps/desktop/src/renderer/components/globe-adapter/use-map-instance.ts": 2,
-  "apps/desktop/src/renderer/components/globe-adapter/use-overlay-projection.ts": 2,
-  "apps/desktop/src/renderer/components/globe-spike/GlobeSpike.tsx": 3,
-  "apps/desktop/src/renderer/components/globe-spike/GlobeSpikeHost.tsx": 2,
-  "apps/desktop/src/renderer/components/globe-spike/use-land-plan.ts": 2
+  "apps/desktop/src/renderer/components/design-workspace/validation/FindingList.tsx": 2
 }

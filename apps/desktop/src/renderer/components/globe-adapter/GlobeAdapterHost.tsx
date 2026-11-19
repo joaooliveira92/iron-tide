@@ -1,5 +1,7 @@
-import { lazy, Suspense, useCallback, useEffect, useMemo, useState } from "react";
+import { lazy, Suspense, useCallback, useMemo, useState } from "react";
 
+import { useWindowEvent } from "../../lib/use-window-event.js";
+import { useExternalSync } from "../../shell/useExternalSync.js";
 import { AREAS } from "../world-map/map-geometry.js";
 import { EMPTY_LIVE_OVERLAY, type LiveWorldMapOverlay } from "../world-map/campaign-map-join.js";
 import {
@@ -110,19 +112,15 @@ export function GlobeAdapterHost() {
   const [state, setState] = useState<MapPrototypeState>(initialMapPrototypeState);
   const [selectedFleetId, setSelectedFleetId] = useState<string | null>(null);
   const [lastDrop, setLastDrop] = useState<string | null>(null);
-  useEffect(() => {
-    const onHash = () => {
-      setHash(window.location.hash);
-      setFailed(false);
-    };
-    window.addEventListener("hashchange", onHash);
-    return () => window.removeEventListener("hashchange", onHash);
-  }, []);
-  useEffect(() => {
+  useWindowEvent("hashchange", () => {
+    setHash(window.location.hash);
+    setFailed(false);
+  });
+  useExternalSync(() => {
     document.documentElement.dataset.demoSelectedFleet = selectedFleetId ?? "";
     document.documentElement.dataset.demoDrop = lastDrop ?? "";
   }, [selectedFleetId, lastDrop]);
-  useEffect(() => {
+  useExternalSync(() => {
     window.__globeAdapterDemo = {
       selectedFleetId,
       lastDrop,
