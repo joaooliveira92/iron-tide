@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { readFileSync } from "node:fs";
+import { existsSync } from "node:fs";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
@@ -13,6 +13,7 @@ import {
 } from "../assert-no-effect-hooks.mjs";
 
 const count = (source, file = "a.tsx") => findEffectHooks(file, source).length;
+const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
 
 void test("self-test fixtures pass", () => {
   assert.equal(runSelfTest().ok, true);
@@ -38,22 +39,18 @@ void test("fails closed on a parse error", () => {
   assert.throws(() => findEffectHooks("a.tsx", "useEffect("), /failing closed/u);
 });
 
-void test("an unlisted file with a use is a violation", () => {
-  const result = evaluateEffectHooks({ "a.ts": 1 }, {});
-  assert.equal(result.violations.length, 1);
+void test("any banned use in a guarded file is a violation", () => {
+  const violations = evaluateEffectHooks({ "apps/a.ts": 1 });
+  assert.equal(violations.length, 1);
+  assert.match(violations[0], /apps\/a\.ts: 1 effect hook use/u);
 });
 
-void test("a listed file that grew is a violation", () => {
-  const result = evaluateEffectHooks({ "a.ts": 3 }, { "a.ts": 2 });
-  assert.equal(result.violations.length, 1);
+void test("a tree without banned uses has no violations", () => {
+  assert.deepEqual(evaluateEffectHooks({}), []);
 });
 
-void test("a listed file that fell or vanished must tighten the baseline", () => {
-  const fell = evaluateEffectHooks({ "a.ts": 1 }, { "a.ts": 2 });
-  assert.deepEqual(fell.violations, []);
-  assert.equal(fell.tighten.length, 1);
-  const gone = evaluateEffectHooks({}, { "a.ts": 2 });
-  assert.equal(gone.tighten.length, 1);
+void test("the ratchet baseline is retired", () => {
+  assert.equal(existsSync(`${repoRoot}scripts/effect-hooks.baseline.json`), false);
 });
 
 void test("only the single external-sync module path is exempt from the guard", () => {
@@ -63,13 +60,6 @@ void test("only the single external-sync module path is exempt from the guard", 
   assert.equal(isGuarded("apps/desktop/src/renderer/shell/other.ts"), true);
 });
 
-void test("the real tree matches the baseline exactly", () => {
-  const repoRoot = fileURLToPath(new URL("../..", import.meta.url));
-  const baseline = JSON.parse(
-    readFileSync(`${repoRoot}scripts/effect-hooks.baseline.json`, "utf8"),
-  );
-  assert.deepEqual(evaluateEffectHooks(measureEffectHooks(repoRoot), baseline), {
-    violations: [],
-    tighten: [],
-  });
+void test("the real tree has no banned effect hook outside the exemptions", () => {
+  assert.deepEqual(measureEffectHooks(repoRoot), {});
 });

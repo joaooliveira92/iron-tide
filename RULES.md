@@ -172,9 +172,7 @@ and `scripts/verify-reachability-ledger.mjs` fails when a row drifts.
   async work in Effect services. Only what none of these can express (syncing
   state to the document root, registering with a parent while mounted) goes in
   `apps/desktop/src/renderer/shell/useExternalSync.ts`, the one path the gate
-  exempts. `scripts/effect-hooks.baseline.json` lists the
-  files not yet migrated; `gate:effect-hooks` fails any new use and any entry that
-  could be lowered, so the list only shrinks (#930).
+  exempts. `gate:effect-hooks` (in `pnpm preflight`) fails any other use (#930).
 
 ## Module size
 
