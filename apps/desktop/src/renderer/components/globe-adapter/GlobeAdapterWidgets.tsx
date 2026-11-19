@@ -1,6 +1,7 @@
-import { useEffect, useMemo, useRef } from "react";
+import { useMemo, useRef } from "react";
 
 import { formatFixed } from "../../lib/presentation-format/format.js";
+import { useLifecycle } from "../../shell/useExternalSync.js";
 import { AREAS } from "../world-map/map-geometry.js";
 import { useFrameMeter } from "../world-map/useFrameMeter.js";
 import {
@@ -89,7 +90,7 @@ export function GlobeFrameMeter() {
   const meterRef = useRef<HTMLSpanElement | null>(null);
   const meter = useFrameMeter(meterRef);
   const { sample } = meter;
-  useEffect(() => {
+  useLifecycle(() => {
     let frame = requestAnimationFrame(function tick() {
       sample();
       frame = requestAnimationFrame(tick);

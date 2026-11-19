@@ -1,15 +1,8 @@
 "use client";
 
 import { motion, useReducedMotion } from "motion/react";
-import {
-  type CSSProperties,
-  type ReactNode,
-  useEffect,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { type CSSProperties, type ReactNode, useMemo, useRef, useState } from "react";
+import { useExternalLayoutSync, useLifecycle } from "../../shell/useExternalSync.js";
 import "./CardDeck.css";
 import { DeckContext, type DeckContextValue, useDeck } from "./deckContext.js";
 import { clamp, initialOrder, ORIGINS, SHADOW } from "./deckGeometry.js";
@@ -26,8 +19,6 @@ import { useDeckFlight } from "./useDeckFlight.js";
 import { useDeckGestures } from "./useDeckGestures.js";
 import { useDeckMotion } from "./useDeckMotion.js";
 import { useDeckRefs } from "./useDeckRefs.js";
-
-const useIsomorphicLayoutEffect = typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 export interface CardDeckRootProps {
   count: number;
@@ -107,22 +98,25 @@ function CardDeckRoot({
   const latest = useRef({ placeAll: motion.placeAll, sendToBack, grab: gestures.onDown });
   latest.current = { placeAll: motion.placeAll, sendToBack, grab: gestures.onDown };
 
-  useIsomorphicLayoutEffect(() => {
+  useExternalLayoutSync(() => {
     refs.order.current = order;
     const options: PlaceAllOptions = { stagger: mountedRef.current ? 0 : 0.06 };
     latest.current.placeAll(options);
     mountedRef.current = true;
   }, [order, shape, visible, spread, depth, speed, count]);
 
-  useEffect(() => {
-    if (topIndex === undefined || topIndex < 0 || topIndex >= count) return;
-    const current = refs.order.current;
-    if (current[0] === topIndex) return;
-    if (!current.includes(topIndex)) return;
-    commit([topIndex, ...current.filter((index) => index !== topIndex)]);
-  }, [topIndex, count]);
+  const [syncedTop, setSyncedTop] = useState({ topIndex, count });
+  if (syncedTop.topIndex !== topIndex || syncedTop.count !== count) {
+    setSyncedTop({ topIndex, count });
+    if (topIndex !== undefined && topIndex >= 0 && topIndex < count) {
+      const current = refs.order.current;
+      if (current[0] !== topIndex && current.includes(topIndex)) {
+        commit([topIndex, ...current.filter((index) => index !== topIndex)]);
+      }
+    }
+  }
 
-  useEffect(() => {
+  useLifecycle(() => {
     refs.alive.current = true;
     const values = refs.values.current;
     return () => {
@@ -261,7 +255,7 @@ export interface CardDeckAutoplayProps {
 
 function CardDeckAutoplay({ delay = 3000, pause = "never" }: CardDeckAutoplayProps) {
   const { state, actions } = useDeck("CardDeck.Autoplay");
-  useEffect(() => {
+  useLifecycle(() => {
     if (state.count < 2 || state.dragging || (pause === "hover" && state.hovered)) {
       return undefined;
     }
