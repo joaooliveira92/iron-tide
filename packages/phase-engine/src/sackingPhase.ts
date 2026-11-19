@@ -13,7 +13,7 @@ import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
 export const PRESTIGE_SACKING_STREAM = "prestige_sacking" as const;
 export const PRESTIGE_SACKING_FAILED = "PRESTIGE_SACKING_FAILED" as const;
 
-function endCareer(
+export function endCareer(
   ctx: PhaseContext,
   player: string,
   prestige: number,
@@ -32,7 +32,7 @@ function endCareer(
   ctx.snapshot.write("careerResult", result.success);
 }
 
-function monthOf(campaignMonth: string): { year: number; month: number } {
+export function monthOf(campaignMonth: string): { year: number; month: number } {
   const [year, month] = campaignMonth.split("-").map(Number);
   return { year: year!, month: month! };
 }
@@ -42,6 +42,7 @@ export function runSackingPhase(ctx: PhaseContext): PhaseRunOutcome {
   if (player === undefined) return { status: "continue" };
   const nation = ctx.snapshot.read("nations").get(player);
   if (nation === undefined) return { status: "continue" };
+  if (ctx.snapshot.read("careerResult") !== undefined) return { status: "continue" };
   const rules = ctx.snapshot.read("prestigeRules");
   const prestige = nation["prestige"];
   const current = monthOf(ctx.campaignMonth);
@@ -99,7 +100,7 @@ export const sackingPhase: MonthPhase = {
   id: "sacking",
   name: "Sacking",
   permissions: {
-    reads: ["nations", "prestigeRules", "rulesetVersion"],
+    reads: ["nations", "prestigeRules", "rulesetVersion", "careerResult"],
     writes: ["careerResult"],
     rng: true,
   },

@@ -413,7 +413,7 @@
       "renderer_screen": "shell/status-strip/cards/PrestigeCard.tsx",
       "evidence_test": "apps/desktop/src/renderer/shell/PrestigeCardEvent.test.tsx",
       "decision": null,
-      "note": "An answered event moves prestige; the status strip names the last change. Explanation tree and sacking end state: brief slice 3."
+      "note": "An answered event moves prestige; the status strip names the last change."
     },
     {
       "id": "presence-shortfall-prestige",
@@ -457,7 +457,7 @@
       "status": "reachable",
       "engine_package": "phase-engine",
       "engine_modules": [],
-      "engine_symbols": ["applyShortfallUnrest"],
+      "engine_symbols": ["applyShortfallUnrest", "applyUnrestContributions"],
       "main_commands": ["resolveTurn"],
       "renderer_screen": "shell/status-strip/panels/NationPanel.tsx",
       "evidence_test": "apps/desktop/src/renderer/shell/StatusStripUnrest.test.tsx",

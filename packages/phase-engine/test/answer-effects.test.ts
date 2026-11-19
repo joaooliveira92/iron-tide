@@ -297,7 +297,12 @@ describe("answer effects on an AI answer", () => {
     expect(calm.next.nations.get("FRA")!.unrest).toBe(2);
     expect(wild.next.nations.get("FRA")!.unrest).toBe(10);
     const strip = (s: CampaignSnapshot) => {
-      const { unrest: _unrest, eventHistory: _history, ...rest } = s.nations.get("FRA")!;
+      const {
+        unrest: _unrest,
+        unrestLastChange: _change,
+        eventHistory: _history,
+        ...rest
+      } = s.nations.get("FRA")!;
       return { rest, relations: s.politics.relations };
     };
     expect(strip(wild.next)).toEqual(strip(calm.next));

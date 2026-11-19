@@ -707,13 +707,10 @@ describe("Full-slice integration", () => {
     const executor = new MonthExecutor();
     const cmd = makeBudgetCommand(snapshot, "uk", "con-gbr-ship-battleship2", SafeInt(50));
 
-    const result1 = executor.execute(snapshot, [cmd], "rng-stable-seed", new DiagnosticCollector());
-    const hash1 = result1.randomLedger.hash();
+    const run = () =>
+      executor.execute(snapshot, [cmd], "rng-stable-seed", new DiagnosticCollector());
 
-    const result2 = executor.execute(snapshot, [cmd], "rng-stable-seed", new DiagnosticCollector());
-    const hash2 = result2.randomLedger.hash();
-
-    expect(hash1).toBe(hash2);
+    expect(run().randomLedger.hash()).toBe(run().randomLedger.hash());
   });
 
   it("12. Permitted RNG families and aggregate ownership are declared once", () => {
@@ -729,6 +726,7 @@ describe("Full-slice integration", () => {
       "resolve_diplomacy",
       "resolve_research",
       "sacking",
+      "unrest",
       "weather_generation",
     ]);
 

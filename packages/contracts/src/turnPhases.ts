@@ -19,6 +19,7 @@ export const TURN_PHASES = [
   "presence_measurement",
   "foreign_station_deployment",
   "base_limits",
+  "unrest",
   "sacking",
   "closing_validation",
 ] as const;
