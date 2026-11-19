@@ -58,7 +58,7 @@ function runUnattended(from: CampaignSnapshot): Outbreak {
       declaredAt = month;
       attackerId = war.attackerId;
     }
-    if (result.outcome === "suspended" && result.suspended?.request.kind === "offer") {
+    if (result.outcome === "suspended" && result.suspended?.request?.kind === "offer") {
       return {
         declaredAt,
         offerAt: month,
