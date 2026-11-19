@@ -119,6 +119,14 @@ function minimalSnapshot(): CampaignSnapshot {
             maintenanceAdderBp: 10000,
           },
           specialTraining: [{ subject: "GUNNERY", fundedMonths: 1, maintenanceAdderBp: 3000 }],
+          tradeProtection: {
+            month: "1880-03",
+            quota: 3,
+            assigned: 1,
+            shortfall: 2,
+            shortfallBp: 6666,
+            merchantPoolBp: 9000,
+          },
           dock: {
             maximumNewConstructionMassKg: 1,
             maximumMajorRepairMassKg: 1,

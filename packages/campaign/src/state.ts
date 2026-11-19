@@ -12,6 +12,7 @@ import type { BudgetModifier, NationEventHistory } from "./eventState.js";
 import type { FleetExerciseRecord } from "./fleetExercise.js";
 import type { FleetMoraleLastChange } from "./fleetMorale.js";
 import type { TrainingSubjectEntry } from "./specialTraining.js";
+import type { TradeProtectionState } from "./tradeProtection.js";
 import type { WarOptionalRecords } from "./warRecords.js";
 import type { PermanentDivision } from "./division.js";
 import type { Officer } from "./officers.js";
@@ -387,6 +388,7 @@ export interface NationState {
   carrierOperations?: Record<string, unknown>;
   specialTraining?: TrainingSubjectEntry[];
   fleetExercise?: FleetExerciseRecord;
+  tradeProtection?: TradeProtectionState;
   isPlayable: boolean;
   isAI: boolean;
 }
