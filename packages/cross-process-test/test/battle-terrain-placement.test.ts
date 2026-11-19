@@ -4,6 +4,7 @@ import { pointInNoGoZone } from "@bluewave/combat/terrain";
 import { describe, expect, it } from "vite-plus/test";
 
 import { compileProductionBattleTerrain } from "../src/production-pack.js";
+import { fleetManagementOptions } from "../src/replay-corpus/corpus.js";
 
 const SIDE_SIZES = [1, 2, 3, 5, 8, 12] as const;
 
@@ -29,6 +30,14 @@ describe("production battle terrain placement", () => {
 
   it("covers the Cyprus, Gibraltar and Malta areas", () => {
     expect(Object.keys(terrain ?? {}).sort()).toEqual(["med_cyprus", "med_gibraltar", "med_malta"]);
+  }, 60_000);
+
+  it("supplies the placed terrain to every replay corpus engine", () => {
+    expect(Object.keys(fleetManagementOptions("austria_hungary").terrain ?? {}).sort()).toEqual([
+      "med_cyprus",
+      "med_gibraltar",
+      "med_malta",
+    ]);
   }, 60_000);
 
   it("never places a spawn point on land or inside a base exclusion", () => {
