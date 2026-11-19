@@ -95,6 +95,20 @@ export interface MonthlyReportFleetExercise {
   readonly tension: readonly MonthlyReportExerciseTension[];
 }
 
+export interface MonthlyReportTradeProtection {
+  readonly quota: number;
+  readonly assigned: number;
+  readonly shortfall: number;
+  readonly shortfallBp: number;
+  readonly loss?: {
+    readonly raiderHits: number;
+    readonly pressureHit: boolean;
+    readonly lossBp: number;
+    readonly poolBefore: number;
+    readonly poolAfter: number;
+  };
+}
+
 export interface MonthlyReportPeriod {
   readonly from: { readonly year: number; readonly month: number };
   readonly to: { readonly year: number; readonly month: number };
@@ -114,6 +128,7 @@ export interface MonthlyReportEntry {
   readonly battleOutcomes: readonly BattleOutcome[];
   readonly presence?: MonthlyReportPresence;
   readonly fleetExercise?: MonthlyReportFleetExercise;
+  readonly tradeProtection?: MonthlyReportTradeProtection;
 }
 
 export interface MonthlyReports {

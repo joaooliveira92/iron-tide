@@ -18,6 +18,7 @@ import type {
   MonthlyReportResearchProgress,
   MonthlyReportShip,
 } from "../../../shared/reports-contract.js";
+import { tradeProtectionFromEvents } from "./tradeProtectionReport.js";
 import { sumByCategory } from "./responseMappers.js";
 
 export interface FleetSnapshot {
@@ -210,6 +211,7 @@ export function buildMonthlyReportEntry(input: MonthlyReportEntryInput): Monthly
 
   const presence = presenceFromEvents(input.domainEvents, playerNationId);
   const fleetExercise = fleetExerciseFromEvents(input.domainEvents, playerNationId);
+  const tradeProtection = tradeProtectionFromEvents(input.domainEvents, playerNationId);
 
   return {
     reportId: input.reportId,
@@ -267,5 +269,6 @@ export function buildMonthlyReportEntry(input: MonthlyReportEntryInput): Monthly
     })),
     ...(presence === undefined ? {} : { presence }),
     ...(fleetExercise === undefined ? {} : { fleetExercise }),
+    ...(tradeProtection === undefined ? {} : { tradeProtection }),
   };
 }

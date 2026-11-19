@@ -147,6 +147,22 @@ const MonthlyReportFleetExerciseSchema = Schema.Struct({
   ),
 });
 
+const MonthlyReportTradeProtectionSchema = Schema.Struct({
+  quota: nonNegativeInt,
+  assigned: nonNegativeInt,
+  shortfall: nonNegativeInt,
+  shortfallBp: nonNegativeInt,
+  loss: Schema.optional(
+    Schema.Struct({
+      raiderHits: nonNegativeInt,
+      pressureHit: Schema.Boolean,
+      lossBp: nonNegativeInt,
+      poolBefore: nonNegativeInt,
+      poolAfter: nonNegativeInt,
+    }),
+  ),
+});
+
 const StrategicPrioritySchema = Schema.Struct({
   id: nonEmptyString,
   type: strategicPriorityTypeSchema,
@@ -173,6 +189,7 @@ const MonthlyReportEntrySchema = Schema.Struct({
   battleOutcomes: Schema.Array(BattleOutcomeSchema),
   presence: Schema.optional(MonthlyReportPresenceSchema),
   fleetExercise: Schema.optional(MonthlyReportFleetExerciseSchema),
+  tradeProtection: Schema.optional(MonthlyReportTradeProtectionSchema),
 });
 
 export const MonthlyReportsSchema = Schema.Struct({
