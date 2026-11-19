@@ -139,10 +139,39 @@ void test("verify:affected routes docs, scripts, goldens and content to their ow
     golden.units.map((unit) => unit.kind),
     ["golden"],
   );
-  const content = planAffected({ paths: ["content/production/x.yaml"], workspaces: WORKSPACES });
+});
+
+void test("verify:affected runs the tests of every package when content changes (issue #934)", () => {
+  const plan = planAffected({ paths: ["content/production/x.yaml"], workspaces: WORKSPACES });
+  assert.equal(plan.full, false);
   assert.deepEqual(
-    content.units.map((unit) => unit.kind),
-    ["content"],
+    plan.units.map((unit) => unit.name),
+    ["content", "@x/a"],
+  );
+  assert.deepEqual(plan.reasons["@x/a"], ["reads changed content"]);
+  const consumer = plan.units.find((unit) => unit.name === "@x/a");
+  assert.deepEqual(
+    unitCommands(consumer).map((command) => command.label),
+    ["test"],
+  );
+});
+
+void test("verify:affected keeps the full script set for a package changed alongside content", () => {
+  const plan = planAffected({
+    paths: ["content/production/x.yaml", "packages/a/src/x.ts"],
+    workspaces: WORKSPACES,
+  });
+  assert.deepEqual(
+    plan.units.map((unit) => unit.name),
+    ["content", "@x/a", "@x/b"],
+  );
+  assert.deepEqual(
+    unitCommands(plan.units.find((unit) => unit.name === "@x/a")).map((command) => command.label),
+    ["build", "test", "lint"],
+  );
+  assert.deepEqual(
+    unitCommands(plan.units.find((unit) => unit.name === "@x/b")).map((command) => command.label),
+    ["build"],
   );
 });
 
