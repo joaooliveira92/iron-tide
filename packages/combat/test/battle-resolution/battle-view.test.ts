@@ -10,6 +10,7 @@ import {
 import { createContactTrack } from "@bluewave/combat/contact";
 import type { PermanentDivision } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
+import type { TerrainView } from "@bluewave/combat/terrain";
 import { ATTACKER_NATION, makeAutoInput, makeNations } from "./fixtures.js";
 
 const NO_ORDERS: PlayerBattleOrders = { divisions: {} };
@@ -334,6 +335,111 @@ describe("determinism and units", () => {
     };
     const ship = view(session).ships.find((entry) => entry.shipId === own.assetId)!;
     expect(ship.positionM).toEqual([-1, -2]);
+  });
+});
+
+describe("planned route land flag", () => {
+  const ROUTE_LENGTH_M = 20_000;
+  const WALL_NEAR_M = 5_000;
+  const WALL_WIDTH_M = 1_000;
+  const WALL_HALF_SPAN_M = 5_000;
+
+  function leadAndDivision() {
+    const session = newDivisionSession();
+    const division = session.state.divisions.find((entry) => entry.sideId === "ATTACKER")!;
+    const position = session.state.movementStates![division.tacticalFlagshipId]!.position;
+    return {
+      session,
+      divisionId: division.tacticalDivisionId,
+      leadXM: Math.floor(position[0] / UM_PER_M),
+      leadYM: Math.floor(position[1] / UM_PER_M),
+    };
+  }
+
+  function wallAcross(xM: number, yM: number, nearM: number): TerrainView {
+    const x0 = xM + nearM;
+    const x1 = x0 + WALL_WIDTH_M;
+    const y0 = yM - WALL_HALF_SPAN_M;
+    const y1 = yM + WALL_HALF_SPAN_M;
+    return {
+      land: [
+        {
+          id: "wall",
+          vertices: [
+            { xM: x0, yM: y0 },
+            { xM: x1, yM: y0 },
+            { xM: x1, yM: y1 },
+            { xM: x0, yM: y1 },
+          ],
+        },
+      ],
+      shallows: [],
+      exclusions: [],
+    };
+  }
+
+  function eastWaypointOrders(
+    divisionId: string,
+    leadXM: number,
+    leadYM: number,
+  ): PlayerBattleOrders {
+    return {
+      divisions: {
+        [divisionId]: {
+          stance: "ENGAGE",
+          speedPercent: 80,
+          waypoint: { xMetres: leadXM + ROUTE_LENGTH_M, yMetres: leadYM, pauseOnArrival: false },
+        },
+      },
+    };
+  }
+
+  it("flags a waypoint route that crosses land between the lead ship and the waypoint", () => {
+    const { session, divisionId, leadXM, leadYM } = leadAndDivision();
+    const terrain = wallAcross(leadXM, leadYM, WALL_NEAR_M);
+    const built = battleView(session, {
+      pauseReason: null,
+      orders: eastWaypointOrders(divisionId, leadXM, leadYM),
+      terrain,
+    });
+    const own = built.divisions.find((entry) => entry.divisionId === divisionId)!;
+    expect(own.order?.routeCrossesLand).toBe(true);
+  });
+
+  it("clears the flag when the waypoint route stays in open water", () => {
+    const { session, divisionId, leadXM, leadYM } = leadAndDivision();
+    const terrain = wallAcross(leadXM, leadYM + 3 * WALL_HALF_SPAN_M, WALL_NEAR_M);
+    const built = battleView(session, {
+      pauseReason: null,
+      orders: eastWaypointOrders(divisionId, leadXM, leadYM),
+      terrain,
+    });
+    const own = built.divisions.find((entry) => entry.divisionId === divisionId)!;
+    expect(own.order?.routeCrossesLand).toBe(false);
+  });
+
+  it("reports unknown when the view is built without terrain", () => {
+    const { session, divisionId, leadXM, leadYM } = leadAndDivision();
+    const built = battleView(session, {
+      pauseReason: null,
+      orders: eastWaypointOrders(divisionId, leadXM, leadYM),
+    });
+    const own = built.divisions.find((entry) => entry.divisionId === divisionId)!;
+    expect(own.order?.routeCrossesLand).toBeNull();
+  });
+
+  it("reports unknown for a course order, which has no route endpoint", () => {
+    const { session, divisionId, leadYM, leadXM } = leadAndDivision();
+    const orders: PlayerBattleOrders = {
+      divisions: { [divisionId]: { stance: "ENGAGE", speedPercent: 80, courseDeg: 90 } },
+    };
+    const built = battleView(session, {
+      pauseReason: null,
+      orders,
+      terrain: wallAcross(leadXM, leadYM, WALL_NEAR_M),
+    });
+    const own = built.divisions.find((entry) => entry.divisionId === divisionId)!;
+    expect(own.order?.routeCrossesLand).toBeNull();
   });
 });
 
