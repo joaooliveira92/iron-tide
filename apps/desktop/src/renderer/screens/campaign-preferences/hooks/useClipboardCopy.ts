@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useMemo, useSyncExternalStore } from "react";
+import { createTimedFlag } from "../../../lib/timed-flag.js";
 
 export interface UseClipboardCopyReturn {
   readonly copied: boolean;
@@ -6,22 +7,15 @@ export interface UseClipboardCopyReturn {
 }
 
 export function useClipboardCopy(resetDelayMs = 2000): UseClipboardCopyReturn {
-  const [copied, setCopied] = useState(false);
-  const resetTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined);
-
-  useEffect(() => () => clearTimeout(resetTimer.current), []);
+  const flag = useMemo(() => createTimedFlag(resetDelayMs), [resetDelayMs]);
+  const copied = useSyncExternalStore(flag.subscribe, flag.get);
 
   const copy = useCallback(
     async (text: string) => {
       await navigator.clipboard.writeText(text);
-      clearTimeout(resetTimer.current);
-      setCopied(true);
-      resetTimer.current = setTimeout(() => {
-        resetTimer.current = undefined;
-        setCopied(false);
-      }, resetDelayMs);
+      flag.raise();
     },
-    [resetDelayMs],
+    [flag],
   );
 
   return { copied, copy };
