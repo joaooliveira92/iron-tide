@@ -30,9 +30,10 @@ const record = buildPendingTurn({
 });
 
 const save: PlayerBattleSave = {
-  schemaVersion: "1.0.0",
+  schemaVersion: "1.1.0",
   turnId: "turn-1",
   battleId: "battle-1",
+  divisionAi: null,
   steps: [
     { mode: "minute", divisions: [{ divisionId: "d1", stance: "ENGAGE", speedPercent: 50 }] },
   ],

@@ -1,3 +1,4 @@
+import { PlayerBattleDivisionAiCheckpointSchema } from "@bluewave/combat/battleResolution";
 import { Schema } from "effect";
 import { PlayerBattleDivisionOrderSchema } from "../shared/player-battle-schemas.js";
 import { defineSidecar, type SidecarReading } from "./runtime/sidecar.js";
@@ -11,14 +12,29 @@ const StepSchema = Schema.Struct({
   divisions: Schema.Array(PlayerBattleDivisionOrderSchema),
 });
 
-export const PlayerBattleSaveSchema = Schema.Struct({
+const SaveV1Schema = Schema.Struct({
   schemaVersion: Schema.Literal("1.0.0"),
   turnId: nonEmpty,
   battleId: nonEmpty,
   steps: Schema.Array(StepSchema),
 });
-export type PlayerBattleSave = typeof PlayerBattleSaveSchema.Type;
+
+const SaveV1_1Schema = Schema.Struct({
+  schemaVersion: Schema.Literal("1.1.0"),
+  turnId: nonEmpty,
+  battleId: nonEmpty,
+  steps: Schema.Array(StepSchema),
+  divisionAi: Schema.NullOr(PlayerBattleDivisionAiCheckpointSchema),
+});
+
+export const PlayerBattleSaveSchema = Schema.Union([SaveV1Schema, SaveV1_1Schema]);
+export type PlayerBattleSave = typeof SaveV1_1Schema.Type;
 export type PlayerBattleStep = typeof StepSchema.Type;
+
+function currentShape(stored: typeof PlayerBattleSaveSchema.Type): PlayerBattleSave {
+  if (stored.schemaVersion === "1.1.0") return stored;
+  return { ...stored, schemaVersion: "1.1.0", divisionAi: null };
+}
 
 export interface PlayerBattleExpectation {
   readonly turnId: string;
@@ -26,7 +42,7 @@ export interface PlayerBattleExpectation {
 }
 
 export const playerBattleSidecar = defineSidecar<
-  PlayerBattleSave,
+  typeof PlayerBattleSaveSchema.Type,
   PlayerBattleSave | null,
   PlayerBattleExpectation
 >({
@@ -35,7 +51,9 @@ export const playerBattleSidecar = defineSidecar<
   decodeOptions: { onExcessProperty: "error" },
   empty: () => null,
   resolve: (stored, expected) =>
-    stored.turnId === expected.turnId && stored.battleId === expected.battleId ? stored : null,
+    stored.turnId === expected.turnId && stored.battleId === expected.battleId
+      ? currentShape(stored)
+      : null,
 });
 
 export function inspectPlayerBattleSave(

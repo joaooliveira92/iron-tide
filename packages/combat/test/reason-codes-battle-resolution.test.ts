@@ -22,6 +22,7 @@ const REUSED_COMBAT_CATALOG_CODES = ["TACTICAL_STATE_INVARIANT_FAILED"] as const
 const IN_SLICE_MARKERS = [
   "BATTLE_AUTO_RESOLUTION_FAILED",
   "BATTLE_VIABILITY_EVALUATION_FAILED",
+  "PLAYER_BATTLE_DIVISION_AI_CHECKPOINT_INVALID",
 ] as const;
 
 describe("AC-13: battle-resolution reason-code set-equality", () => {
@@ -35,7 +36,7 @@ describe("AC-13: battle-resolution reason-code set-equality", () => {
     }
   });
 
-  it("the battle-resolution module ships exactly its two in-slice markers — nothing more, nothing less", () => {
+  it("the battle-resolution module ships exactly its three in-slice markers — nothing more, nothing less", () => {
     const shipped = Object.values(BATTLE_RESOLUTION_REASON_CODES).sort();
     expect(shipped).toEqual([...IN_SLICE_MARKERS].sort());
   });

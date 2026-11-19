@@ -4,8 +4,10 @@ import type { BattleManifest } from "@bluewave/combat";
 import {
   advancePlayerBattleMinute,
   createPlayerBattleSession,
+  divisionAiCheckpointOf,
   playerBattleResult,
   playerBattleSessionHash,
+  restoreDivisionAiCheckpoint,
   runPlayerBattleToEnd,
   type AutoResolverNation,
   type PlayerBattleSession,
@@ -27,7 +29,7 @@ import type {
 import { toCombatOrders } from "../../shared/player-battle-orders.js";
 import { BATTLE_VIEW_INVALID, boundaryBattleView } from "./battleViewBoundary.js";
 import type { BattleTerrainByArea } from "../battleTerrain.js";
-import type { PlayerBattleStep } from "../playerBattleSidecar.js";
+import type { PlayerBattleSave, PlayerBattleStep } from "../playerBattleSidecar.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { ContentArtifact } from "../runtime/contentArtifact.js";
 import { DecisionSource } from "../runtime/decisionSource.js";
@@ -76,9 +78,10 @@ type Replay =
   | { readonly kind: "replayed"; readonly session: PlayerBattleSession }
   | { readonly kind: "failed" };
 
-function replaySteps(session: PlayerBattleSession, steps: readonly PlayerBattleStep[]): Replay {
+function replaySave(session: PlayerBattleSession, save: PlayerBattleSave): Replay {
   try {
-    return { kind: "replayed", session: steps.reduce(applyStep, session) };
+    const replayed = save.steps.reduce(applyStep, session);
+    return { kind: "replayed", session: restoreDivisionAiCheckpoint(replayed, save.divisionAi) };
   } catch {
     return { kind: "failed" };
   }
@@ -242,7 +245,7 @@ export const startPlayerBattle = (input: {
     let steps: readonly PlayerBattleStep[] = [];
     let resume: ResumeOutcome = loaded.kind === "corrupt" ? "save-corrupt" : "fresh";
     if (loaded.kind === "found" && loaded.save.steps.length > 0) {
-      const replay = replaySteps(projected, loaded.save.steps);
+      const replay = replaySave(projected, loaded.save);
       if (replay.kind === "replayed") {
         session = replay.session;
         steps = loaded.save.steps;
@@ -289,10 +292,11 @@ export const stepPlayerBattle = (input: {
     const pending = yield* (yield* PendingTurnStore).load(record.saveDir);
     if (pending !== null) {
       yield* (yield* PlayerBattleStore).save(record.saveDir, {
-        schemaVersion: "1.0.0",
+        schemaVersion: "1.1.0",
         turnId: pending.turnId,
         battleId: input.battleId,
         steps,
+        divisionAi: divisionAiCheckpointOf(next),
       });
     }
     const value: AdvancePlayerBattleResult = {

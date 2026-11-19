@@ -1,5 +1,6 @@
 import type { CollisionContext, CollisionRules } from "../collision/index.js";
 import type { TerrainView } from "../terrain/index.js";
+import type { DivisionAiMemory } from "../division-ai/memory.js";
 import type { GunneryBattery } from "../gunnery/resolve.js";
 import type { SeparationState } from "../navigation/model.js";
 import type { TacticalBattleState } from "../tactical/state.js";
@@ -102,6 +103,10 @@ export interface CreatePlayerBattleInput {
   readonly collisionRules?: CollisionRules;
 }
 
+export interface PlayerDivisionAiSession {
+  readonly memory: DivisionAiMemory;
+}
+
 export interface PlayerBattleSession {
   readonly battleId: string;
   readonly areaId: string;
@@ -139,4 +144,5 @@ export interface PlayerBattleSession {
   readonly waypointArrivals?: Readonly<Record<string, PlayerBattleWaypointArrival>>;
   readonly separation?: Readonly<Record<string, SeparationState>>;
   readonly collision?: CollisionContext;
+  readonly divisionAi?: PlayerDivisionAiSession;
 }

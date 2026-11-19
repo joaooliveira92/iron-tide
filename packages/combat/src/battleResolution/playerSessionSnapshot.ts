@@ -1,5 +1,6 @@
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { battleLoss } from "../damage/minuteDamage.js";
+import { hashDivisionAiMemory } from "../division-ai/memory.js";
 import type { BattleSide } from "./viability.js";
 import type { PlayerBattleResult, PlayerBattleSession } from "./playerSessionTypes.js";
 
@@ -63,6 +64,9 @@ export function playerBattleSessionHash(session: PlayerBattleSession): string {
       ...(session.waypointArrivals === undefined
         ? {}
         : { waypointArrivals: session.waypointArrivals }),
+      ...(session.divisionAi === undefined
+        ? {}
+        : { divisionAiMemoryHash: hashDivisionAiMemory(session.divisionAi.memory) }),
     }),
   );
 }

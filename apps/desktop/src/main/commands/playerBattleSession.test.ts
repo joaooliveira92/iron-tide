@@ -1,3 +1,5 @@
+import { withDivisionAiMemory } from "@bluewave/combat/battleResolution";
+import { DIVISION_AI_MEMORY_VERSION, type DivisionAiMemory } from "@bluewave/combat/division-ai";
 import { BluewaveError } from "@bluewave/contracts";
 import { mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -249,6 +251,106 @@ describe("player battle session over in-memory sidecar stores", () => {
     await restarted.runtime.dispose();
   });
 
+  const memory: DivisionAiMemory = {
+    version: DIVISION_AI_MEMORY_VERSION,
+    divisions: [
+      {
+        divisionId: "div-a",
+        mode: "SUPPORT_STATION",
+        modeSinceMinute: 1,
+        supportSide: -1,
+        attacking: true,
+        patrolAnchor: { xMetres: 4_000, yMetres: -2_500 },
+        waypointIndex: 3,
+      },
+    ],
+  };
+
+  async function seedMemory(a: App, battleId: string): Promise<void> {
+    await a.runtime.runPromise(
+      Effect.gen(function* () {
+        const registry = yield* PlayerBattleRegistry;
+        const live = yield* registry.get(SESSION, battleId);
+        if (live === null) throw new Error("battle not started");
+        yield* registry.put(SESSION, battleId, {
+          ...live,
+          session: withDivisionAiMemory(live.session, memory),
+        });
+      }),
+    );
+  }
+
+  it("resumes the division AI memory after a restart with the same session hash", async () => {
+    const stores = memoryStores();
+    const first = app(stores);
+    const battleId = await acceptedBattle(first);
+    const started = await start(first, battleId);
+    const orders = ordersFor(started, 40);
+    await advance(first, battleId, "minute", orders);
+    await seedMemory(first, battleId);
+    const before = await advance(first, battleId, "minute", orders);
+    if (before.outcome !== "success") throw new Error("advance failed");
+    const beforeValue = before.value as StartValue;
+    await first.runtime.dispose();
+
+    const restarted = app(stores);
+    const resumed = await start(restarted, battleId);
+    expect(resumed.resumed).toBe(true);
+    expect(resumed.sessionHash).toBe(beforeValue.sessionHash);
+    const live = await restarted.runtime.runPromise(
+      Effect.gen(function* () {
+        return yield* (yield* PlayerBattleRegistry).get(SESSION, battleId);
+      }),
+    );
+    expect(live?.session.divisionAi?.memory).toEqual(memory);
+    await restarted.runtime.dispose();
+  });
+
+  it("refuses to resume when the saved memory no longer matches its hash", async () => {
+    const stores = memoryStores();
+    const first = app(stores);
+    const battleId = await acceptedBattle(first);
+    const started = await start(first, battleId);
+    const orders = ordersFor(started, 40);
+    await seedMemory(first, battleId);
+    await advance(first, battleId, "minute", orders);
+    const turnId = await first.runtime.runPromise(
+      Effect.gen(function* () {
+        return (yield* (yield* PendingTurnStore).load(join(saveDir, "save")))!.turnId;
+      }),
+    );
+    const saved = await first.runtime.runPromise(
+      Effect.gen(function* () {
+        const load = yield* (yield* PlayerBattleStore).load(join(saveDir, "save"), {
+          turnId,
+          battleId,
+        });
+        if (load.kind !== "found") throw new Error("no save");
+        return load.save;
+      }),
+    );
+    if (saved.divisionAi === null) throw new Error("no checkpoint saved");
+    const tampered: PlayerBattleSave = {
+      ...saved,
+      divisionAi: {
+        ...saved.divisionAi,
+        memory: { ...saved.divisionAi.memory, divisions: [] },
+      },
+    };
+    await first.runtime.runPromise(
+      Effect.gen(function* () {
+        yield* (yield* PlayerBattleStore).save(join(saveDir, "save"), tampered);
+      }),
+    );
+    await first.runtime.dispose();
+
+    const restarted = app(stores);
+    expect(await resumeOf(restarted, battleId)).toBe("resume-failed");
+    const fresh = await start(restarted, battleId);
+    expect(fresh.resumed).toBe(false);
+    await restarted.runtime.dispose();
+  });
+
   const steered = (value: StartValue, courseDeg: number, speedKnots: number) =>
     ordersFor(value, 100).map((order) => ({
       ...order,
@@ -365,9 +467,10 @@ describe("player battle session over in-memory sidecar stores", () => {
     );
     const poisoned: PlayerBattleSave = JSON.parse(
       JSON.stringify({
-        schemaVersion: "1.0.0",
+        schemaVersion: "1.1.0",
         turnId,
         battleId,
+        divisionAi: null,
         steps: [{ mode: "minute", divisions: null }],
       }),
     );
