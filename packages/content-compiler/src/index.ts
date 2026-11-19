@@ -140,6 +140,7 @@ export {
 export { safePath } from "./safePath.js";
 export { battleOffersFromRulesets } from "./battleOfferRules.js";
 export { fleetMoraleFromRulesets } from "./fleetMoraleRules.js";
+export { tradeProtectionFromRulesets } from "./tradeProtectionRules.js";
 export { tensionDriftFromRulesets } from "./tensionDriftRules.js";
 export { peaceBehaviourFromRulesets } from "./peaceBehaviourRules.js";
 export { eventResolutionFromRulesets } from "./eventResolutionRules.js";
