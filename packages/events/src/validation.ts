@@ -222,6 +222,27 @@ export const PrestigeChangedSchema = Schema.Struct({
   rulesetVersion: nonEmptyString,
 });
 
+export const UnrestChangedSchema = Schema.Struct({
+  kind: Schema.Literal("UnrestChanged"),
+  nationId: nonEmptyString,
+  reasonCode: Schema.NonEmptyString.check(Schema.isPattern(/^[A-Z][A-Z0-9_]*$/)),
+  before: nonNegativeSafeInt,
+  after: nonNegativeSafeInt,
+  delta: safeInt,
+  rulesetVersion: nonEmptyString,
+});
+
+export const UnrestConsequenceSchema = Schema.Struct({
+  kind: Schema.Literal("UnrestConsequence"),
+  nationId: nonEmptyString,
+  consequence: Schema.Literals(["STRIKE", "REVOLUTION"]),
+  unrest: nonNegativeSafeInt,
+  rateBeforeBp: nonNegativeSafeInt,
+  rateAfterBp: nonNegativeSafeInt,
+  careerEnded: Schema.Boolean,
+  rulesetVersion: nonEmptyString,
+});
+
 export const DivisionExperienceChangedSchema = Schema.Struct({
   kind: Schema.Literal("DivisionExperienceChanged"),
   nationId: nonEmptyString,
@@ -364,6 +385,8 @@ export const DomainEventBodySchema = Schema.Union([
   DeclineThresholdReachedSchema,
   EnemyDeclinedBattleSchema,
   PrestigeChangedSchema,
+  UnrestChangedSchema,
+  UnrestConsequenceSchema,
   DivisionExperienceChangedSchema,
   FleetExerciseScheduledSchema,
   FleetExerciseCompletedSchema,
@@ -399,6 +422,8 @@ const eventKindList = [
   "DeclineThresholdReached",
   "EnemyDeclinedBattle",
   "PrestigeChanged",
+  "UnrestChanged",
+  "UnrestConsequence",
   "DivisionExperienceChanged",
   "FleetExerciseScheduled",
   "FleetExerciseCompleted",
@@ -442,6 +467,8 @@ export type ShipStationAssignmentChanged = Schema.Schema.Type<
   typeof ShipStationAssignmentChangedSchema
 >;
 export type PresenceShortfall = Schema.Schema.Type<typeof PresenceShortfallSchema>;
+export type UnrestChanged = Schema.Schema.Type<typeof UnrestChangedSchema>;
+export type UnrestConsequence = Schema.Schema.Type<typeof UnrestConsequenceSchema>;
 export type BattleOfferAnswered = Schema.Schema.Type<typeof BattleOfferAnsweredSchema>;
 export type BattleDeclined = Schema.Schema.Type<typeof BattleDeclinedSchema>;
 export type DeclineThresholdReached = Schema.Schema.Type<typeof DeclineThresholdReachedSchema>;

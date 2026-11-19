@@ -7,6 +7,7 @@ import type {
   PeaceBehaviourRules,
   TradeProtectionRules,
   TensionDriftRules,
+  UnrestRules,
 } from "@bluewave/content-schema";
 import type { LegacyFleetInput } from "@bluewave/campaign";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
@@ -36,6 +37,7 @@ import {
   type ConstructionEventRules,
   loadEventContent,
   loadFleetMoraleRules,
+  loadUnrestRules,
   loadPeaceBehaviourRules,
   loadTensionDriftRules,
   loadTradeProtectionRules,
@@ -85,6 +87,7 @@ export class ContentArtifact extends Context.Service<
       TradeProtectionRules | undefined,
       CommandFailed
     >;
+    readonly loadUnrestRules: () => Effect.Effect<UnrestRules | undefined, CommandFailed>;
     readonly loadTensionDriftRules: () => Effect.Effect<
       TensionDriftRules | undefined,
       CommandFailed
@@ -155,6 +158,7 @@ export function contentArtifactLayer(
       Effect.try({ try: () => loadFleetMoraleRules(), catch: contentUnavailable }),
     loadTradeProtectionRules: () =>
       Effect.try({ try: () => loadTradeProtectionRules(), catch: contentUnavailable }),
+    loadUnrestRules: () => Effect.try({ try: () => loadUnrestRules(), catch: contentUnavailable }),
     loadTensionDriftRules: () =>
       Effect.try({ try: () => loadTensionDriftRules(), catch: contentUnavailable }),
     loadPeaceBehaviourRules: () =>

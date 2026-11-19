@@ -10,6 +10,7 @@ import {
   tradeProtectionQuota,
   tradeProtectionShortfall,
   tradeProtectionUnrestStep,
+  unrestOf,
   type NationState,
   type Ship,
   type TradeDutyDesign,
@@ -21,6 +22,7 @@ import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import type { DomainEventEnvelope } from "@bluewave/events";
 import type { PhaseContext } from "./pipeline.js";
+import { applyUnrestContributions } from "./unrestApplication.js";
 
 const TRADE_EVENT_VERSION = "0.1.0" as const;
 const TRADE_STREAM_FAMILY = "trade/loss";
@@ -185,6 +187,7 @@ export function applyTradeProtectionForMonth(ctx: PhaseContext): void {
   }
 
   const updated = new Map(nations);
+  const unrestRises: Array<readonly [string, number]> = [];
   for (const victimId of [...victims].sort(byId)) {
     const nation = nations.get(victimId);
     if (nation === undefined) continue;
@@ -270,11 +273,12 @@ export function applyTradeProtectionForMonth(ctx: PhaseContext): void {
     }
 
     const step = tradeProtectionUnrestStep(rules, poolAfter, month);
-    updated.set(victimId, {
-      ...nation,
-      tradeProtection: next,
-      ...(step > 0 ? { unrest: applyUnrestDelta(nation.unrest, step) } : {}),
-    });
+    updated.set(victimId, { ...nation, tradeProtection: next });
+    const delta = step > 0 ? applyUnrestDelta(nation.unrest, step) - unrestOf(nation) : 0;
+    if (delta !== 0) unrestRises.push([victimId, delta]);
   }
   ctx.snapshot.write("nations", updated);
+  for (const [victimId, delta] of unrestRises) {
+    applyUnrestContributions(ctx, victimId, [{ reasonCode: "TRADE_LOSS", delta }]);
+  }
 }

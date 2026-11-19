@@ -18,7 +18,7 @@
   "packages/campaign/test/campaign.test.ts": { "lines": 958 },
   "packages/campaign/test/design03.compliance.test.ts": { "lines": 997 },
   "packages/campaign/test/prestige.test.ts": { "lines": 604 },
-  "packages/combat/src/battleResolution/resolve.ts": { "lines": 662 },
+  "packages/combat/src/battleResolution/resolve.ts": { "lines": 660 },
   "packages/combat/src/submarines/model.ts": { "lines": 602 },
   "packages/combat/test/air-defense/state.test.ts": { "lines": 759 },
   "packages/combat/test/torpedo/contracts.test.ts": { "lines": 749 },

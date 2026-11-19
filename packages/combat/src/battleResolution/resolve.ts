@@ -32,13 +32,14 @@ import { planTorpedoCommands } from "./torpedoDoctrine.js";
 import { pursuitOrders } from "./pursuit.js";
 import { shipOutcomes } from "./shipOutcomes.js";
 import {
+  battleCollisionOf,
   carryCollisionState,
+  hazardInputsOf,
   observeCollisionRecords,
-  projectBattleCollision,
   withCollisionActivity,
   type CollisionActivity,
 } from "./collisionWiring.js";
-import type { CollisionRules } from "../collision/index.js";
+import type { CollisionRules, TacticalMinefieldRecord } from "../collision/index.js";
 import type { TerrainView } from "../terrain/index.js";
 import { TORPEDO_HIT_RESOLVED, type TorpedoContext } from "../torpedoes/index.js";
 import {
@@ -94,6 +95,7 @@ export interface ResolveBattleAutoInput {
   maxMinutes?: number;
   randomLedger?: RandomLedger;
   terrain?: TerrainView;
+  minefields?: readonly TacticalMinefieldRecord[];
   collisionRules?: CollisionRules;
 }
 
@@ -352,11 +354,7 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
   let smokeEventCount = 0;
   const airCombatActivity = { capEngagements: 0, strikeAttacks: 0, losses: 0 };
   const airDefenseActivity = { engagements: 0, kills: 0, aborts: 0, disruptions: 0 };
-  let collision = projectBattleCollision({
-    designs: projected.designs,
-    terrain: input.terrain,
-    rules: input.collisionRules,
-  });
+  let collision = battleCollisionOf(input, projected.designs);
   const collisionTally: CollisionActivity = { collisions: 0, terrainBlocks: 0 };
   const lossTracker = new CauseOfLossTracker();
   const telemetry = emptyTelemetry();
@@ -427,7 +425,7 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
         damage,
         units: projected.units,
         baseOrders: projected.orders,
-        ...(input.terrain === undefined ? {} : { terrain: input.terrain }),
+        ...hazardInputsOf(collision),
       }),
       engine,
       gunnery: withNightTraining(

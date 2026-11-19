@@ -41,7 +41,12 @@ import type {
   TechnologyDefinitionData,
 } from "@bluewave/campaign";
 import type { SafeInt } from "@bluewave/contracts";
-import { COMPILED_DESIGN_VERSION_FIELDS, fields, FLEET_STATE_FIELDS } from "./cloneFields.js";
+import {
+  COMPILED_DESIGN_VERSION_FIELDS,
+  fields,
+  FLEET_STATE_FIELDS,
+  NATION_STATE_FIELDS,
+} from "./cloneFields.js";
 import { PhaseEngineError } from "./errors.js";
 import { cloneBudgetModifiers, cloneEventHistory } from "./eventStateClone.js";
 import { WAR_RECORD_FIELDS, cloneDeclineCounters, clonePeaceOffers } from "./warRecordsClone.js";
@@ -312,47 +317,7 @@ const F = {
     "futureDeliveryEligible",
     "month",
   ),
-  NationState: fields<NationState>()(
-    "id",
-    "name",
-    "tag",
-    "governmentType",
-    "traits",
-    "eventHistory",
-    "unrest",
-    "fleetMorale",
-    "fleetMoraleLastChange",
-    "budgetModifiers",
-    "treasury",
-    "income",
-    "expenses",
-    "baseResources",
-    "navalAppropriationRateBp",
-    "maintenanceCost",
-    "prestige",
-    "prestigeLastChange",
-    "homeAreaId",
-    "fleets",
-    "divisions",
-    "officers",
-    "research",
-    "constructionProjects",
-    "dock",
-    "dockExpansion",
-    "designStudies",
-    "procurementIntents",
-    "foreignContracts",
-    "foreignContractPayments",
-    "foreignInsightAwards",
-    "foreignContractImpoundments",
-    "aircraft",
-    "carrierOperations",
-    "specialTraining",
-    "fleetExercise",
-    "tradeProtection",
-    "isPlayable",
-    "isAI",
-  ),
+  NationState: NATION_STATE_FIELDS,
   DiplomaticRelation: fields<DiplomaticRelation>()(
     "nationA",
     "nationB",

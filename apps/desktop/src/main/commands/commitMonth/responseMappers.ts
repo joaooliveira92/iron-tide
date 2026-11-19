@@ -92,6 +92,10 @@ function describeDomainEventBody(body: DomainEventBody): string {
       return `${body.nationId}: division ${body.divisionId} experience ${String(body.before)} to ${String(body.after)} (${body.reasonCode}, ${body.sourceId})`;
     case "PrestigeChanged":
       return `${body.nationId}: prestige ${String(body.before)} to ${String(body.after)} (${String(body.delta)}; ${body.reasonCode}, ${body.ruleKind})`;
+    case "UnrestChanged":
+      return `${body.nationId}: unrest ${String(body.before)} to ${String(body.after)} (${String(body.delta)}; ${body.reasonCode})`;
+    case "UnrestConsequence":
+      return `${body.nationId}: ${body.consequence.toLowerCase()} at unrest ${String(body.unrest)} (rate ${String(body.rateBeforeBp)} to ${String(body.rateAfterBp)} bp${body.careerEnded ? ", career ended" : ""})`;
     case "FleetExerciseScheduled":
       return `${body.nationId}: fleet exercise set for ${body.month} with ${String(body.shipIds.length)} ships (${body.shipIds.join(", ")})`;
     case "FleetExerciseCompleted":

@@ -6,6 +6,7 @@ import {
   nextMonthId,
   planAnswerEffects,
   resolveEventCounterpart,
+  withUnrestChange,
 } from "@bluewave/campaign";
 import type {
   AnswerEffectLine,
@@ -21,6 +22,7 @@ import type { SafeInt } from "@bluewave/contracts";
 import type { DomainEventEnvelope } from "@bluewave/events";
 import { Result } from "effect";
 import { prestigeChangedEvent } from "./events.js";
+import { unrestChangedEvent } from "./unrestApplication.js";
 
 export function attachAnswerEffects(
   history: NationEventHistory,
@@ -158,7 +160,24 @@ export function applyAnswerEffects(input: AnswerEffectInput): AnswerEffectOutcom
   const unrestBefore = nation.unrest ?? 0;
   const unrestAfter = applyUnrestDelta(nation.unrest, plan.unrest);
   const touchesUnrest = plan.unrest !== 0 || nation.unrest !== undefined;
-  if (touchesUnrest) nation = { ...nation, unrest: unrestAfter };
+  if (unrestAfter !== unrestBefore) {
+    nation = withUnrestChange(nation, input.month, [
+      { reasonCode: "EVENT", delta: unrestAfter - unrestBefore },
+    ]);
+    ledgerEvents.push(
+      unrestChangedEvent(
+        nation.id,
+        "EVENT",
+        unrestBefore,
+        unrestAfter,
+        input.rulesetVersion,
+        input.nextSeq(),
+        input.month,
+      ),
+    );
+  } else if (touchesUnrest) {
+    nation = { ...nation, unrest: unrestAfter };
+  }
 
   if (newModifiers.length > 0) {
     const horizon = nextMonthId(input.month);
