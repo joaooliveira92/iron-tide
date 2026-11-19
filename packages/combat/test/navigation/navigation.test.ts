@@ -55,11 +55,12 @@ function context(
 
 function stateAt(speedBp: number): TacticalBattleState {
   const base = buildTestState();
-  const a1 = (base.movementStates ?? {})["a1"]!;
+  const movementStates = base.movementStates ?? {};
+  const a1 = movementStates["a1"]!;
   return {
     ...base,
     movementStates: {
-      ...base.movementStates,
+      ...movementStates,
       a1: { ...a1, currentSpeed: speedBp, orderedSpeed: speedBp },
     },
   };

@@ -1,13 +1,13 @@
-import type { PlayerBattleView } from "@bluewave/combat/battleResolution";
 import { translate } from "../../../lib/strings.js";
 import { formatTacticalClock, type TacticalTimeScale } from "./tactical-time.js";
+import type { TacticalView } from "./tactical-view.js";
 
 export function TacticalStatusBar({
   view,
   running,
   scale,
 }: {
-  readonly view: PlayerBattleView;
+  readonly view: TacticalView;
   readonly running: boolean;
   readonly scale: TacticalTimeScale;
 }) {

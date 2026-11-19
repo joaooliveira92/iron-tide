@@ -1,6 +1,4 @@
-import type { PlayerBattleView } from "@bluewave/combat/battleResolution";
 import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
-import { playerSideOf } from "../../../../../shared/player-battle-orders.js";
 import { niceScaleBar } from "../../../../components/world-map/map-scale.js";
 import { UM_PER_METRE, UM_PER_NAUTICAL_MILE } from "../../../../lib/presentation-format/units.js";
 import { usePreferences } from "../../../../lib/preferences-context.js";
@@ -11,6 +9,7 @@ import {
   useBattleState,
 } from "../../session/battle-session-contexts.js";
 import { worldToScreen, type TacticalViewport } from "../tactical-geometry.js";
+import type { TacticalView } from "../tactical-view.js";
 import {
   TacticalMapContext,
   createCursorStore,
@@ -37,7 +36,7 @@ function TacticalMapFrame({
   view,
   children,
 }: {
-  readonly view: PlayerBattleView;
+  readonly view: TacticalView;
   readonly children: ReactNode;
 }) {
   const { running, stepIntervalMs } = useBattleState();
@@ -91,7 +90,6 @@ function TacticalMapFrame({
     project,
     shipsById,
     visibleShips,
-    playerSide: playerSideOf(view),
     symbolSize: symbolSizeFor(lodBandFor(camera.metresPerPixel)),
     pixelsPerNm,
     bar: niceScaleBar(pixelsPerNm, SCALE_BAR_MAX_PX),

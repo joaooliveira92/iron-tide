@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from "react";
 import { formatMeasurement } from "../../../../lib/presentation-format/format.js";
-import { UM_PER_NAUTICAL_MILE } from "../../../../lib/presentation-format/units.js";
+import { UM_PER_METRE } from "../../../../lib/presentation-format/units.js";
 import { translate } from "../../../../lib/strings.js";
 import { useBattleCameraState, useBattleState } from "../../session/battle-session-contexts.js";
 import { compassFromHeading, screenToWorld } from "../tactical-geometry.js";
@@ -43,7 +43,7 @@ export function TacticalMapConditions() {
       </p>
       <p data-testid="battle-weather">
         {translate("tactical.weather.visibility", {
-          range: formatMeasurement(view.weather.visibilityNm * UM_PER_NAUTICAL_MILE, measurement),
+          range: formatMeasurement(view.weather.visibilityM * UM_PER_METRE, measurement),
         })}
       </p>
       <CursorDistance />

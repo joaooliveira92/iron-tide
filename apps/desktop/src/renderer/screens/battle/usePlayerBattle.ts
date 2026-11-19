@@ -1,4 +1,3 @@
-import type { PlayerBattleView } from "@bluewave/combat/battleResolution";
 import { useCallback } from "react";
 import type { BridgeResult } from "../../../shared/bridge-contract.js";
 import type {
@@ -21,11 +20,12 @@ import {
   useCommandScreenWorkflow,
   type RequestLifecycle,
 } from "../../lib/command-screen-workflow.js";
+import { projectTacticalView, type TacticalView } from "./tactical/tactical-view.js";
 
 export type BattleResume = "fresh" | "resumed";
 
 export interface PlayerBattleState extends RequestLifecycle {
-  readonly view: PlayerBattleView | null;
+  readonly view: TacticalView | null;
   readonly orders: DivisionOrders;
   readonly acceptedOrders: DivisionOrders;
   readonly resume: BattleResume;
@@ -47,7 +47,7 @@ const initialState = (): PlayerBattleState => ({
 });
 
 export interface UsePlayerBattleReturn {
-  readonly view: PlayerBattleView | null;
+  readonly view: TacticalView | null;
   readonly resume: BattleResume;
   readonly acceptedOrders: DivisionOrders;
   readonly error: string | null;
@@ -80,14 +80,17 @@ export function usePlayerBattle(
           ? { ...result, value: { ...result.value, revision: 0 } }
           : result;
       },
-      project: (projection) => ({
-        view: projection.view,
-        orders: standingOrdersFor(projection.view, projection.lastOrders),
-        acceptedOrders: standingOrdersFor(projection.view, projection.lastOrders),
-        resume: projection.resumed ? "resumed" : "fresh",
-      }),
+      project: (projection) => {
+        const view = projectTacticalView(projection.battleView);
+        return {
+          view,
+          orders: standingOrdersFor(view, projection.lastOrders),
+          acceptedOrders: standingOrdersFor(view, projection.lastOrders),
+          resume: projection.resumed ? "resumed" : "fresh",
+        };
+      },
       accept: (value) => ({
-        patch: value === null ? {} : { view: value.view },
+        patch: value === null ? {} : { view: projectTacticalView(value.battleView) },
         notice: "",
       }),
     }),

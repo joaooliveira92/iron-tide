@@ -207,10 +207,10 @@ describe("battle offer commands", () => {
     expect(started.outcome).toBe("success");
     if (started.outcome !== "success") return;
     const start = started.value as {
-      view: { minute: number; maxMinutes: number };
+      battleView: { status: { minute: number; maxMinutes: number } };
     };
-    expect(start.view.minute).toBe(0);
-    expect(start.view.maxMinutes).toBeGreaterThan(0);
+    expect(start.battleView.status.minute).toBe(0);
+    expect(start.battleView.status.maxMinutes).toBeGreaterThan(0);
 
     const advanced = await run(offerRuntime, advancePlayerBattleProgram, {
       sessionId: "s-accept",
@@ -221,7 +221,7 @@ describe("battle offer commands", () => {
     expect(advanced.outcome).toBe("success");
     if (advanced.outcome !== "success") return;
     const advance = advanced.value as {
-      view: { ended: boolean };
+      battleView: { ended: boolean };
       result: {
         battleId: string;
         winnerId: string | null;
@@ -231,7 +231,7 @@ describe("battle offer commands", () => {
         damageReport: Readonly<Record<string, number>>;
       } | null;
     };
-    expect(advance.view.ended).toBe(true);
+    expect(advance.battleView.ended).toBe(true);
     expect(advance.result).not.toBeNull();
     const outcome = advance.result!;
 
@@ -274,16 +274,10 @@ describe("battle offer commands", () => {
     if (started.outcome !== "success") throw new Error("start failed");
     const view = (
       started.value as {
-        view: {
-          playerNationId: string;
-          divisions: readonly { divisionId: string; sideId: string }[];
-          ships: readonly { shipId: string; sideId: string }[];
-        };
+        battleView: { divisions: readonly { divisionId: string }[] };
       }
-    ).view;
-    const playerSide = view.ships.find((ship) => ship.shipId.length > 0)!.sideId;
-    const mine = view.divisions.filter((division) => division.sideId === playerSide);
-    const divisions = mine.map((division) => ({
+    ).battleView;
+    const divisions = view.divisions.map((division) => ({
       divisionId: division.divisionId,
       stance: "HOLD" as const,
       speedPercent: 40,
@@ -296,11 +290,11 @@ describe("battle offer commands", () => {
         divisions,
       });
       if (result.outcome !== "success") throw new Error("advance failed");
-      return result.value as { sessionHash: string; view: { minute: number } };
+      return result.value as { sessionHash: string; battleView: { status: { minute: number } } };
     };
     await advance();
     const before = await advance();
-    expect(before.view.minute).toBe(2);
+    expect(before.battleView.status.minute).toBe(2);
 
     const resumed = await run(restartedRuntime, startPlayerBattleProgram, {
       sessionId: "s-mid",
@@ -309,10 +303,10 @@ describe("battle offer commands", () => {
     if (resumed.outcome !== "success") throw new Error("resume failed");
     const resumedValue = resumed.value as {
       sessionHash: string;
-      view: { minute: number };
+      battleView: { status: { minute: number } };
       resumed: boolean;
     };
-    expect(resumedValue.view.minute).toBe(2);
+    expect(resumedValue.battleView.status.minute).toBe(2);
     expect(resumedValue.sessionHash).toBe(before.sessionHash);
     expect(resumedValue.resumed).toBe(true);
   });

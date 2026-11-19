@@ -1,30 +1,26 @@
-import type { PlayerBattleShipView, PlayerBattleView } from "@bluewave/combat/battleResolution";
 import { describe, expect, it } from "vite-plus/test";
 import { projectCombatLog, shipIdOf, transientMarkers } from "./tactical-log.js";
+import type { TacticalShip, TacticalView } from "./tactical-view.js";
 
-const ship = (shipId: string, sideId: string): PlayerBattleShipView => ({
+const ship = (shipId: string, own: boolean): TacticalShip => ({
   shipId,
   name: `Ship ${shipId}`,
-  className: "c",
+  own,
   shipType: "ironclad",
-  sideId,
   divisionId: null,
   hitPoints: 10,
   maxHitPoints: 10,
   damageState: "NORMAL",
   position: [0, 0],
   headingDeg: 0,
-  speedBp: 0,
+  speedMilliKnots: 0,
   contactConfidenceBp: null,
 });
 
-const BASE: PlayerBattleView = {
+const BASE: TacticalView = {
   battleId: "bat",
   campaignMonth: "1880-02",
-  playerNationId: "uk",
   areaId: "channel",
-  attackerId: "uk",
-  defenderId: "fr",
   minute: 3,
   maxMinutes: 100,
   ended: false,
@@ -32,8 +28,8 @@ const BASE: PlayerBattleView = {
   winnerId: null,
   loserId: null,
   objectives: [],
-  weather: { seaState: "CALM", visibilityNm: 10, precipitation: "CLEAR", daylight: true },
-  ships: [ship("a1", "ATTACKER"), ship("d1", "DEFENDER")],
+  weather: { seaState: "CALM", visibilityM: 18_520, precipitation: "CLEAR", daylight: true },
+  ships: [ship("a1", true), ship("d1", false)],
   divisions: [],
   log: [
     { minute: 1, eventType: "resolve_movement_intent", actorId: "pipeline", targetId: "" },

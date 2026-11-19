@@ -16,21 +16,14 @@ export { PLAYER_BATTLE_STANCES } from "./playerSessionTypes.js";
 export type {
   CreatePlayerBattleInput,
   PlayerBattleDivisionOrder,
-  PlayerBattleDivisionView,
   PlayerBattleEvent,
   PlayerBattleOrders,
   PlayerBattleResult,
   PlayerBattleSession,
-  PlayerBattleShipView,
   PlayerBattleStance,
-  PlayerBattleView,
 } from "./playerSessionTypes.js";
 export { advancePlayerBattleMinute, runPlayerBattleToEnd } from "./playerSessionAdvance.js";
-export {
-  playerBattleResult,
-  playerBattleSessionHash,
-  playerBattleView,
-} from "./playerSessionSnapshot.js";
+export { playerBattleResult, playerBattleSessionHash } from "./playerSessionSnapshot.js";
 
 interface ProjectedBattle {
   readonly projection: ProjectBattleOutput;

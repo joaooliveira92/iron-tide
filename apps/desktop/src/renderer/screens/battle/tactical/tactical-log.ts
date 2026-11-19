@@ -1,5 +1,4 @@
-import type { PlayerBattleEvent, PlayerBattleView } from "@bluewave/combat/battleResolution";
-import { playerSideOf } from "../../../../shared/player-battle-orders.js";
+import type { TacticalLogEvent, TacticalView } from "./tactical-view.js";
 
 export type CombatLogCategory = "battle" | "contact" | "fire" | "damage";
 
@@ -33,13 +32,12 @@ export function shipIdOf(reference: string, battleId: string): string {
 
 interface Projection {
   readonly names: ReadonlyMap<string, string>;
-  readonly sides: ReadonlyMap<string, string>;
-  readonly playerSide: string | null;
+  readonly own: ReadonlySet<string>;
   readonly battleId: string;
 }
 
 function entryFor(
-  event: PlayerBattleEvent,
+  event: TacticalLogEvent,
   sequence: number,
   projection: Projection,
 ): CombatLogEntry | null {
@@ -49,7 +47,7 @@ function entryFor(
   const base = { sequence, minute: event.minute };
   switch (event.eventType) {
     case "contact_created":
-      if (projection.sides.get(target) === projection.playerSide) return null;
+      if (projection.own.has(target)) return null;
       return {
         ...base,
         category: "contact",
@@ -90,11 +88,10 @@ function entryFor(
   }
 }
 
-export function projectCombatLog(view: PlayerBattleView): readonly CombatLogEntry[] {
+export function projectCombatLog(view: TacticalView): readonly CombatLogEntry[] {
   const projection: Projection = {
     names: new Map(view.ships.map((ship) => [ship.shipId, ship.name])),
-    sides: new Map(view.ships.map((ship) => [ship.shipId, ship.sideId])),
-    playerSide: playerSideOf(view),
+    own: new Set(view.ships.filter((ship) => ship.own).map((ship) => ship.shipId)),
     battleId: view.battleId,
   };
   const entries: CombatLogEntry[] = [

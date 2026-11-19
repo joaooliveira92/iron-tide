@@ -5,43 +5,28 @@ import {
   MIN_SPEED_PERCENT,
   defaultOrdersFor,
   ordersToDtos,
-  playerSideOf,
   type OrdersView,
   standingOrdersFor,
   toCombatOrders,
 } from "./player-battle-orders.js";
 
-const viewOf = (playerNationId: string): OrdersView => ({
-  playerNationId,
-  attackerId: "uk",
-  defenderId: "france",
-  divisions: [
-    { divisionId: "a1", sideId: "ATTACKER" },
-    { divisionId: "a2", sideId: "ATTACKER" },
-    { divisionId: "d1", sideId: "DEFENDER" },
-  ],
+const viewOf = (): OrdersView => ({
+  divisions: [{ divisionId: "a1" }, { divisionId: "a2" }],
 });
 
 describe("player battle orders", () => {
-  it("resolves the player side from the nation", () => {
-    expect(playerSideOf(viewOf("uk"))).toBe("ATTACKER");
-    expect(playerSideOf(viewOf("france"))).toBe("DEFENDER");
-    expect(playerSideOf(viewOf("spain"))).toBeNull();
-  });
-
-  it("defaults only the player's divisions to full-speed engage", () => {
-    expect(defaultOrdersFor(viewOf("uk"))).toEqual({
+  it("defaults the player's divisions to full-speed engage", () => {
+    expect(defaultOrdersFor(viewOf())).toEqual({
       a1: DEFAULT_DIVISION_ORDER,
       a2: DEFAULT_DIVISION_ORDER,
     });
-    expect(defaultOrdersFor(viewOf("france"))).toEqual({ d1: DEFAULT_DIVISION_ORDER });
-    expect(defaultOrdersFor(viewOf("spain"))).toEqual({});
+    expect(defaultOrdersFor({ divisions: [] })).toEqual({});
     expect(DEFAULT_DIVISION_ORDER).toEqual({ stance: "ENGAGE", speedPercent: MAX_SPEED_PERCENT });
     expect(MIN_SPEED_PERCENT).toBe(0);
   });
 
   it("overlays the last standing orders on the defaults", () => {
-    const orders = standingOrdersFor(viewOf("uk"), [
+    const orders = standingOrdersFor(viewOf(), [
       { divisionId: "a1", stance: "HOLD", speedPercent: 40 },
     ]);
     expect(orders).toEqual({
@@ -70,7 +55,7 @@ describe("course and knots orders", () => {
   });
 
   it("restores a standing course order over the default", () => {
-    const orders = standingOrdersFor(viewOf("uk"), [{ divisionId: "a1", ...steered }]);
+    const orders = standingOrdersFor(viewOf(), [{ divisionId: "a1", ...steered }]);
     expect(orders.a1).toEqual(steered);
     expect(orders.a2).toEqual(DEFAULT_DIVISION_ORDER);
   });

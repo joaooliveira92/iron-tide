@@ -41,6 +41,13 @@ export interface BattleViewTurretBearing {
   readonly bearsOnTarget: boolean;
 }
 
+export interface BattleViewShipExplanations {
+  readonly gunneryAccuracy: ExplanationTree | null;
+  readonly torpedoSolution: ExplanationTree | null;
+  readonly damageControl: ExplanationTree | null;
+  readonly loss: ExplanationTree | null;
+}
+
 export interface BattleViewOwnShip {
   readonly shipId: string;
   readonly name: string;
@@ -55,6 +62,9 @@ export interface BattleViewOwnShip {
   readonly speedExplanation: ExplanationTree | null;
   readonly damageStars: DamageStars;
   readonly damageState: string;
+  readonly hitPoints: number;
+  readonly maxHitPoints: number;
+  readonly explanations: BattleViewShipExplanations;
   readonly carriesMines: boolean | null;
   readonly machinery: BattleViewMachinery | null;
   readonly separation: BattleViewSeparation | null;
@@ -155,6 +165,7 @@ export interface BattleView {
   readonly version: typeof BATTLE_VIEW_VERSION;
   readonly battleId: string;
   readonly areaId: string;
+  readonly campaignMonth: string;
   readonly side: BattleViewSide;
   readonly playerNationId: string;
   readonly ended: boolean;

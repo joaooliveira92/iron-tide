@@ -54,14 +54,9 @@ interface StartValue {
     readonly pauseReason: string | null;
     readonly contacts: readonly unknown[];
     readonly ships: readonly { readonly shipId: string }[];
-  };
-  readonly view: {
-    readonly minute: number;
     readonly ended: boolean;
-    readonly playerNationId: string;
-    readonly attackerId: string;
-    readonly divisions: readonly { divisionId: string; sideId: string }[];
-    readonly ships: readonly { shipId: string; name: string; sideId: string }[];
+    readonly status: { readonly minute: number };
+    readonly divisions: readonly { readonly divisionId: string }[];
   };
 }
 
@@ -119,14 +114,11 @@ describe("player battle session over in-memory sidecar stores", () => {
   };
 
   const ordersFor = (value: StartValue, speedPercent: number) => {
-    const side = value.view.playerNationId === value.view.attackerId ? "ATTACKER" : "DEFENDER";
-    return value.view.divisions
-      .filter((division) => division.sideId === side)
-      .map((division) => ({
-        divisionId: division.divisionId,
-        stance: "HOLD" as const,
-        speedPercent,
-      }));
+    return value.battleView.divisions.map((division) => ({
+      divisionId: division.divisionId,
+      stance: "HOLD" as const,
+      speedPercent,
+    }));
   };
 
   const advance = (a: App, battleId: string, mode: "minute" | "to_end", divisions: unknown) =>
@@ -210,23 +202,16 @@ describe("player battle session over in-memory sidecar stores", () => {
     const started = await start(a, battleId);
     expect(started.resumed).toBe(false);
     expect(started.lastOrders).toEqual([]);
-    expect(started.view.minute).toBe(0);
+    expect(started.battleView.status.minute).toBe(0);
     expect(started.battleView.version).toBe("battle_view_v1");
     expect(started.battleView.pauseReason).toBeNull();
     expect(started.battleView.contacts).toEqual([]);
-    const hostileShips = started.view.ships.filter(
-      (ship) => ship.sideId !== started.battleView.side,
-    );
-    expect(hostileShips.length).toBeGreaterThan(0);
-    const exposed = JSON.stringify(started.battleView);
-    for (const ship of hostileShips) {
-      expect(exposed).not.toContain(ship.shipId);
-      expect(exposed).not.toContain(ship.name);
-    }
 
     const minute = await advance(a, battleId, "minute", ordersFor(started, 40));
     expect(minute.outcome).toBe("success");
-    expect(minute.outcome === "success" && (minute.value as StartValue).view.minute).toBe(1);
+    expect(
+      minute.outcome === "success" && (minute.value as StartValue).battleView.status.minute,
+    ).toBe(1);
 
     const early = await a.run(finishPlayerBattleProgram, { sessionId: SESSION, battleId });
     expect(early).toMatchObject({ outcome: "error", reason: "PLAYER_BATTLE_NOT_FINISHED" });
@@ -258,7 +243,7 @@ describe("player battle session over in-memory sidecar stores", () => {
     const restarted = app(stores);
     const resumed = await start(restarted, battleId);
     expect(resumed.resumed).toBe(true);
-    expect(resumed.view.minute).toBe(2);
+    expect(resumed.battleView.status.minute).toBe(2);
     expect(resumed.sessionHash).toBe(beforeValue.sessionHash);
     expect(resumed.lastOrders).toEqual(orders);
     await restarted.runtime.dispose();
@@ -288,7 +273,7 @@ describe("player battle session over in-memory sidecar stores", () => {
     const restarted = app(stores);
     const resumed = await start(restarted, battleId);
     expect(resumed.resumed).toBe(true);
-    expect(resumed.view.minute).toBe(3);
+    expect(resumed.battleView.status.minute).toBe(3);
     expect(resumed.sessionHash).toBe(beforeValue.sessionHash);
     expect(resumed.lastOrders).toEqual(orders);
     await restarted.runtime.dispose();
@@ -364,7 +349,7 @@ describe("player battle session over in-memory sidecar stores", () => {
     expect(await resumeOf(a, battleId)).toBe("save-corrupt");
     const started = await start(a, battleId);
     expect(started.resumed).toBe(false);
-    expect(started.view.minute).toBe(0);
+    expect(started.battleView.status.minute).toBe(0);
     expect(cleared).toEqual([]);
     await a.runtime.dispose();
   });
@@ -399,7 +384,7 @@ describe("player battle session over in-memory sidecar stores", () => {
       }),
     );
     expect(started.resumed).toBe(false);
-    expect(started.view.minute).toBe(0);
+    expect(started.battleView.status.minute).toBe(0);
     expect(stillThere.kind).toBe("none");
     await a.runtime.dispose();
   });

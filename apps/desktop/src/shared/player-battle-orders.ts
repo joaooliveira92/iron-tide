@@ -11,10 +11,7 @@ export const MIN_SPEED_KNOTS = 1;
 export const MAX_SPEED_KNOTS = 60;
 
 export interface OrdersView {
-  readonly playerNationId: string;
-  readonly attackerId: string;
-  readonly defenderId: string;
-  readonly divisions: readonly { readonly divisionId: string; readonly sideId: string }[];
+  readonly divisions: readonly { readonly divisionId: string }[];
 }
 
 export interface DivisionOrder {
@@ -31,18 +28,9 @@ export const DEFAULT_DIVISION_ORDER: DivisionOrder = {
   speedPercent: MAX_SPEED_PERCENT,
 };
 
-export function playerSideOf(view: OrdersView): "ATTACKER" | "DEFENDER" | null {
-  if (view.playerNationId === view.attackerId) return "ATTACKER";
-  if (view.playerNationId === view.defenderId) return "DEFENDER";
-  return null;
-}
-
 export function defaultOrdersFor(view: OrdersView): DivisionOrders {
-  const side = playerSideOf(view);
   const out: Record<string, DivisionOrder> = {};
-  for (const division of view.divisions) {
-    if (division.sideId === side) out[division.divisionId] = DEFAULT_DIVISION_ORDER;
-  }
+  for (const division of view.divisions) out[division.divisionId] = DEFAULT_DIVISION_ORDER;
   return out;
 }
 

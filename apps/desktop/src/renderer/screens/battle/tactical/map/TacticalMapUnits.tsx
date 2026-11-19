@@ -1,21 +1,21 @@
-import type { PlayerBattleShipView } from "@bluewave/combat/battleResolution";
 import { useMemo, type KeyboardEvent } from "react";
 import { translate } from "../../../../lib/strings.js";
 import { useBattleActions, useBattleState } from "../../session/battle-session-contexts.js";
 import { visibleLabelKeys, type LabelCandidate } from "../tactical-geometry.js";
 import { shipPoint, shipStatus } from "../tactical-model.js";
 import { TACTICAL_PALETTE } from "../tactical-palette.js";
+import type { TacticalShip } from "../tactical-view.js";
 import { useTacticalMap } from "./tactical-map-context.js";
 
 const LABEL_CHAR_PX = 6.8;
 const LABEL_HEIGHT_PX = 16;
 
-function Ship({ ship }: { readonly ship: PlayerBattleShipView }) {
-  const { view, project, playerSide, symbolSize: size, moveStyle } = useTacticalMap();
+function Ship({ ship }: { readonly ship: TacticalShip }) {
+  const { view, project, symbolSize: size, moveStyle } = useTacticalMap();
   const state = useBattleState();
   const actions = useBattleActions();
   const [x, y] = project(shipPoint(ship)!);
-  const own = ship.sideId === playerSide;
+  const { own } = ship;
   const status = shipStatus(ship);
   const colour = own ? TACTICAL_PALETTE.own : TACTICAL_PALETTE.hostile;
   const heading = ship.headingDeg ?? 0;
@@ -104,7 +104,7 @@ function Ships() {
 }
 
 function ShipNames() {
-  const { view, visibleShips, project, playerSide, symbolSize: size, moveStyle } = useTacticalMap();
+  const { view, visibleShips, project, symbolSize: size, moveStyle } = useTacticalMap();
   const { selectedShipId, overlays } = useBattleState();
 
   const labelKeys = useMemo(() => {
@@ -118,7 +118,7 @@ function ShipNames() {
       const width = ship.name.length * LABEL_CHAR_PX + 8;
       const priority =
         (ship.shipId === selectedShipId ? 100 : 0) +
-        (ship.sideId === playerSide ? 10 : 0) +
+        (ship.own ? 10 : 0) +
         (view.divisions.some((division) => division.flagshipId === ship.shipId) ? 5 : 0);
       return {
         key: ship.shipId,
@@ -130,7 +130,7 @@ function ShipNames() {
       };
     });
     return visibleLabelKeys(candidates);
-  }, [overlays.labels, visibleShips, project, selectedShipId, playerSide, view.divisions, size]);
+  }, [overlays.labels, visibleShips, project, selectedShipId, view.divisions, size]);
 
   return visibleShips
     .filter((ship) => labelKeys.has(ship.shipId))
@@ -149,9 +149,7 @@ function ShipNames() {
             data-testid={`tactical-label-${ship.shipId}`}
             x={size + 6}
             y={4}
-            fill={
-              ship.sideId === playerSide ? TACTICAL_PALETTE.ownLabel : TACTICAL_PALETTE.hostileLabel
-            }
+            fill={ship.own ? TACTICAL_PALETTE.ownLabel : TACTICAL_PALETTE.hostileLabel}
             fontSize={12}
           >
             {ship.name}

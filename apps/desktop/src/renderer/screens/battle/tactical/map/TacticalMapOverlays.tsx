@@ -45,7 +45,7 @@ function RangeRings() {
 }
 
 function Tracks() {
-  const { visibleShips, project, playerSide } = useTacticalMap();
+  const { visibleShips, project } = useTacticalMap();
   const state = useBattleState();
   if (!state.overlays.tracks) return null;
   return visibleShips.map((ship) => {
@@ -58,7 +58,7 @@ function Tracks() {
         data-testid="tactical-trail"
         points={points}
         fill="none"
-        stroke={ship.sideId === playerSide ? TACTICAL_PALETTE.own : TACTICAL_PALETTE.hostile}
+        stroke={ship.own ? TACTICAL_PALETTE.own : TACTICAL_PALETTE.hostile}
         strokeOpacity={0.35}
         strokeWidth={1.5}
         pointerEvents="none"

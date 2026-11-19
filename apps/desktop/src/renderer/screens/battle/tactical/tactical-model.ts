@@ -1,19 +1,21 @@
-import type { PlayerBattleShipView, PlayerBattleView } from "@bluewave/combat/battleResolution";
 import type { WorldPoint } from "./tactical-geometry.js";
+import type { TacticalShip, TacticalView } from "./tactical-view.js";
 
 export type ShipStatus = "operational" | "damaged" | "sunk";
 
 export const PROVISIONAL_TRAIL_LENGTH = 12;
 
-export function shipStatus(ship: PlayerBattleShipView): ShipStatus {
+export function shipStatus(ship: TacticalShip): ShipStatus {
   if (ship.damageState === "SINKING" || ship.damageState === "FOUNDERED") return "sunk";
-  if (ship.damageState !== "NORMAL" || ship.hitPoints < ship.maxHitPoints) return "damaged";
+  const worn =
+    ship.hitPoints !== null && ship.maxHitPoints !== null && ship.hitPoints < ship.maxHitPoints;
+  if (ship.damageState !== "NORMAL" || worn) return "damaged";
   return "operational";
 }
 
 export type Trails = Readonly<Record<string, readonly WorldPoint[]>>;
 
-export function appendTrails(trails: Trails, view: PlayerBattleView): Trails {
+export function appendTrails(trails: Trails, view: TacticalView): Trails {
   const next: Record<string, readonly WorldPoint[]> = {};
   let changed = false;
   for (const ship of view.ships) {
@@ -31,24 +33,24 @@ export function appendTrails(trails: Trails, view: PlayerBattleView): Trails {
 }
 
 export function selectedShip(
-  view: PlayerBattleView,
+  view: TacticalView,
   selectedShipId: string | null,
-): PlayerBattleShipView | null {
+): TacticalShip | null {
   if (selectedShipId === null) return null;
   return view.ships.find((ship) => ship.shipId === selectedShipId) ?? null;
 }
 
-export function divisionOfShip(view: PlayerBattleView, shipId: string): string | null {
+export function divisionOfShip(view: TacticalView, shipId: string): string | null {
   return view.ships.find((ship) => ship.shipId === shipId)?.divisionId ?? null;
 }
 
-export function knownPositions(view: PlayerBattleView): readonly WorldPoint[] {
+export function knownPositions(view: TacticalView): readonly WorldPoint[] {
   return view.ships.flatMap((ship) =>
     ship.position === null ? [] : [[ship.position[0], ship.position[1]] as const],
   );
 }
 
-export function shipPoint(ship: PlayerBattleShipView): WorldPoint | null {
+export function shipPoint(ship: TacticalShip): WorldPoint | null {
   return ship.position === null ? null : [ship.position[0], ship.position[1]];
 }
 
