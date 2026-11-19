@@ -1,7 +1,7 @@
 import type { TacticalBattleState } from "../tactical/state.js";
 import type { TacticalShipUnit } from "../tactical/unit.js";
 import type { DamageContext } from "../damage/minuteDamage.js";
-import type { KnownMinefieldView } from "../collision/minefields.js";
+import { minefieldsOfSide, type KnownMinefieldsBySide } from "../collision/knownMinefields.js";
 import { steerClearOfHazards } from "../collision/steering.js";
 import type { TerrainView } from "../terrain/index.js";
 import {
@@ -18,9 +18,9 @@ export function pursuitOrders(input: {
   units: readonly TacticalShipUnit[];
   baseOrders: Readonly<Record<string, { orderedHeading: number; orderedSpeedBp: number }>>;
   terrain?: TerrainView;
-  minefields?: KnownMinefieldView;
+  minefieldsBySide?: KnownMinefieldsBySide;
 }): Record<string, { orderedHeading: number; orderedSpeedBp: number }> {
-  const { battleId, battleState, damage, units, baseOrders, terrain, minefields } = input;
+  const { battleId, battleState, damage, units, baseOrders, terrain, minefieldsBySide } = input;
   const movement = battleState.movementStates ?? {};
   const contactPos = new Map(
     (battleState.contacts ?? []).map((c) => [c.contactId, c.position] as const),
@@ -60,12 +60,13 @@ export function pursuitOrders(input: {
             bearingToEnemy: headingToward(best.dx, best.dy),
           })
         : headingToward(best.dx, best.dy);
+    const known = minefieldsOfSide(minefieldsBySide, u.sideId);
     out[u.assetId] = {
       orderedHeading:
-        terrain || minefields
+        terrain || known.minefields
           ? steerClearOfHazards({
               ...(terrain ? { terrain } : {}),
-              ...(minefields ? { minefields } : {}),
+              ...known,
               position: own.position,
               heading: wanted,
               speedBp: base.orderedSpeedBp,

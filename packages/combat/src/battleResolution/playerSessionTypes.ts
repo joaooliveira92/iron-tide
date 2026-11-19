@@ -1,4 +1,8 @@
-import type { CollisionContext, CollisionRules } from "../collision/index.js";
+import type {
+  CollisionContext,
+  CollisionRules,
+  TacticalMinefieldRecord,
+} from "../collision/index.js";
 import type { TerrainView } from "../terrain/index.js";
 import type { DivisionAiMemory } from "../division-ai/memory.js";
 import type { GunneryBattery } from "../gunnery/resolve.js";
@@ -100,6 +104,7 @@ export interface CreatePlayerBattleInput {
   readonly maxMinutes?: number;
   readonly waypointRules?: WaypointRules;
   readonly terrain?: TerrainView;
+  readonly minefields?: readonly TacticalMinefieldRecord[];
   readonly collisionRules?: CollisionRules;
 }
 

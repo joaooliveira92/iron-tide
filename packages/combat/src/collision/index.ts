@@ -31,6 +31,14 @@ export {
   type KnownMinefieldView,
 } from "./minefields.js";
 export {
+  TACTICAL_MINEFIELD_RECORD_INVALID,
+  decodeTacticalMinefieldRecords,
+  minefieldsOfSide,
+  projectKnownMinefields,
+  type KnownMinefieldsBySide,
+  type TacticalMinefieldRecord,
+} from "./knownMinefields.js";
+export {
   LAND_LOOKAHEAD_SECONDS,
   steerClearOfHazards,
   steerClearOfLand,

@@ -1,4 +1,5 @@
 import type { TerrainView } from "../terrain/index.js";
+import type { KnownMinefieldsBySide } from "./knownMinefields.js";
 
 export interface CollisionRules {
   readonly lengthShareBp: number;
@@ -33,6 +34,7 @@ export interface CollisionState {
 
 export interface CollisionContext {
   readonly terrain?: TerrainView;
+  readonly minefields?: KnownMinefieldsBySide;
   readonly shipCollision?: ShipCollisionContext;
   readonly state?: CollisionState;
 }
