@@ -24,6 +24,7 @@ function fixture() {
   git(root, "config", "user.email", "t@example.test");
   git(root, "config", "user.name", "t");
   git(root, "config", "commit.gpgsign", "false");
+  git(root, "config", "core.autocrlf", "true");
   put(root, "golden/replays/a.replay.json", "base-a\n");
   put(root, "golden/replays/b.replay.json", "base-b\n");
   put(root, "golden/replay-approvals/legacy.json", "legacy\n");
@@ -85,8 +86,9 @@ void test("a conflicted replay is re-recorded on the merged tree and the branch 
     });
     assert.equal(status, 0);
     assert.equal(git(root, "diff", "--name-only", "--diff-filter=U"), "");
-    assert.equal(readFileSync(join(root, "golden/replays/a.replay.json"), "utf8"), "recorded-a\n");
-    assert.equal(readFileSync(join(root, "golden/replays/b.replay.json"), "utf8"), "dev-b\n");
+    const text = (path) => readFileSync(join(root, path), "utf8").replaceAll("\r\n", "\n");
+    assert.equal(text("golden/replays/a.replay.json"), "recorded-a\n");
+    assert.equal(text("golden/replays/b.replay.json"), "dev-b\n");
     assert.equal(existsSync(join(root, "golden/replay-approvals/feature.json")), false);
     assert.equal(existsSync(join(root, "golden/replay-approvals/dev.json")), true);
     assert.equal(existsSync(join(root, "golden/replay-approvals/legacy.json")), true);

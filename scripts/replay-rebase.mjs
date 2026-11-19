@@ -74,12 +74,12 @@ export function replayRebase({ root, base, git, exec, options, print }) {
       .filter((path) => path.startsWith(`${REPLAYS}/`) && path.endsWith(REPLAY_SUFFIX))
       .map((path) => path.slice(REPLAYS.length + 1, -REPLAY_SUFFIX.length)),
   );
+  const differsFromBase = new Set(lines(git("diff", "--name-only", base, "--", REPLAYS)));
   for (const name of present) {
     const path = `${REPLAYS}/${name}`;
-    const changed =
-      !baseFiles.has(path) ||
-      git("show", `${base}:${path}`) !== readFileSync(join(root, path), "utf8");
-    if (changed) toRecord.add(name.slice(0, -REPLAY_SUFFIX.length));
+    if (!baseFiles.has(path) || differsFromBase.has(path)) {
+      toRecord.add(name.slice(0, -REPLAY_SUFFIX.length));
+    }
   }
   for (const id of [...toRecord].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))) {
     const status = exec("pnpm", ["replay:record", id]);
