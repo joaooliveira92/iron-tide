@@ -6,13 +6,16 @@ authoritative cause is a stop condition (see `AGENTS.md`).
 
 ## Approvals
 
-`golden/replay-approvals/` holds one file per change, so two changes never edit one file; `legacy.json`
-(entries from before the split) is never edited. Entries are bound to the exact old and new checkpoint
+`golden/replay-approvals/` holds one file per change; `legacy.json` (pre-split entries) is never edited. Entries are bound to the exact old and new checkpoint
 hashes of one replay and month, with a cause and a migration assessment. After `pnpm replay:record <id>`, run `pnpm replay:approve --cause "<why>"
 --migration "<assessment>" --class <class>` to write a new file from the diff against `origin/dev`
 (`--base <ref>`); the class is `EXPECTED_GAMEPLAY_CHANGE`, `SERIALIZATION_ONLY` or
 `RULESET_VERSION_CHANGE`. `pnpm check:replay-approvals` fails an unapproved, mismatched, orphaned,
 reused, rewritten or misclassed entry. Entries are append-only relative to the gate base. A `dev` to `main` PR runs `check-chain --main <ref> --head <ref>`: per first-parent hop.
+
+## Rebasing
+
+Never hand-resolve `golden/`: run `pnpm replay:rebase` ([guide](replay-rebase.md), with the catalogue-hash limit #993).
 
 ## File format
 
