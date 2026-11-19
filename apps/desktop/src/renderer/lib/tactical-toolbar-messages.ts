@@ -1,4 +1,10 @@
 export const TACTICAL_TOOLBAR_MESSAGES = {
+  "tactical.unit.target_input": "Priority target",
+  "tactical.unit.target_automatic": "Automatic (nearest)",
+  "tactical.unit.target_lost": "Contact no longer in view",
+  "tactical.unit.target_pending": "Pending: takes effect on the next step.",
+  "tactical.unit.target_accepted": "Division fires on this contact while it is in view.",
+  "tactical.unit.target_auto_state": "Division picks its own targets.",
   "tactical.toolbar.label": "Tactical controls",
   "tactical.toolbar.pause": "Pause",
   "tactical.toolbar.resume": "Resume",

@@ -23,6 +23,7 @@ export const PlayerBattleDivisionOrderSchema = Schema.Struct({
   speedPercent: boundedInteger(MIN_SPEED_PERCENT, MAX_SPEED_PERCENT),
   courseDeg: Schema.optionalKey(boundedInteger(MIN_COURSE_DEG, MAX_COURSE_DEG)),
   speedKnots: Schema.optionalKey(boundedInteger(MIN_SPEED_KNOTS, MAX_SPEED_KNOTS)),
+  targetHandle: Schema.optionalKey(nonEmptyString),
 });
 
 export const StartPlayerBattlePayloadSchema = Schema.Struct({

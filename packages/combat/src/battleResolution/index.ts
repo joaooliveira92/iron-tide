@@ -24,6 +24,7 @@ export * from "./runRequest.js";
 export * from "./playerSessionPause.js";
 export * from "./playerSessionRun.js";
 export * from "./battleViewTypes.js";
+export { contactHandle } from "./battleViewFog.js";
 export * from "./battleViewTuning.js";
 export { battleView, BATTLE_VIEW_ACCESSIBILITY, type BattleViewInput } from "./battleView.js";
 export * from "./autoResolution.js";

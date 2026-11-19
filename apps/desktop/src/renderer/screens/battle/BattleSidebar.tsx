@@ -61,6 +61,7 @@ export function BattleSidebar() {
           acceptedOrders={state.acceptedOrders}
           setOrder={actions.setOrder}
           releaseCourse={actions.releaseCourse}
+          setTarget={actions.setTarget}
           onPreviewCourse={actions.previewCourse}
         />
       </div>

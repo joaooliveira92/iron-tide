@@ -19,6 +19,7 @@ export interface DivisionOrder {
   readonly speedPercent: number;
   readonly courseDeg?: number;
   readonly speedKnots?: number;
+  readonly targetHandle?: string;
 }
 
 export type DivisionOrders = Readonly<Record<string, DivisionOrder>>;
@@ -40,6 +41,7 @@ function orderOf(order: Omit<PlayerBattleDivisionOrderDto, "divisionId">): Divis
     speedPercent: order.speedPercent,
     ...(order.courseDeg === undefined ? {} : { courseDeg: order.courseDeg }),
     ...(order.speedKnots === undefined ? {} : { speedKnots: order.speedKnots }),
+    ...(order.targetHandle === undefined ? {} : { targetHandle: order.targetHandle }),
   };
 }
 
