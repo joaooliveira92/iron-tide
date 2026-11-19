@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useMemo } from "react";
 import { cn } from "../../lib/utils.js";
 import { hexToNormalizedRgb } from "./shader-color.js";
 import { createShaderProgram } from "./shader-program.js";
@@ -93,9 +93,6 @@ const Cloudscape = ({
   style,
   ...props
 }: CloudscapeProps) => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const hostRef = useRef<HTMLDivElement | null>(null);
-
   const settings = useMemo(
     () => ({
       colorBottom,
@@ -106,108 +103,113 @@ const Cloudscape = ({
     [colorBottom, colorMid, colorTop, speed],
   );
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const host = hostRef.current;
-    if (!canvas || !host) {
-      return;
-    }
+  const attachCanvas = useCallback(
+    (canvas: HTMLCanvasElement) => {
+      const host = canvas.parentElement;
+      if (!host) {
+        return;
+      }
 
-    const gl = canvas.getContext("webgl", { antialias: true, alpha: true });
-    if (!gl) {
-      console.error("WebGL not supported");
-      return;
-    }
+      const gl = canvas.getContext("webgl", { antialias: true, alpha: true });
+      if (!gl) {
+        console.error("WebGL not supported");
+        return;
+      }
 
-    const shaderProgram = createShaderProgram(gl, vertexShaderGLSL, fragmentShaderGLSL);
-    if (shaderProgram === null) return;
+      const shaderProgram = createShaderProgram(gl, vertexShaderGLSL, fragmentShaderGLSL);
+      if (shaderProgram === null) return;
 
-    const glProgram = shaderProgram.program;
-    gl.useProgram(glProgram);
+      const glProgram = shaderProgram.program;
+      gl.useProgram(glProgram);
 
-    const vertexPositionAttribLocation = gl.getAttribLocation(glProgram, "position");
-    const screenQuadVertexBuffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, screenQuadVertexBuffer);
-    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
-    gl.enableVertexAttribArray(vertexPositionAttribLocation);
-    gl.vertexAttribPointer(vertexPositionAttribLocation, 2, gl.FLOAT, false, 0, 0);
+      const vertexPositionAttribLocation = gl.getAttribLocation(glProgram, "position");
+      const screenQuadVertexBuffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, screenQuadVertexBuffer);
+      gl.bufferData(
+        gl.ARRAY_BUFFER,
+        new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]),
+        gl.STATIC_DRAW,
+      );
+      gl.enableVertexAttribArray(vertexPositionAttribLocation);
+      gl.vertexAttribPointer(vertexPositionAttribLocation, 2, gl.FLOAT, false, 0, 0);
 
-    const resolutionUniformLocation = gl.getUniformLocation(glProgram, "u_resolution");
-    const timeUniformLocation = gl.getUniformLocation(glProgram, "u_time");
-    const colorBottomUniformLocation = gl.getUniformLocation(glProgram, "u_colorBottom");
-    const colorMidUniformLocation = gl.getUniformLocation(glProgram, "u_colorMid");
-    const colorTopUniformLocation = gl.getUniformLocation(glProgram, "u_colorTop");
-    const speedUniformLocation = gl.getUniformLocation(glProgram, "u_speed");
+      const resolutionUniformLocation = gl.getUniformLocation(glProgram, "u_resolution");
+      const timeUniformLocation = gl.getUniformLocation(glProgram, "u_time");
+      const colorBottomUniformLocation = gl.getUniformLocation(glProgram, "u_colorBottom");
+      const colorMidUniformLocation = gl.getUniformLocation(glProgram, "u_colorMid");
+      const colorTopUniformLocation = gl.getUniformLocation(glProgram, "u_colorTop");
+      const speedUniformLocation = gl.getUniformLocation(glProgram, "u_speed");
 
-    if (
-      !resolutionUniformLocation ||
-      !timeUniformLocation ||
-      !colorBottomUniformLocation ||
-      !colorMidUniformLocation ||
-      !colorTopUniformLocation ||
-      !speedUniformLocation
-    ) {
-      gl.deleteBuffer(screenQuadVertexBuffer);
-      shaderProgram.dispose();
-      return;
-    }
+      if (
+        !resolutionUniformLocation ||
+        !timeUniformLocation ||
+        !colorBottomUniformLocation ||
+        !colorMidUniformLocation ||
+        !colorTopUniformLocation ||
+        !speedUniformLocation
+      ) {
+        gl.deleteBuffer(screenQuadVertexBuffer);
+        shaderProgram.dispose();
+        return;
+      }
 
-    const resize = () => {
-      const dpr = Math.min(window.devicePixelRatio || 1, 2);
-      const { width, height } = host.getBoundingClientRect();
-      canvas.width = Math.max(1, Math.floor(width * dpr));
-      canvas.height = Math.max(1, Math.floor(height * dpr));
-      gl.viewport(0, 0, canvas.width, canvas.height);
-      gl.uniform2f(resolutionUniformLocation, canvas.width, canvas.height);
-    };
+      const resize = () => {
+        const dpr = Math.min(window.devicePixelRatio || 1, 2);
+        const { width, height } = host.getBoundingClientRect();
+        canvas.width = Math.max(1, Math.floor(width * dpr));
+        canvas.height = Math.max(1, Math.floor(height * dpr));
+        gl.viewport(0, 0, canvas.width, canvas.height);
+        gl.uniform2f(resolutionUniformLocation, canvas.width, canvas.height);
+      };
 
-    resize();
-    const resizeObserver = new ResizeObserver(resize);
-    resizeObserver.observe(host);
+      resize();
+      const resizeObserver = new ResizeObserver(resize);
+      resizeObserver.observe(host);
 
-    let animationFrameId = 0;
-    const start = performance.now();
+      let animationFrameId = 0;
+      const start = performance.now();
 
-    const render = (now: number) => {
-      const elapsedSec = (now - start) / 1000;
+      const render = (now: number) => {
+        const elapsedSec = (now - start) / 1000;
 
-      const colorBottom = hexToNormalizedRgb(settings.colorBottom, DEFAULT_COLOR);
-      const colorMid = hexToNormalizedRgb(settings.colorMid, DEFAULT_COLOR);
-      const colorTop = hexToNormalizedRgb(settings.colorTop, DEFAULT_COLOR);
+        const colorBottom = hexToNormalizedRgb(settings.colorBottom, DEFAULT_COLOR);
+        const colorMid = hexToNormalizedRgb(settings.colorMid, DEFAULT_COLOR);
+        const colorTop = hexToNormalizedRgb(settings.colorTop, DEFAULT_COLOR);
 
-      gl.clearColor(0, 0, 0, 0);
-      gl.clear(gl.COLOR_BUFFER_BIT);
+        gl.clearColor(0, 0, 0, 0);
+        gl.clear(gl.COLOR_BUFFER_BIT);
 
-      gl.uniform1f(timeUniformLocation, elapsedSec);
-      gl.uniform3f(colorBottomUniformLocation, colorBottom[0], colorBottom[1], colorBottom[2]);
-      gl.uniform3f(colorMidUniformLocation, colorMid[0], colorMid[1], colorMid[2]);
-      gl.uniform3f(colorTopUniformLocation, colorTop[0], colorTop[1], colorTop[2]);
-      gl.uniform1f(speedUniformLocation, settings.speed);
+        gl.uniform1f(timeUniformLocation, elapsedSec);
+        gl.uniform3f(colorBottomUniformLocation, colorBottom[0], colorBottom[1], colorBottom[2]);
+        gl.uniform3f(colorMidUniformLocation, colorMid[0], colorMid[1], colorMid[2]);
+        gl.uniform3f(colorTopUniformLocation, colorTop[0], colorTop[1], colorTop[2]);
+        gl.uniform1f(speedUniformLocation, settings.speed);
 
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+
+        animationFrameId = requestAnimationFrame(render);
+      };
 
       animationFrameId = requestAnimationFrame(render);
-    };
 
-    animationFrameId = requestAnimationFrame(render);
-
-    return () => {
-      cancelAnimationFrame(animationFrameId);
-      resizeObserver.disconnect();
-      gl.deleteBuffer(screenQuadVertexBuffer);
-      shaderProgram.dispose();
-    };
-  }, [settings]);
+      return () => {
+        cancelAnimationFrame(animationFrameId);
+        resizeObserver.disconnect();
+        gl.deleteBuffer(screenQuadVertexBuffer);
+        shaderProgram.dispose();
+      };
+    },
+    [settings],
+  );
 
   return (
     <div
-      ref={hostRef}
       className={cn("relative flex w-full items-center overflow-hidden bg-black", className)}
       style={{ height, containerType: "size", ...style }}
       {...props}
     >
       <canvas
-        ref={canvasRef}
+        ref={attachCanvas}
         aria-hidden="true"
         className="pointer-events-none absolute inset-0 h-full w-full"
         style={{ width: "100%", height: "100%", display: "block" }}

@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useRef } from "react";
+import { useCallback, useMemo } from "react";
 import { cn } from "../../lib/utils.js";
 
 const vertexShaderGLSL = `
@@ -89,90 +89,88 @@ interface LumaDriftProps extends React.HTMLAttributes<HTMLDivElement> {
 }
 
 const LumaDrift = ({ speed = 1, height = "100vh", className, style, ...props }: LumaDriftProps) => {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const hostRef = useRef<HTMLDivElement | null>(null);
-
   const settings = useMemo(() => ({ speed }), [speed]);
 
-  useEffect(() => {
-    const canvas = canvasRef.current;
-    const host = hostRef.current;
-    if (!canvas || !host) return;
+  const attachCanvas = useCallback(
+    (canvas: HTMLCanvasElement) => {
+      const host = canvas.parentElement;
+      if (!host) return;
 
-    const gl = (canvas.getContext("webgl") ||
-      canvas.getContext("experimental-webgl")) as WebGLRenderingContext | null;
-    if (!gl) return;
+      const gl = (canvas.getContext("webgl") ||
+        canvas.getContext("experimental-webgl")) as WebGLRenderingContext | null;
+      if (!gl) return;
 
-    const compileShader = (type: number, source: string) => {
-      const shader = gl.createShader(type)!;
-      gl.shaderSource(shader, source);
-      gl.compileShader(shader);
-      if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
-        console.error(gl.getShaderInfoLog(shader));
-      }
-      return shader;
-    };
+      const compileShader = (type: number, source: string) => {
+        const shader = gl.createShader(type)!;
+        gl.shaderSource(shader, source);
+        gl.compileShader(shader);
+        if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+          console.error(gl.getShaderInfoLog(shader));
+        }
+        return shader;
+      };
 
-    const program = gl.createProgram()!;
-    gl.attachShader(program, compileShader(gl.VERTEX_SHADER, vertexShaderGLSL));
-    gl.attachShader(program, compileShader(gl.FRAGMENT_SHADER, fragmentShaderGLSL));
-    gl.linkProgram(program);
-    gl.useProgram(program);
+      const program = gl.createProgram()!;
+      gl.attachShader(program, compileShader(gl.VERTEX_SHADER, vertexShaderGLSL));
+      gl.attachShader(program, compileShader(gl.FRAGMENT_SHADER, fragmentShaderGLSL));
+      gl.linkProgram(program);
+      gl.useProgram(program);
 
-    const vertices = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]);
-    const buffer = gl.createBuffer();
-    gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
-    gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
+      const vertices = new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]);
+      const buffer = gl.createBuffer();
+      gl.bindBuffer(gl.ARRAY_BUFFER, buffer);
+      gl.bufferData(gl.ARRAY_BUFFER, vertices, gl.STATIC_DRAW);
 
-    const pos = gl.getAttribLocation(program, "position");
-    gl.enableVertexAttribArray(pos);
-    gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
+      const pos = gl.getAttribLocation(program, "position");
+      gl.enableVertexAttribArray(pos);
+      gl.vertexAttribPointer(pos, 2, gl.FLOAT, false, 0, 0);
 
-    const locs = {
-      res: gl.getUniformLocation(program, "u_resolution"),
-      time: gl.getUniformLocation(program, "u_time"),
-    };
+      const locs = {
+        res: gl.getUniformLocation(program, "u_resolution"),
+        time: gl.getUniformLocation(program, "u_time"),
+      };
 
-    const resize = () => {
-      const dpr = window.devicePixelRatio || 1;
-      const rect = host.getBoundingClientRect();
-      canvas.width = rect.width * dpr;
-      canvas.height = rect.height * dpr;
-      gl.viewport(0, 0, canvas.width, canvas.height);
-    };
+      const resize = () => {
+        const dpr = window.devicePixelRatio || 1;
+        const rect = host.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        gl.viewport(0, 0, canvas.width, canvas.height);
+      };
 
-    const observer = new ResizeObserver(resize);
-    observer.observe(host);
-    resize();
+      const observer = new ResizeObserver(resize);
+      observer.observe(host);
+      resize();
 
-    const startTime = Date.now();
-    let frameId: number;
-    const render = () => {
-      const elapsed = (Date.now() - startTime) * settings.speed;
-      gl.uniform2f(locs.res, canvas.width, canvas.height);
-      gl.uniform1f(locs.time, elapsed);
-      gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+      const startTime = Date.now();
+      let frameId: number;
+      const render = () => {
+        const elapsed = (Date.now() - startTime) * settings.speed;
+        gl.uniform2f(locs.res, canvas.width, canvas.height);
+        gl.uniform1f(locs.time, elapsed);
+        gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+        frameId = requestAnimationFrame(render);
+      };
+
       frameId = requestAnimationFrame(render);
-    };
 
-    frameId = requestAnimationFrame(render);
-
-    return () => {
-      cancelAnimationFrame(frameId);
-      observer.disconnect();
-      gl.deleteProgram(program);
-    };
-  }, [settings]);
+      return () => {
+        cancelAnimationFrame(frameId);
+        observer.disconnect();
+        gl.deleteProgram(program);
+      };
+    },
+    [settings],
+  );
 
   return (
     <div
-      ref={hostRef}
       className={cn("relative flex w-full items-center overflow-hidden bg-black", className)}
       style={{ height, ...style }}
       {...props}
     >
       <canvas
-        ref={canvasRef}
+        ref={attachCanvas}
         className="pointer-events-none absolute inset-0 block h-full w-full"
       />
     </div>
