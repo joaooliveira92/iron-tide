@@ -1,5 +1,6 @@
-import { useEffect, type MutableRefObject } from "react";
+import { type MutableRefObject } from "react";
 import type { Map as MapLibreMap } from "maplibre-gl";
+import { useExternalSync } from "../../shell/useExternalSync.js";
 import type { WorldMapChartProps } from "../world-map/WorldMapChart.js";
 import { homeFocusPoint } from "../world-map/campaign-map-join.js";
 import { nationFocusPoint } from "../world-map/useInitialFocusArea.js";
@@ -29,7 +30,7 @@ export function useCameraSync({
   initialFocusNationId,
   setProjection,
 }: CameraSyncInput) {
-  useEffect(() => {
+  useExternalSync(() => {
     const map = mapRef.current;
     if (map === null || !ready) return;
     const next = adapterProjectionFromApp(appProjection);
@@ -40,13 +41,13 @@ export function useCameraSync({
     }
   }, [ready, appProjection, mapRef, projectionRef, setProjection]);
 
-  useEffect(() => {
+  useExternalSync(() => {
     const map = mapRef.current;
     if (map === null || !ready || restoringRef.current) return;
     map.setCenter([centre, map.getCenter().lat]);
   }, [ready, centre]);
 
-  useEffect(() => {
+  useExternalSync(() => {
     const map = mapRef.current;
     if (map === null || !ready || restoringRef.current) return;
     const point = homeFocusPoint(initialFocusAreaId);
@@ -55,7 +56,7 @@ export function useCameraSync({
     map.jumpTo({ center: [target[0], target[1]], zoom: 3.5, bearing: 0, pitch: 0 });
   }, [initialFocusAreaId, initialFocusNationId, ready]);
 
-  useEffect(() => {
+  useExternalSync(() => {
     if (ready) restoringRef.current = false;
   }, [ready]);
 }

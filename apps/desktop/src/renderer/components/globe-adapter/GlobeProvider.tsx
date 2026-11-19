@@ -1,5 +1,5 @@
 import type { Map as MapLibreMap } from "maplibre-gl";
-import { useEffect, useMemo, useRef, useState, type ReactNode } from "react";
+import { useMemo, useRef, useState, type ReactNode } from "react";
 
 import { useLandPlan } from "../globe-spike/use-land-plan.js";
 import { homeFocusPoint } from "../world-map/campaign-map-join.js";
@@ -68,7 +68,12 @@ export function GlobeProvider({
     adapterProjectionFromApp(state.projection),
   );
   const [status, setStatus] = useState("starting");
-  const [liveMessage, setLiveMessage] = useState("");
+  const [liveMessage, setLiveMessage] = useState(() => routeAnnouncement(route));
+  const [announcedRoute, setAnnouncedRoute] = useState(route);
+  if (announcedRoute !== route) {
+    setAnnouncedRoute(route);
+    setLiveMessage(routeAnnouncement(route));
+  }
   const [errorText, setErrorText] = useState<string | null>(null);
   const [camera, setCamera] = useState<AppCameraState>(() => {
     const adapterProjection = adapterProjectionFromApp(state.projection);
@@ -126,10 +131,6 @@ export function GlobeProvider({
     hoveredArea,
     selectedFleet,
   });
-
-  useEffect(() => {
-    setLiveMessage(routeAnnouncement(route));
-  }, [route]);
 
   useCameraSync({
     mapRef,

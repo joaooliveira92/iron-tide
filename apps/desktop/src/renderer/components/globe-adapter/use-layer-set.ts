@@ -1,5 +1,6 @@
-import { useEffect, type MutableRefObject, type RefObject } from "react";
+import { type MutableRefObject, type RefObject } from "react";
 import type { Map as MapLibreMap } from "maplibre-gl";
+import { useExternalSync } from "../../shell/useExternalSync.js";
 import type { MapPrototypeState } from "../world-map/map-state.js";
 import type { MapVariant } from "../world-map/map-variant-layout.js";
 import {
@@ -32,7 +33,7 @@ export function useLayerSet({
   hoveredArea,
   selectedFleet,
 }: LayerSetInput): void {
-  useEffect(() => {
+  useExternalSync(() => {
     const map = mapRef.current;
     if (map === null || !ready) return;
     const visibility = adapterLayerVisibility(layers);
@@ -49,7 +50,7 @@ export function useLayerSet({
     map.setFilter("adapter-marker-labels", markerFilter(visibility) as never);
   }, [mapRef, ready, variant, layers]);
 
-  useEffect(() => {
+  useExternalSync(() => {
     const map = mapRef.current;
     if (map === null || !ready) return;
     const paint = ownershipPaintValues({ ownership }, layers.ownership);
@@ -57,7 +58,7 @@ export function useLayerSet({
     map.setPaintProperty("areas-fill", "fill-opacity", paint.opacity);
   }, [mapRef, ownership, ready, layers.ownership]);
 
-  useEffect(() => {
+  useExternalSync(() => {
     const map = mapRef.current;
     if (map === null || !ready) return;
     map.setFilter("areas-selected", ["==", ["get", "id"], selected ?? "__none__"]);
@@ -65,7 +66,7 @@ export function useLayerSet({
     selectedAreaRef.current = selected;
   }, [mapRef, ready, selected, selectedAreaRef]);
 
-  useEffect(() => {
+  useExternalSync(() => {
     const map = mapRef.current;
     if (map === null || !ready) return;
     const filter = ["==", ["get", "id"], hoveredArea ?? "__none__"];
@@ -73,7 +74,7 @@ export function useLayerSet({
     map.setFilter("areas-hover-line", filter as never);
   }, [mapRef, hoveredArea, ready]);
 
-  useEffect(() => {
+  useExternalSync(() => {
     const map = mapRef.current;
     if (map === null || !ready) return;
     map.setFilter("adapter-selected-fleet-ring", [

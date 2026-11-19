@@ -1,4 +1,5 @@
-import { useEffect, useRef, type ReactNode } from "react";
+import { useRef, type ReactNode } from "react";
+import { useExternalSync } from "../../shell/useExternalSync.js";
 
 export const INDEX_TABS_CLEARANCE = "12.5rem";
 
@@ -18,7 +19,7 @@ export function ChartDesk({ tabs, drawer, slip, foot }: ChartDeskProps) {
   const showSlip = drawer === null && slip !== null;
   const showFoot = foot !== undefined && foot !== null;
 
-  useEffect(() => {
+  useExternalSync(() => {
     const host = deskRef.current?.parentElement;
     if (host === null || host === undefined) return;
     const slipElement = showSlip ? slipRef.current : showFoot ? footRef.current : null;

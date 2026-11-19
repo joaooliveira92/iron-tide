@@ -1,8 +1,9 @@
 "use client";
 
 import { useReducedMotion, type Transition } from "motion/react";
-import { useCallback, useId, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useId, useRef, useState } from "react";
 import { cn } from "../../lib/utils.js";
+import { useExternalLayoutSync } from "../../shell/useExternalSync.js";
 import { BouncyAccordionRow } from "./bouncy-accordion-row.js";
 import type {
   BouncyAccordionClassNames,
@@ -88,7 +89,7 @@ export function BouncyAccordion({
     activeValue === null || previousValue.current !== null
       ? COLLAPSE_TRANSITION
       : EXPAND_TRANSITION;
-  useLayoutEffect(() => {
+  useExternalLayoutSync(() => {
     previousValue.current = activeValue;
   }, [activeValue]);
 

@@ -1,4 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+
+import { useLifecycle } from "../../shell/useExternalSync.js";
 
 import { decodeCoastline } from "../../lib/coastline-codec.js";
 import { loadBakedTiles, subtleDigest, type BakedTiles } from "./baked-tiles.js";
@@ -46,7 +48,7 @@ async function loadRuntimeCoast(): Promise<GeoFeatureCollection> {
 
 export function useLandPlan(mode: LandMode, assetRoot = "map-spike"): LandPlan {
   const [plan, setPlan] = useState<LandPlan>({ kind: "loading" });
-  useEffect(() => {
+  useLifecycle(() => {
     let active = true;
     const settle = (next: LandPlan) => {
       if (active) setPlan(next);

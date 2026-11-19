@@ -1,9 +1,10 @@
 import { LngLat, Map as MapLibreMap, addProtocol, removeProtocol, setWorkerUrl } from "maplibre-gl";
 import workerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import "maplibre-gl/dist/maplibre-gl.css";
-import { useCallback, useEffect, useMemo, useRef, useState, type KeyboardEvent } from "react";
+import { useCallback, useMemo, useRef, useState, type KeyboardEvent } from "react";
 
 import { formatFixed } from "../../lib/presentation-format/format.js";
+import { useExternalSync } from "../../shell/useExternalSync.js";
 import { BAKED_PROTOCOL, createBakedTileLoader } from "./baked-tiles.js";
 import { createSpikeApi } from "./globe-spike-bridge.js";
 import { entities } from "./globe-spike-entities.js";
@@ -35,7 +36,7 @@ export function GlobeSpike({ onFail }: GlobeSpikeProps) {
   const [notice, setNotice] = useState<string | null>(null);
   const list = useMemo(entities, []);
 
-  useEffect(() => {
+  useExternalSync(() => {
     if (plan.kind === "failed") onFail(plan.reason);
   }, [plan, onFail]);
 
@@ -131,7 +132,7 @@ export function GlobeSpike({ onFail }: GlobeSpikeProps) {
     handler();
   }, []);
 
-  useEffect(() => {
+  useExternalSync(() => {
     const container = containerRef.current;
     if (container === null || plan.kind === "loading" || plan.kind === "failed") return;
     if (!hasRenderableSize(container.clientWidth, container.clientHeight)) {

@@ -1,7 +1,8 @@
 "use client";
 
-import { type ReactNode, useId, useLayoutEffect, useMemo, useRef, useState } from "react";
+import { type ReactNode, useId, useMemo, useRef, useState } from "react";
 import { cn } from "../../lib/utils.js";
+import { useExternalLayoutSync } from "../../shell/useExternalSync.js";
 import { ListContext, type ListContextValue, type MoveDirection } from "./sortable-list-context.js";
 import {
   SortableListGroup,
@@ -44,7 +45,7 @@ function SortableListRoot<T extends { id: string }>({
   const pendingFocus = useRef<string | null>(null);
   const live = useRef(items);
   const previousRef = useRef(previous);
-  useLayoutEffect(() => {
+  useExternalLayoutSync(() => {
     live.current = items;
     previousRef.current = previous;
     if (pendingFocus.current !== null) {

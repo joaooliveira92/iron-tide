@@ -1,5 +1,6 @@
-import { Component, lazy, Suspense, useCallback, useEffect, useState, type ReactNode } from "react";
+import { Component, lazy, Suspense, useCallback, useState, type ReactNode } from "react";
 
+import { useLifecycle } from "../../shell/useExternalSync.js";
 import { isSpikeHash } from "./globe-spike-flag.js";
 
 declare const __GLOBE_SPIKE__: boolean;
@@ -57,7 +58,7 @@ function SpikeOverlay() {
 export function GlobeSpikeHost({ children }: { readonly children: ReactNode }) {
   const [requested, setRequested] = useState(spikeRequested);
 
-  useEffect(() => {
+  useLifecycle(() => {
     if (!GLOBE_SPIKE) return;
     window.__globeSpikeViolations = [];
     let probing = true;
