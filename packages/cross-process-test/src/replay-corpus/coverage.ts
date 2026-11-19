@@ -19,6 +19,7 @@ export const SUBSYSTEMS = [
   { id: "resolve_carrier_operations", label: "Carrier operations" },
   { id: "battle_generation", label: "Battle generation" },
   { id: "battle_resolution", label: "Battle resolution" },
+  { id: "unrest", label: "Unrest" },
   { id: "closing_validation", label: "Closing validation" },
 ] as const;
 
@@ -46,6 +47,7 @@ const EVENT_SUBSYSTEM: Readonly<Record<string, string>> = {
   ForeignStationShipMoved: "battle_resolution",
   ForeignStationNoRoute: "battle_resolution",
   PossessionTransferred: "command_collection",
+  UnrestChanged: "unrest",
 };
 
 const NEUTRAL_EVENT_TYPES: ReadonlySet<string> = new Set(["NationBudgetChanged"]);
