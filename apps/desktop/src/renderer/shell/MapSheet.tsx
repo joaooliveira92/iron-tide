@@ -1,7 +1,17 @@
-import { lazy, memo, Suspense, useEffect, useState } from "react";
+import { lazy, memo, Suspense } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "../components/ui/sheet.js";
 import { useWorldMapController } from "../components/world-map/useWorldMapController.js";
 import { useCampaignShellState } from "./CampaignShellContext.js";
+import { useHotkeyToggle } from "./useHotkeyToggle.js";
+
+function isMapHotkey(event: KeyboardEvent): boolean {
+  if (event.key !== "F1") return false;
+  const target = event.target;
+  return !(
+    target instanceof HTMLElement &&
+    (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)
+  );
+}
 
 const WorldMapChart = lazy(() =>
   import("../components/world-map/WorldMapChart.js").then((module) => ({
@@ -19,26 +29,8 @@ const MapSheetBody = memo(function MapSheetBody({
 }: {
   readonly sessionId: string | null;
 }) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useHotkeyToggle(isMapHotkey);
   const map = useWorldMapController(sessionId);
-
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent): void {
-      if (event.key !== "F1") return;
-      const target = event.target;
-      if (
-        target instanceof HTMLElement &&
-        (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable)
-      ) {
-        return;
-      }
-      event.preventDefault();
-      setOpen((isOpen) => !isOpen);
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>

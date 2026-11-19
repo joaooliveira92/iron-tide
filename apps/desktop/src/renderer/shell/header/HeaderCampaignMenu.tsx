@@ -1,5 +1,5 @@
 import { ChevronDown } from "lucide-react";
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 
 import { Button } from "../../components/ui/button.js";
 import { translate } from "../../lib/strings.js";
@@ -24,9 +24,8 @@ export function HeaderCampaignMenu({
   const [menuOpen, setMenuOpen] = useState(false);
   const [confirmOpen, setConfirmOpen] = useState(false);
 
-  const rootRef = useRef<HTMLDivElement>(null);
   const closeMenu = useCallback(() => setMenuOpen(false), []);
-  useDismissOnOutside(rootRef, menuOpen, closeMenu);
+  const rootRef = useDismissOnOutside(menuOpen, closeMenu);
 
   const run = (action: () => void) => () => {
     closeMenu();

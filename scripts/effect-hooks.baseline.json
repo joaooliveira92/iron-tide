@@ -92,15 +92,8 @@
   "apps/desktop/src/renderer/screens/shipbuilding/workspace/useWorkspaceNavigation.ts": 3,
   "apps/desktop/src/renderer/screens/shipbuilding/workspace/useWorkspaceSession.ts": 3,
   "apps/desktop/src/renderer/screens/simulation/hooks/useSimulationScreen.ts": 3,
-  "apps/desktop/src/renderer/shell/AppFrame.tsx": 2,
   "apps/desktop/src/renderer/shell/CampaignShellContext.tsx": 2,
-  "apps/desktop/src/renderer/shell/GlobalSearch.tsx": 2,
-  "apps/desktop/src/renderer/shell/GuidedInspectionOverlay.tsx": 2,
-  "apps/desktop/src/renderer/shell/MapSheet.tsx": 2,
-  "apps/desktop/src/renderer/shell/header/campaign-menu/useDismissOnOutside.ts": 2,
-  "apps/desktop/src/renderer/shell/screen-header.tsx": 3,
   "apps/desktop/src/renderer/shell/shell-sections.tsx": 2,
   "apps/desktop/src/renderer/shell/useCampaignShell.ts": 2,
-  "apps/desktop/src/renderer/shell/useGuidedInspection.ts": 2,
-  "apps/desktop/src/renderer/shell/usePrimaryAction.ts": 2
+  "apps/desktop/src/renderer/shell/useGuidedInspection.ts": 2
 }
