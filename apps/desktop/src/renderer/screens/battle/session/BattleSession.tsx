@@ -64,6 +64,7 @@ export function BattleSessionProvider({
   const selectDivision = useStableCallback(selection.selectDivision);
   const setOrder = useStableCallback(battle.setOrder);
   const releaseCourse = useStableCallback(battle.releaseCourse);
+  const setTarget = useStableCallback(battle.setTarget);
   const submit = useStableCallback(battle.submit);
 
   const entries = useMemo(() => (view === null ? [] : projectCombatLog(view)), [view]);
@@ -155,6 +156,7 @@ export function BattleSessionProvider({
       previewCourse,
       setOrder,
       releaseCourse,
+      setTarget,
       submit,
     }),
     [
@@ -177,6 +179,7 @@ export function BattleSessionProvider({
       previewCourse,
       setOrder,
       releaseCourse,
+      setTarget,
       submit,
     ],
   );

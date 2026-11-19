@@ -6,6 +6,7 @@ export interface PlayerBattleDivisionOrderDto {
   readonly speedPercent: number;
   readonly courseDeg?: number;
   readonly speedKnots?: number;
+  readonly targetHandle?: string;
 }
 
 export interface PlayerBattleResultDto {

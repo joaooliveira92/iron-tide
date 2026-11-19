@@ -2,7 +2,17 @@
 
 ## Status
 
-Blocked pending owner decision.
+Resolved 2026-11-19: Option A, decided by the agent under the owner's grant of full autonomy ("decide how to proceed"). Implemented for #230.
+
+## Resolution
+
+- **Shape (Q1, Q2):** one optional contact per division, `targetHandle` (the fog-safe `contactHandle`, never a true asset id). Gunnery on every battery of that division takes the ordered contact when it is an enemy, in the contact set, and still `NORMAL`; otherwise the existing nearest-target choice applies.
+- **Lost or hidden target (Q3):** stateless fallback to automatic fire. The order stays in the order set, so `to_end` runs never fail mid-run; the UI marks a contact no longer in view. A handle that names no enemy is refused when the step is submitted.
+- **Ship-target orders (Q4):** not in this slice. This is the `DIVISION` target-order kind of ADR-0322, legal at Rear Admiral and Captain. The `SHIP` kind (Captain) stays deferred.
+- **Replay (Q5):** the order rides inside each stored step as an optional `targetHandle` on the division order. Sidecar `schemaVersion` stays `1.0.0`: the key is additive and optional, and saves without it decode and replay unchanged.
+- **Torpedoes and smoke (Q6):** gunnery only.
+- **Rank gate:** enforced by `assertOrderPermitted(mode, "TARGET_ORDERS", ..., "DIVISION")` when the session has force orders enabled (`session.force`). No player path enables realism modes yet (the modes stay out of #230), so without a force session the order is allowed as pre-realism sandbox behaviour. Wiring a mode into the player path later makes Admiral refuse the order with no change here.
+- **Hashes:** an absent `targetHandle` changes no hash, so the replay corpus needs no re-pin.
 
 ## Trigger
 

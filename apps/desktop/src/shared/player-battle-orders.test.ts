@@ -15,6 +15,20 @@ const viewOf = (): OrdersView => ({
 });
 
 describe("player battle orders", () => {
+  it("carries a target handle through standing orders, the wire and the combat orders", () => {
+    const dto = {
+      divisionId: "a1",
+      stance: "ENGAGE" as const,
+      speedPercent: 80,
+      targetHandle: "ab12",
+    };
+    const standing = standingOrdersFor(viewOf(), [dto]);
+    expect(standing["a1"]?.targetHandle).toBe("ab12");
+    expect(standing["a2"]?.targetHandle).toBeUndefined();
+    expect(ordersToDtos(standing).find((order) => order.divisionId === "a1")).toEqual(dto);
+    expect(toCombatOrders([dto]).divisions["a1"]?.targetHandle).toBe("ab12");
+  });
+
   it("defaults the player's divisions to full-speed engage", () => {
     expect(defaultOrdersFor(viewOf())).toEqual({
       a1: DEFAULT_DIVISION_ORDER,

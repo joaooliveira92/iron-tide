@@ -11,6 +11,7 @@ import { translate } from "../../../lib/strings.js";
 import { BattleExplanationDisclosure } from "../BattleExplanationDisclosure.js";
 import { compassFromHeading, headingFromCompass } from "./tactical-geometry.js";
 import { divisionOfShip, selectedShip, shortDivisionId } from "./tactical-model.js";
+import { TargetOrderControl } from "./TargetOrderControl.js";
 import { courseOrderState, parseCourse, parseSpeedKnots } from "./tactical-orders.js";
 import type { TacticalView } from "./tactical-view.js";
 
@@ -22,6 +23,7 @@ export interface UnitCommandPanelProps {
   readonly acceptedOrders: Readonly<Record<string, DivisionOrder>>;
   readonly setOrder: (divisionId: string, patch: Partial<DivisionOrder>) => void;
   readonly releaseCourse: (divisionId: string) => void;
+  readonly setTarget: (divisionId: string, targetHandle: string | null) => void;
   readonly onPreviewCourse: (headingDeg: number | null) => void;
 }
 
@@ -229,6 +231,15 @@ export const UnitCommandPanel = memo(function UnitCommandPanel(props: UnitComman
                 : translate("tactical.unit.state_stance")}
           </p>
         </form>
+      )}
+      {own && divisionId !== null && division !== undefined && (
+        <TargetOrderControl
+          view={view}
+          divisionId={divisionId}
+          order={division}
+          acceptedHandle={accepted?.targetHandle}
+          setTarget={props.setTarget}
+        />
       )}
     </section>
   );
