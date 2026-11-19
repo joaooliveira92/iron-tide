@@ -225,11 +225,11 @@ describe("commitMonth", () => {
         algorithm: "sha256",
         artifactKind: "campaign-snapshot",
         compatibilityVersion: CURRENT_COMPATIBILITY_VERSION,
-        bodyHash: "ef4d2c12b7cabce7986b5ec75b607421c4ac586fefa740500966eee4e7cd6a60",
-        bodyLength: 213806,
+        bodyHash: "e401af5b259d56ed851d7affa8b00ca3e2e1e8988de4db90a58473ecf7bc4d15",
+        bodyLength: 213927,
       });
       expect(updated.state.rawHash).toBe(
-        "627594151879b6a0e4e8e6dda005630dde4dea005bb80ca323aa870e7000ad7a",
+        "69eb3f6d3a6feab4caee4cc5df28ba2ab44ae8a00ee63d8040276a5c6d9977e3",
       );
       const expectedActiveWars = updated.state.snapshot.wars.wars.filter(
         (w) => w.status !== "ENDED",

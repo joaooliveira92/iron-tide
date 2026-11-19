@@ -43,7 +43,7 @@ import type {
   TechnologyDefinitionData,
 } from "@bluewave/campaign";
 import type { SafeInt } from "@bluewave/contracts";
-import { fields, FLEET_STATE_FIELDS } from "./cloneFields.js";
+import { COMPILED_DESIGN_VERSION_FIELDS, fields, FLEET_STATE_FIELDS } from "./cloneFields.js";
 import { PhaseEngineError } from "./errors.js";
 import { cloneBudgetModifiers, cloneEventHistory } from "./eventStateClone.js";
 import { WAR_RECORD_FIELDS, cloneDeclineCounters, clonePeaceOffers } from "./warRecordsClone.js";
@@ -483,32 +483,7 @@ const F = {
     "peaceOffers",
   ),
   CampaignSlot: fields<CampaignSlot>()("nationId", "type"),
-  CompiledDesignVersion: fields<CompiledDesignVersion>()(
-    "designVersionId",
-    "designFamilyId",
-    "className",
-    "nationId",
-    "hullType",
-    "normalizedDisplacementKg",
-    "normalizedSpeedUms",
-    "normalizedArmorUm",
-    "hitPoints",
-    "mainGunsCaliber",
-    "mainGunsCount",
-    "machineryType",
-    "crewComplement",
-    "contentVersion",
-    "compiledHash",
-    "capabilities",
-    "armament",
-    "torpedoArmament",
-    "sourceDraft",
-    "colonialServiceFitted",
-    "crampedAccommodation",
-    "shortRange",
-    "constructionCostUnits",
-    "constructionPlan",
-  ),
+  CompiledDesignVersion: COMPILED_DESIGN_VERSION_FIELDS,
   DesignFamily: fields<DesignFamily>()(
     "designFamilyId",
     "nationId",

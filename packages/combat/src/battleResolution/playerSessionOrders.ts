@@ -4,6 +4,7 @@ import type { TacticalShipUnit } from "../tactical/unit.js";
 import type { UnitOrders } from "../simulation/engine.js";
 import { headingToward } from "./engagement.js";
 import { pursuitOrders } from "./pursuit.js";
+import { terrainOf } from "./collisionWiring.js";
 import { BATTLE_AUTO_RESOLUTION_FAILED } from "./reasonCodes.js";
 import {
   DIVISION_ORDER_MAX_HEADING_DEG,
@@ -162,6 +163,7 @@ export function resolveOrders(
     damage: session.damage,
     units: session.units,
     baseOrders: session.baseOrders,
+    ...terrainOf(session.collision),
   });
   return compileDivisionOrders({
     orders: adjust === undefined ? base : adjust(base),
@@ -170,6 +172,7 @@ export function resolveOrders(
     baseOrders: session.baseOrders,
     movement: session.state.movementStates ?? {},
     pursuit,
+    ...terrainOf(session.collision),
     headingAway: (unit) => headingAway(session, unit),
   }).unitOrders;
 }

@@ -30,6 +30,16 @@ import {
 } from "./capabilities.js";
 import { planTorpedoCommands } from "./torpedoDoctrine.js";
 import { pursuitOrders } from "./pursuit.js";
+import { shipOutcomes } from "./shipOutcomes.js";
+import {
+  carryCollisionState,
+  observeCollisionRecords,
+  projectBattleCollision,
+  withCollisionActivity,
+  type CollisionActivity,
+} from "./collisionWiring.js";
+import type { CollisionRules } from "../collision/index.js";
+import type { TerrainView } from "../terrain/index.js";
 import { TORPEDO_HIT_RESOLVED, type TorpedoContext } from "../torpedoes/index.js";
 import {
   type MissileContext,
@@ -37,7 +47,6 @@ import {
   type MissileRules,
 } from "../missiles/index.js";
 import {
-  battleLoss,
   initialDamageState,
   type DamageContext,
   type DamageTargetContext,
@@ -84,6 +93,8 @@ export interface ResolveBattleAutoInput {
   missilesRules?: MissileRules;
   maxMinutes?: number;
   randomLedger?: RandomLedger;
+  terrain?: TerrainView;
+  collisionRules?: CollisionRules;
 }
 
 export interface BattleResolutionResult {
@@ -113,6 +124,7 @@ export interface BattleResolutionResult {
     aborts: number;
     disruptions: number;
   };
+  collisionActivity?: CollisionActivity;
   provenance: {
     battleId: string;
     manifestHash: string;
@@ -340,6 +352,12 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
   let smokeEventCount = 0;
   const airCombatActivity = { capEngagements: 0, strikeAttacks: 0, losses: 0 };
   const airDefenseActivity = { engagements: 0, kills: 0, aborts: 0, disruptions: 0 };
+  let collision = projectBattleCollision({
+    designs: projected.designs,
+    terrain: input.terrain,
+    rules: input.collisionRules,
+  });
+  const collisionTally: CollisionActivity = { collisions: 0, terrainBlocks: 0 };
   const lossTracker = new CauseOfLossTracker();
   const telemetry = emptyTelemetry();
 
@@ -409,6 +427,7 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
         damage,
         units: projected.units,
         baseOrders: projected.orders,
+        ...(input.terrain === undefined ? {} : { terrain: input.terrain }),
       }),
       engine,
       gunnery: withNightTraining(
@@ -424,6 +443,7 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
       smoke,
       airCombat,
       airDefense,
+      ...(collision ? { collision } : {}),
     });
 
     allEvents.push(...res.events);
@@ -530,6 +550,9 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
       };
     }
 
+    observeCollisionRecords(collisionTally, res.collisionRecords);
+    collision = carryCollisionState(collision, res.collisionState);
+
     if (res.smokeClouds) smoke = { ...smoke, clouds: res.smokeClouds };
     if (res.airCombatRecords) {
       airCombat = { ...airCombat, existingRecords: res.airCombatRecords.map((r) => ({ ...r })) };
@@ -568,42 +591,13 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
     });
   }
 
-  const attackerShips = unitsOf(projected, "ATTACKER");
-  const defenderShips = unitsOf(projected, "DEFENDER");
-  const sunkOf = (ships: readonly TacticalShipUnit[]): string[] =>
-    ships
-      .filter((u) => {
-        const st = damage.targets[u.assetId]?.state;
-        if (!st) {
-          throw new BluewaveError(BATTLE_AUTO_RESOLUTION_FAILED, {
-            code: BATTLE_AUTO_RESOLUTION_FAILED,
-            battleId: input.manifest.battleId,
-            shipId: u.assetId,
-            reason: "projected unit has no damage target at result assembly",
-          });
-        }
-        return st.terminalStatus !== "NORMAL";
-      })
-      .map((u) => u.assetId)
-      .sort();
-
-  const attackerSunkIds = sunkOf(attackerShips);
-  const defenderSunkIds = sunkOf(defenderShips);
-  const attackerSurvivorIds = attackerShips
-    .map((u) => u.assetId)
-    .sort()
-    .filter((id) => !attackerSunkIds.includes(id));
-  const defenderSurvivorIds = defenderShips
-    .map((u) => u.assetId)
-    .sort()
-    .filter((id) => !defenderSunkIds.includes(id));
-
-  const damageReport: Record<string, SafeInt> = {};
-  for (const u of projected.units) {
-    const st = damage.targets[u.assetId]?.state;
-    if (!st) continue;
-    damageReport[u.assetId] = battleLoss(u.hitPoints as number, st, u.maxHitPoints as number);
-  }
+  const {
+    attackerSunkIds,
+    defenderSunkIds,
+    attackerSurvivorIds,
+    defenderSurvivorIds,
+    damageReport,
+  } = shipOutcomes({ battleId: input.manifest.battleId, units: projected.units, damage });
 
   let winnerId: string | null = null;
   let loserId: string | null = null;
@@ -665,6 +659,7 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
       ? { airCombatActivity }
       : {}),
     ...(airDefenseActivity.engagements > 0 ? { airDefenseActivity } : {}),
+    ...withCollisionActivity(collision, collisionTally),
     telemetry: finalizeTelemetry(telemetry),
     provenance,
   };
@@ -677,6 +672,7 @@ export function resolveBattleAuto(input: ResolveBattleAutoInput): BattleResoluti
     smokeActivity: _smoke,
     airCombatActivity: _airCombat,
     airDefenseActivity: _airDefense,
+    collisionActivity: _collision,
     ...hashBody
   } = result;
   result.resultHash = createEnvelope(

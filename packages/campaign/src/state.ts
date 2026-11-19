@@ -94,6 +94,8 @@ export interface CompiledDesignVersion {
   crewComplement: SafeInt;
   contentVersion: string;
   compiledHash: string;
+  hullLengthMm?: SafeInt;
+  hullBeamMm?: SafeInt;
   capabilities?: readonly DesignCapability[];
   armament?: readonly CompiledArmamentMount[];
   torpedoArmament?: readonly CompiledTorpedoMount[];

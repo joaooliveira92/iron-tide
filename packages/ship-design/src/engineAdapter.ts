@@ -20,6 +20,8 @@ export interface EngineDesignFields {
   readonly crewComplement: number;
   readonly contentVersion: string;
   readonly compiledHash: string;
+  readonly hullLengthMm: number;
+  readonly hullBeamMm: number;
   readonly capabilities?: readonly CapabilityData[];
   readonly armament?: readonly CompiledWeaponArmament[];
   readonly torpedoArmament?: readonly {
@@ -123,6 +125,8 @@ export function toEngineDesign(
     crewComplement: c.systems?.crewRequired ?? 0,
     contentVersion: o.contentVersion,
     compiledHash: c.hash,
+    hullLengthMm: d.hull.lengthWl,
+    hullBeamMm: d.hull.beam,
     ...(c.capabilities.length > 0 ? { capabilities: [...c.capabilities] } : {}),
     ...(armament.length > 0 ? { armament } : {}),
     ...(torpedoArmament.length > 0 ? { torpedoArmament } : {}),
