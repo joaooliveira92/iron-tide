@@ -28,6 +28,12 @@ describe("toEngineDesign", () => {
     expect(e.compiledHash).toBe(c.hash);
     expect(e.nationId).toBe("uk");
   });
+  it("carries the draft waterline length and beam in millimetres", () => {
+    expect(e.hullLengthMm).toBe(draft.hull.lengthWl);
+    expect(e.hullBeamMm).toBe(draft.hull.beam);
+    expect(e.hullLengthMm).toBeGreaterThan(0);
+    expect(e.hullBeamMm).toBeGreaterThan(0);
+  });
   it("derives guns, crew, hit points and torpedo mounts from the real components", () => {
     expect(e.mainGunsCaliber).toBe(119_380);
     expect(e.mainGunsCount).toBe(2);

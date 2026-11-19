@@ -112,6 +112,8 @@ export const StorableCompiledDesignVersionSchema = Schema.Struct({
   crewComplement: Schema.Finite,
   contentVersion: Schema.String,
   compiledHash: Schema.String,
+  hullLengthMm: Schema.optional(Schema.Finite),
+  hullBeamMm: Schema.optional(Schema.Finite),
   capabilities: Schema.optional(StorableDesignCapabilitiesSchema),
   armament: Schema.optional(Schema.Array(Schema.Unknown)),
   torpedoArmament: Schema.optional(Schema.Array(Schema.Unknown)),

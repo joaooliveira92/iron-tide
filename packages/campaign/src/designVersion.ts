@@ -116,6 +116,8 @@ export function buildDesignVersion(
     crewComplement: SafeInt(e.crewComplement),
     contentVersion: e.contentVersion,
     compiledHash: e.compiledHash,
+    hullLengthMm: SafeInt(e.hullLengthMm),
+    hullBeamMm: SafeInt(e.hullBeamMm),
     ...(e.capabilities === undefined ? {} : { capabilities: [...e.capabilities] }),
     constructionCostUnits: SafeInt(units),
     ...(orderPlan
