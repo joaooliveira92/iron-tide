@@ -25,10 +25,16 @@ const HOME_REFUSED = {
   ok: false,
   reason: "x",
 } as Partial<ConstructionBatchPreviewOutcome> as ConstructionBatchPreviewOutcome;
-const FOREIGN_NONE = {
+const FOREIGN_NONE: ForeignConstructionPreviewOutcome = {
   ok: true,
-  preview: { builders: [] },
-} as Partial<ForeignConstructionPreviewOutcome> as ForeignConstructionPreviewOutcome;
+  preview: {
+    designVersionId: "d",
+    quantity: 1,
+    designDisplacementKg: 0,
+    builders: [],
+    contract: null,
+  },
+};
 
 function sessionWith(patch: Partial<Session>): Session {
   const state = {

@@ -1,6 +1,9 @@
 import { cleanup, fireEvent, render, screen } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
-import type { DivisionOrder } from "../../../../shared/player-battle-orders.js";
+import {
+  DEFAULT_DIVISION_ORDER,
+  type DivisionOrder,
+} from "../../../../shared/player-battle-orders.js";
 import { BASE_VIEW } from "../session/battle-session-harness.js";
 import { UnitCommandPanel, type UnitCommandPanelProps } from "./UnitCommandPanel.js";
 
@@ -9,9 +12,9 @@ const orders: Readonly<Record<string, DivisionOrder>> = {};
 function panelProps(patch: Partial<UnitCommandPanelProps>): UnitCommandPanelProps {
   return {
     view: BASE_VIEW,
-    locale: "en-GB",
+    locale: "en-US",
     selectedShipId: "a1",
-    orderFor: () => ({}),
+    orderFor: () => DEFAULT_DIVISION_ORDER,
     acceptedOrders: orders,
     setOrder: () => undefined,
     releaseCourse: () => undefined,
@@ -52,7 +55,10 @@ describe("unit command panel course preview", () => {
     expect(onPreviewCourse.mock.calls.at(-1)?.[0]).not.toBeNull();
     rerender(
       <UnitCommandPanel
-        {...panelProps({ onPreviewCourse, orderFor: () => ({ courseDeg: 10 }) })}
+        {...panelProps({
+          onPreviewCourse,
+          orderFor: () => ({ ...DEFAULT_DIVISION_ORDER, courseDeg: 10 }),
+        })}
       />,
     );
     expect(onPreviewCourse.mock.calls.at(-1)).toEqual([null]);
