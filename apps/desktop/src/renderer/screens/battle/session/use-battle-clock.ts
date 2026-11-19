@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useState } from "react";
 import { DEFAULT_TIME_SCALE, type TacticalTimeScale } from "../tactical/tactical-time.js";
 import { useTacticalPacer } from "../tactical/useTacticalPacer.js";
 
@@ -23,9 +23,11 @@ export function useBattleClock({ busy, ended, loaded, onStep }: BattleClockInput
 
   useTacticalPacer({ running, scale, busy, ended: !loaded || ended, onStep });
 
-  useEffect(() => {
+  const [seenEnded, setSeenEnded] = useState(ended);
+  if (seenEnded !== ended) {
+    setSeenEnded(ended);
     if (ended) setRunning(false);
-  }, [ended]);
+  }
 
   const toggleRunning = useCallback(() => setRunning((current) => !current), []);
   const pause = useCallback(() => setRunning(false), []);

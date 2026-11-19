@@ -1,4 +1,4 @@
-import { memo, useEffect, useState } from "react";
+import { memo, useCallback, useState } from "react";
 import {
   MAX_SPEED_KNOTS,
   MIN_SPEED_KNOTS,
@@ -58,15 +58,21 @@ export const UnitCommandPanel = memo(function UnitCommandPanel(props: UnitComman
     setSpeedText(speedTextFor(standingSpeed));
   }
 
-  useEffect(() => {
-    const parsed = parseCourse(courseText);
-    onPreviewCourse(parsed.ok && touched ? headingFromCompass(parsed.value) : null);
-    return () => onPreviewCourse(null);
-  }, [courseText, touched, onPreviewCourse]);
+  const parsedCourse = parseCourse(courseText);
+  const previewHeading = parsedCourse.ok && touched ? headingFromCompass(parsedCourse.value) : null;
+  const publishPreview = useCallback(
+    (element: HTMLElement | null) => {
+      if (element === null) return undefined;
+      onPreviewCourse(previewHeading);
+      return () => onPreviewCourse(null);
+    },
+    [previewHeading, onPreviewCourse],
+  );
 
   if (ship === null) {
     return (
       <section
+        ref={publishPreview}
         data-testid="unit-panel"
         aria-label="Selected unit"
         className="rounded border border-border p-2 text-xs text-muted-foreground"
@@ -86,6 +92,7 @@ export const UnitCommandPanel = memo(function UnitCommandPanel(props: UnitComman
 
   return (
     <section
+      ref={publishPreview}
       data-testid="unit-panel"
       aria-label="Selected unit"
       className="space-y-2 rounded border border-border p-2 text-xs"
