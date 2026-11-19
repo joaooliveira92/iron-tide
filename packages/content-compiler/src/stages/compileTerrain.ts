@@ -20,6 +20,7 @@ function recordOf(area: TerrainArea, radiusM: number): CompiledTerrainRecord {
   return {
     areaId: area.areaId,
     box: area.box,
+    battleOrigin: area.battleOrigin,
     land: polygonsOf(area, "LAND"),
     shallows: polygonsOf(area, "SHALLOWS"),
     exclusions: [...area.bases]
