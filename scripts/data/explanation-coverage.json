@@ -710,6 +710,18 @@
       }
     },
     {
+      "file": "packages/campaign-engine/src/unrest-projection.ts",
+      "type": "PlayerProjectionUnrestChange",
+      "area": "strategic",
+      "issue": "#1020",
+      "covered": {},
+      "exempt": {
+        "before": "Not yet explained; #1020 adds an unrest_change tree and re-exempts any field it does not explain.",
+        "after": "Not yet explained; #1020 adds an unrest_change tree and re-exempts any field it does not explain.",
+        "delta": "Not yet explained; #1020 adds an unrest_change tree and re-exempts any field it does not explain."
+      }
+    },
+    {
       "file": "packages/campaign-engine/src/projection.ts",
       "type": "PlayerProjectionCareer",
       "area": "strategic",

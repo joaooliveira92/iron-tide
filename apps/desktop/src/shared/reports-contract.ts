@@ -95,6 +95,23 @@ export interface MonthlyReportFleetExercise {
   readonly tension: readonly MonthlyReportExerciseTension[];
 }
 
+export interface MonthlyReportUnrestChange {
+  readonly reasonCode: string;
+  readonly delta: number;
+}
+
+export interface MonthlyReportUnrestConsequence {
+  readonly consequence: "STRIKE" | "REVOLUTION";
+  readonly careerEnded: boolean;
+}
+
+export interface MonthlyReportUnrest {
+  readonly before: number;
+  readonly after: number;
+  readonly changes: readonly MonthlyReportUnrestChange[];
+  readonly consequences: readonly MonthlyReportUnrestConsequence[];
+}
+
 export interface MonthlyReportPeriod {
   readonly from: { readonly year: number; readonly month: number };
   readonly to: { readonly year: number; readonly month: number };
@@ -114,6 +131,7 @@ export interface MonthlyReportEntry {
   readonly battleOutcomes: readonly BattleOutcome[];
   readonly presence?: MonthlyReportPresence;
   readonly fleetExercise?: MonthlyReportFleetExercise;
+  readonly unrest?: MonthlyReportUnrest;
 }
 
 export interface MonthlyReports {
