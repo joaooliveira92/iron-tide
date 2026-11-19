@@ -122,7 +122,10 @@ contract wins; fix this file in the same change.
   `ContentBundle`: the bundle content hash seeds technology variation, so a
   bundle change would move replays. The ruleset `terrain` section and
   `files.terrain` are stripped from the bundle identity. Polygons and the
-  exclusion radius are PROVISIONAL content and ruleset data.
+  exclusion radius are PROVISIONAL content and ruleset data. Each area authors
+  a `battleOrigin`, the area-local point mapped to the battle box corner;
+  battles take the terrain of their `areaId` (#982), and an area with no record
+  resolves in open sea.
 
 ## Scope and values
 
@@ -142,7 +145,7 @@ contract wins; fix this file in the same change.
 
 Engine capabilities with no desktop path stay dormant until a ticket wires them:
 aircraft and carriers, air combat, mines, submarines, coastal defence, smoke,
-surface-to-surface missiles, formation keeping and terrain queries. `scripts/data/reachability-ledger.json` lists each one
+surface-to-surface missiles and formation keeping. `scripts/data/reachability-ledger.json` lists each one
 and `scripts/verify-reachability-ledger.mjs` fails when a row drifts.
 
 ## Services, layers, composition

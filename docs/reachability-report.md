@@ -6,7 +6,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | --- | --- |
 | reachable | 43 |
 | dormant-by-decision | 15 |
-| internal | 16 |
+| internal | 18 |
 
 ## Reachable
 
@@ -71,7 +71,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | combat-navigation | Machinery speed effects: fouling, breakdowns, vibration | RULES.md#dormant-by-decision |
 | combat-formation | Formation keeping | RULES.md#dormant-by-decision |
 | combat-submarines | Submarine operations | RULES.md#dormant-by-decision |
-| combat-terrain | Coast, shoals and base exclusion zones in battle | RULES.md#dormant-by-decision |
+| combat-division-ai | Division AI orders in battle | RULES.md#dormant-by-decision |
 | combat-coastal-defense | Coastal defence batteries | RULES.md#dormant-by-decision |
 | combat-smoke | Smokescreens and funnel smoke | RULES.md#dormant-by-decision |
 | national-traits | Play a nation whose national traits change shipbuilding, prestige loss, budget and surprise attack | #424 |
@@ -86,6 +86,8 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | design-studies | Design study bookkeeping | - |
 | foreign-contract-monthly | Monthly foreign-contract, insight and war-policy steps | - |
 | phase-engine-infrastructure | Errors, ledger, month pipeline and replay verification | - |
+| combat-terrain | Coast, shoals and base exclusion zones in battle | - |
+| battle-terrain-placement | Area terrain handed to battle resolution by campaign area | - |
 | combat-tactical-core | Tactical simulation loop, clock, targeting and battle generation | - |
 | combat-battle-resolution | Battle resolution, auto-resolution, endings and ledger | - |
 | combat-aircraft-model | Aircraft data model shared by air combat and carriers | - |

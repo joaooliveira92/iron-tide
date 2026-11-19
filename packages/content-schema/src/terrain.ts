@@ -8,7 +8,7 @@ export const TERRAIN_LAYERS = ["LAND", "SHALLOWS"] as const;
 export const TERRAIN_VERSION = 1;
 export const TERRAIN_HASH_DOMAIN = "bluewave.terrain.v1";
 export const TERRAIN_ARTIFACT_KIND = "terrain-pack";
-export const TERRAIN_COMPATIBILITY_VERSION = "0.1.0";
+export const TERRAIN_COMPATIBILITY_VERSION = "0.2.0";
 
 const metre = Schema.Finite.check(
   Schema.isInt(),
@@ -43,6 +43,7 @@ export const TerrainAreaSchema = Schema.Struct({
   box: TerrainBoxSchema,
   polygons: Schema.Array(TerrainPolygonSchema),
   bases: Schema.Array(TerrainBaseSchema),
+  battleOrigin: TerrainVertexSchema,
   provenance: ProvenanceSchema,
 });
 
@@ -69,6 +70,7 @@ export const CompiledTerrainExclusionSchema = Schema.Struct({
 export const CompiledTerrainRecordSchema = Schema.Struct({
   areaId: Schema.NonEmptyString,
   box: TerrainBoxSchema,
+  battleOrigin: TerrainVertexSchema,
   land: Schema.Array(CompiledTerrainPolygonSchema),
   shallows: Schema.Array(CompiledTerrainPolygonSchema),
   exclusions: Schema.Array(CompiledTerrainExclusionSchema),

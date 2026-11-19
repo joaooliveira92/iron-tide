@@ -11,7 +11,11 @@ import {
   type PlayerBattleSession,
 } from "@bluewave/combat/battleResolution";
 import { isBluewaveError } from "@bluewave/contracts";
-import { gunQualityRulesForBattle, trainingEffectsFor } from "@bluewave/phase-engine";
+import {
+  battleTerrainOf,
+  gunQualityRulesForBattle,
+  trainingEffectsFor,
+} from "@bluewave/phase-engine";
 import type { ShipBuildingContent } from "@bluewave/ship-design";
 import { Effect } from "effect";
 import type {
@@ -22,6 +26,7 @@ import type {
 } from "../../shared/player-battle-contract.js";
 import { toCombatOrders } from "../../shared/player-battle-orders.js";
 import { BATTLE_VIEW_INVALID, boundaryBattleView } from "./battleViewBoundary.js";
+import type { BattleTerrainByArea } from "../battleTerrain.js";
 import type { PlayerBattleStep } from "../playerBattleSidecar.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
 import { ContentArtifact } from "../runtime/contentArtifact.js";
@@ -118,6 +123,7 @@ export function projectSession(
   gunneryRules?: GunneryRules,
   missilesRules?: MissilesRules,
   shipBuilding?: ShipBuildingContent,
+  terrain?: BattleTerrainByArea,
 ): PlayerBattleSession | PlayerBattleRefusal {
   const manifest = (snapshot.wars.battleManifests ?? []).find(
     (candidate) => candidate.battleId === battleId,
@@ -155,6 +161,7 @@ export function projectSession(
       ...(gunneryRules === undefined ? {} : { gunneryRadar: gunneryRules.radar }),
       ...(gunQuality === undefined ? {} : { gunQuality }),
       ...(missilesRules === undefined ? {} : { missilesRules }),
+      ...battleTerrainOf(terrain, manifest.areaId),
     });
   } catch (error) {
     return refuse("PLAYER_BATTLE_PROJECTION_FAILED", projectionFailureReason(error));
@@ -212,6 +219,7 @@ export const startPlayerBattle = (input: {
     const gunneryRules = yield* (yield* ContentArtifact).loadGunneryRules();
     const missilesRules = yield* (yield* ContentArtifact).loadMissilesRules();
     const shipBuilding = yield* (yield* ContentArtifact).loadShipBuildingContent();
+    const terrain = yield* (yield* ContentArtifact).loadBattleTerrain();
     const projected = projectSession(
       outcome.snapshot,
       input.battleId,
@@ -221,6 +229,7 @@ export const startPlayerBattle = (input: {
       gunneryRules,
       missilesRules,
       shipBuilding,
+      terrain,
     );
     if (isRefusal(projected)) return projected;
 
