@@ -1,6 +1,8 @@
 import { X } from "lucide-react";
-import { useEffect, useId, useRef, type ReactNode } from "react";
+import { useId, useRef, type ReactNode } from "react";
 import { cn } from "../../lib/utils.js";
+import { useWindowEvent } from "../../lib/use-window-event.js";
+import { useExternalSync } from "../../shell/useExternalSync.js";
 
 export interface DepartmentDrawerProps {
   readonly title: string;
@@ -23,12 +25,8 @@ export function DepartmentDrawer({
 }: DepartmentDrawerProps) {
   const titleId = useId();
   const headingRef = useRef<HTMLHeadingElement>(null);
-  const onCloseRef = useRef(onClose);
-  useEffect(() => {
-    onCloseRef.current = onClose;
-  });
 
-  useEffect(() => {
+  useExternalSync(() => {
     const opener = document.activeElement;
     headingRef.current?.focus({ preventScroll: true });
     return () => {
@@ -37,19 +35,15 @@ export function DepartmentDrawer({
     };
   }, [title]);
 
-  useEffect(() => {
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key !== "Escape" || event.defaultPrevented) return;
-      const target = event.target;
-      if (target instanceof Element && target.closest('[role="listbox"], [role="menu"]') !== null) {
-        return;
-      }
-      event.preventDefault();
-      onCloseRef.current();
+  useWindowEvent("keydown", (event) => {
+    if (event.key !== "Escape" || event.defaultPrevented) return;
+    const target = event.target;
+    if (target instanceof Element && target.closest('[role="listbox"], [role="menu"]') !== null) {
+      return;
     }
-    window.addEventListener("keydown", onKeyDown);
-    return () => window.removeEventListener("keydown", onKeyDown);
-  }, []);
+    event.preventDefault();
+    onClose();
+  });
 
   return (
     <section

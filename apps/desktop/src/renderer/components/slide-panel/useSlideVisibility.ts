@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { useExternalSync } from "../../shell/useExternalSync.js";
 import { PANEL_TRANSITION_MS } from "./constants.js";
 
 export interface SlideVisibility {
@@ -13,7 +14,7 @@ export function useSlideVisibility(isOpen: boolean, animateOnMount = false): Sli
   const frameOneRef = useRef<number | null>(null);
   const frameTwoRef = useRef<number | null>(null);
 
-  useEffect(() => {
+  useExternalSync(() => {
     const clearPendingWork = (): void => {
       if (hideTimerRef.current !== null) {
         clearTimeout(hideTimerRef.current);

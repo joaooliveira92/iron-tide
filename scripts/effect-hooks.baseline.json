@@ -21,11 +21,5 @@
   "apps/desktop/src/renderer/components/globe-adapter/use-overlay-projection.ts": 2,
   "apps/desktop/src/renderer/components/globe-spike/GlobeSpike.tsx": 3,
   "apps/desktop/src/renderer/components/globe-spike/GlobeSpikeHost.tsx": 2,
-  "apps/desktop/src/renderer/components/globe-spike/use-land-plan.ts": 2,
-  "apps/desktop/src/renderer/components/motion/bouncy-accordion-row.tsx": 2,
-  "apps/desktop/src/renderer/components/motion/bouncy-accordion.tsx": 2,
-  "apps/desktop/src/renderer/components/motion/sortable-list.tsx": 2,
-  "apps/desktop/src/renderer/components/slate/ChartDesk.tsx": 2,
-  "apps/desktop/src/renderer/components/slate/DepartmentDrawer.tsx": 4,
-  "apps/desktop/src/renderer/components/slide-panel/useSlideVisibility.ts": 2
+  "apps/desktop/src/renderer/components/globe-spike/use-land-plan.ts": 2
 }

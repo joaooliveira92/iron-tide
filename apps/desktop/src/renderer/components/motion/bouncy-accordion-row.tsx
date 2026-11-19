@@ -2,7 +2,7 @@
 
 import { motion, type Transition } from "motion/react";
 import { ChevronDown } from "lucide-react";
-import { useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import { EASE_OUT } from "../../lib/ease.js";
 import { cn } from "../../lib/utils.js";
 import type { BouncyAccordionClassNames, BouncyAccordionItem } from "./bouncy-accordion-types.js";
@@ -49,11 +49,8 @@ export function BouncyAccordionRow({
   classNames?: BouncyAccordionClassNames;
   onToggle: () => void;
 }) {
-  const contentRef = useRef<HTMLDivElement>(null);
   const [contentHeight, setContentHeight] = useState(0);
-
-  useLayoutEffect(() => {
-    const node = contentRef.current;
+  const contentRef = useCallback((node: HTMLDivElement | null) => {
     if (!node) return;
     const updateHeight = () => setContentHeight(node.offsetHeight);
     updateHeight();
