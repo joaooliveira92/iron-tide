@@ -36,7 +36,6 @@
   "apps/desktop/src/renderer/components/ui/select/use-floating-position.ts": 3,
   "apps/desktop/src/renderer/components/ui/select/use-option-registry.ts": 2,
   "apps/desktop/src/renderer/components/ui/select/use-typeahead.ts": 2,
-  "apps/desktop/src/renderer/components/ui/sidebar/sidebar-provider.tsx": 1,
   "apps/desktop/src/renderer/components/world-map/CoastlineCanvas.tsx": 4,
   "apps/desktop/src/renderer/components/world-map/MapMinimap.tsx": 4,
   "apps/desktop/src/renderer/components/world-map/MapScaleBar.tsx": 2,
@@ -44,12 +43,5 @@
   "apps/desktop/src/renderer/components/world-map/useCoastline.ts": 2,
   "apps/desktop/src/renderer/components/world-map/useInitialFocusArea.ts": 2,
   "apps/desktop/src/renderer/components/world-map/useMapCamera.ts": 3,
-  "apps/desktop/src/renderer/components/world-map/useMapCameraGestures.ts": 2,
-  "apps/desktop/src/renderer/content/usePresentationContent.ts": 2,
-  "apps/desktop/src/renderer/content/useUiCatalogue.ts": 2,
-  "apps/desktop/src/renderer/lib/command-screen-workflow.ts": 3,
-  "apps/desktop/src/renderer/lib/preferences-context.tsx": 2,
-  "apps/desktop/src/renderer/lib/use-min-width.ts": 2,
-  "apps/desktop/src/renderer/lib/use-mobile.ts": 1,
-  "apps/desktop/src/renderer/lib/use-read.ts": 2
+  "apps/desktop/src/renderer/components/world-map/useMapCameraGestures.ts": 2
 }

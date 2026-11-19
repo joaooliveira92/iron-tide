@@ -1,5 +1,3 @@
-import { useEffect, useState } from "react";
-
 import { useBridge } from "./bridge-context.js";
 import {
   invalidateQuery,
@@ -8,6 +6,7 @@ import {
   type ReadQueryValue,
   type ReadResult,
 } from "./read-queries.js";
+import { useStoreLifecycle } from "./use-store-lifecycle.js";
 
 export interface UseReadOptions {
   readonly enabled?: boolean;
@@ -20,22 +19,25 @@ export function useRead<Name extends ReadQueryName>(
   revision: number | null,
   options: UseReadOptions = {},
 ): ReadResult<ReadQueryValue<Name>> {
-  const [state, setState] = useState<ReadResult<ReadQueryValue<Name>>>({ status: "loading" });
   const client = useBridge()?.campaign;
   const enabled = options.enabled ?? true;
   const refreshToken = options.refreshToken ?? 0;
 
-  useEffect(() => {
-    if (!enabled) return;
-    let active = true;
-    if (refreshToken > 0) invalidateQuery(client, query, sessionId);
-    void readQuery(client, query, sessionId, revision).then((read) => {
-      if (active) setState(read);
-    });
-    return () => {
-      active = false;
-    };
-  }, [client, query, sessionId, revision, enabled, refreshToken]);
+  const [state] = useStoreLifecycle<ReadResult<ReadQueryValue<Name>>>(
+    () => ({ status: "loading" }),
+    (target) => {
+      if (!enabled) return;
+      let active = true;
+      if (refreshToken > 0) invalidateQuery(client, query, sessionId);
+      void readQuery(client, query, sessionId, revision).then((read) => {
+        if (active) target.set(read);
+      });
+      return () => {
+        active = false;
+      };
+    },
+    [client, query, sessionId, revision, enabled, refreshToken],
+  );
 
   return state;
 }

@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 import type { BridgeResult } from "../../shared/bridge-contract.js";
+import { useExternalSync } from "../shell/useExternalSync.js";
 import { describeTransportFailure } from "./bridge-read.js";
 import { stampCommand, type CommandStamp, type TransportIdSource } from "./command-envelope.js";
 
@@ -312,14 +313,14 @@ export function useCommandScreenWorkflow<
 
   const needsRefresh = adapter.requiresRefresh(state);
   const hasLoadedOnMount = useRef(false);
-  useEffect(() => {
+  useExternalSync(() => {
     const isMount = !hasLoadedOnMount.current;
     hasLoadedOnMount.current = true;
     if (isMount || needsRefresh) void loadScreen();
   }, [needsRefresh, loadScreen]);
 
   const seenRefreshKey = useRef(options.refreshKey);
-  useEffect(() => {
+  useExternalSync(() => {
     if (seenRefreshKey.current === options.refreshKey) return;
     seenRefreshKey.current = options.refreshKey;
     void loadScreen();

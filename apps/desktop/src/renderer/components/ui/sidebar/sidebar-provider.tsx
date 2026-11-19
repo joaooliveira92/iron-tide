@@ -2,6 +2,7 @@ import * as React from "react";
 
 import { useIsMobile } from "../../../lib/use-mobile.js";
 import { cn } from "../../../lib/utils.js";
+import { useWindowEvent } from "../../../lib/use-window-event.js";
 import { SIDEBAR_KEYBOARD_SHORTCUT, SIDEBAR_WIDTH, SIDEBAR_WIDTH_ICON } from "./constants.js";
 import { SidebarContext, type SidebarContextValue } from "./context.js";
 
@@ -40,17 +41,12 @@ export const SidebarProvider = ({
     else setOpen(!open);
   }, [isMobile, open, openMobile, setOpen]);
 
-  React.useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.metaKey || event.ctrlKey)) {
-        event.preventDefault();
-        toggleSidebar();
-      }
-    };
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [toggleSidebar]);
+  useWindowEvent("keydown", (event) => {
+    if (event.key === SIDEBAR_KEYBOARD_SHORTCUT && (event.metaKey || event.ctrlKey)) {
+      event.preventDefault();
+      toggleSidebar();
+    }
+  });
 
   const contextValue = React.useMemo<SidebarContextValue>(
     () => ({

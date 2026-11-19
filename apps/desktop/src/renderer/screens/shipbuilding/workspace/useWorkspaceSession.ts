@@ -9,7 +9,7 @@ import { useDraftAutosave } from "../../../components/design-workspace/useDraftA
 import { useRestoredDraftToast } from "../../../components/design-workspace/useRestoredDraftToast.js";
 import { plural } from "../../../components/design-workspace/plural.js";
 import { useBridge } from "../../../lib/bridge-context.js";
-import { useLifecycle } from "../../../lib/use-lifecycle.js";
+import { useLifecycle } from "../../../shell/useExternalSync.js";
 import { useStudyPreview } from "../../../components/design-workspace/panels/SubmitPanel.js";
 import { useCampaignMonthId } from "../../../shell/CampaignShellContext.js";
 import { usePresentationFormat } from "../../../shell/usePresentationFormat.js";

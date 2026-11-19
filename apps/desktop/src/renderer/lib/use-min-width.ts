@@ -1,19 +1,21 @@
-import { useEffect, useState } from "react";
+import { useCallback, useSyncExternalStore } from "react";
+
+const hasMatchMedia = (): boolean => typeof window.matchMedia === "function";
 
 export function useMinWidth(px: number): boolean {
   const query = `(min-width: ${px}px)`;
-  const [matches, setMatches] = useState(() =>
-    typeof window.matchMedia === "function" ? window.matchMedia(query).matches : true,
+  const subscribe = useCallback(
+    (notify: () => void) => {
+      if (!hasMatchMedia()) return () => undefined;
+      const list = window.matchMedia(query);
+      list.addEventListener("change", notify);
+      return () => list.removeEventListener("change", notify);
+    },
+    [query],
   );
-
-  useEffect(() => {
-    if (typeof window.matchMedia !== "function") return;
-    const list = window.matchMedia(query);
-    const onChange = () => setMatches(list.matches);
-    onChange();
-    list.addEventListener("change", onChange);
-    return () => list.removeEventListener("change", onChange);
-  }, [query]);
-
-  return matches;
+  const read = useCallback(
+    () => (hasMatchMedia() ? window.matchMedia(query).matches : true),
+    [query],
+  );
+  return useSyncExternalStore(subscribe, read);
 }

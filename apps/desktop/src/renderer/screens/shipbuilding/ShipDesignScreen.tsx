@@ -1,6 +1,6 @@
 import { useMemo } from "react";
 import { useDrawingBoardContentSource } from "../../components/design-workspace/useDrawingBoardContent.js";
-import { useLifecycle } from "../../lib/use-lifecycle.js";
+import { useLifecycle } from "../../shell/useExternalSync.js";
 import { useRevisionRequest } from "../../shell/CampaignShellContext.js";
 import { useConstructionScreen } from "../construction/hooks/useConstructionScreen.js";
 import { ShipbuildingWorkspace } from "./ShipbuildingWorkspace.js";

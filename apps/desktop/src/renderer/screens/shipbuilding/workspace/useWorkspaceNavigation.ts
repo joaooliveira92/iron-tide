@@ -33,7 +33,7 @@ import {
 import type { EntityContext } from "../../../components/design-workspace/selection/facts.js";
 import { useLeaveGuard } from "../../../shell/CampaignShellContext.js";
 import { useScreenHeaderHost } from "../../../shell/screen-header.js";
-import { useLifecycle } from "../../../lib/use-lifecycle.js";
+import { useLifecycle } from "../../../shell/useExternalSync.js";
 import { useMinWidth } from "../../../lib/use-min-width.js";
 import { COMMAND_OVERLAY_MIN_WIDTH } from "../../overview/hooks/useOverviewModel.js";
 import { placeForDestination } from "../destination-place.js";

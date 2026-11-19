@@ -1,7 +1,7 @@
 import { useCallback, useRef, useState } from "react";
 import type { BluewaveDesktopBridge } from "../../../preload/index.js";
 import { useBridge } from "../../lib/bridge-context.js";
-import { useLifecycle } from "../../lib/use-lifecycle.js";
+import { useLifecycle } from "../../shell/useExternalSync.js";
 import { readUiState, writeUiStatePatch } from "../../lib/uiStateSidecar.js";
 import {
   DEFAULT_INSPECTOR_LAYOUT,
