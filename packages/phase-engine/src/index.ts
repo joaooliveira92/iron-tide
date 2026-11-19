@@ -161,7 +161,7 @@ export type {
 } from "./tacticalReplay.js";
 export { TacticalReplayVerifier } from "./tacticalReplay.js";
 export { gunQualityRulesForBattle } from "./battleGunQuality.js";
-export { battleTerrainOf } from "./battleTerrain.js";
+export { battleMinefieldsOf, battleTerrainOf } from "./battleTerrain.js";
 export { AVIATION_TECHNOLOGY, resolveAircraftDevelopment } from "./aircraft.js";
 export { resolveCarrierOperations } from "./carrier-operations.js";
 export * from "./designStudies.js";

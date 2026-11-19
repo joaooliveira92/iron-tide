@@ -10,6 +10,7 @@ import {
 } from "../src/index.js";
 import {
   ATTACKER_NATION,
+  BATTLE_AREA,
   CAMPAIGN_SEED,
   DEFENDER_NATION,
   makeBattleSnapshot,
@@ -40,6 +41,49 @@ describe("TacticalReplayVerifier (ticket 07)", () => {
     expect(result.battles).toHaveLength(1);
     expect(result.battles[0]!.match).toBe(true);
     expect(result.battles[0]!.divergence).toBeUndefined();
+  });
+
+  it("re-resolves with the same known minefields and diverges without them", () => {
+    const minefields = {
+      [BATTLE_AREA]: [
+        {
+          id: "mf",
+          xM: 5_000,
+          yM: 0,
+          radiusM: 2_000,
+          knownToSideIds: ["ATTACKER", "DEFENDER"],
+          pressureBp: 4_000,
+        },
+      ],
+    };
+    const s0 = makeBattleSnapshot();
+    const month = new MonthExecutor().execute(
+      s0,
+      [],
+      CAMPAIGN_SEED,
+      new DiagnosticCollector(),
+      undefined,
+      { minefields },
+    );
+    const fs = month.finalSnapshot;
+    const verifySnap: CampaignSnapshot = {
+      ...s0,
+      strategicWeather: fs.strategicWeather,
+      wars: { ...s0.wars, battles: fs.wars.battles, battleManifests: fs.wars.battleManifests },
+    };
+    const verifier = new TacticalReplayVerifier();
+    expect(
+      verifier.verify(
+        verifySnap,
+        CAMPAIGN_SEED,
+        undefined,
+        undefined,
+        undefined,
+        undefined,
+        minefields,
+      ).match,
+    ).toBe(true);
+    expect(verifier.verify(verifySnap, CAMPAIGN_SEED).match).toBe(false);
   });
 
   it("is deterministic: two re-runs produce byte-identical verification output", () => {

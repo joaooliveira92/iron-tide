@@ -8,9 +8,11 @@ import {
   runPlayerBattleToEnd,
   type PlayerBattleOrders,
 } from "@bluewave/combat/battleResolution";
+import type { TacticalMinefieldRecord } from "@bluewave/combat/collision";
 import type { TerrainView } from "@bluewave/combat/terrain";
 import {
   carryCollisionState,
+  knownMinefieldsOf,
   observeCollisionRecords,
   projectBattleCollision,
   withCollisionActivity,
@@ -115,7 +117,9 @@ describe("collision state and activity", () => {
 
 const ORDERS: PlayerBattleOrders = { divisions: {} };
 
-function playerInput(extra: { terrain?: TerrainView } = {}) {
+function playerInput(
+  extra: { terrain?: TerrainView; minefields?: readonly TacticalMinefieldRecord[] } = {},
+) {
   return { ...makeAutoInput(), playerNationId: ATTACKER_NATION, ...extra };
 }
 
@@ -166,6 +170,110 @@ describe("player session collision wiring", () => {
       collision: { ...withSea.collision, state: { speedCaps: {}, inContact: ["a1|d1"] } },
     };
     expect(playerBattleSessionHash(stateful)).not.toBe(playerBattleSessionHash(withSea));
+  });
+});
+
+function fieldAt(
+  knownToSideIds: readonly string[],
+  pressureBp: number,
+  xM = 3_000,
+): TacticalMinefieldRecord {
+  return { id: "mf-1", xM, yM: 0, radiusM: 2_500, knownToSideIds, pressureBp };
+}
+
+describe("projectBattleCollision minefields", () => {
+  it("keeps the per-side view on the collision context and projects it alone", () => {
+    const minefields = { ATTACKER: { minefields: [{ id: "m", xM: 1, yM: 2, radiusM: 3 }] } };
+    const collision = projectBattleCollision({ designs: {}, minefields });
+    expect(collision?.minefields).toBe(minefields);
+    expect(collision?.terrain).toBeUndefined();
+  });
+
+  it("projects nothing for an empty per-side view", () => {
+    expect(projectBattleCollision({ designs: {}, minefields: {} })).toBeUndefined();
+  });
+
+  it("derives each side's view from records using the battle's sides only", () => {
+    const units = makeAutoInput().manifest.sides.map((side) => side.sideId);
+    expect(units).toEqual(["ATTACKER", "DEFENDER"]);
+    const bySide = knownMinefieldsOf([fieldAt(["ATTACKER", "OUTSIDER"], 5_000)], units);
+    expect(Object.keys(bySide ?? {})).toEqual(["ATTACKER"]);
+    expect(knownMinefieldsOf([fieldAt([], 5_000)], units)).toBeUndefined();
+    expect(knownMinefieldsOf(undefined, units)).toBeUndefined();
+  });
+});
+
+describe("resolveBattleAuto minefield wiring (§24)", () => {
+  const base = resolveBattleAuto(makeAutoInput());
+
+  it("an unknown field never reaches the AI, whatever its pressure", () => {
+    for (const pressureBp of [0, 5_000, 10_000]) {
+      const result = resolveBattleAuto({
+        ...makeAutoInput(),
+        minefields: [fieldAt([], pressureBp)],
+      });
+      expect(result.resultHash).toBe(base.resultHash);
+    }
+  });
+
+  it("a known field steers its own side, and true pressure is unobservable", () => {
+    const low = resolveBattleAuto({
+      ...makeAutoInput(),
+      minefields: [fieldAt(["ATTACKER"], 100)],
+    });
+    const high = resolveBattleAuto({
+      ...makeAutoInput(),
+      minefields: [fieldAt(["ATTACKER"], 9_900)],
+    });
+    expect(low.resultHash).not.toBe(base.resultHash);
+    expect(high.resultHash).toBe(low.resultHash);
+    expect(high.minuteHashes).toEqual(low.minuteHashes);
+  });
+
+  it("a field known to one side does not steer the other", () => {
+    const attackerOnly = resolveBattleAuto({
+      ...makeAutoInput(),
+      minefields: [fieldAt(["ATTACKER"], 1)],
+    });
+    const defenderOnly = resolveBattleAuto({
+      ...makeAutoInput(),
+      minefields: [fieldAt(["DEFENDER"], 1)],
+    });
+    expect(attackerOnly.resultHash).not.toBe(defenderOnly.resultHash);
+  });
+});
+
+describe("player session minefield wiring (§24)", () => {
+  it("keeps only the known per-side view on the session, never the records", () => {
+    const session = createPlayerBattleSession(
+      playerInput({
+        minefields: [fieldAt(["ATTACKER"], 7_000), { ...fieldAt([], 9_000), id: "x" }],
+      }),
+    );
+    expect(session.collision?.minefields).toEqual({
+      ATTACKER: { minefields: [{ id: "mf-1", xM: 3_000, yM: 0, radiusM: 2_500 }] },
+    });
+    expect(JSON.stringify(session)).not.toContain("pressureBp");
+  });
+
+  it("an unknown field leaves the session hash unchanged and a known one steers", () => {
+    const plain = runPlayerBattleToEnd(createPlayerBattleSession(playerInput()), ORDERS);
+    const unknown = runPlayerBattleToEnd(
+      createPlayerBattleSession(playerInput({ minefields: [fieldAt([], 9_000)] })),
+      ORDERS,
+    );
+    expect(playerBattleSessionHash(unknown)).toBe(playerBattleSessionHash(plain));
+    const known = (pressureBp: number) =>
+      playerBattleSessionHash(
+        runPlayerBattleToEnd(
+          createPlayerBattleSession(
+            playerInput({ minefields: [fieldAt(["ATTACKER", "DEFENDER"], pressureBp)] }),
+          ),
+          ORDERS,
+        ),
+      );
+    expect(known(10)).not.toBe(playerBattleSessionHash(plain));
+    expect(known(10)).toBe(known(9_990));
   });
 });
 

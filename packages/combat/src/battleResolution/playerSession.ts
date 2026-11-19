@@ -3,7 +3,7 @@ import { RandomEngine } from "@bluewave/random";
 import { BATTLE_SEED_FORMULA_VERSION, deriveBattleSeed } from "../generation/seed.js";
 import { buildBattleWeather } from "../weather/neighbour.js";
 import { AUTO_RESOLUTION_MAX_MINUTES } from "./constants.js";
-import { projectBattleCollision, withCollision } from "./collisionWiring.js";
+import { battleCollisionOf, withCollision } from "./collisionWiring.js";
 import { projectBattle, type ProjectBattleOutput } from "./project.js";
 import type { CreatePlayerBattleInput, PlayerBattleSession } from "./playerSessionTypes.js";
 import {
@@ -126,12 +126,6 @@ export function createPlayerBattleSession(input: CreatePlayerBattleInput): Playe
     log: [],
     result: null,
     ...(input.waypointRules === undefined ? {} : { waypointRules: input.waypointRules }),
-    ...withCollision(
-      projectBattleCollision({
-        designs: projection.designs,
-        terrain: input.terrain,
-        rules: input.collisionRules,
-      }),
-    ),
+    ...withCollision(battleCollisionOf(input, projection.designs)),
   };
 }
