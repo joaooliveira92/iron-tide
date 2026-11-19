@@ -1,4 +1,5 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import { useExternalSync } from "../../shell/useExternalSync.js";
 import { simplifyPolygons, type FlatPolygon } from "../../lib/simplify-geometry.js";
 import { runTimeSliced } from "../../lib/time-slice.js";
 import { minimapToWorld, visibleWorldRects } from "./map-viewport.js";
@@ -55,11 +56,9 @@ export function MapMinimap({
   const svgRef = useRef<SVGSVGElement | null>(null);
   const rectRefs = useRef<(SVGRectElement | null)[]>([]);
   const cameraRef = useRef(camera);
-  useEffect(() => {
-    cameraRef.current = camera;
-  });
+  cameraRef.current = camera;
 
-  useEffect(() => {
+  useExternalSync(() => {
     const handle = runTimeSliced(
       buildMinimapPath(polygons, projection, centre),
       {
@@ -74,7 +73,7 @@ export function MapMinimap({
     return () => handle.cancel();
   }, [polygons, projection, centre]);
 
-  useEffect(() => {
+  useExternalSync(() => {
     const update = () => {
       const current = cameraRef.current;
       const view = current.getViewport();

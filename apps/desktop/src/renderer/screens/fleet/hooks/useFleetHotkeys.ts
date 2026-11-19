@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { useLifecycle } from "../../../lib/use-lifecycle.js";
+import { useLifecycle } from "../../../shell/useExternalSync.js";
 import {
   classifyHotkeyTarget,
   fleetHotkeyAction,

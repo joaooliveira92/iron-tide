@@ -1,13 +1,4 @@
-import {
-  createContext,
-  use,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, use, useCallback, useMemo, useRef, type ReactNode } from "react";
 
 import type { BridgeResult } from "../../shared/bridge-contract.js";
 import {
@@ -28,6 +19,7 @@ import {
   type NationalCurrencySource,
 } from "./presentation-format/index.js";
 import { useBridge } from "./bridge-context.js";
+import { useStoreLifecycle } from "./use-store-lifecycle.js";
 
 export type PreferencesStatus = "loading" | "ready" | "error";
 
@@ -40,6 +32,15 @@ export interface PreferencesContextValue {
   readonly preferences: AppPreferences;
   readonly status: PreferencesStatus;
   readonly setApp: (patch: Partial<AppPreferences>) => void;
+}
+
+interface PreferencesState {
+  readonly preferences: AppPreferences;
+  readonly status: PreferencesStatus;
+}
+
+function withStatus(state: PreferencesState, status: PreferencesStatus): PreferencesState {
+  return state.status === status ? state : { ...state, status };
 }
 
 const DEFAULT_CONTEXT_VALUE: PreferencesContextValue = {
@@ -61,56 +62,50 @@ export function PreferencesProvider({
 }) {
   const bridge = useBridge();
   const capability: PreferencesCapability | undefined = bridge?.preferences;
-  const [preferences, setPreferences] = useState<AppPreferences>(
-    initialSnapshot?.app ?? DEFAULT_APP_PREFERENCES,
-  );
-  const [status, setStatus] = useState<PreferencesStatus>(
-    capability === undefined || initialSnapshot !== undefined ? "ready" : "loading",
-  );
-  const preferencesRef = useRef(preferences);
-  preferencesRef.current = preferences;
   const writeSeqRef = useRef(0);
 
-  useEffect(() => {
-    if (capability === undefined) {
-      setStatus("ready");
-      return;
-    }
-    if (initialSnapshot !== undefined) {
-      preferencesRef.current = initialSnapshot.app;
-      setPreferences(initialSnapshot.app);
-      setStatus("ready");
-      return;
-    }
-    let active = true;
-    setStatus("loading");
-    const seqAtStart = writeSeqRef.current;
-    void capability
-      .read()
-      .then((result) => {
-        if (!active) return;
-        if (writeSeqRef.current !== seqAtStart) return;
-        if (result.outcome === "success") {
-          preferencesRef.current = result.value.app;
-          setPreferences(result.value.app);
-          setStatus("ready");
-        } else {
-          setStatus("error");
-        }
-      })
-      .catch(() => {
-        if (active) setStatus("error");
-      });
-    return () => {
-      active = false;
-    };
-  }, [capability, initialSnapshot]);
+  const [{ preferences, status }, store] = useStoreLifecycle<PreferencesState>(
+    () => ({
+      preferences: initialSnapshot?.app ?? DEFAULT_APP_PREFERENCES,
+      status: capability === undefined || initialSnapshot !== undefined ? "ready" : "loading",
+    }),
+    (target) => {
+      if (capability === undefined) {
+        target.set((state) => withStatus(state, "ready"));
+        return;
+      }
+      if (initialSnapshot !== undefined) {
+        target.set({ preferences: initialSnapshot.app, status: "ready" });
+        return;
+      }
+      let active = true;
+      target.set((state) => withStatus(state, "loading"));
+      const seqAtStart = writeSeqRef.current;
+      void capability
+        .read()
+        .then((result) => {
+          if (!active) return;
+          if (writeSeqRef.current !== seqAtStart) return;
+          if (result.outcome === "success") {
+            target.set({ preferences: result.value.app, status: "ready" });
+          } else {
+            target.set((state) => withStatus(state, "error"));
+          }
+        })
+        .catch(() => {
+          if (active) target.set((state) => withStatus(state, "error"));
+        });
+      return () => {
+        active = false;
+      };
+    },
+    [capability, initialSnapshot],
+  );
 
   const setApp = useCallback(
     (patch: Partial<AppPreferences>) => {
-      const merged: AppPreferences = { ...preferencesRef.current, ...patch };
-      preferencesRef.current = merged;
-      setPreferences(merged);
+      const merged: AppPreferences = { ...store.get().preferences, ...patch };
+      store.set((state) => ({ ...state, preferences: merged }));
       if (capability === undefined) return;
       const seq = ++writeSeqRef.current;
       void capability
@@ -118,13 +113,12 @@ export function PreferencesProvider({
         .then((result) => {
           if (writeSeqRef.current !== seq) return;
           if (result.outcome === "success") {
-            preferencesRef.current = result.value.app;
-            setPreferences(result.value.app);
+            store.set((state) => ({ ...state, preferences: result.value.app }));
           }
         })
         .catch(() => {});
     },
-    [capability],
+    [capability, store],
   );
 
   const value = useMemo<PreferencesContextValue>(

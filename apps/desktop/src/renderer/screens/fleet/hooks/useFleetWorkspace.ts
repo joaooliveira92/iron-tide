@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useLifecycle } from "../../../lib/use-lifecycle.js";
+import { useLifecycle } from "../../../shell/useExternalSync.js";
 import { useMinWidth } from "../../../lib/use-min-width.js";
 import { COMMAND_OVERLAY_MIN_WIDTH } from "../../overview/hooks/useOverviewModel.js";
 import type { FleetDepartment } from "../fleet-departments.js";

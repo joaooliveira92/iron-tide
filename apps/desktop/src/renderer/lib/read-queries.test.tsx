@@ -183,4 +183,21 @@ describe("shared read queries", () => {
     await waitFor(() => expect(result.current).toEqual({ status: "ready", value: { n: 2 } }));
     expect(execute).toHaveBeenCalledTimes(2);
   });
+
+  it("keeps the previous value while a new revision loads", async () => {
+    let n = 0;
+    const { execute, wrapper } = fakeBridge(() => success({ n: (n += 1) }));
+
+    const { result, rerender } = renderHook(
+      ({ revision }: { revision: number }) => useRead("inspectCampaign", "s1", revision),
+      { wrapper, initialProps: { revision: 1 } },
+    );
+    await waitFor(() => expect(result.current).toEqual({ status: "ready", value: { n: 1 } }));
+
+    rerender({ revision: 2 });
+    expect(result.current).toEqual({ status: "ready", value: { n: 1 } });
+
+    await waitFor(() => expect(result.current).toEqual({ status: "ready", value: { n: 2 } }));
+    expect(execute).toHaveBeenCalledTimes(2);
+  });
 });

@@ -1,5 +1,6 @@
-import { useEffect, type MutableRefObject, type RefObject } from "react";
+import type { MutableRefObject, RefObject } from "react";
 
+import { useExternalSync } from "../../shell/useExternalSync.js";
 import type { CameraTransform } from "./useMapCamera.js";
 
 export interface MapCameraGestureInput {
@@ -27,7 +28,7 @@ export function useMapCameraGestures({
   resetFrameMeter,
   sampleFrame,
 }: MapCameraGestureInput): void {
-  useEffect(() => {
+  useExternalSync(() => {
     const svg = svgRef.current;
     if (svg === null) return;
 

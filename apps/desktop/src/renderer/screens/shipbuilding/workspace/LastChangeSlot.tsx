@@ -1,5 +1,5 @@
 import { useRef } from "react";
-import { useLifecycle } from "../../../lib/use-lifecycle.js";
+import { useLifecycle } from "../../../shell/useExternalSync.js";
 import { LastChangeStrip } from "../components/LastChangeStrip.js";
 import type { DesignSectionId } from "../design-sections.js";
 import {

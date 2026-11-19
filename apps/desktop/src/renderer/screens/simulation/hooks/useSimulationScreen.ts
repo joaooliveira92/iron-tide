@@ -15,7 +15,7 @@ import { useBridge } from "../../../lib/bridge-context.js";
 import { envelopeOf, stampCommand } from "../../../lib/command-envelope.js";
 import { auditInputFromDecisions } from "../../../lib/engine-audit.js";
 import { readQuery } from "../../../lib/read-queries.js";
-import { useLifecycle } from "../../../lib/use-lifecycle.js";
+import { useLifecycle } from "../../../shell/useExternalSync.js";
 import { SCRIPTED_TACTICAL_ORDERS } from "../simulation-battle-orders.js";
 import {
   commandFailureMessage,
