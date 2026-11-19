@@ -15,7 +15,7 @@ export function createHotkeyToggleStore(
   const set = (next: boolean) => {
     if (next === open) return;
     open = next;
-    for (const listener of [...listeners]) listener();
+    for (const listener of listeners) listener();
   };
 
   const onKeyDown = (event: KeyboardEvent) => {

@@ -4,6 +4,7 @@ import type { ReactNode } from "react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
 
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
+import type { CampaignCommandClient } from "../../shared/campaign-contract.js";
 import type { WindowState } from "../../shared/bridge-contract.js";
 import type { UiStateFirstMonthInspection } from "../../shared/ui-state-contract.js";
 import { BridgeProvider } from "../lib/bridge-context.js";
@@ -164,14 +165,16 @@ describe("window state", () => {
 describe("guided inspection", () => {
   function uiBridge(initial: UiStateFirstMonthInspection | undefined) {
     let stored = initial;
-    const execute = vi.fn(async (command: string, arg: unknown) => {
+    const execute: ReturnType<typeof vi.fn> = vi.fn(async (command: string, arg: unknown) => {
       if (command === "writeUiState") {
         const patch = arg as { firstMonthInspection?: UiStateFirstMonthInspection };
         stored = patch.firstMonthInspection ?? stored;
       }
       return ok({ uiState: stored === undefined ? {} : { firstMonthInspection: stored } });
     });
-    const bridge = { campaign: { execute } } as BluewaveDesktopBridge;
+    const bridge = {
+      campaign: { execute: execute as CampaignCommandClient["execute"] },
+    } as Partial<BluewaveDesktopBridge> as BluewaveDesktopBridge;
     return { bridge, execute, stored: () => stored };
   }
 

@@ -3,10 +3,10 @@ import { useCallback } from "react";
 export function useDismissOnOutside(
   open: boolean,
   onDismiss: () => void,
-): (root: HTMLElement) => (() => void) | void {
+): (root: HTMLElement | null) => (() => void) | void {
   return useCallback(
-    (root: HTMLElement) => {
-      if (!open) return;
+    (root: HTMLElement | null) => {
+      if (root === null || !open) return;
 
       const onPointerDown = (event: PointerEvent) => {
         if (!root.contains(event.target as Node)) onDismiss();
