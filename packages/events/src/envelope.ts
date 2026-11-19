@@ -19,6 +19,7 @@ export type {
   FleetExerciseScheduled,
   ForeignStationNoRoute,
   ForeignStationShipMoved,
+  MerchantLossSuffered,
   NationBudgetChanged,
   PossessionTransferred,
   PresenceShortfall,
@@ -33,6 +34,7 @@ export type {
   ShipRemovedFromDivision,
   ShipStationAssignmentChanged,
   TechnologyDiscovered,
+  TradeProtectionAssessed,
 } from "./validation.js";
 
 export type EventVersion = string;

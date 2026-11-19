@@ -40,6 +40,8 @@ const EVENT_SUBSYSTEM: Readonly<Record<string, string>> = {
   FleetExerciseScheduled: "command_collection",
   FleetExerciseCompleted: "maintenance",
   ExerciseTensionRaised: "resolve_diplomacy",
+  TradeProtectionAssessed: "resolve_diplomacy",
+  MerchantLossSuffered: "resolve_diplomacy",
   RevoltPressureRequested: "battle_resolution",
   ShipDetachedToFleet: "battle_resolution",
   ShipRemovedFromDivision: "battle_resolution",

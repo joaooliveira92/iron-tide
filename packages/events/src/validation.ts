@@ -257,6 +257,27 @@ export const ExerciseTensionRaisedSchema = Schema.Struct({
   delta: positiveSafeInt,
 });
 
+export const TradeProtectionAssessedSchema = Schema.Struct({
+  kind: Schema.Literal("TradeProtectionAssessed"),
+  nationId: nonEmptyString,
+  month: discoveryMonth,
+  quota: nonNegativeSafeInt,
+  assigned: nonNegativeSafeInt,
+  shortfall: nonNegativeSafeInt,
+  shortfallBp: nonNegativeSafeInt,
+});
+
+export const MerchantLossSufferedSchema = Schema.Struct({
+  kind: Schema.Literal("MerchantLossSuffered"),
+  nationId: nonEmptyString,
+  month: discoveryMonth,
+  raiderHits: nonNegativeSafeInt,
+  pressureHit: Schema.Boolean,
+  lossBp: positiveSafeInt,
+  poolBefore: nonNegativeSafeInt,
+  poolAfter: nonNegativeSafeInt,
+});
+
 export const PrestigeLossRequestedSchema = Schema.Struct({
   kind: Schema.Literal("PrestigeLossRequested"),
   nationId: nonEmptyString,
@@ -347,6 +368,8 @@ export const DomainEventBodySchema = Schema.Union([
   FleetExerciseScheduledSchema,
   FleetExerciseCompletedSchema,
   ExerciseTensionRaisedSchema,
+  TradeProtectionAssessedSchema,
+  MerchantLossSufferedSchema,
 ]);
 
 const eventKindList = [
@@ -380,6 +403,8 @@ const eventKindList = [
   "FleetExerciseScheduled",
   "FleetExerciseCompleted",
   "ExerciseTensionRaised",
+  "TradeProtectionAssessed",
+  "MerchantLossSuffered",
 ] as const;
 
 export const DomainEventEnvelopeSchema = Schema.Struct({
@@ -426,6 +451,8 @@ export type DivisionExperienceChanged = Schema.Schema.Type<typeof DivisionExperi
 export type FleetExerciseScheduled = Schema.Schema.Type<typeof FleetExerciseScheduledSchema>;
 export type FleetExerciseCompleted = Schema.Schema.Type<typeof FleetExerciseCompletedSchema>;
 export type ExerciseTensionRaised = Schema.Schema.Type<typeof ExerciseTensionRaisedSchema>;
+export type TradeProtectionAssessed = Schema.Schema.Type<typeof TradeProtectionAssessedSchema>;
+export type MerchantLossSuffered = Schema.Schema.Type<typeof MerchantLossSufferedSchema>;
 export type PrestigeLossRequested = Schema.Schema.Type<typeof PrestigeLossRequestedSchema>;
 export type RevoltPressureRequested = Schema.Schema.Type<typeof RevoltPressureRequestedSchema>;
 export type ShipDetachedToFleet = Schema.Schema.Type<typeof ShipDetachedToFleetSchema>;

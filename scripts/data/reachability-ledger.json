@@ -457,7 +457,7 @@
       "status": "dormant-by-decision",
       "engine_package": "phase-engine",
       "engine_modules": [],
-      "engine_symbols": ["applyTradeDutyCommand"],
+      "engine_symbols": ["applyTradeDutyCommand", "applyTradeProtectionForMonth"],
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
