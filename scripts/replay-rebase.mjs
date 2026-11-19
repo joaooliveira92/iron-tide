@@ -81,7 +81,7 @@ export function replayRebase({ root, base, git, exec, options, print }) {
       git("show", `${base}:${path}`) !== readFileSync(join(root, path), "utf8");
     if (changed) toRecord.add(name.slice(0, -REPLAY_SUFFIX.length));
   }
-  for (const id of [...toRecord].sort()) {
+  for (const id of [...toRecord].sort((a, b) => (a < b ? -1 : a > b ? 1 : 0))) {
     const status = exec("pnpm", ["replay:record", id]);
     if (status !== 0) {
       print(`replay:record ${id} failed (${String(status)}); fix the scenario and rerun\n`);

@@ -70,7 +70,7 @@ function mergeDevIntoFeature(root) {
   assert.match(git(root, "diff", "--name-only", "--diff-filter=U"), /a\.replay\.json/);
 }
 
-test("a conflicted replay is re-recorded on the merged tree and the branch approval is regenerated", () => {
+void test("a conflicted replay is re-recorded on the merged tree and the branch approval is regenerated", () => {
   const root = fixture();
   try {
     mergeDevIntoFeature(root);
@@ -118,7 +118,7 @@ test("a conflicted replay is re-recorded on the merged tree and the branch appro
   }
 });
 
-test("flags override carried approval metadata", () => {
+void test("flags override carried approval metadata", () => {
   const root = fixture();
   try {
     mergeDevIntoFeature(root);
@@ -145,7 +145,7 @@ test("flags override carried approval metadata", () => {
   }
 });
 
-test("without any metadata it records but does not approve and reports the next step", () => {
+void test("without any metadata it records but does not approve and reports the next step", () => {
   const root = fixture();
   try {
     mergeDevIntoFeature(root);
@@ -170,7 +170,7 @@ test("without any metadata it records but does not approve and reports the next 
   }
 });
 
-test("a failing approvals check is returned as the exit status", () => {
+void test("a failing approvals check is returned as the exit status", () => {
   const root = fixture();
   try {
     mergeDevIntoFeature(root);
@@ -188,7 +188,7 @@ test("a failing approvals check is returned as the exit status", () => {
   }
 });
 
-test("parseArguments reads the base and the approval flags", () => {
+void test("parseArguments reads the base and the approval flags", () => {
   assert.deepEqual(
     parseArguments(["--base", "origin/main", "--cause", "c", "--migration", "m", "--class", "k"]),
     { base: "origin/main", cause: "c", migration: "m", changeClass: "k" },
