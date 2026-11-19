@@ -1,4 +1,5 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
+import { useLifecycle } from "../../lib/use-lifecycle.js";
 import { useBridge } from "../../lib/bridge-context.js";
 import { hasDrawingBoardContent, setDrawingBoardContent } from "./content.js";
 
@@ -10,7 +11,7 @@ export function useDrawingBoardContentSource(): DrawingBoardContentStatus {
     hasDrawingBoardContent() ? "ready" : "loading",
   );
 
-  useEffect(() => {
+  useLifecycle(() => {
     if (hasDrawingBoardContent()) {
       setStatus("ready");
       return;

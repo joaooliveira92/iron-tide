@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useRef, useState } from "react";
+import { useLifecycle } from "../../../lib/use-lifecycle.js";
 import { ArrowRight, ListChecks } from "lucide-react";
 import { Badge } from "../../ui/badge.js";
 import { Button } from "../../ui/button.js";
@@ -29,7 +30,7 @@ export function FindingList({
   });
   const [resolved, setResolved] = useState<readonly string[]>([]);
   const keys = findings.map((f) => f.key).join("\n");
-  useEffect(() => {
+  useLifecycle(() => {
     const before = previous.current;
     previous.current = { entityKey, findings };
     if (before.entityKey !== entityKey) {
