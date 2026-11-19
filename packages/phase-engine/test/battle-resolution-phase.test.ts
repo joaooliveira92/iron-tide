@@ -1,6 +1,7 @@
 import type { CampaignSnapshot, CompiledDesignVersion, Ship } from "@bluewave/campaign";
 import { resolve } from "@bluewave/combat";
 import { BATTLE_AUTO_RESOLUTION_FAILED } from "@bluewave/combat/battleResolution";
+import type { TacticalMinefieldRecord } from "@bluewave/combat/collision";
 import type { TerrainView } from "@bluewave/combat/terrain";
 import { INVALID_BATTLE_WEATHER_INITIALIZATION } from "@bluewave/combat/weather";
 import type { MissilesRules } from "@bluewave/content-schema";
@@ -29,6 +30,7 @@ function runMonth(
   engineOptions?: {
     readonly missilesRules?: MissilesRules;
     readonly terrain?: Readonly<Record<string, TerrainView>>;
+    readonly minefields?: Readonly<Record<string, readonly TacticalMinefieldRecord[]>>;
   },
 ) {
   const collector = new DiagnosticCollector();
@@ -350,6 +352,35 @@ describe("battle_resolution phase (AC-8): tactical auto-resolution wiring", () =
     expect(elsewhere.result.finalSnapshot.wars.battles[0]!.result).toEqual(
       open.result.finalSnapshot.wars.battles[0]!.result,
     );
+  });
+
+  it("threads only the known minefields of the battle area into battle_resolution", () => {
+    const field = (knownToSideIds: readonly string[]) => ({
+      id: "mf",
+      xM: 5_000,
+      yM: 0,
+      radiusM: 2_000,
+      knownToSideIds,
+      pressureBp: 9_000,
+    });
+    const open = runMonth(makeBattleSnapshot());
+    const known = runMonth(makeBattleSnapshot(), {
+      minefields: { [BATTLE_AREA]: [field(["ATTACKER", "DEFENDER"])] },
+    });
+    const unknown = runMonth(makeBattleSnapshot(), {
+      minefields: { [BATTLE_AREA]: [field([])] },
+    });
+    const elsewhere = runMonth(makeBattleSnapshot(), {
+      minefields: { "other-area": [field(["ATTACKER", "DEFENDER"])] },
+    });
+    const resultOf = (run: ReturnType<typeof runMonth>) =>
+      run.result.finalSnapshot.wars.battles[0]!.result;
+
+    expect(known.collector.errors).toHaveLength(0);
+    expect(resultOf(known)).not.toEqual(resultOf(open));
+    expect(resultOf(unknown)).toEqual(resultOf(open));
+    expect(resultOf(elsewhere)).toEqual(resultOf(open));
+    expect(unknown.result.randomLedger.hash()).toBe(open.result.randomLedger.hash());
   });
 
   it("threads missilesRules into battle_resolution so a launcher design changes the resolved damage", () => {

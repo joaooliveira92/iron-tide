@@ -6,6 +6,7 @@ import type {
   CommandLedger,
   CommandLifecycle,
 } from "@bluewave/commands";
+import type { TacticalMinefieldRecord } from "@bluewave/combat/collision";
 import type { TerrainView } from "@bluewave/combat/terrain";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import type { EventLedger } from "@bluewave/events";
@@ -71,6 +72,7 @@ export interface MonthExecutorEngineOptions {
   readonly gunneryRules?: GunneryRules;
   readonly missilesRules?: MissilesRules;
   readonly terrain?: Readonly<Record<string, TerrainView>>;
+  readonly minefields?: Readonly<Record<string, readonly TacticalMinefieldRecord[]>>;
   readonly tensionDrift?: TensionDriftRules;
   readonly fleetMorale?: FleetMoraleRules;
   readonly peaceBehaviour?: PeaceBehaviourRules;

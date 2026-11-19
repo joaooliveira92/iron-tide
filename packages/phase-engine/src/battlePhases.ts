@@ -17,7 +17,7 @@ import {
   toCampaignBattleResult,
 } from "./battles.js";
 import { battleAbsencesFor } from "./battleAbsences.js";
-import { battleTerrainOf } from "./battleTerrain.js";
+import { battleMinefieldsOf, battleTerrainOf } from "./battleTerrain.js";
 import { gunQualityRulesForBattle } from "./battleGunQuality.js";
 import { trainingEffectsFor } from "./battleTraining.js";
 import { applyBattleExperience } from "./battleExperience.js";
@@ -363,6 +363,7 @@ function resolveViaTacticalAuto(
         ? {}
         : { missilesRules: ctx.engineOptions.missilesRules }),
       ...battleTerrainOf(ctx.engineOptions?.terrain, battle["areaId"]),
+      ...battleMinefieldsOf(ctx.engineOptions?.minefields, battle["areaId"]),
       randomLedger,
     });
 

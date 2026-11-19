@@ -11,7 +11,8 @@ import type { TerrainView } from "@bluewave/combat/terrain";
 import type { MissilesRules } from "@bluewave/content-schema";
 import type { ShipBuildingContent } from "@bluewave/ship-design";
 import { gunQualityRulesForBattle } from "./battleGunQuality.js";
-import { battleTerrainOf } from "./battleTerrain.js";
+import { battleMinefieldsOf, battleTerrainOf } from "./battleTerrain.js";
+import type { TacticalMinefieldRecord } from "@bluewave/combat/collision";
 import { resolveBattleManifest } from "./battles.js";
 import { computeManifestHash } from "@bluewave/combat/generation";
 import { canonicalSerialize } from "@bluewave/deterministic";
@@ -88,6 +89,7 @@ export class TacticalReplayVerifier {
     missilesRules?: MissilesRules,
     shipBuilding?: ShipBuildingContent,
     terrain?: Readonly<Record<string, TerrainView>>,
+    minefields?: Readonly<Record<string, readonly TacticalMinefieldRecord[]>>,
   ): TacticalReplayResult {
     const campaignMonth = campaignMonthId(
       snapshot["startYear"],
@@ -111,6 +113,7 @@ export class TacticalReplayVerifier {
           missilesRules,
           shipBuilding,
           terrain,
+          minefields,
         ),
       );
     }
@@ -127,6 +130,7 @@ export class TacticalReplayVerifier {
     missilesRules: MissilesRules | undefined,
     shipBuilding: ShipBuildingContent | undefined,
     terrain: Readonly<Record<string, TerrainView>> | undefined,
+    minefields: Readonly<Record<string, readonly TacticalMinefieldRecord[]>> | undefined,
   ): TacticalBattleVerification {
     const manifest = resolveBattleManifest(snapshot, battle);
     if (!manifest) {
@@ -190,6 +194,7 @@ export class TacticalReplayVerifier {
         ...(gunQuality === undefined ? {} : { gunQuality }),
         ...(missilesRules === undefined ? {} : { missilesRules }),
         ...battleTerrainOf(terrain, battle["areaId"]),
+        ...battleMinefieldsOf(minefields, battle["areaId"]),
         randomLedger: new RandomLedger(),
       });
     } catch (e) {
