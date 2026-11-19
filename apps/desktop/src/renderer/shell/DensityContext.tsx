@@ -1,7 +1,8 @@
-import { createContext, type ReactNode, use, useCallback, useLayoutEffect, useMemo } from "react";
+import { createContext, type ReactNode, use, useCallback, useMemo } from "react";
 
 import type { InterfaceDensityPreference } from "../../shared/preferences-contract.js";
 import { usePreferences } from "../lib/preferences-context.js";
+import { useExternalLayoutSync } from "./useExternalSync.js";
 
 export type Density = InterfaceDensityPreference;
 
@@ -25,7 +26,7 @@ export function DensityProvider({ children }: { children: ReactNode }) {
   const { preferences, setApp } = usePreferences();
   const density = preferences.interfaceDensity;
 
-  useLayoutEffect(() => {
+  useExternalLayoutSync(() => {
     document.documentElement.dataset["density"] = density;
   }, [density]);
 

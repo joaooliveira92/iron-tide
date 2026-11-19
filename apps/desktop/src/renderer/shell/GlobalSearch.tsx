@@ -1,5 +1,5 @@
 import { Search } from "lucide-react";
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import { Button } from "../components/ui/button.js";
 import {
   Command,
@@ -14,6 +14,11 @@ import { cn } from "../lib/utils.js";
 import { translate } from "../lib/strings.js";
 import type { SearchTarget } from "./global-search-state.js";
 import { filterSearchTargets } from "./global-search-state.js";
+import { useHotkeyToggle } from "./useHotkeyToggle.js";
+
+function isSearchHotkey(event: KeyboardEvent): boolean {
+  return event.key.toLowerCase() === "f" && (event.metaKey || event.ctrlKey);
+}
 
 export interface GlobalSearchProps {
   readonly className?: string;
@@ -22,20 +27,8 @@ export interface GlobalSearchProps {
 }
 
 export function GlobalSearch({ className, targets, onNavigate }: GlobalSearchProps) {
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useHotkeyToggle(isSearchHotkey);
   const [query, setQuery] = useState("");
-
-  useEffect(() => {
-    function handleKeyDown(event: KeyboardEvent): void {
-      if (event.key.toLowerCase() === "f" && (event.metaKey || event.ctrlKey)) {
-        event.preventDefault();
-        setOpen((isOpen) => !isOpen);
-      }
-    }
-
-    window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []);
 
   if (targets.length === 0) return null;
 

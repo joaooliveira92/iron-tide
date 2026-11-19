@@ -1,6 +1,6 @@
-import { useEffect } from "react";
 import type { PreferencesRecoveryInfo } from "../../shared/preferences-contract.js";
 import { toast } from "../components/ui/toast.js";
+import { useExternalSync } from "./useExternalSync.js";
 
 export const PREFERENCES_RESET_TOAST_ID = "preferences-reset";
 
@@ -13,7 +13,7 @@ export function PreferencesResetNotice({
 }: {
   readonly recovery: PreferencesRecoveryInfo | undefined;
 }) {
-  useEffect(() => {
+  useExternalSync(() => {
     if (recovery === undefined) return;
     toast(preferencesResetMessage(recovery), {
       id: PREFERENCES_RESET_TOAST_ID,

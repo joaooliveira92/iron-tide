@@ -4,8 +4,10 @@ import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 
 import {
+  EXTERNAL_SYNC_MODULE,
   evaluateEffectHooks,
   findEffectHooks,
+  isGuarded,
   measureEffectHooks,
   runSelfTest,
 } from "../assert-no-effect-hooks.mjs";
@@ -52,6 +54,13 @@ void test("a listed file that fell or vanished must tighten the baseline", () =>
   assert.equal(fell.tighten.length, 1);
   const gone = evaluateEffectHooks({}, { "a.ts": 2 });
   assert.equal(gone.tighten.length, 1);
+});
+
+void test("only the single external-sync module path is exempt from the guard", () => {
+  assert.equal(isGuarded(EXTERNAL_SYNC_MODULE), false);
+  assert.equal(isGuarded(EXTERNAL_SYNC_MODULE.replace("shell/", "lib/")), true);
+  assert.equal(isGuarded(`${EXTERNAL_SYNC_MODULE}x`), true);
+  assert.equal(isGuarded("apps/desktop/src/renderer/shell/other.ts"), true);
 });
 
 void test("the real tree matches the baseline exactly", () => {

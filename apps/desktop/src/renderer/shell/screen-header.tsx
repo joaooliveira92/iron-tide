@@ -1,13 +1,7 @@
 import type { LucideIcon } from "lucide-react";
-import {
-  createContext,
-  useContext,
-  useLayoutEffect,
-  useMemo,
-  useState,
-  type ReactNode,
-} from "react";
+import { createContext, useContext, useMemo, useState, type ReactNode } from "react";
 import { createPortal } from "react-dom";
+import { useExternalLayoutSync } from "./useExternalSync.js";
 
 export interface ScreenHeaderSpec {
   readonly title: string;
@@ -66,12 +60,12 @@ export function ScreenHeader({ title, icon, children }: ScreenHeaderProps) {
   const setToolbarUsed = context?.setToolbarUsed;
   const hasToolbar = children !== undefined && children !== null && children !== false;
 
-  useLayoutEffect(() => {
+  useExternalLayoutSync(() => {
     setSpec?.({ title, icon });
     return () => setSpec?.(null);
   }, [setSpec, title, icon]);
 
-  useLayoutEffect(() => {
+  useExternalLayoutSync(() => {
     setToolbarUsed?.(hasToolbar);
     return () => setToolbarUsed?.(false);
   }, [setToolbarUsed, hasToolbar]);

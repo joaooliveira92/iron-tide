@@ -1,4 +1,4 @@
-import { useCallback, useLayoutEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import { Button } from "../components/ui/button.js";
 import {
   GUIDED_INSPECTION_STEPS,
@@ -50,7 +50,6 @@ export function GuidedInspectionOverlay({
   const step: GuidedStep = GUIDED_INSPECTION_STEPS[clamped]!;
   const [rect, setRect] = useState<Rect | null>(null);
   const [scrolling, setScrolling] = useState(false);
-  const overlayRef = useRef<HTMLDivElement>(null);
   const scrollEndTimer = useRef<number | null>(null);
 
   const recompute = useCallback(() => {
@@ -58,7 +57,7 @@ export function GuidedInspectionOverlay({
     setRect((current) => (sameRect(current, next) ? current : next));
   }, [step.targetSelector]);
 
-  useLayoutEffect(() => {
+  const trackTarget = useCallback(() => {
     recompute();
     const handleScroll = () => {
       recompute();
@@ -114,7 +113,7 @@ export function GuidedInspectionOverlay({
 
   return (
     <div
-      ref={overlayRef}
+      ref={trackTarget}
       data-testid="guided-inspection-overlay"
       aria-live="polite"
       className="fixed inset-0 z-40 pointer-events-none"

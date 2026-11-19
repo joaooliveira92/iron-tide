@@ -1,10 +1,11 @@
-import { createContext, type ReactNode, use, useEffect, useMemo, useRef } from "react";
+import { createContext, type ReactNode, use, useMemo, useRef } from "react";
 import { BluewaveError } from "@bluewave/contracts";
 import type { BluewaveDesktopBridge } from "../../preload/index.js";
 import type { ActiveCampaignCurrencyContext } from "../lib/presentation-format/index.js";
 import type { useCampaignShell } from "./useCampaignShell.js";
 import { useCampaignShell as useCampaignShellModel } from "./useCampaignShell.js";
 import type { LeaveGuard, LeaveTarget } from "./campaign-screen-types.js";
+import { useExternalSync } from "./useExternalSync.js";
 
 type CampaignShell = ReturnType<typeof useCampaignShell>;
 
@@ -219,7 +220,7 @@ export function useLeaveGuard(guard: LeaveGuard): (target: LeaveTarget) => void 
   latest.current = guard;
   const bypass = useRef(false);
   const setGuard = actions?.setLeaveGuard;
-  useEffect(() => {
+  useExternalSync(() => {
     if (setGuard === undefined) return;
     setGuard((target) => bypass.current || latest.current(target));
     return () => setGuard(null);

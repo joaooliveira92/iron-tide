@@ -1,7 +1,8 @@
-import { createContext, type ReactNode, use, useCallback, useLayoutEffect, useMemo } from "react";
+import { createContext, type ReactNode, use, useCallback, useMemo } from "react";
 
 import type { FontPreference } from "../../shared/preferences-contract.js";
 import { usePreferences } from "../lib/preferences-context.js";
+import { useExternalLayoutSync } from "./useExternalSync.js";
 
 export type SansFontPreference = FontPreference;
 
@@ -31,7 +32,7 @@ export function FontProvider({ children }: { children: ReactNode }) {
   const { preferences, setApp } = usePreferences();
   const font = preferences.font;
 
-  useLayoutEffect(() => {
+  useExternalLayoutSync(() => {
     document.documentElement.dataset["font"] = font;
   }, [font]);
 
