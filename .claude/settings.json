@@ -42,6 +42,15 @@
         ]
       },
       {
+        "matcher": "Agent|Read",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node \"$CLAUDE_PROJECT_DIR/scripts/hooks/pre-tool-use-routing.mjs\""
+          }
+        ]
+      },
+      {
         "matcher": "mcp__t3-code__delegate_task",
         "hooks": [
           {
