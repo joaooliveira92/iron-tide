@@ -1,10 +1,4 @@
 {
-  "apps/desktop/src/renderer/components/backgrounds/auralis.tsx": 2,
-  "apps/desktop/src/renderer/components/backgrounds/cloudscape.tsx": 2,
-  "apps/desktop/src/renderer/components/backgrounds/lumadrift.tsx": 2,
-  "apps/desktop/src/renderer/components/backgrounds/nebulore.tsx": 2,
-  "apps/desktop/src/renderer/components/backgrounds/pattern-waves.tsx": 3,
-  "apps/desktop/src/renderer/components/backgrounds/starts.tsx": 2,
   "apps/desktop/src/renderer/components/card-deck/CardDeck.tsx": 7,
   "apps/desktop/src/renderer/components/card-deck/DeckMasterPane.tsx": 3,
   "apps/desktop/src/renderer/components/design-workspace/panels/RevisionPanel.tsx": 2,
