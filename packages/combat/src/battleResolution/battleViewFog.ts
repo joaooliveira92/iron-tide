@@ -96,10 +96,23 @@ export interface LogResolver {
   readonly contactsByAsset: ReadonlyMap<string, BattleViewContact>;
 }
 
-function refOf(id: string, resolver: LogResolver): string | null | undefined {
+const BATTERY_SEPARATOR = ":";
+
+function assetOf(id: string, battleId: string, resolver: LogResolver): string {
+  const qualified = `${battleId}${BATTERY_SEPARATOR}`;
+  const unqualified = id.startsWith(qualified) ? id.slice(qualified.length) : id;
+  const known = (candidate: string): boolean =>
+    resolver.ownIds.has(candidate) || resolver.contactsByAsset.has(candidate);
+  if (known(unqualified)) return unqualified;
+  const separator = unqualified.lastIndexOf(BATTERY_SEPARATOR);
+  return separator === -1 ? unqualified : unqualified.slice(0, separator);
+}
+
+function refOf(id: string, battleId: string, resolver: LogResolver): string | null | undefined {
   if (id === "") return null;
-  if (resolver.ownIds.has(id)) return id;
-  return resolver.contactsByAsset.get(id)?.handle;
+  const asset = assetOf(id, battleId, resolver);
+  if (resolver.ownIds.has(asset)) return asset;
+  return resolver.contactsByAsset.get(asset)?.handle;
 }
 
 function actorPosition(
@@ -124,10 +137,11 @@ export function projectLog(
   for (const event of session.log) {
     const severity = tuning.logSeverity[event.eventType];
     if (severity === undefined) continue;
-    const actorRef = refOf(event.actorId, resolver);
+    const actorAsset = assetOf(event.actorId, session.battleId, resolver);
+    const actorRef = refOf(event.actorId, session.battleId, resolver);
     if (actorRef === undefined || actorRef === null) continue;
-    const targetRef = refOf(event.targetId, resolver);
-    const actorIsOwn = resolver.ownIds.has(event.actorId);
+    const targetRef = refOf(event.targetId, session.battleId, resolver);
+    const actorIsOwn = resolver.ownIds.has(actorAsset);
     if (targetRef === undefined && !actorIsOwn) continue;
     entries.push({
       minute: event.minute,
@@ -135,7 +149,7 @@ export function projectLog(
       eventType: event.eventType,
       actorRef,
       targetRef: targetRef ?? null,
-      actorPositionM: actorPosition(event.actorId, event, session, resolver),
+      actorPositionM: actorPosition(actorAsset, event, session, resolver),
     });
   }
   return entries;

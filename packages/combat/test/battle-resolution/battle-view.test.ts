@@ -222,6 +222,73 @@ describe("fog: hidden truth never reaches the view", () => {
     expect(json).not.toContain("obs-");
     expect(json).not.toContain("pipeline");
   });
+
+  it("keeps gunnery and impact events keyed by battery and battle-qualified ids", () => {
+    const base = withContact(newSession(), 0, 100);
+    const hostile = enemyUnits(base)[0]!;
+    const own = base.units.find((unit) => unit.sideId === "ATTACKER")!;
+    const handle = view(base).contacts[0]!.handle;
+    const minute = base.minute;
+    const session: PlayerBattleSession = {
+      ...base,
+      log: [
+        {
+          minute,
+          eventType: "gunnery_salvo",
+          actorId: `${own.assetId}:MAIN`,
+          targetId: `${base.battleId}:${hostile.assetId}`,
+        },
+        {
+          minute,
+          eventType: "damage_impact",
+          actorId: `${own.assetId}:MAIN`,
+          targetId: hostile.assetId,
+        },
+        {
+          minute,
+          eventType: "gunnery_salvo",
+          actorId: `${hostile.assetId}:MAIN`,
+          targetId: `${base.battleId}:${own.assetId}`,
+        },
+        {
+          minute,
+          eventType: "damage_impact",
+          actorId: `${hostile.assetId}:MAIN`,
+          targetId: own.assetId,
+        },
+      ],
+    };
+    const { log } = view(session);
+    expect(log.map((entry) => [entry.eventType, entry.actorRef, entry.targetRef])).toEqual([
+      ["gunnery_salvo", own.assetId, handle],
+      ["damage_impact", own.assetId, handle],
+      ["gunnery_salvo", handle, own.assetId],
+      ["damage_impact", handle, own.assetId],
+    ]);
+    const json = JSON.stringify(log);
+    expect(json).not.toContain(hostile.assetId);
+    expect(json).not.toContain(":MAIN");
+    expect(json).not.toContain(base.battleId);
+  });
+
+  it("drops salvos fired at or by an unspotted ship", () => {
+    const base = newSession();
+    const hostile = enemyUnits(base)[0]!;
+    const own = base.units.find((unit) => unit.sideId === "ATTACKER")!;
+    const session: PlayerBattleSession = {
+      ...base,
+      state: { ...base.state, contacts: [] },
+      log: [
+        {
+          minute: base.minute,
+          eventType: "gunnery_salvo",
+          actorId: `${hostile.assetId}:MAIN`,
+          targetId: `${base.battleId}:${own.assetId}`,
+        },
+      ],
+    };
+    expect(JSON.stringify(view(session).log)).not.toContain(hostile.assetId);
+  });
 });
 
 describe("determinism and units", () => {
