@@ -135,6 +135,7 @@ export function planFormationSubstep(
       ruleset: context.ruleset,
       turnTogether: context.turnTogether?.[division.divisionId] === true,
       track: runtime.tracks[division.divisionId],
+      ...(context.separation === undefined ? {} : { separation: context.separation }),
     });
     Object.assign(overrides, plan.overrides);
     records.push(...plan.records);

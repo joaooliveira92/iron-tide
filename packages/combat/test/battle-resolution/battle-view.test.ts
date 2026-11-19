@@ -368,6 +368,38 @@ describe("own divisions and seams", () => {
     }
   });
 
+  it("reports no separation flag when the session carries no separation map", () => {
+    for (const ship of view(newSession()).ships) {
+      expect(ship.separation).toBeNull();
+    }
+  });
+
+  it("flags a separated or disordered own ship from the session separation map", () => {
+    const session = newSession();
+    const [first, second] = session.units.filter((unit) => unit.sideId === "ATTACKER");
+    const held = {
+      formation: "LINE_ABREAST",
+      heldHeading: 90,
+      heldSpeedBp: 5_000,
+      driftMinutes: 3,
+    };
+    const flagged: PlayerBattleSession = {
+      ...session,
+      separation: {
+        [first!.assetId]: { ...held, separated: true, disordered: false },
+        ...(second === undefined
+          ? {}
+          : { [second.assetId]: { ...held, separated: false, disordered: true } }),
+      },
+    };
+    const ships = view(flagged).ships;
+    expect(ships.find((ship) => ship.shipId === first!.assetId)?.separation).toBe("SEPARATED");
+    if (second !== undefined) {
+      expect(ships.find((ship) => ship.shipId === second.assetId)?.separation).toBe("DISORDERED");
+    }
+    expect(JSON.stringify(view(flagged))).not.toContain("heldHeading");
+  });
+
   it("explains the own current speed with an explanation tree", () => {
     const ship = view(newSession()).ships.find((entry) => entry.positionM !== null)!;
     expect(ship.speedExplanation?.formulaId).toBe("ship_motion");

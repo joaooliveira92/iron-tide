@@ -36,6 +36,7 @@ function ownShip(ship: TacticalShip): BattleViewOwnShip {
     },
     carriesMines: null,
     machinery: null,
+    separation: null,
     turrets: [],
   };
 }

@@ -1,5 +1,6 @@
 import { battleLoss } from "../damage/minuteDamage.js";
 import type { TacticalContact } from "../contact/neighbour.js";
+import type { SeparationState } from "../navigation/model.js";
 import type { TacticalDivision } from "../tactical/division.js";
 import type { TacticalShipUnit } from "../tactical/unit.js";
 import { explainShipMotion } from "./battle-explanations.js";
@@ -27,6 +28,7 @@ import {
   type BattleViewOverlays,
   type BattleViewOwnDivision,
   type BattleViewOwnShip,
+  type BattleViewSeparation,
   type BattleViewSide,
   type BattleViewStatus,
   type PointM,
@@ -76,6 +78,12 @@ function orderView(
   };
 }
 
+function separationFlag(state: SeparationState | undefined): BattleViewSeparation | null {
+  if (state === undefined) return null;
+  if (state.separated) return "SEPARATED";
+  return state.disordered ? "DISORDERED" : null;
+}
+
 function ownShipView(
   session: PlayerBattleSession,
   unit: TacticalShipUnit,
@@ -111,6 +119,7 @@ function ownShipView(
     explanations: ownShipExplanations(session, unit, sources),
     carriesMines: null,
     machinery: null,
+    separation: separationFlag(session.separation?.[unit.assetId]),
     turrets: [],
   };
 }
