@@ -1,6 +1,6 @@
 import * as d3Geo from "d3-geo";
 import * as d3Selection from "d3-selection";
-import { useEffect, useRef } from "react";
+import { useState, type RefCallback } from "react";
 import { feature } from "topojson-client";
 
 interface GeometryCollection {
@@ -65,7 +65,7 @@ export type RotationAnim = {
 export type ElementRef<T> = { current: T | null };
 
 export interface SvgGlobeRefs {
-  containerRef: ElementRef<HTMLDivElement>;
+  containerRef: RefCallback<HTMLDivElement>;
   svgRef: ElementRef<SVGSVGElement>;
   oceanRef: ElementRef<SVGCircleElement>;
   gratRef: ElementRef<SVGGElement>;
@@ -85,58 +85,57 @@ export interface SvgGlobeHandles extends SvgGlobeRefs {
   projection: () => d3Geo.GeoProjection | undefined;
   rotationAnimRef: ElementRef<RotationAnim>;
   registerFrameRenderer: (renderFn: () => void) => () => void;
+  registerTickHandler: (handler: (now: number) => void) => () => void;
   registerResizeHandler: (handler: (context: SvgGlobeResizeContext) => void) => () => void;
   setDragging: (dragging: boolean) => void;
 }
 
-function useStableRefs(): SvgGlobeRefs {
-  return {
-    containerRef: useRef<HTMLDivElement>(null),
-    svgRef: useRef<SVGSVGElement>(null),
-    oceanRef: useRef<SVGCircleElement>(null),
-    gratRef: useRef<SVGGElement>(null),
-    landRef: useRef<SVGGElement>(null),
-    pinRef: useRef<SVGGElement>(null),
-    ringRef: useRef<SVGGElement>(null),
-  };
-}
+export type SvgGlobeSetup = (
+  globe: SvgGlobeHandles,
+  container: HTMLDivElement,
+) => void | (() => void);
 
-export function useSvgGlobe(): SvgGlobeHandles {
-  const refs = useStableRefs();
-  const rotationAnimRef = useRef<RotationAnim | null>(null);
-  const projectionRef = useRef<d3Geo.GeoProjection | undefined>(undefined);
-  const frameRenderersRef = useRef<Array<() => void>>([]);
-  const resizeHandlersRef = useRef<Array<(context: SvgGlobeResizeContext) => void>>([]);
-  const draggingRef = useRef(false);
+function createSvgGlobe(setup: SvgGlobeSetup | undefined): SvgGlobeHandles {
+  const svgRef: ElementRef<SVGSVGElement> = { current: null };
+  const oceanRef: ElementRef<SVGCircleElement> = { current: null };
+  const gratRef: ElementRef<SVGGElement> = { current: null };
+  const landRef: ElementRef<SVGGElement> = { current: null };
+  const pinRef: ElementRef<SVGGElement> = { current: null };
+  const ringRef: ElementRef<SVGGElement> = { current: null };
+  const rotationAnimRef: ElementRef<RotationAnim> = { current: null };
+  let projection: d3Geo.GeoProjection | undefined;
+  let frameRenderers: Array<() => void> = [];
+  let tickHandlers: Array<(now: number) => void> = [];
+  let resizeHandlers: Array<(context: SvgGlobeResizeContext) => void> = [];
+  let dragging = false;
 
-  useEffect(() => {
-    const container = refs.containerRef.current;
-    const svgEl = refs.svgRef.current;
-    if (!container || !svgEl) return;
+  function startBase(container: HTMLDivElement): (() => void) | undefined {
+    const svgEl = svgRef.current;
+    if (!svgEl) return undefined;
 
     let width = container.clientWidth || 800;
     let height = container.clientHeight || 600;
     let baseScale = Math.min(width, height) * 0.42;
 
-    const projection = d3Geo
+    const nextProjection = d3Geo
       .geoOrthographic()
       .clipAngle(90)
       .translate([width / 2, height / 2])
       .scale(baseScale)
       .rotate([-40, 30]);
-    const pathGenerator = d3Geo.geoPath(projection);
+    const pathGenerator = d3Geo.geoPath(nextProjection);
     const graticule = d3Geo.geoGraticule10();
-    projectionRef.current = projection;
+    projection = nextProjection;
 
-    const oceanSel = d3Selection.select(refs.oceanRef.current);
-    const gratSel = d3Selection.select(refs.gratRef.current);
-    const landSel = d3Selection.select(refs.landRef.current);
+    const oceanSel = d3Selection.select(oceanRef.current);
+    const gratSel = d3Selection.select(gratRef.current);
+    const landSel = d3Selection.select(landRef.current);
 
     let lastFrameAt = performance.now();
 
     function renderBase(): void {
-      const [cx, cy] = projection.translate();
-      const sphereRadius = projection.scale();
+      const [cx, cy] = nextProjection.translate();
+      const sphereRadius = nextProjection.scale();
       oceanSel.attr("cx", cx).attr("cy", cy).attr("r", sphereRadius);
 
       gratSel
@@ -153,7 +152,7 @@ export function useSvgGlobe(): SvgGlobeHandles {
 
     function renderFrame(): void {
       renderBase();
-      for (const renderFn of frameRenderersRef.current) renderFn();
+      for (const renderFn of frameRenderers) renderFn();
     }
 
     let rafId = 0;
@@ -165,19 +164,19 @@ export function useSvgGlobe(): SvgGlobeHandles {
     function tick(now: number): void {
       const dt = now - lastFrameAt;
       lastFrameAt = now;
+      for (const handler of tickHandlers) handler(now);
       const anim = rotationAnimRef.current;
-      const dragging = draggingRef.current;
       if (anim) {
         const t = Math.min(1, (now - anim.start) / FOCUS_SPIN_MS);
         const eased = easeCubicInOut(t);
-        projection.rotate([
+        nextProjection.rotate([
           anim.fromLambda + (anim.toLambda - anim.fromLambda) * eased,
           anim.fromPhi + (anim.toPhi - anim.fromPhi) * eased,
         ]);
         if (t >= 1) rotationAnimRef.current = null;
       } else if (!dragging) {
-        const [lambda, phi] = projection.rotate();
-        projection.rotate([lambda + AUTOROTATE_DEG_PER_MS * dt, phi]);
+        const [lambda, phi] = nextProjection.rotate();
+        nextProjection.rotate([lambda + AUTOROTATE_DEG_PER_MS * dt, phi]);
       }
       if (dragging || now - lastRenderAt >= GLOBE_RENDER_INTERVAL_MS) {
         renderFrame();
@@ -220,13 +219,13 @@ export function useSvgGlobe(): SvgGlobeHandles {
       width = w;
       height = h;
       baseScale = Math.min(width, height) * 0.42;
-      projection.translate([width / 2, height / 2]);
-      if (resizeHandlersRef.current.length) {
-        for (const handler of resizeHandlersRef.current) {
-          handler({ width, height, baseScale, projection });
+      nextProjection.translate([width / 2, height / 2]);
+      if (resizeHandlers.length) {
+        for (const handler of resizeHandlers) {
+          handler({ width, height, baseScale, projection: nextProjection });
         }
       } else {
-        projection.scale(baseScale);
+        nextProjection.scale(baseScale);
       }
     });
     resizeObserver.observe(container);
@@ -237,31 +236,53 @@ export function useSvgGlobe(): SvgGlobeHandles {
       intersectionObserver.disconnect();
       document.removeEventListener("visibilitychange", onVisibilityChange);
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  function registerFrameRenderer(renderFn: () => void): () => void {
-    frameRenderersRef.current.push(renderFn);
-    return () => {
-      frameRenderersRef.current = frameRenderersRef.current.filter((fn) => fn !== renderFn);
-    };
   }
 
-  function registerResizeHandler(handler: (context: SvgGlobeResizeContext) => void): () => void {
-    resizeHandlersRef.current.push(handler);
-    return () => {
-      resizeHandlersRef.current = resizeHandlersRef.current.filter((fn) => fn !== handler);
-    };
-  }
-
-  return {
-    ...refs,
-    projection: () => projectionRef.current,
+  const handles: SvgGlobeHandles = {
+    containerRef: (container) => {
+      if (!container) return undefined;
+      const stopBase = startBase(container);
+      if (!stopBase) return undefined;
+      const stopSetup = setup?.(handles, container);
+      return () => {
+        if (typeof stopSetup === "function") stopSetup();
+        stopBase();
+      };
+    },
+    svgRef,
+    oceanRef,
+    gratRef,
+    landRef,
+    pinRef,
+    ringRef,
+    projection: () => projection,
     rotationAnimRef,
-    registerFrameRenderer,
-    registerResizeHandler,
-    setDragging: (dragging: boolean) => {
-      draggingRef.current = dragging;
+    registerFrameRenderer: (renderFn) => {
+      frameRenderers.push(renderFn);
+      return () => {
+        frameRenderers = frameRenderers.filter((fn) => fn !== renderFn);
+      };
+    },
+    registerTickHandler: (handler) => {
+      tickHandlers.push(handler);
+      return () => {
+        tickHandlers = tickHandlers.filter((fn) => fn !== handler);
+      };
+    },
+    registerResizeHandler: (handler) => {
+      resizeHandlers.push(handler);
+      return () => {
+        resizeHandlers = resizeHandlers.filter((fn) => fn !== handler);
+      };
+    },
+    setDragging: (next) => {
+      dragging = next;
     },
   };
+  return handles;
+}
+
+export function useSvgGlobe(setup?: SvgGlobeSetup): SvgGlobeHandles {
+  const [handles] = useState(() => createSvgGlobe(setup));
+  return handles;
 }

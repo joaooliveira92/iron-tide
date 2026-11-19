@@ -58,8 +58,6 @@
   "apps/desktop/src/renderer/lib/use-min-width.ts": 2,
   "apps/desktop/src/renderer/lib/use-mobile.ts": 1,
   "apps/desktop/src/renderer/lib/use-read.ts": 2,
-  "apps/desktop/src/renderer/screens/new-game/nation-selection/InteractiveGlobe.tsx": 5,
-  "apps/desktop/src/renderer/screens/new-game/nation-selection/useSvgGlobe.ts": 2,
   "apps/desktop/src/renderer/screens/shipbuilding/ShipDesignScreen.tsx": 3,
   "apps/desktop/src/renderer/screens/shipbuilding/useInspectorLayout.ts": 4,
   "apps/desktop/src/renderer/screens/shipbuilding/workspace/LastChangeSlot.tsx": 2,
