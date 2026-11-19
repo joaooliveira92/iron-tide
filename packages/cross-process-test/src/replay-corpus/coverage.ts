@@ -36,7 +36,7 @@ const EVENT_SUBSYSTEM: Readonly<Record<string, string>> = {
   PresenceShortfall: "battle_resolution",
   PrestigeLossRequested: "battle_resolution",
   PrestigeChanged: "battle_resolution",
-  DivisionExperienceChanged: "battle_resolution",
+  DivisionExperienceChanged: "maintenance",
   FleetExerciseScheduled: "command_collection",
   FleetExerciseCompleted: "maintenance",
   ExerciseTensionRaised: "resolve_diplomacy",

@@ -35,7 +35,11 @@ export const FleetReorganisationPenaltySchema = Schema.Struct({
 export const FleetManagementRulesSchema = Schema.Struct({
   sectionVersion: Schema.Literal(1),
   divisionCohesion: Schema.Struct({ monthlyGrowth: points, cap: points }),
-  divisionExperience: Schema.Struct({ perBattle: points, perExercise: points }),
+  divisionExperience: Schema.Struct({
+    perBattle: points,
+    perExercise: points,
+    service: Schema.optionalKey(Schema.Struct({ monthlyGrowth: points, cap: points })),
+  }),
   reorganisationPenalty: Schema.Struct({
     roleChange: FleetReorganisationPenaltySchema,
     formationChange: FleetReorganisationPenaltySchema,

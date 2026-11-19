@@ -8,9 +8,9 @@ export interface DivisionCohesionGrowthRules {
   readonly cap: number;
 }
 
-type GrowthMember = Pick<Ship, "id" | "readiness" | "isUnderConstruction" | "availability">;
+export type GrowthMember = Pick<Ship, "id" | "readiness" | "isUnderConstruction" | "availability">;
 
-function isGrowthMember(ship: GrowthMember | undefined): boolean {
+export function isGrowthMember(ship: GrowthMember | undefined): boolean {
   return (
     ship !== undefined &&
     ship.readiness === "ACTIVE" &&
