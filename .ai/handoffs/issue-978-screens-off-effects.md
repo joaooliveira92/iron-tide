@@ -15,8 +15,12 @@ Branch `refactor/issue-978-screens-off-effects`. Every `screens/` entry is gone 
 - `pnpm snap` after: new-game, ship design, ports-and-fleets panel clean (`--strict`). Battle (no snap route to a live battle) and simulation (debug-only screen, absent from the shipping bundle) not snappable.
 - Final-commit gates (`pnpm heavy`): logs in `/tmp/978-gate-*.log`, summary in `/tmp/978-gates.txt` (ephemeral).
 
-## Still owed if this session ends
+## Done since
 
-- `pnpm snap` before (origin/dev worktree `../978-base`, built) for new-game, ship design, fleet; compare with `/tmp/snap-after/*`.
-- Rewrite PR #984 body (see task: Closes #978, Refs #930, areas, decisions and deltas, gate table, observed vs assumed, trailer).
-- Remove the `978-base` worktree (`git worktree remove`), mark ready when gates are green.
+- `pnpm snap` before/after: new-game and ship design aria identical; fleet differs only by save nondeterminism. Base worktree removed.
+- `pnpm preflight` and `pnpm test:scripts` passed on the final code; `pnpm check` first failed on two lint findings (fixed in the last commit) and was rerun (log `/tmp/978-gate-check2.log`, exit in `/tmp/978-chk.txt`).
+- PR #984 body rewritten (`Closes #978`, `Refs #930`).
+
+## Still owed
+
+- Confirm `pnpm check` exit 0; if green, set the check row in the PR body to `passed` and `gh pr ready 984`. If it failed, fix the named failures only, rerun.
