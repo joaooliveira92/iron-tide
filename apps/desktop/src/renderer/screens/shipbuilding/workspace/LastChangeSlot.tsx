@@ -1,4 +1,5 @@
-import { useEffect, useRef } from "react";
+import { useRef } from "react";
+import { useLifecycle } from "../../../lib/use-lifecycle.js";
 import { LastChangeStrip } from "../components/LastChangeStrip.js";
 import type { DesignSectionId } from "../design-sections.js";
 import {
@@ -13,7 +14,7 @@ export function LastChangeSlot() {
   const { clearLastChange, openSection } = useShipbuildingActions();
   const section = place?.section ?? null;
   const opened = useRef<DesignSectionId | null>(null);
-  useEffect(() => {
+  useLifecycle(() => {
     const own = opened.current === section;
     opened.current = null;
     if (!own) clearLastChange();

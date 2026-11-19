@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 import type { BluewaveDesktopBridge } from "../../../preload/index.js";
 import { useBridge } from "../../lib/bridge-context.js";
+import { useLifecycle } from "../../lib/use-lifecycle.js";
 import { readUiState, writeUiStatePatch } from "../../lib/uiStateSidecar.js";
 import {
   DEFAULT_INSPECTOR_LAYOUT,
@@ -34,11 +35,9 @@ export function useInspectorLayout(sessionId?: string): UseInspectorLayoutResult
   const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const pending = useRef<InspectorLayout | null>(null);
 
-  useEffect(() => {
-    latest.current = layout;
-  }, [layout]);
+  latest.current = layout;
 
-  useEffect(() => {
+  useLifecycle(() => {
     if (bridge === undefined || sessionId === undefined) return;
     let cancelled = false;
     void (async () => {
@@ -50,7 +49,7 @@ export function useInspectorLayout(sessionId?: string): UseInspectorLayoutResult
     };
   }, [bridge, sessionId]);
 
-  useEffect(
+  useLifecycle(
     () => () => {
       if (timer.current === null) return;
       clearTimeout(timer.current);
