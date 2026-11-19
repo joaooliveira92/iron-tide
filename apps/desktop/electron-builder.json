@@ -24,6 +24,7 @@
     "!scripts/globe-spike-*.mjs",
     "!scripts/globe-adapter-*.mjs",
     "!scripts/map-baseline.mjs",
+    "!test/**",
     "!test-results/**",
     "!dist-electron/**",
     "!**/*.tsbuildinfo",
