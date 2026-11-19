@@ -1,4 +1,4 @@
-import { type KeyboardEvent, type ReactNode, useCallback, useEffect, useRef } from "react";
+import { type KeyboardEvent, type ReactNode, useCallback, useRef } from "react";
 import { CardDeck } from "./CardDeck.js";
 import { createWheelStepper, normalizeIndex } from "./deckNavigation.js";
 
@@ -50,11 +50,7 @@ export function DeckMasterPane({
   const count = cards.length;
   const normalizedFocusedIndex = normalizeIndex(focusedIndex, count);
 
-  const containerRef = useRef<HTMLDivElement | null>(null);
-
-  useEffect(() => {
-    containerRef.current?.focus();
-  }, []);
+  const focusedRef = useRef(false);
 
   const step = useCallback(
     (delta: number) => {
@@ -70,23 +66,27 @@ export function DeckMasterPane({
   countRef.current = count;
   const hasListbox = count > 0;
 
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    const stepper = createWheelStepper((direction) => stepRef.current(direction));
-    const handleWheel = (event: WheelEvent): void => {
-      if (countRef.current <= 1 || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
-      event.preventDefault();
-      stepper.push(event.deltaY, event.deltaMode);
-    };
-
-    el.addEventListener("wheel", handleWheel, { passive: false });
-    return () => {
-      el.removeEventListener("wheel", handleWheel);
-      stepper.dispose();
-    };
-  }, [hasListbox]);
+  const attachContainer = useCallback(
+    (el: HTMLDivElement | null) => {
+      if (!el) return undefined;
+      if (!focusedRef.current) {
+        focusedRef.current = true;
+        el.focus();
+      }
+      const stepper = createWheelStepper((direction) => stepRef.current(direction));
+      const handleWheel = (event: WheelEvent): void => {
+        if (countRef.current <= 1 || Math.abs(event.deltaX) > Math.abs(event.deltaY)) return;
+        event.preventDefault();
+        stepper.push(event.deltaY, event.deltaMode);
+      };
+      el.addEventListener("wheel", handleWheel, { passive: false });
+      return () => {
+        el.removeEventListener("wheel", handleWheel);
+        stepper.dispose();
+      };
+    },
+    [hasListbox],
+  );
 
   const handleKeyDown = (event: KeyboardEvent<HTMLDivElement>): void => {
     onKeyDown?.(event);
@@ -175,7 +175,7 @@ export function DeckMasterPane({
         className={`relative min-h-0 ${hasFooter ? "flex-[0_1_26rem]" : "flex-1"} overflow-hidden`}
       >
         <div
-          ref={containerRef}
+          ref={attachContainer}
           id={listboxId}
           role="listbox"
           tabIndex={0}

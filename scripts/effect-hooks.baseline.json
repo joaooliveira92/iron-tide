@@ -1,6 +1,4 @@
 {
-  "apps/desktop/src/renderer/components/card-deck/CardDeck.tsx": 7,
-  "apps/desktop/src/renderer/components/card-deck/DeckMasterPane.tsx": 3,
   "apps/desktop/src/renderer/components/design-workspace/panels/RevisionPanel.tsx": 2,
   "apps/desktop/src/renderer/components/design-workspace/panels/SubmitPanel.tsx": 2,
   "apps/desktop/src/renderer/components/design-workspace/panels/rebuild/useRebuildState.ts": 3,
