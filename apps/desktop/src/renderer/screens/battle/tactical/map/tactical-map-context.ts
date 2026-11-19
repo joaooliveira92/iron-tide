@@ -1,10 +1,10 @@
-import type { PlayerBattleShipView, PlayerBattleView } from "@bluewave/combat/battleResolution";
 import { BluewaveError } from "@bluewave/contracts";
 import { createContext, use } from "react";
 import type { formatMeasurement } from "../../../../lib/presentation-format/format.js";
 import type { niceScaleBar } from "../../../../components/world-map/map-scale.js";
 import type { lodBandFor } from "../../../tactical-map/tacticalScale.js";
 import type { TacticalViewport } from "../tactical-geometry.js";
+import type { TacticalShip, TacticalView } from "../tactical-view.js";
 
 export type ScreenPoint = readonly [number, number];
 
@@ -33,12 +33,11 @@ export type LodBand = ReturnType<typeof lodBandFor>;
 export type MapMeasurement = Parameters<typeof formatMeasurement>[1];
 
 export interface TacticalMapGeometry {
-  readonly view: PlayerBattleView;
+  readonly view: TacticalView;
   readonly viewport: TacticalViewport;
   readonly project: (point: readonly [number, number]) => ScreenPoint;
-  readonly shipsById: ReadonlyMap<string, PlayerBattleShipView>;
-  readonly visibleShips: readonly PlayerBattleShipView[];
-  readonly playerSide: string | null;
+  readonly shipsById: ReadonlyMap<string, TacticalShip>;
+  readonly visibleShips: readonly TacticalShip[];
   readonly symbolSize: number;
   readonly pixelsPerNm: number;
   readonly bar: ReturnType<typeof niceScaleBar>;

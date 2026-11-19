@@ -721,38 +721,6 @@
     },
     {
       "file": "packages/combat/src/battleResolution/playerSessionTypes.ts",
-      "type": "PlayerBattleShipView",
-      "area": "battle",
-      "issue": "#305",
-      "covered": {
-        "gunneryAccuracy": "gunnery_accuracy",
-        "torpedoSolution": "torpedo_solution",
-        "damageControl": "damage_control",
-        "loss": "battle_loss",
-        "motion": "ship_motion"
-      },
-      "exempt": {
-        "hitPoints": "Not yet explained; #305 covers this area and re-exempts any field it does not explain.",
-        "maxHitPoints": "Not yet explained; #305 covers this area and re-exempts any field it does not explain.",
-        "headingDeg": "Own ships print it as a compass course in the unit panel with no explanation tree yet; a hostile value only orients its map symbol and is never printed.",
-        "speedBp": "Own ships print it with the ship_motion tree; a hostile value only sizes its map wake and is never printed.",
-        "contactConfidenceBp": "Hostile contacts only; it fades the map symbol and is never printed."
-      }
-    },
-    {
-      "file": "packages/combat/src/battleResolution/playerSessionTypes.ts",
-      "type": "PlayerBattleView",
-      "area": "battle",
-      "issue": "#305",
-      "covered": {},
-      "exempt": {
-        "minute": "Not yet explained; #305 covers this area and re-exempts any field it does not explain.",
-        "maxMinutes": "Not yet explained; #305 covers this area and re-exempts any field it does not explain.",
-        "weather.visibilityNm": "Not yet explained; #305 covers this area and re-exempts any field it does not explain."
-      }
-    },
-    {
-      "file": "packages/combat/src/battleResolution/playerSessionTypes.ts",
       "type": "PlayerBattleEvent",
       "area": "battle",
       "issue": "#305",

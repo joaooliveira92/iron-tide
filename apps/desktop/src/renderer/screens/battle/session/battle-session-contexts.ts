@@ -1,4 +1,3 @@
-import type { PlayerBattleShipView, PlayerBattleView } from "@bluewave/combat/battleResolution";
 import { BluewaveError } from "@bluewave/contracts";
 import { createContext, use } from "react";
 import type { DivisionOrder, DivisionOrders } from "../../../../shared/player-battle-orders.js";
@@ -19,10 +18,11 @@ import type {
 import type { Trails } from "../tactical/tactical-model.js";
 import type { ScreenRectangle } from "../tactical/tactical-rectangle.js";
 import type { TacticalTimeScale } from "../tactical/tactical-time.js";
+import type { TacticalShip, TacticalView } from "../tactical/tactical-view.js";
 import type { BattleResume } from "../usePlayerBattle.js";
 
 export interface BattleSessionState {
-  readonly view: PlayerBattleView | null;
+  readonly view: TacticalView | null;
   readonly resume: BattleResume;
   readonly error: string | null;
   readonly busy: boolean;
@@ -31,7 +31,7 @@ export interface BattleSessionState {
   readonly scale: TacticalTimeScale;
   readonly stepIntervalMs: number;
   readonly selectedShipId: string | null;
-  readonly selected: PlayerBattleShipView | null;
+  readonly selected: TacticalShip | null;
   readonly selectedPoint: WorldPoint | null;
   readonly selectedDivisionId: string | null;
   readonly preview: CoursePreview | null;

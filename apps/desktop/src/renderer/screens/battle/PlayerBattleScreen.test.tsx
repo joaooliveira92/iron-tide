@@ -1,6 +1,5 @@
 import { cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import { afterEach, describe, expect, it, vi } from "vite-plus/test";
-import type { PlayerBattleView } from "@bluewave/combat/battleResolution";
 import type { BluewaveDesktopBridge } from "../../../preload/index.js";
 import type { CampaignCommandClient } from "../../../shared/campaign-contract.js";
 import type { InterruptionRequestDto } from "../../../shared/turn-message-contract.js";
@@ -12,14 +11,13 @@ import { axeViolations } from "../../lib/axe.js";
 import { BridgeProvider } from "../../lib/bridge-context.js";
 import { PreferencesProvider } from "../../lib/preferences-context.js";
 import { PlayerBattleScreen } from "./PlayerBattleScreen.js";
+import { battleViewFor } from "./tactical/tactical-view-fixture.js";
+import type { TacticalView } from "./tactical/tactical-view.js";
 
-const VIEW: PlayerBattleView = {
+const VIEW: TacticalView = {
   battleId: "b1",
   campaignMonth: "1880-02",
-  playerNationId: "uk",
   areaId: "channel",
-  attackerId: "uk",
-  defenderId: "france",
   minute: 3,
   maxMinutes: 120,
   ended: false,
@@ -29,7 +27,7 @@ const VIEW: PlayerBattleView = {
   objectives: [],
   weather: {
     seaState: "MODERATE",
-    visibilityNm: 10,
+    visibilityM: 18_520,
     precipitation: "CLEAR",
     daylight: true,
   },
@@ -37,16 +35,15 @@ const VIEW: PlayerBattleView = {
     {
       shipId: "s1",
       name: "HMS Alpha",
-      className: "A",
+      own: true,
       shipType: "ironclad",
-      sideId: "ATTACKER",
       divisionId: "d1",
       hitPoints: 40,
       maxHitPoints: 100,
       damageState: "CRIPPLED",
       position: [0, 0],
       headingDeg: 90,
-      speedBp: 12_000,
+      speedMilliKnots: 12_000,
       contactConfidenceBp: null,
       gunneryAccuracy: {
         formulaId: "gunnery_accuracy",
@@ -149,7 +146,6 @@ const VIEW: PlayerBattleView = {
   divisions: [
     {
       divisionId: "d1",
-      sideId: "ATTACKER",
       role: "BATTLE_LINE",
       formation: "LINE_AHEAD",
       flagshipId: "s1",
@@ -172,10 +168,10 @@ const REQUEST: InterruptionRequestDto = {
   areaId: "channel",
 };
 
-function startReply(view: PlayerBattleView, resumed: boolean, lastOrders: unknown[]) {
+function startReply(view: TacticalView, resumed: boolean, lastOrders: unknown[]) {
   return Promise.resolve({
     outcome: "success",
-    value: { view, sessionHash: "h", resumed, lastOrders },
+    value: { battleView: battleViewFor(view), sessionHash: "h", resumed, lastOrders },
   } as never);
 }
 
@@ -286,7 +282,7 @@ describe("PlayerBattleScreen", () => {
 
   it("shows no accuracy disclosure for a ship the engine did not explain", async () => {
     const bridge = bridgeWith({}, { resumed: false, lastOrders: [] });
-    const withoutExplanation: PlayerBattleView = {
+    const withoutExplanation: TacticalView = {
       ...VIEW,
       ships: VIEW.ships.map(({ gunneryAccuracy: _omitted, ...ship }) => ship),
     };
@@ -296,25 +292,27 @@ describe("PlayerBattleScreen", () => {
     expect(within(row).queryByTestId("battle-accuracy")).toBeNull();
   });
 
-  it("lists enemy ships that belong to no division instead of hiding them", async () => {
+  it("lists hostile contacts under their handle label instead of hiding them", async () => {
     const bridge = bridgeWith({}, { resumed: false, lastOrders: [] });
-    const withEnemy: PlayerBattleView = {
+    const withEnemy: TacticalView = {
       ...VIEW,
       ships: [
         ...VIEW.ships,
         {
           ...VIEW.ships[0]!,
           shipId: "e1",
-          name: "FS Beta",
-          sideId: "DEFENDER",
+          name: "Unidentified contact e1",
+          own: false,
+          shipType: null,
           divisionId: null,
+          contactConfidenceBp: 9_000,
         },
       ],
     };
     bridge.campaign.execute.mockReturnValue(startReply(withEnemy, false, []));
     mount(bridge);
     const row = await screen.findByTestId("battle-ship-e1");
-    expect(row.textContent).toContain("FS Beta");
+    expect(row.textContent).toContain("Unidentified contact e1");
   });
 
   it("restores the standing orders when a saved battle is resumed", async () => {
@@ -358,7 +356,11 @@ describe("PlayerBattleScreen", () => {
     bridge.campaign.execute.mockReturnValue(
       Promise.resolve({
         outcome: "success",
-        value: { view: { ...VIEW, minute: 4 }, sessionHash: "h2", result: null },
+        value: {
+          battleView: battleViewFor({ ...VIEW, minute: 4 }),
+          sessionHash: "h2",
+          result: null,
+        },
         diagnostics: [],
       } as never),
     );
@@ -387,7 +389,7 @@ describe("PlayerBattleScreen", () => {
   });
 
   it("submits the result of an ended battle", async () => {
-    const ended: PlayerBattleView = { ...VIEW, ended: true, endReason: "ANNIHILATION" };
+    const ended: TacticalView = { ...VIEW, ended: true, endReason: "ANNIHILATION" };
     const bridge = bridgeWith({}, { resumed: false, lastOrders: [] });
     bridge.campaign.execute.mockReturnValue(startReply(ended, false, []));
     const onSubmitResult = vi.fn();

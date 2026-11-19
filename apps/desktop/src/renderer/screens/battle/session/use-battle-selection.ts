@@ -1,4 +1,3 @@
-import type { PlayerBattleShipView, PlayerBattleView } from "@bluewave/combat/battleResolution";
 import { useCallback, useMemo, useState } from "react";
 import type { WorldPoint } from "../tactical/tactical-geometry.js";
 import type {
@@ -8,12 +7,13 @@ import type {
   OverlayKey,
 } from "../tactical/tactical-map-types.js";
 import { selectedShip, shipPoint } from "../tactical/tactical-model.js";
+import type { TacticalShip, TacticalView } from "../tactical/tactical-view.js";
 
 const INITIAL_OVERLAYS: MapOverlays = { labels: "all", tracks: true, rings: true, fire: true };
 
 export interface BattleSelection {
   readonly selectedShipId: string | null;
-  readonly selected: PlayerBattleShipView | null;
+  readonly selected: TacticalShip | null;
   readonly selectedPoint: WorldPoint | null;
   readonly selectedDivisionId: string | null;
   readonly preview: CoursePreview | null;
@@ -25,7 +25,7 @@ export interface BattleSelection {
   readonly setNames: (labels: NameFilter) => void;
 }
 
-export function useBattleSelection(view: PlayerBattleView | null): BattleSelection {
+export function useBattleSelection(view: TacticalView | null): BattleSelection {
   const [selectedShipId, setSelectedShipId] = useState<string | null>(null);
   const [coursePreview, setCoursePreview] = useState<number | null>(null);
   const [overlays, setOverlays] = useState<MapOverlays>(INITIAL_OVERLAYS);

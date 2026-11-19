@@ -1,20 +1,19 @@
-import type { PlayerBattleShipView, PlayerBattleView } from "@bluewave/combat/battleResolution";
 import { memo, useMemo } from "react";
 import {
   MAX_SPEED_PERCENT,
   MIN_SPEED_PERCENT,
   PLAYER_BATTLE_STANCES,
   SPEED_PERCENT_STEP,
-  playerSideOf,
   type DivisionOrder,
 } from "../../../../shared/player-battle-orders.js";
 import type { FormattingLocale } from "../../../../shared/preferences-contract.js";
 import { AccuracyDisclosure } from "../AccuracyDisclosure.js";
 import { BattleExplanationDisclosure } from "../BattleExplanationDisclosure.js";
 import { shortDivisionId } from "./tactical-model.js";
+import type { TacticalShip, TacticalView } from "./tactical-view.js";
 
 export interface OrderOfBattleProps {
-  readonly view: PlayerBattleView;
+  readonly view: TacticalView;
   readonly locale: FormattingLocale;
   readonly orderFor: (divisionId: string) => DivisionOrder;
   readonly setOrder: (divisionId: string, patch: Partial<DivisionOrder>) => void;
@@ -24,7 +23,8 @@ export interface OrderOfBattleProps {
   readonly onSelectDivision: (divisionId: string) => void;
 }
 
-function Damage({ ship }: { readonly ship: PlayerBattleShipView }) {
+function Damage({ ship }: { readonly ship: TacticalShip }) {
+  if (ship.hitPoints === null || ship.maxHitPoints === null) return null;
   return (
     <span className={ship.damageState === "NORMAL" ? "" : "text-red-400"}>
       {ship.damageState === "NORMAL" ? "" : "▼ "}
@@ -35,17 +35,14 @@ function Damage({ ship }: { readonly ship: PlayerBattleShipView }) {
 
 export const OrderOfBattle = memo(function OrderOfBattle(props: OrderOfBattleProps) {
   const { view, locale, orderFor, setOrder, selectedShipId, selectedDivisionId } = props;
-  const { shipsById, divisions, enemyDivisions, unassignedHostile } = useMemo(() => {
-    const playerSide = playerSideOf(view);
-    return {
+  const { shipsById, divisions, contacts } = useMemo(
+    () => ({
       shipsById: new Map(view.ships.map((ship) => [ship.shipId, ship])),
-      divisions: view.divisions.filter((division) => division.sideId === playerSide),
-      enemyDivisions: view.divisions.filter((division) => division.sideId !== playerSide),
-      unassignedHostile: view.ships.filter(
-        (ship) => ship.sideId !== playerSide && ship.divisionId === null,
-      ),
-    };
-  }, [view]);
+      divisions: view.divisions,
+      contacts: view.ships.filter((ship) => !ship.own),
+    }),
+    [view],
+  );
 
   return (
     <div className="space-y-4">
@@ -166,45 +163,14 @@ export const OrderOfBattle = memo(function OrderOfBattle(props: OrderOfBattlePro
         </div>
       </section>
 
-      <section aria-label="Enemy divisions">
-        <h3 className="text-xs font-semibold uppercase text-muted-foreground">Enemy divisions</h3>
+      <section aria-label="Enemy contacts">
+        <h3 className="text-xs font-semibold uppercase text-muted-foreground">Enemy contacts</h3>
         <div className="mt-2 space-y-2">
-          {enemyDivisions.map((division) => (
-            <div key={division.divisionId} className="rounded border border-border p-2">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-semibold">
-                  {shortDivisionId(division.divisionId)}
-                </span>
-                <span className="text-xs text-muted-foreground">
-                  {division.role} · {division.formation}
-                </span>
-              </div>
-              <ul className="mt-1 space-y-0.5 text-xs">
-                {division.unitIds.map((unitId) => {
-                  const ship = shipsById.get(unitId);
-                  if (ship === undefined) return null;
-                  return (
-                    <li key={unitId} className="flex justify-between gap-2">
-                      <button
-                        type="button"
-                        aria-pressed={selectedShipId === unitId}
-                        className="text-left hover:underline"
-                        onClick={() => props.onSelectShip(unitId)}
-                      >
-                        {ship.name}
-                      </button>
-                      <Damage ship={ship} />
-                    </li>
-                  );
-                })}
-              </ul>
-            </div>
-          ))}
-          {unassignedHostile.length > 0 && (
+          {contacts.length === 0 && <p className="text-xs">No contacts held.</p>}
+          {contacts.length > 0 && (
             <div className="rounded border border-border p-2">
-              <span className="text-xs font-semibold">Not in a division</span>
               <ul className="mt-1 space-y-0.5 text-xs">
-                {unassignedHostile.map((ship) => (
+                {contacts.map((ship) => (
                   <li
                     key={ship.shipId}
                     data-testid={`battle-ship-${ship.shipId}`}
@@ -217,10 +183,11 @@ export const OrderOfBattle = memo(function OrderOfBattle(props: OrderOfBattlePro
                     >
                       {ship.name}
                     </button>
-                    <span>
-                      {ship.damageState === "NORMAL" ? "" : "▼ "}
-                      {ship.hitPoints}/{ship.maxHitPoints} {ship.damageState}
-                    </span>
+                    {ship.contactConfidenceBp === null ? null : (
+                      <span className="text-muted-foreground">
+                        {Math.round(ship.contactConfidenceBp / 100)}%
+                      </span>
+                    )}
                   </li>
                 ))}
               </ul>

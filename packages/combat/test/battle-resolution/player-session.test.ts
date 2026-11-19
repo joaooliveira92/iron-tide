@@ -9,14 +9,18 @@ import {
   createPlayerBattleSession,
   playerBattleResult,
   playerBattleSessionHash,
-  playerBattleView,
   runPlayerBattleToEnd,
+  battleView,
   type PlayerBattleOrders,
+  type PlayerBattleSession,
 } from "@bluewave/combat/battleResolution";
 import { ATTACKER_NATION, makeAutoInput, makeNations } from "./fixtures.js";
 import type { PermanentDivision } from "@bluewave/campaign";
 import { BluewaveError, isBluewaveError, SafeInt } from "@bluewave/contracts";
 import { BATTLE_AUTO_RESOLUTION_FAILED } from "@bluewave/combat/battleResolution";
+
+const ownView = (session: PlayerBattleSession) =>
+  battleView(session, { pauseReason: null, orders: null });
 
 function capture(run: () => unknown): BluewaveError {
   try {
@@ -116,38 +120,29 @@ describe("T-2 player battle session", () => {
   });
 
   it("explains the accuracy of the player's own gunned ships and never the enemy's", () => {
-    const view = playerBattleView(createPlayerBattleSession(makePlayerInput()));
-    const own = view.ships.filter((ship) => ship.sideId === "ATTACKER");
-    const enemy = view.ships.filter((ship) => ship.sideId === "DEFENDER");
-    expect(own.length).toBeGreaterThan(0);
-    for (const ship of own) {
-      expect(ship.gunneryAccuracy?.formulaId).toBe("gunnery_accuracy");
-      expect(ship.gunneryAccuracy?.unit).toBe("bp");
+    const view = ownView(createPlayerBattleSession(makePlayerInput()));
+    expect(view.ships.length).toBeGreaterThan(0);
+    for (const ship of view.ships) {
+      expect(ship.explanations.gunneryAccuracy?.formulaId).toBe("gunnery_accuracy");
+      expect(ship.explanations.gunneryAccuracy?.unit).toBe("bp");
     }
-    for (const ship of enemy) expect(ship).not.toHaveProperty("gunneryAccuracy");
+    expect(JSON.stringify(view)).not.toMatch(/"(d1|d2)"/u);
   });
 
   it("explains battle numbers only on the player's own ships", () => {
-    const view = playerBattleView(
+    const view = ownView(
       runPlayerBattleToEnd(createPlayerBattleSession(makePlayerInput()), DEFAULT_ORDERS),
     );
-    const own = view.ships.filter((ship) => ship.sideId === "ATTACKER");
-    const enemy = view.ships.filter((ship) => ship.sideId === "DEFENDER");
-    for (const ship of enemy) {
-      expect(ship).not.toHaveProperty("torpedoSolution");
-      expect(ship).not.toHaveProperty("damageControl");
-      expect(ship).not.toHaveProperty("loss");
-    }
-    for (const ship of own) {
-      if (ship.torpedoSolution !== undefined) {
-        expect(ship.torpedoSolution.formulaId).toBe("torpedo_solution");
+    for (const { explanations } of view.ships) {
+      if (explanations.torpedoSolution !== null) {
+        expect(explanations.torpedoSolution.formulaId).toBe("torpedo_solution");
       }
-      if (ship.damageControl !== undefined) {
-        expect(ship.damageControl.formulaId).toBe("damage_control");
+      if (explanations.damageControl !== null) {
+        expect(explanations.damageControl.formulaId).toBe("damage_control");
       }
-      if (ship.loss !== undefined) {
-        expect(ship.loss.formulaId).toBe("battle_loss");
-        expect(Number(ship.loss.result)).toBeGreaterThan(0);
+      if (explanations.loss !== null) {
+        expect(explanations.loss.formulaId).toBe("battle_loss");
+        expect(Number(explanations.loss.result)).toBeGreaterThan(0);
       }
     }
   });
@@ -161,11 +156,11 @@ describe("T-2 player battle session", () => {
         trainingEffects: { ...NO_TRAINING_EFFECTS, gunneryBp: 1_000 },
       },
     };
-    const plain = playerBattleView(createPlayerBattleSession(base));
-    const view = playerBattleView(createPlayerBattleSession(trained));
-    const shipId = view.ships.find((ship) => ship.sideId === "ATTACKER")!.shipId;
+    const plain = ownView(createPlayerBattleSession(base));
+    const view = ownView(createPlayerBattleSession(trained));
+    const shipId = view.ships[0]!.shipId;
     const explained = (v: typeof view) =>
-      v.ships.find((ship) => ship.shipId === shipId)!.gunneryAccuracy!;
+      v.ships.find((ship) => ship.shipId === shipId)!.explanations.gunneryAccuracy!;
     const training = explained(view).children?.find(
       (c) => c.formulaId === "gunnery_accuracy.training",
     );
@@ -178,10 +173,11 @@ describe("T-2 player battle session", () => {
 
   it("exposes a structured view with objectives, ships and divisions", () => {
     const session = createPlayerBattleSession(makePlayerInput());
-    const view = playerBattleView(session);
+    const view = ownView(session);
     expect(view.battleId).toBe(session.battleId);
-    expect(view.minute).toBe(0);
-    expect(view.ships.map((s) => s.shipId).sort()).toEqual(["a1", "a2", "d1", "d2"]);
+    expect(view.campaignMonth).toBe(session.campaignMonth);
+    expect(view.status.minute).toBe(0);
+    expect(view.ships.map((s) => s.shipId).sort()).toEqual(["a1", "a2"]);
     for (const ship of view.ships) {
       expect(ship.maxHitPoints).toBe(100);
       expect(ship.damageState).toBe("NORMAL");

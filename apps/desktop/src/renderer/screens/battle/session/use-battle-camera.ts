@@ -1,4 +1,3 @@
-import type { PlayerBattleView } from "@bluewave/combat/battleResolution";
 import { useCallback, useEffect, useRef, useState } from "react";
 import {
   PROVISIONAL_ZOOM_STEP,
@@ -11,6 +10,7 @@ import {
 } from "../tactical/tactical-geometry.js";
 import { appendTrails, knownPositions, type Trails } from "../tactical/tactical-model.js";
 import type { ScreenRectangle } from "../tactical/tactical-rectangle.js";
+import type { TacticalView } from "../tactical/tactical-view.js";
 import {
   applyCameraChange,
   frameRectangle,
@@ -37,7 +37,7 @@ export interface BattleCamera {
 }
 
 export function useBattleCamera(
-  view: PlayerBattleView | null,
+  view: TacticalView | null,
   focusPoint: WorldPoint | null,
 ): BattleCamera {
   const [{ camera, following }, setCameraFollow] = useState<CameraFollow>({
@@ -46,7 +46,7 @@ export function useBattleCamera(
   });
   const [viewport, setViewport] = useState<TacticalViewport>(INITIAL_VIEWPORT);
   const [trailed, setTrailed] = useState<{
-    readonly view: PlayerBattleView | null;
+    readonly view: TacticalView | null;
     readonly trails: Trails;
   }>({ view: null, trails: {} });
   const fittedKey = useRef("");

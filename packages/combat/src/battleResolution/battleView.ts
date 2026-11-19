@@ -4,6 +4,11 @@ import type { TacticalDivision } from "../tactical/division.js";
 import type { TacticalShipUnit } from "../tactical/unit.js";
 import { explainShipMotion } from "./battle-explanations.js";
 import {
+  ownShipExplanations,
+  ownShipExplanationSources,
+  type OwnShipExplanationSources,
+} from "./battleViewExplanations.js";
+import {
   pointMetres,
   projectContact,
   projectLog,
@@ -76,6 +81,7 @@ function ownShipView(
   unit: TacticalShipUnit,
   divisionOfShip: ReadonlyMap<string, string>,
   tuning: BattleViewTuning,
+  sources: OwnShipExplanationSources,
 ): BattleViewOwnShip {
   const movement = session.state.movementStates?.[unit.assetId];
   const damage = session.damage.targets[unit.assetId]?.state;
@@ -100,6 +106,9 @@ function ownShipView(
     speedExplanation: movement === undefined ? null : explainShipMotion(movement),
     damageStars: starsForLoss(lossBp, tuning),
     damageState: damage?.terminalStatus ?? "NORMAL",
+    hitPoints: unit.hitPoints as number,
+    maxHitPoints,
+    explanations: ownShipExplanations(session, unit, sources),
     carriesMines: null,
     machinery: null,
     turrets: [],
@@ -198,7 +207,8 @@ export function battleView(
       divisionOfShip.set(shipId, division.tacticalDivisionId);
     }
   }
-  const ships = ownUnits.map((unit) => ownShipView(session, unit, divisionOfShip, tuning));
+  const sources = ownShipExplanationSources(session);
+  const ships = ownUnits.map((unit) => ownShipView(session, unit, divisionOfShip, tuning, sources));
   const ownPositions = new Map<string, PointM>();
   for (const ship of ships)
     if (ship.positionM !== null) ownPositions.set(ship.shipId, ship.positionM);
@@ -216,6 +226,7 @@ export function battleView(
     version: BATTLE_VIEW_VERSION,
     battleId: session.battleId,
     areaId: session.areaId,
+    campaignMonth: session.campaignMonth,
     side,
     playerNationId: session.playerNationId,
     ended: session.ended,
