@@ -28,6 +28,8 @@ const FILES = [
   "scripts/data/agent-context-policy.json",
   "scripts/hooks/pre-tool-use-bash.mjs",
   "scripts/hooks/pre-tool-use-edit.mjs",
+  "scripts/hooks/pre-tool-use-routing.mjs",
+  "scripts/lib/agent-routing.mjs",
   "scripts/hooks/user-prompt-context.mjs",
   "scripts/hooks/session-telemetry.mjs",
   "scripts/hooks/stop-gate.mjs",

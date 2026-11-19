@@ -32,7 +32,9 @@ const HOOK_SOURCES = [
   "scripts/hooks/user-prompt-context.mjs",
   "scripts/hooks/session-telemetry.mjs",
   "scripts/hooks/session-start-resume.mjs",
+  "scripts/hooks/pre-tool-use-routing.mjs",
   "scripts/lib/agent-guard.mjs",
+  "scripts/lib/agent-routing.mjs",
   "scripts/lib/mutation-streak.mjs",
   "scripts/lib/hook-telemetry.mjs",
   "scripts/lib/session-resume.mjs",
@@ -149,6 +151,7 @@ function checkSettings(root, failures) {
   const expectations = [
     ["PreToolUse", "scripts/hooks/pre-tool-use-bash.mjs", "Bash"],
     ["PreToolUse", "scripts/hooks/pre-tool-use-edit.mjs", "Edit|Write|Grep"],
+    ["PreToolUse", "scripts/hooks/pre-tool-use-routing.mjs", "Agent|Read"],
     ["UserPromptSubmit", "scripts/hooks/user-prompt-context.mjs", undefined],
     ["PostToolUse", "scripts/hooks/session-telemetry.mjs", undefined],
     ["PreCompact", "scripts/hooks/session-telemetry.mjs", undefined],

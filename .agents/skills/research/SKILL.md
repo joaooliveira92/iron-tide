@@ -3,7 +3,7 @@ name: research
 description: Investigate a question against high-trust primary sources and publish the findings as a GitHub Discussion. Use when the user wants a topic researched, docs or API facts gathered, or reading legwork delegated to a background agent.
 ---
 
-Spin up a **background agent** to do the research, so you keep working while it reads.
+Spin up a **background agent** to do the research, so you keep working while it reads. Launch it with the Agent tool, `subagent_type: "claude"` and `run_in_background: true`; the `general-purpose` type is denied by the agent-routing hook.
 
 Its job:
 
