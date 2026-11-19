@@ -18,7 +18,7 @@ const runHook = (payload) =>
     encoding: "utf8",
   });
 
-describe("agent routing", () => {
+void describe("agent routing", () => {
   test("denies the general-purpose subagent type", () => {
     const verdict = evaluateAgentRouting({
       input: { subagent_type: "general-purpose", prompt: "look around" },
@@ -59,7 +59,7 @@ describe("agent routing", () => {
   });
 });
 
-describe("read routing", () => {
+void describe("read routing", () => {
   const denied = [
     "/repo/golden/replays/seed-1.json",
     "/repo/.ai/reports/agent-efficiency-2026-11-01.md",
@@ -111,7 +111,7 @@ describe("read routing", () => {
   });
 });
 
-describe("routing hook", () => {
+void describe("routing hook", () => {
   test("blocks the general-purpose agent with exit 2 and a stderr message", () => {
     const result = runHook({
       tool_name: "Agent",
