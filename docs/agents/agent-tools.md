@@ -14,7 +14,7 @@ One block: branch, head, ahead/behind `dev`, dirty paths, the branch's PR with f
 
 ## `pnpm verify:affected [--base <ref>] [--dry-run] [--verbose]`
 
-Reads `pnpm change-scope --base <ref>` (default `dev`), maps changed paths to workspaces, adds reverse dependencies, and runs build, typecheck, tests and lint for each affected unit. Shared configuration, unowned paths and goldens widen the plan. Work is serialised through the `heavy` lock, logs land in `node_modules/.cache/bluewave-verify/`, stdout is one line per unit. `--dry-run` prints the plan.
+Reads `pnpm change-scope --base <ref>` (default `dev`), maps changed paths to workspaces, adds reverse dependencies, and runs build, typecheck, tests and lint for each affected unit. Shared configuration, unowned paths and goldens widen the plan; `content/` adds every package's `test`. Work is serialised through the `heavy` lock, logs land in `node_modules/.cache/bluewave-verify/`, stdout is one line per unit. `--dry-run` prints the plan.
 
 Exit codes: `0` clean, `1` failure, `2` usage or unknown base, `130` cancelled. It does not replace `pnpm check`.
 
