@@ -3,6 +3,7 @@ import { fileURLToPath } from "node:url";
 
 import type { CampaignState } from "@bluewave/campaign";
 import { CampaignCompiler } from "@bluewave/campaign/compiler";
+import { placeBattleTerrain, type TerrainView } from "@bluewave/combat/terrain";
 import {
   buildContentBundleArtifact,
   buildFullSurfaceInput,
@@ -67,6 +68,16 @@ function decodeBundle(artifact: ContentBundleArtifact): CompiledContentBundle {
     );
   }
   return bundle;
+}
+
+export function compileProductionBattleTerrain(
+  packDir: string = PRODUCTION_PACK_DIR,
+): Readonly<Record<string, TerrainView>> | undefined {
+  const compiled = buildProductionArtifact(packDir).terrain?.terrain;
+  if (compiled === undefined) return undefined;
+  const placed: Record<string, TerrainView> = {};
+  for (const record of compiled.records) placed[record.areaId] = placeBattleTerrain(record);
+  return placed;
 }
 
 export function compileProductionBundle(): {
