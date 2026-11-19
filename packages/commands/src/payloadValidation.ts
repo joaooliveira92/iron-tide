@@ -42,6 +42,7 @@ import type { BudgetProjectCommand, CommandBody, CommandEnvelope } from "./envel
 import { validateShipReadinessCommand } from "./readinessCommandValidation.js";
 import { validateFleetExercise } from "./fleetExerciseValidation.js";
 import { validateMoveFleet } from "./moveFleetValidation.js";
+import { validateTradeDuty } from "./tradeDutyValidation.js";
 import { validateSpecialTraining } from "./specialTrainingValidation.js";
 import { validateStationAssignment } from "./stationAssignmentValidation.js";
 import type { LifecycleStepResult } from "./types.js";
@@ -89,6 +90,7 @@ export function validatePayloadRules(
   if (envelope.body.type === "SetShipReadiness")
     return validateShipReadinessCommand(envelope, snapshot);
   if (envelope.body.type === "HoldFleetExercise") return validateFleetExercise(envelope, snapshot);
+  if (envelope.body.type === "SetTradeDuty") return validateTradeDuty(envelope, snapshot);
   if (envelope.body.type === "SetSpecialTraining")
     return validateSpecialTraining(envelope, snapshot);
   if (envelope.body.type === "HaltConstruction")

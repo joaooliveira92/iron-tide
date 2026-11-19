@@ -3,7 +3,12 @@ import { stationAreaIds } from "./presence.js";
 import type { PossessionData, Ship } from "./state.js";
 import type { ShipReadinessState } from "./readiness.js";
 
-export const STATION_ASSIGNMENTS = ["FOREIGN_STATION", "EXERCISE"] as const;
+export const STATION_ASSIGNMENTS = [
+  "FOREIGN_STATION",
+  "EXERCISE",
+  "TRADE_PROTECTION",
+  "RAIDER",
+] as const;
 export type StationAssignment = (typeof STATION_ASSIGNMENTS)[number];
 
 export const STATION_ASSIGNMENT_REASONS = [

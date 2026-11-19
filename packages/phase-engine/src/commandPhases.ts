@@ -56,6 +56,7 @@ import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
 import { applyReviseProject } from "./reviseProject.js";
 import { applyStartRebuild } from "./startRebuild.js";
 import { applyFleetExerciseCommand } from "./fleetExercise.js";
+import { applyTradeDutyCommand } from "./tradeDuty.js";
 import { applySpecialTrainingCommand } from "./specialTraining.js";
 import { applyShipReadinessCommand, applyStationAssignmentCommand } from "./stationAssignment.js";
 import { applyCancelConstructionProject } from "./cancelConstructionProject.js";
@@ -88,6 +89,7 @@ function applyPlayerCommand(ctx: PhaseContext, body: CommandBody, commandId: str
   if (applyShipReadinessCommand(ctx, body)) return;
   if (applySpecialTrainingCommand(ctx, body)) return;
   if (applyFleetExerciseCommand(ctx, body)) return;
+  if (applyTradeDutyCommand(ctx, body)) return;
   applyConstructionCommand(ctx, body, commandId);
 }
 

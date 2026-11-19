@@ -1,4 +1,4 @@
-import type { CampaignState, NationState } from "@bluewave/campaign";
+import type { CampaignState, NationState, StationAssignment } from "@bluewave/campaign";
 import {
   activeBudgetModifiers,
   budgetModifierBp,
@@ -88,7 +88,7 @@ export interface PlayerProjectionShip {
   readonly designId: string;
   readonly readiness: string;
   readonly crewQuality: number;
-  readonly stationAssignment?: "FOREIGN_STATION" | "EXERCISE";
+  readonly stationAssignment?: StationAssignment;
   readonly colonialServiceFitted?: true;
   readonly overBase?: true;
   readonly displacementTons?: number;
