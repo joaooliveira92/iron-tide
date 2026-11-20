@@ -224,7 +224,7 @@ describe("#997: monthly trade protection", () => {
       }),
     );
     const withRules = (seed: string) =>
-      runTrade(from, [], { ...TRADE_RULES, raiderHitBp: 5_000, shortfallAmplifyBp: 0 }, seed);
+      runTrade(from, [], { ...TRADE_RULES, raiderHitBp: 5_000, shortfallAmplifyBp: 1 }, seed);
     const a = tradeDraws(withRules("s1")).map((d) => [d.entityKey, d.draw, d.outcome]);
     const b = tradeDraws(withRules("s1")).map((d) => [d.entityKey, d.draw, d.outcome]);
     expect(a).toEqual(b);
