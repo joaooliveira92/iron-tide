@@ -35,7 +35,15 @@ export function readApprovalsAt(
 }
 
 export function gateBaseCommit(git: (...args: string[]) => string, ref: string): string {
-  return git("merge-base", ref, "HEAD").trim();
+  const merging = ((): boolean => {
+    try {
+      git("rev-parse", "-q", "--verify", "MERGE_HEAD");
+      return true;
+    } catch {
+      return false;
+    }
+  })();
+  return git("merge-base", ref, "HEAD", ...(merging ? ["MERGE_HEAD"] : [])).trim();
 }
 
 export interface ChainRefs {
