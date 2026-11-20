@@ -13,18 +13,21 @@ const pkg = path.resolve(root, "packages", "content-codemod");
 
 const FILES = ["test/determinism.test.ts", "test/publish.test.ts"];
 
-// This gate runs content-codemod's tests, which import workspace packages whose
-// published entry is their built `dist/` (e.g. `@bluewave/ship-design`,
-// `@bluewave/content-schema`). In a fresh checkout the workspace is not yet
-// built, and the preflight gates run in parallel, so without this the gate
-// intermittently loses the race and dies with "Failed to resolve entry for
-// package ...". Build this package's dependency closure first so the gate is
-// self-contained regardless of scheduling.
-execFileSync("pnpm", ["--filter", "@bluewave/content-codemod...", "build"], {
-  cwd: root,
-  stdio: "inherit",
-  shell: process.platform === "win32",
-});
+export const CODEMOD_BUILD_ARGS = [
+  "--filter",
+  "@bluewave/content-codemod...",
+  "--filter",
+  "@bluewave/content-authoring...",
+  "build",
+];
+
+function buildWorkspaceClosure() {
+  execFileSync("pnpm", CODEMOD_BUILD_ARGS, {
+    cwd: root,
+    stdio: "inherit",
+    shell: process.platform === "win32",
+  });
+}
 
 function migrateOnce() {
   const out = execFileSync("pnpm", ["exec", "vp", "test", "run", "--reporter=verbose", ...FILES], {
@@ -38,11 +41,18 @@ function migrateOnce() {
   return match[1];
 }
 
-const first = migrateOnce();
-const second = migrateOnce();
-if (first !== second) {
-  console.error(`codemod determinism: runs differ\n${first}\n${second}`);
-  process.exit(1);
+function main() {
+  buildWorkspaceClosure();
+  const first = migrateOnce();
+  const second = migrateOnce();
+  if (first !== second) {
+    console.error(`codemod determinism: runs differ\n${first}\n${second}`);
+    process.exit(1);
+  }
+  console.log(`codemod determinism: two fresh processes byte-identical (tree sha256 ${first})`);
+  console.log(
+    "codemod idempotency: source → staged → staged fixed point verified in both processes",
+  );
 }
-console.log(`codemod determinism: two fresh processes byte-identical (tree sha256 ${first})`);
-console.log("codemod idempotency: source → staged → staged fixed point verified in both processes");
+
+if (process.argv[1] && path.resolve(process.argv[1]) === fileURLToPath(import.meta.url)) main();
