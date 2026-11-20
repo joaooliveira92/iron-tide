@@ -1,4 +1,4 @@
-import type { UnrestLastChange } from "@bluewave/campaign";
+import { UNREST_REASON_CODES, type UnrestLastChange } from "@bluewave/campaign";
 import { describe, expect, it } from "vite-plus/test";
 import { explainUnrestChange } from "../src/unrest-explanations.js";
 
@@ -61,20 +61,7 @@ describe("unrest change explanation", () => {
   });
 
   it("names every reason code with its own formula id", () => {
-    const codes = [
-      "MILITARY_SPENDING",
-      "SPENDING_CUT",
-      "WAR_OUTBREAK",
-      "WAR_DURATION",
-      "BLOCKADE",
-      "DEFEAT",
-      "VICTORY",
-      "CRAMPED_ACCOMMODATION",
-      "PRESENCE_SHORTFALL",
-      "EVENT",
-      "SOCIAL_PROGRAMME",
-      "REVOLUTION_AFTERMATH",
-    ] as const;
+    const codes = UNREST_REASON_CODES;
     const tree = explainUnrestChange(
       lastChange({
         before: 5,

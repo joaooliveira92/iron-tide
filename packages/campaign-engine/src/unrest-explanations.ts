@@ -20,6 +20,7 @@ const CHILD_ID: Readonly<Record<UnrestReasonCode, string>> = {
   VICTORY: "unrest_change.victory",
   CRAMPED_ACCOMMODATION: "unrest_change.cramped_accommodation",
   PRESENCE_SHORTFALL: "unrest_change.presence_shortfall",
+  TRADE_LOSS: "unrest_change.trade_loss",
   EVENT: "unrest_change.event",
   SOCIAL_PROGRAMME: "unrest_change.social_programme",
   REVOLUTION_AFTERMATH: "unrest_change.revolution_aftermath",

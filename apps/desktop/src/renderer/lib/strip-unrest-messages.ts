@@ -30,6 +30,7 @@ export const STRIP_UNREST_MESSAGES = {
   "strategic.unrest_change.victory": "Victory",
   "strategic.unrest_change.cramped_accommodation": "Cramped ships",
   "strategic.unrest_change.presence_shortfall": "Uncovered stations",
+  "strategic.unrest_change.trade_loss": "Merchant losses",
   "strategic.unrest_change.event": "Event answer",
   "strategic.unrest_change.social_programme": "Social programme",
   "strategic.unrest_change.revolution_aftermath": "Revolution aftermath",
