@@ -1,5 +1,9 @@
 import { describe, expect, it } from "vite-plus/test";
-import { decidePeaceProposal, decidePeaceResponse } from "../src/peaceBehaviour";
+import {
+  decidePeaceProposal,
+  decidePeaceResponse,
+  decideRevolutionPeaceTerm,
+} from "../src/peaceBehaviour";
 
 const margin = 20;
 
@@ -98,5 +102,52 @@ describe("decidePeaceResponse", () => {
     expect(
       decidePeaceResponse(snapshot(0, 0), "w1", "d", { _tag: "StatusQuo" }, margin).accept,
     ).toBe(true);
+  });
+});
+
+describe("decideRevolutionPeaceTerm", () => {
+  it("lets the counterpart take the dearest affordable area of the revolting nation", () => {
+    expect(decideRevolutionPeaceTerm(snapshot(60, 0), "w1", "d")).toEqual({
+      term: { _tag: "CedeArea", areaId: "far" },
+      reason: "REVOLUTION_CESSION",
+    });
+  });
+
+  it("needs no lead over the revolting nation, only affordability", () => {
+    expect(decideRevolutionPeaceTerm(snapshot(10, 40), "w1", "d")).toEqual({
+      term: { _tag: "CedeArea", areaId: "near" },
+      reason: "REVOLUTION_CESSION",
+    });
+  });
+
+  it("falls back to status quo when the counterpart cannot afford any area", () => {
+    expect(decideRevolutionPeaceTerm(snapshot(0, 0), "w1", "d")).toEqual({
+      term: { _tag: "StatusQuo" },
+      reason: "REVOLUTION_NO_AFFORDABLE_AREA",
+    });
+  });
+
+  it("treats a revolting non-principal as status quo", () => {
+    expect(decideRevolutionPeaceTerm(snapshot(60, 0), "w1", "x")).toEqual({
+      term: { _tag: "StatusQuo" },
+      reason: "REVOLUTION_NOT_A_PRINCIPAL",
+    });
+  });
+
+  it("proposes nothing for an inactive war", () => {
+    expect(decideRevolutionPeaceTerm(snapshot(60, 0, "ENDED"), "w1", "d")).toEqual({
+      term: undefined,
+      reason: "WAR_NOT_ACTIVE",
+    });
+  });
+
+  it("reads the counterpart's score when the revolting nation is the attacker", () => {
+    const s = snapshot(0, 60);
+    s.world.areas = s.world.areas.map((a: { controller: string }) => ({ ...a, controller: "a" }));
+    s.nations = new Map([["a", { homeAreaId: "home" }]]);
+    expect(decideRevolutionPeaceTerm(s, "w1", "a").term).toEqual({
+      _tag: "CedeArea",
+      areaId: "far",
+    });
   });
 });

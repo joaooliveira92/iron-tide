@@ -9,9 +9,10 @@ import {
   unrestOf,
   type NationState,
 } from "@bluewave/campaign";
+import { decideRevolutionPeaceTerm } from "@bluewave/ai";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { SafeInt } from "@bluewave/contracts";
-import { applyAcceptPeace } from "./diplomacy.js";
+import { applyAcceptPeace, applyProposePeace } from "./diplomacy.js";
 import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
 import { endCareer, monthOf } from "./sackingPhase.js";
 import { applyUnrestContributions, unrestConsequenceEvent } from "./unrestApplication.js";
@@ -139,6 +140,32 @@ export function runUnrestPhase(ctx: PhaseContext): PhaseRunOutcome {
   return { status: "continue" };
 }
 
+function endWarWithTerms(ctx: PhaseContext, revoltingId: string, warId: string): void {
+  const decision = decideRevolutionPeaceTerm(ctx.snapshot.current, warId, revoltingId);
+  if (decision.term === undefined) return;
+  const war = ctx.snapshot.current.wars.wars.find((w) => w.id === warId);
+  if (war === undefined) return;
+  const counterpartId = war.attackerId === revoltingId ? war.defenderId : war.attackerId;
+  ctx.snapshot.current = applyProposePeace(
+    ctx.snapshot.current,
+    { type: "ProposePeace", nationId: counterpartId, warId, term: decision.term },
+    ctx.campaignMonth,
+    {
+      nextSeq: () => ctx.nextSeq(),
+      append: (event) => ctx.eventLedger.append(event),
+      reject: (code, message) =>
+        ctx.collector.addError(code, message, { stage: "command-collection" }),
+    },
+  );
+  if (ctx.snapshot.current.wars.wars.some((w) => w.id === warId && w.status === "ACTIVE")) {
+    ctx.snapshot.current = applyAcceptPeace(
+      ctx.snapshot.current,
+      { type: "AcceptPeace", nationId: revoltingId, warId },
+      ctx.campaignMonth,
+    );
+  }
+}
+
 function applyRevolution(
   ctx: PhaseContext,
   nation: NationState,
@@ -152,13 +179,7 @@ function applyRevolution(
     emitConsequence(ctx, nation.id, "REVOLUTION", unrest, rateBp, rateBp, true);
     return;
   }
-  for (const warId of activeWarIds(ctx, nation.id)) {
-    ctx.snapshot.current = applyAcceptPeace(
-      ctx.snapshot.current,
-      { type: "AcceptPeace", nationId: nation.id, warId },
-      ctx.campaignMonth,
-    );
-  }
+  for (const warId of activeWarIds(ctx, nation.id)) endWarWithTerms(ctx, nation.id, warId);
   applyUnrestContributions(ctx, nation.id, [
     { reasonCode: "REVOLUTION_AFTERMATH", delta: rules.aftermathUnrest - unrest },
   ]);
@@ -168,6 +189,10 @@ function applyRevolution(
 export const unrestPhase: MonthPhase = {
   id: "unrest",
   name: "Unrest",
-  permissions: { reads: "all", writes: ["nations", "wars", "politics", "careerResult"], rng: true },
+  permissions: {
+    reads: "all",
+    writes: ["nations", "wars", "politics", "world", "careerResult"],
+    rng: true,
+  },
   run: runUnrestPhase,
 };

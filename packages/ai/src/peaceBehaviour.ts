@@ -60,16 +60,53 @@ export function decidePeaceProposal(
   const lead = sides.ownScore - sides.otherScore;
   if (lead <= -margin) return { term: { _tag: "StatusQuo" }, reason: "PROPOSER_TRAILS_BY_MARGIN" };
   if (lead < margin) return { term: undefined, reason: "SCORES_WITHIN_MARGIN" };
-  const affordable = snapshot.world.areas
+  const affordable = dearestAffordableArea(snapshot, sides.otherId, sides.ownScore);
+  if (affordable === undefined) return { term: undefined, reason: "NO_AFFORDABLE_AREA" };
+  return { term: { _tag: "CedeArea", areaId: affordable }, reason: "PROPOSER_LEADS_BY_MARGIN" };
+}
+
+function dearestAffordableArea(
+  snapshot: PeaceSnapshot,
+  loserId: string,
+  budget: number,
+): string | undefined {
+  return snapshot.world.areas
     .filter(
       (a) =>
         a.cessionCost !== undefined &&
-        a.cessionCost <= sides.ownScore &&
-        Result.isSuccess(checkCedeArea(snapshot, sides.otherId, a.id)),
+        a.cessionCost <= budget &&
+        Result.isSuccess(checkCedeArea(snapshot, loserId, a.id)),
     )
-    .sort((a, b) => (b.cessionCost ?? 0) - (a.cessionCost ?? 0) || (a.id < b.id ? -1 : 1))[0];
-  if (affordable === undefined) return { term: undefined, reason: "NO_AFFORDABLE_AREA" };
-  return { term: { _tag: "CedeArea", areaId: affordable.id }, reason: "PROPOSER_LEADS_BY_MARGIN" };
+    .sort((a, b) => (b.cessionCost ?? 0) - (a.cessionCost ?? 0) || (a.id < b.id ? -1 : 1))[0]?.id;
+}
+
+export type RevolutionPeaceReason =
+  | "REVOLUTION_CESSION"
+  | "REVOLUTION_NO_AFFORDABLE_AREA"
+  | "REVOLUTION_NOT_A_PRINCIPAL"
+  | "WAR_NOT_ACTIVE";
+
+export interface RevolutionPeaceDecision {
+  readonly term: PeaceTerm | undefined;
+  readonly reason: RevolutionPeaceReason;
+}
+
+export function decideRevolutionPeaceTerm(
+  snapshot: PeaceSnapshot,
+  warId: string,
+  revoltingId: string,
+): RevolutionPeaceDecision {
+  const sides = sidesOf(snapshot, warId, revoltingId);
+  if (typeof sides === "string") {
+    return sides === "NOT_A_PRINCIPAL"
+      ? { term: { _tag: "StatusQuo" }, reason: "REVOLUTION_NOT_A_PRINCIPAL" }
+      : { term: undefined, reason: "WAR_NOT_ACTIVE" };
+  }
+  const area = dearestAffordableArea(snapshot, revoltingId, sides.otherScore);
+  if (area === undefined) {
+    return { term: { _tag: "StatusQuo" }, reason: "REVOLUTION_NO_AFFORDABLE_AREA" };
+  }
+  return { term: { _tag: "CedeArea", areaId: area }, reason: "REVOLUTION_CESSION" };
 }
 
 export function decidePeaceResponse(
