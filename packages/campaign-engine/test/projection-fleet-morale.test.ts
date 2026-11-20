@@ -9,6 +9,36 @@ function projectionWith(nation: Partial<Parameters<typeof fixtureNation>[0]> = {
   return buildPlayerProjection(state, "uk", MONTH)!;
 }
 
+describe("player projection: unrest change", () => {
+  it("carries no change before the first unrest movement", () => {
+    expect(projectionWith().unrestChange).toBeUndefined();
+  });
+
+  it("exposes the last change with its explanation tree", () => {
+    const { unrestChange } = projectionWith({
+      unrest: 5,
+      unrestLastChange: {
+        before: 3,
+        after: 5,
+        contributions: [
+          { reasonCode: "MILITARY_SPENDING", delta: 3 },
+          { reasonCode: "VICTORY", delta: -1 },
+        ],
+        month: "1880-02",
+      },
+    });
+    expect(unrestChange).toMatchObject({
+      before: 3,
+      after: 5,
+      delta: 2,
+      month: "1880-02",
+      reasonCodes: ["MILITARY_SPENDING", "VICTORY"],
+    });
+    expect(unrestChange?.changeExplanation.formulaId).toBe("unrest_change");
+    expect(Number(unrestChange?.changeExplanation.result)).toBe(5);
+  });
+});
+
 describe("player projection: fleet morale", () => {
   it("reads absent morale as full on the 0 to 100 scale, with no last change", () => {
     const { fleetMorale } = projectionWith();

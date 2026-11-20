@@ -120,7 +120,7 @@
       "exempt": {
         "revision": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
         "projectedSurplusDeficit": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
-        "unrest": "Not yet explained; the strip note names the sources (#826) but no tree lists each change. #300 covers this area."
+        "unrest": "Accumulated unrest level; the unrest_change tree explains the last movement, not the accumulated total (#1020)."
       }
     },
     {
@@ -714,11 +714,13 @@
       "type": "PlayerProjectionUnrestChange",
       "area": "strategic",
       "issue": "#1020",
-      "covered": {},
+      "covered": {
+        "changeExplanation": "unrest_change"
+      },
       "exempt": {
-        "before": "Not yet explained; #1020 adds an unrest_change tree and re-exempts any field it does not explain.",
-        "after": "Not yet explained; #1020 adds an unrest_change tree and re-exempts any field it does not explain.",
-        "delta": "Not yet explained; #1020 adds an unrest_change tree and re-exempts any field it does not explain."
+        "before": "Shown as the \"Unrest before\" line of unrest_change.",
+        "after": "Shown as the unrest_change result, equal to the displayed after value.",
+        "delta": "Shown as the sum of the driver and clamp lines of unrest_change."
       }
     },
     {

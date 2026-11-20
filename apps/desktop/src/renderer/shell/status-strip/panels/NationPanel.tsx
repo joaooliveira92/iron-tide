@@ -4,6 +4,7 @@ import { FleetMoraleCard } from "../cards/FleetMoraleCard.js";
 import { PrestigeCard } from "../cards/PrestigeCard.js";
 import { ShipyardCard } from "../cards/ShipyardCard.js";
 import { StationsCard } from "../cards/StationsCard.js";
+import { UnrestCard } from "../cards/UnrestCard.js";
 import { StripCard } from "../StripCard.js";
 import { StripGlyph } from "../StripGlyph.js";
 import { StripPanel } from "../StripPanel.js";
@@ -90,6 +91,24 @@ function FleetMoraleTile({
   );
 }
 
+function UnrestTile({ row, model }: { readonly row: StripRow; readonly model: StatusStripModel }) {
+  const { unrest } = model;
+  return (
+    <StripCard
+      row={row}
+      detail={<UnrestCard gauge={unrest} note={row.note} explanation={model.unrestExplanation} />}
+    >
+      <span className={FIELD_LABEL}>{row.label}</span>
+      <span className="flex items-center gap-2">
+        <span className="font-display text-base leading-5 font-semibold tabular-nums">
+          {row.value}
+        </span>
+        <StripGlyph variant="meter" fraction={unrest.fraction} fill="bg-admiralty-accent" />
+      </span>
+    </StripCard>
+  );
+}
+
 function StationsTile({
   row,
   model,
@@ -156,6 +175,9 @@ export function NationPanel() {
         {rows.map((row) => {
           if (row.id === "fleet-morale") {
             return <FleetMoraleTile key={row.id} row={row} model={model} />;
+          }
+          if (row.id === "unrest") {
+            return <UnrestTile key={row.id} row={row} model={model} />;
           }
           if (row.id === "foreign-stations") {
             return <StationsTile key={row.id} row={row} model={model} />;
