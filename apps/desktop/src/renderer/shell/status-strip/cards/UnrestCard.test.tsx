@@ -1,4 +1,5 @@
 import { cleanup, render, screen } from "@testing-library/react";
+import type { ExplanationTree } from "@bluewave/events";
 import { afterEach, describe, expect, it } from "vite-plus/test";
 import { PreferencesProvider } from "../../../lib/preferences-context.js";
 import { UnrestCard } from "./UnrestCard.js";
@@ -6,14 +7,14 @@ import { UnrestCard } from "./UnrestCard.js";
 describe("UnrestCard explanation", () => {
   afterEach(cleanup);
 
-  const explanation = {
+  const explanation: ExplanationTree = {
     formulaId: "unrest_change",
     formulaVersion: "unrest_v1",
     inputs: { month: "1880-02" },
     intermediate: { unclampedAfter: 5, clampDelta: 0 },
     result: 5,
     unit: "unrest",
-    operation: "add" as const,
+    operation: "add",
     children: [
       {
         formulaId: "unrest_change.before",
@@ -30,7 +31,7 @@ describe("UnrestCard explanation", () => {
         intermediate: {},
         result: 1,
         unit: "unrest",
-        operation: "add" as const,
+        operation: "add",
       },
     ],
   };
