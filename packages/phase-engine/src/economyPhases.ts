@@ -10,6 +10,7 @@ import {
   nationMonthlyMaintenance,
   nationMaintenanceAdders,
   settleOutflow,
+  tradeProtectionRevenueBp,
   transitionConstructionProject,
 } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
@@ -65,7 +66,18 @@ export function runMonthlyRevenuePhase(ctx: PhaseContext): PhaseRunOutcome {
       },
       campaignMonth,
     );
-    const revenue = monthlyRevenue(baseResources, rateBp);
+    const tradeRules = ctx.engineOptions?.tradeProtection;
+    const unscaled = monthlyRevenue(baseResources, rateBp);
+    const revenue =
+      tradeRules === undefined || nation.tradeProtection === undefined
+        ? unscaled
+        : SafeInt(
+            Math.floor(
+              ((unscaled as number) *
+                tradeProtectionRevenueBp(tradeRules, nation.tradeProtection.merchantPoolBp)) /
+                10_000,
+            ),
+          );
     if ((revenue as number) <= 0) continue;
 
     const previousBalance = nation["treasury"];

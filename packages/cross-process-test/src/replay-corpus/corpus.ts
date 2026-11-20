@@ -10,6 +10,7 @@ import {
   fleetManagementFromRulesets,
   peaceBehaviourFromRulesets,
   tensionDriftFromRulesets,
+  tradeProtectionFromRulesets,
   unrestFromRulesets,
   warDeclarationFromRulesets,
 } from "@bluewave/content-compiler";
@@ -234,6 +235,16 @@ function productionTensionDrift() {
   return decoded.value;
 }
 
+function productionTradeProtection() {
+  const decoded = tradeProtectionFromRulesets(production().bundle.rulesets);
+  if (decoded === undefined) return undefined;
+  if (!decoded.ok)
+    throw new ReplayFileError({
+      message: `production tradeProtection section is invalid at '${decoded.field}'`,
+    });
+  return decoded.value;
+}
+
 function productionPeaceBehaviour() {
   const decoded = peaceBehaviourFromRulesets(production().bundle.rulesets);
   if (decoded === undefined) return undefined;
@@ -302,6 +313,7 @@ function productionConstructionEvents(setup?: ReplaySetupId) {
 export function fleetManagementOptions(playerNationId?: string, setup?: ReplaySetupId) {
   const fleetManagement = productionFleetManagement();
   const tensionDrift = productionTensionDrift();
+  const tradeProtection = productionTradeProtection();
   const peaceBehaviour = productionPeaceBehaviour();
   const warDeclaration = productionWarDeclaration();
   const events = productionEvents();
@@ -313,6 +325,7 @@ export function fleetManagementOptions(playerNationId?: string, setup?: ReplaySe
     ...(unrest === undefined ? {} : { unrest }),
     ...(fleetManagement === undefined ? {} : { fleetManagement }),
     ...(tensionDrift === undefined ? {} : { tensionDrift }),
+    ...(tradeProtection === undefined ? {} : { tradeProtection }),
     ...(peaceBehaviour === undefined ? {} : { peaceBehaviour }),
     ...(warDeclaration === undefined ? {} : { warDeclaration }),
     ...(events === undefined ? {} : { events }),

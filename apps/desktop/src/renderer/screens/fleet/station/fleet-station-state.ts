@@ -67,6 +67,8 @@ function statusOf(
     };
   }
   if (ship.stationCode === "EX") return { code: "EX", label: format("fleet.status.EX") };
+  if (ship.stationCode === "TP") return { code: "TP", label: format("fleet.status.TP") };
+  if (ship.stationCode === "RD") return { code: "RD", label: format("fleet.status.RD") };
   const code = READINESS_CODE[ship.readiness] ?? "AF";
   return { code, label: format(`fleet.status.${code}`) };
 }

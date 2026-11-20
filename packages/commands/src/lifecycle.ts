@@ -329,7 +329,8 @@ export class CommandLifecycle {
       body.type === "AssignForeignStation" ||
       body.type === "ClearForeignStation" ||
       body.type === "SetShipReadiness" ||
-      body.type === "HoldFleetExercise"
+      body.type === "HoldFleetExercise" ||
+      body.type === "SetTradeDuty"
     )
       return {
         type: "success",

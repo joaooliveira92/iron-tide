@@ -15,6 +15,7 @@ export const STRIP_UNREST_MESSAGES = {
   "shell.unrest.reason.VICTORY": "victory",
   "shell.unrest.reason.CRAMPED_ACCOMMODATION": "cramped ships",
   "shell.unrest.reason.PRESENCE_SHORTFALL": "uncovered stations",
+  "shell.unrest.reason.TRADE_LOSS": "merchant losses",
   "shell.unrest.reason.EVENT": "an event answer",
   "shell.unrest.reason.SOCIAL_PROGRAMME": "social programme",
   "shell.unrest.reason.REVOLUTION_AFTERMATH": "revolution aftermath",

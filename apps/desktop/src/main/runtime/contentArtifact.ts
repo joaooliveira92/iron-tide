@@ -5,6 +5,7 @@ import type {
   GunneryRules,
   MissilesRules,
   PeaceBehaviourRules,
+  TradeProtectionRules,
   TensionDriftRules,
   WarDeclarationRules,
   UnrestRules,
@@ -40,6 +41,7 @@ import {
   loadUnrestRules,
   loadPeaceBehaviourRules,
   loadTensionDriftRules,
+  loadTradeProtectionRules,
   loadWarDeclarationRules,
   shipBuildingContentHash,
 } from "../shipBuildingContent.js";
@@ -83,6 +85,10 @@ export class ContentArtifact extends Context.Service<
     readonly loadMissilesRules: () => Effect.Effect<MissilesRules | undefined, CommandFailed>;
     readonly loadBattleTerrain: () => Effect.Effect<BattleTerrainByArea | undefined, CommandFailed>;
     readonly loadFleetMoraleRules: () => Effect.Effect<FleetMoraleRules | undefined, CommandFailed>;
+    readonly loadTradeProtectionRules: () => Effect.Effect<
+      TradeProtectionRules | undefined,
+      CommandFailed
+    >;
     readonly loadUnrestRules: () => Effect.Effect<UnrestRules | undefined, CommandFailed>;
     readonly loadTensionDriftRules: () => Effect.Effect<
       TensionDriftRules | undefined,
@@ -156,6 +162,8 @@ export function contentArtifactLayer(
       Effect.try({ try: () => loadBattleTerrain(), catch: contentUnavailable }),
     loadFleetMoraleRules: () =>
       Effect.try({ try: () => loadFleetMoraleRules(), catch: contentUnavailable }),
+    loadTradeProtectionRules: () =>
+      Effect.try({ try: () => loadTradeProtectionRules(), catch: contentUnavailable }),
     loadUnrestRules: () => Effect.try({ try: () => loadUnrestRules(), catch: contentUnavailable }),
     loadTensionDriftRules: () =>
       Effect.try({ try: () => loadTensionDriftRules(), catch: contentUnavailable }),

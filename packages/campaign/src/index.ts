@@ -26,6 +26,8 @@ export * from "./tensionDrift.js";
 export * from "./eventDraw.js";
 export * from "./eventEffects.js";
 export * from "./fleetMorale.js";
+export * from "./tradeProtection.js";
+export * from "./tradeDuty.js";
 export * from "./unrest.js";
 export * from "./designUnits.js";
 export * from "./fleetSize.js";

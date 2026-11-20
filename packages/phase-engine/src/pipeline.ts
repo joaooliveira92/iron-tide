@@ -20,6 +20,7 @@ import type {
   MissilesRules,
   PeaceBehaviourRules,
   TensionDriftRules,
+  TradeProtectionRules,
   WarDeclarationRules,
   UnrestRules,
   EventResolutionRules,
@@ -77,6 +78,7 @@ export interface MonthExecutorEngineOptions {
   readonly minefields?: Readonly<Record<string, readonly TacticalMinefieldRecord[]>>;
   readonly tensionDrift?: TensionDriftRules;
   readonly fleetMorale?: FleetMoraleRules;
+  readonly tradeProtection?: TradeProtectionRules;
   readonly unrest?: UnrestRules;
   readonly peaceBehaviour?: PeaceBehaviourRules;
   readonly warDeclaration?: WarDeclarationRules;

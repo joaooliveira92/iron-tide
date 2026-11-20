@@ -55,6 +55,7 @@ export const NATION_STATE_FIELDS = fields<NationState>()(
   "carrierOperations",
   "specialTraining",
   "fleetExercise",
+  "tradeProtection",
   "isPlayable",
   "isAI",
 );
