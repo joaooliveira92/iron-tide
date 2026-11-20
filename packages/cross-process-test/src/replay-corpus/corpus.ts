@@ -268,7 +268,8 @@ function productionEvents(): EventEngineContent | undefined {
 function productionUnrest(setup?: ReplaySetupId) {
   if (setup !== "unrest-phase") return undefined;
   const decoded = unrestFromRulesets(production().bundle.rulesets);
-  if (decoded === undefined) return undefined;
+  if (decoded === undefined)
+    throw new ReplayFileError({ message: "production rulesets have no unrest section" });
   if (!decoded.ok)
     throw new ReplayFileError({
       message: `production unrest section is invalid at '${decoded.field}'`,

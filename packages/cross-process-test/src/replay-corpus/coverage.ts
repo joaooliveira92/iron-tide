@@ -51,12 +51,17 @@ const EVENT_SUBSYSTEM: Readonly<Record<string, string>> = {
   UnrestConsequence: "unrest",
 };
 
-const UNREST_REASON_SUBSYSTEM: Readonly<Record<string, string | null>> = {
-  EVENT: null,
-  DEFEAT: "battle_resolution",
-  VICTORY: "battle_resolution",
-  PRESENCE_SHORTFALL: "battle_resolution",
-};
+const UNREST_REASON_SUBSYSTEM: ReadonlyMap<string, string | null> = new Map([
+  ["EVENT", null],
+  ["PRESENCE_SHORTFALL", null],
+  ["DEFEAT", "battle_resolution"],
+  ["VICTORY", "battle_resolution"],
+]);
+
+export function unrestReasonSubsystem(reasonCode: string): string | null {
+  const owner = UNREST_REASON_SUBSYSTEM.get(reasonCode);
+  return owner === undefined ? "unrest" : owner;
+}
 
 const NEUTRAL_EVENT_TYPES: ReadonlySet<string> = new Set(["NationBudgetChanged"]);
 
@@ -82,9 +87,9 @@ export function monthCoverage(result: MonthResult): MonthCoverage {
     if (entry.body.kind === "PrestigeChanged" && eventPrestige.has(entry.body.reasonCode)) {
       continue;
     }
-    if (entry.body.kind === "UnrestChanged" && entry.body.reasonCode in UNREST_REASON_SUBSYSTEM) {
-      const owner = UNREST_REASON_SUBSYSTEM[entry.body.reasonCode];
-      if (owner !== null && owner !== undefined) add(owner);
+    if (entry.body.kind === "UnrestChanged") {
+      const owner = unrestReasonSubsystem(entry.body.reasonCode);
+      if (owner !== null) add(owner);
       continue;
     }
     const subsystem = EVENT_SUBSYSTEM[type];
