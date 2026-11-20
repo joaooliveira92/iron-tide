@@ -37,7 +37,6 @@ const EVENT_SUBSYSTEM: Readonly<Record<string, string>> = {
   PresenceShortfall: "battle_resolution",
   PrestigeLossRequested: "battle_resolution",
   PrestigeChanged: "battle_resolution",
-  DivisionExperienceChanged: "maintenance",
   FleetExerciseScheduled: "command_collection",
   FleetExerciseCompleted: "maintenance",
   ExerciseTensionRaised: "resolve_diplomacy",
@@ -57,6 +56,15 @@ const UNREST_REASON_SUBSYSTEM: ReadonlyMap<string, string | null> = new Map([
   ["DEFEAT", "battle_resolution"],
   ["VICTORY", "battle_resolution"],
 ]);
+
+const DIVISION_EXPERIENCE_REASON_SUBSYSTEM: ReadonlyMap<string, string> = new Map([
+  ["BATTLE_PARTICIPATION", "battle_resolution"],
+  ["SERVICE_TIME", "maintenance"],
+]);
+
+export function divisionExperienceReasonSubsystem(reasonCode: string): string {
+  return DIVISION_EXPERIENCE_REASON_SUBSYSTEM.get(reasonCode) ?? "maintenance";
+}
 
 export function unrestReasonSubsystem(reasonCode: string): string | null {
   const owner = UNREST_REASON_SUBSYSTEM.get(reasonCode);
@@ -90,6 +98,10 @@ export function monthCoverage(result: MonthResult): MonthCoverage {
     if (entry.body.kind === "UnrestChanged") {
       const owner = unrestReasonSubsystem(entry.body.reasonCode);
       if (owner !== null) add(owner);
+      continue;
+    }
+    if (entry.body.kind === "DivisionExperienceChanged") {
+      add(divisionExperienceReasonSubsystem(entry.body.reasonCode));
       continue;
     }
     const subsystem = EVENT_SUBSYSTEM[type];

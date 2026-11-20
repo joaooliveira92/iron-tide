@@ -17,6 +17,7 @@ export { REPLAY_SCENARIOS } from "./scenarios.js";
 export {
   SUBSYSTEMS,
   buildCoverageReport,
+  divisionExperienceReasonSubsystem,
   formatCoverageReport,
   monthCoverage,
   unrestReasonSubsystem,
