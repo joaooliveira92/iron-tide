@@ -294,4 +294,24 @@ export const REPLAY_SCENARIOS: readonly CorpusScenario[] = [
     purpose:
       "Japan as the player: an event drawn in month 7 stays pending, then resolves by its default answer in month 10 with budget and tension effects.",
   },
+  {
+    id: "production-1880-5m-unrest-strike",
+    seed: "replay-corpus-unrest-strike",
+    months: 5,
+    playerNationId: "austria_hungary",
+    setup: "unrest-phase",
+    purpose:
+      "Unrest rules on: Austria-Hungary's 40 percent appropriation raises unrest each month until a strike cuts the rate.",
+    commands: [
+      {
+        month: 1,
+        body: {
+          type: "SetBudgetAllocation",
+          nationId: "austria_hungary",
+          appropriationRateBp: 4_000,
+          researchBudget: 0,
+        },
+      },
+    ],
+  },
 ];
