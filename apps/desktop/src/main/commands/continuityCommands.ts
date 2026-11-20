@@ -357,6 +357,8 @@ export const replayCampaignProgram: CommandHandler<"replayCampaign"> = withPacka
         const unrest = input === null ? undefined : yield* contentArtifact.loadUnrestRules();
         const peaceBehaviour =
           input === null ? undefined : yield* contentArtifact.loadPeaceBehaviourRules();
+        const warDeclaration =
+          input === null ? undefined : yield* contentArtifact.loadWarDeclarationRules();
         const events = input === null ? undefined : yield* contentArtifact.loadEventContent();
         const constructionEvents =
           input === null ? undefined : yield* contentArtifact.loadConstructionEvents();
@@ -379,6 +381,9 @@ export const replayCampaignProgram: CommandHandler<"replayCampaign"> = withPacka
                 ...(unrest !== undefined ? { unrest, playerNationId: metadata.playerSlotId } : {}),
                 ...(peaceBehaviour !== undefined
                   ? { peaceBehaviour, playerNationId: metadata.playerSlotId }
+                  : {}),
+                ...(warDeclaration !== undefined
+                  ? { warDeclaration, playerNationId: metadata.playerSlotId }
                   : {}),
                 ...(events !== undefined ? { events, playerNationId: metadata.playerSlotId } : {}),
                 ...(constructionEvents !== undefined ? { constructionEvents } : {}),

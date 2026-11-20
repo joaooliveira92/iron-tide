@@ -198,6 +198,8 @@ export {
 } from "./research-fields.js";
 export type { PeaceBehaviourRules, PeaceBehaviourRulesDecoded } from "./peace-behaviour.js";
 export { decodePeaceBehaviourRules, PeaceBehaviourRulesSchema } from "./peace-behaviour.js";
+export type { WarDeclarationRules, WarDeclarationRulesDecoded } from "./war-declaration.js";
+export { decodeWarDeclarationRules, WarDeclarationRulesSchema } from "./war-declaration.js";
 export type { RouteEdge } from "./route.js";
 export { RouteEdgeSchema } from "./route.js";
 export { validateAgainstSchema } from "./schema-validator.js";
