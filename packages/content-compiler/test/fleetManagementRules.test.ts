@@ -109,6 +109,25 @@ describe("fleet-management ruleset section", () => {
     }
   });
 
+  it("accepts optional service experience only with an integer step and a cap in range", () => {
+    const c = complete() as Record<string, Record<string, unknown>>;
+    const withService = (service: unknown) => ({
+      ...c,
+      divisionExperience: { ...c["divisionExperience"], service },
+    });
+    expect(validate([ruleset(complete())]).hasErrors).toBe(false);
+    expect(validate([ruleset(withService({ monthlyGrowth: 1, cap: 40 }))]).hasErrors).toBe(false);
+    for (const bad of [
+      { monthlyGrowth: 1.5, cap: 40 },
+      { monthlyGrowth: 1, cap: 101 },
+      { monthlyGrowth: -1, cap: 40 },
+      { monthlyGrowth: 1 },
+      { monthlyGrowth: 1, cap: 40, surprise: 1 },
+    ]) {
+      expect(invalid(withService(bad))).toBe(true);
+    }
+  });
+
   it("accepts an exercise tension consequence only with a sane threshold, step and peacetime ceiling", () => {
     const c = complete() as Record<string, Record<string, unknown>>;
     const withTension = (tension: unknown) => ({

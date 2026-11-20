@@ -9,6 +9,7 @@ import {
   SUBSYSTEMS,
   buildCoverageReport,
   decodeReplayFile,
+  divisionExperienceReasonSubsystem,
   executeScenario,
   formatCoverageReport,
   fuzzSubsystems,
@@ -68,6 +69,12 @@ describe("unrest attribution", () => {
     expect(unrestReasonSubsystem("EVENT")).toBeNull();
     expect(unrestReasonSubsystem("PRESENCE_SHORTFALL")).toBeNull();
     expect(unrestReasonSubsystem("constructor")).toBe("unrest");
+  });
+
+  it("credits division experience to the phase that grants it", () => {
+    expect(divisionExperienceReasonSubsystem("BATTLE_PARTICIPATION")).toBe("battle_resolution");
+    expect(divisionExperienceReasonSubsystem("SERVICE_TIME")).toBe("maintenance");
+    expect(divisionExperienceReasonSubsystem("constructor")).toBe("maintenance");
   });
 
   it("raises unrest from spending and lands a strike in the unrest-strike replay", () => {

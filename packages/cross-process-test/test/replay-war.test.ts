@@ -51,12 +51,18 @@ describe("war-bearing replay", () => {
 
   it("grants the division battle experience once per battle", () => {
     const experience = [1, 2, 3, 4].map((month) => division(month).experience);
+    const perBattle = 3;
+    const service = 1;
     expect(experience[0]).toBe(20);
-    expect(experience[1]! - experience[0]!).toBeGreaterThan(0);
-    expect(experience[2]! - experience[1]!).toBe(experience[1]! - experience[0]!);
-    expect(experience[3]! - experience[2]!).toBe(experience[1]! - experience[0]!);
+    expect(experience[1]! - experience[0]!).toBe(perBattle + service);
+    expect(experience[2]! - experience[1]!).toBe(perBattle + service);
+    expect(experience[3]! - experience[2]!).toBe(perBattle + service);
     const granted = battleMonths.map((m) =>
-      m.result.eventLedger.all.filter((e) => e.eventType === "DivisionExperienceChanged"),
+      m.result.eventLedger.all.filter(
+        (e) =>
+          e.body.kind === "DivisionExperienceChanged" &&
+          e.body.reasonCode === "BATTLE_PARTICIPATION",
+      ),
     );
     expect(granted.map((events) => events.length)).toEqual([2, 2, 2]);
   });
