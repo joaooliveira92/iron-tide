@@ -1,7 +1,9 @@
 import type { CampaignSnapshot, Ship } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
+import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
+import { MonthExecutor } from "../src/index.js";
 import {
   TRADE_RULES,
   runTrade,
@@ -49,10 +51,11 @@ describe("#997: monthly trade protection", () => {
     expect(gbr(dormant.finalSnapshot).tradeProtection).toBeUndefined();
     expect(kinds(dormant, "TradeProtectionAssessed")).toEqual([]);
     expect(tradeDraws(dormant)).toEqual([]);
-    const again = runTrade(from, [], null);
-    expect(sha256Hex(canonicalSerialize(again.finalSnapshot))).toBe(
-      sha256Hex(canonicalSerialize(dormant.finalSnapshot)),
-    );
+    const baseline = new MonthExecutor().execute(from, [], "trade-seed", new DiagnosticCollector());
+    const digest = (value: unknown) => sha256Hex(canonicalSerialize(value));
+    expect(digest(dormant.finalSnapshot)).toBe(digest(baseline.finalSnapshot));
+    expect(digest(dormant.eventLedger.all)).toBe(digest(baseline.eventLedger.all));
+    expect(digest(dormant.randomLedger.all)).toBe(digest(baseline.randomLedger.all));
   });
 
   it("assesses quota, assigned ships and no shortfall when enough escorts are on duty", () => {
