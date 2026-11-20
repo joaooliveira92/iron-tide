@@ -76,7 +76,7 @@ export function useFleetTrade(sessionId: string): UseFleetTradeReturn {
       if (!bridge || selected.length === 0) return Promise.resolve("transport-failure");
       const shipIds = [...selected];
       return workflow
-        .execute(`trade-duty-${duty}`, async (stamp) => {
+        .execute("set-trade-duty", async (stamp) => {
           const result = await bridge.campaign.execute("submitTradeDuty", {
             ...envelopeOf(sessionId, stamp),
             duty,
