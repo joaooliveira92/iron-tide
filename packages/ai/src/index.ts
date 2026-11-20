@@ -12,8 +12,14 @@ export type {
   PeaceProposalDecision,
   PeaceReason,
   PeaceResponseDecision,
+  RevolutionPeaceDecision,
+  RevolutionPeaceReason,
 } from "./peaceBehaviour.js";
-export { decidePeaceProposal, decidePeaceResponse } from "./peaceBehaviour.js";
+export {
+  decidePeaceProposal,
+  decidePeaceResponse,
+  decideRevolutionPeaceTerm,
+} from "./peaceBehaviour.js";
 export type { AiWarOptions } from "./aiWarPlanner.js";
 export type { WarDeclarationDecision, WarDeclarationReason, WarSortie } from "./warBehaviour.js";
 export { decideWarDeclaration, decideWarSorties } from "./warBehaviour.js";
