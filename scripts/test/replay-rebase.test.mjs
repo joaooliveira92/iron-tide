@@ -18,7 +18,7 @@ const put = (root, path, text) => {
 const approvalFile = (cause, migrationAssessment, changeClass) =>
   `${JSON.stringify({ schema: "x", entries: [{ changeClass, cause, migrationAssessment }] })}\n`;
 
-function fixture() {
+function fixture({ newOnBase = false } = {}) {
   const root = mkdtempSync(join(tmpdir(), "replay-rebase-"));
   git(root, "init", "-q", "-b", "dev");
   git(root, "config", "user.email", "t@example.test");
@@ -42,6 +42,7 @@ function fixture() {
   git(root, "checkout", "-q", "dev");
   put(root, "golden/replays/a.replay.json", "dev-a\n");
   put(root, "golden/replays/b.replay.json", "dev-b\n");
+  if (newOnBase) put(root, "golden/replays/c.replay.json", "dev-c\n");
   put(
     root,
     "golden/replay-approvals/dev.json",
@@ -115,6 +116,59 @@ void test("a conflicted replay is re-recorded on the merged tree and the branch 
     );
     assert.equal(calls.at(-1)[1], "check:replay-approvals");
     assert.match(git(root, "status", "--short"), /golden\/replay-approvals\/regenerated\.json/);
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+void test("a replay that is new on the base is re-recorded during the merge", () => {
+  const root = fixture({ newOnBase: true });
+  try {
+    mergeDevIntoFeature(root);
+    const calls = [];
+    const status = replayRebase({
+      root,
+      base: "dev",
+      git: (...args) => git(root, ...args),
+      exec: fakeExec(root, calls),
+      options: {},
+      print: () => {},
+    });
+    assert.equal(status, 0);
+    assert.deepEqual(
+      calls.filter((call) => call[1] === "replay:record"),
+      [
+        ["pnpm", "replay:record", "a"],
+        ["pnpm", "replay:record", "c"],
+      ],
+    );
+    const text = (path) => readFileSync(join(root, path), "utf8").replaceAll("\r\n", "\n");
+    assert.equal(text("golden/replays/b.replay.json"), "dev-b\n");
+    assert.equal(text("golden/replays/c.replay.json"), "recorded-c\n");
+  } finally {
+    rmSync(root, { recursive: true, force: true });
+  }
+});
+
+void test("outside a merge a replay that matches the base is left alone", () => {
+  const root = fixture({ newOnBase: true });
+  try {
+    mergeDevIntoFeature(root);
+    git(root, "merge", "--abort");
+    git(root, "checkout", "-q", "dev");
+    const calls = [];
+    replayRebase({
+      root,
+      base: "dev",
+      git: (...args) => git(root, ...args),
+      exec: fakeExec(root, calls),
+      options: {},
+      print: () => {},
+    });
+    assert.deepEqual(
+      calls.filter((call) => call[1] === "replay:record"),
+      [],
+    );
   } finally {
     rmSync(root, { recursive: true, force: true });
   }

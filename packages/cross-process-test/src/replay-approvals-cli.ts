@@ -5,7 +5,7 @@ import { fileURLToPath } from "node:url";
 
 import { Result } from "effect";
 
-import { readApprovalsAt, readChainInput } from "./replay-approvals-chain-git.js";
+import { gateBaseCommit, readApprovalsAt, readChainInput } from "./replay-approvals-chain-git.js";
 import {
   APPROVALS_DIR,
   APPROVAL_FILE_SUFFIX,
@@ -36,7 +36,7 @@ function baseOf(argv: readonly string[], gateBase: string): string {
 }
 
 function readBase(ref: string): CorpusState {
-  const commit = git("merge-base", ref, "HEAD").trim();
+  const commit = gateBaseCommit(git, ref);
   const listing = git("ls-tree", "--name-only", commit, `${REPLAYS}/`).split("\n");
   const replays = new Map<string, string>();
   for (const path of listing.filter((p) => p.endsWith(SUFFIX))) {
