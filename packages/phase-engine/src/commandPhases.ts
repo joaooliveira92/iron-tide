@@ -405,6 +405,11 @@ export function runAiPlanningPhase(ctx: PhaseContext): PhaseRunOutcome {
   const aiExecutor = new AiPhaseExecutor();
   const aiEngine = ctx.rng.engine();
   const shipBuilding = ctx.engineOptions?.shipBuilding;
+  const warRules = ctx.engineOptions?.warDeclaration;
+  const warOptions =
+    warRules === undefined || ctx.playerNationId === undefined
+      ? undefined
+      : { rules: warRules, playerNationId: ctx.playerNationId };
   for (const slot of ctx.slots) {
     if (slot["type"] !== "ai") continue;
     const nationId = slot["nationId"];
@@ -423,6 +428,7 @@ export function runAiPlanningPhase(ctx: PhaseContext): PhaseRunOutcome {
       ctx.lifecycle,
       idempotencyMap,
       researchAllocation,
+      warOptions,
     );
     for (const diagnostic of diagnostics) {
       collector.addError(diagnostic.code, diagnostic.message, {
@@ -439,6 +445,19 @@ export function runAiPlanningPhase(ctx: PhaseContext): PhaseRunOutcome {
           priorityBody["nationId"],
           priorityBody["fieldPriorities"],
           collector,
+        );
+      } else if (body["type"] === "DeclareWar") {
+        ctx.snapshot.current = applyDeclareWar(
+          ctx.snapshot.current,
+          body as DeclareWarCommand,
+          campaignMonth,
+        );
+      } else if (body["type"] === "MoveFleet") {
+        ctx.snapshot.current = applyMoveFleet(
+          ctx.snapshot.current,
+          body as MoveFleetCommand,
+          collector,
+          campaignMonth,
         );
       } else if (body["type"] === "budget_project") {
         ctx.snapshot.current = applyBudgetProject(
@@ -471,6 +490,6 @@ export const commandCollectionPhase: MonthPhase = {
 export const aiPlanningPhase: MonthPhase = {
   id: "ai_planning",
   name: "AI Planning",
-  permissions: { reads: "all", writes: ["nations"], rng: true },
+  permissions: { reads: "all", writes: ["nations", "wars", "politics"], rng: true },
   run: runAiPlanningPhase,
 };

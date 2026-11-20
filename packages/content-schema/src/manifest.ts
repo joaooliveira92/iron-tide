@@ -28,6 +28,7 @@ export const RulesetManifestSchema = Schema.Struct({
   tradeProtection: Schema.optional(Schema.Unknown),
   unrest: Schema.optional(Schema.Unknown),
   peaceBehaviour: Schema.optional(Schema.Unknown),
+  warDeclaration: Schema.optional(Schema.Unknown),
   eventResolution: Schema.optional(Schema.Unknown),
   provenance: Schema.optional(ProvenanceSchema),
 });

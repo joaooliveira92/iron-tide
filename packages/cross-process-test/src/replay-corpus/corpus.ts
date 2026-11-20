@@ -11,6 +11,7 @@ import {
   peaceBehaviourFromRulesets,
   tensionDriftFromRulesets,
   tradeProtectionFromRulesets,
+  warDeclarationFromRulesets,
 } from "@bluewave/content-compiler";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
 import { SafeInt } from "@bluewave/contracts";
@@ -252,6 +253,16 @@ function productionPeaceBehaviour() {
   return decoded.value;
 }
 
+function productionWarDeclaration() {
+  const decoded = warDeclarationFromRulesets(production().bundle.rulesets);
+  if (decoded === undefined) return undefined;
+  if (!decoded.ok)
+    throw new ReplayFileError({
+      message: `production warDeclaration section is invalid at '${decoded.field}'`,
+    });
+  return decoded.value;
+}
+
 function productionEvents(): EventEngineContent | undefined {
   const decoded = eventResolutionFromRulesets(production().bundle.rulesets);
   if (decoded === undefined) return undefined;
@@ -290,6 +301,7 @@ export function fleetManagementOptions(playerNationId?: string, setup?: ReplaySe
   const tensionDrift = productionTensionDrift();
   const tradeProtection = productionTradeProtection();
   const peaceBehaviour = productionPeaceBehaviour();
+  const warDeclaration = productionWarDeclaration();
   const events = productionEvents();
   const constructionEvents = productionConstructionEvents(setup);
   const terrain = productionBattleTerrain();
@@ -299,6 +311,7 @@ export function fleetManagementOptions(playerNationId?: string, setup?: ReplaySe
     ...(tensionDrift === undefined ? {} : { tensionDrift }),
     ...(tradeProtection === undefined ? {} : { tradeProtection }),
     ...(peaceBehaviour === undefined ? {} : { peaceBehaviour }),
+    ...(warDeclaration === undefined ? {} : { warDeclaration }),
     ...(events === undefined ? {} : { events }),
     ...(constructionEvents === undefined ? {} : { constructionEvents }),
     ...(playerNationId === undefined ? {} : { playerNationId }),

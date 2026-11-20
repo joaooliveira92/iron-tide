@@ -221,6 +221,34 @@ export default list(RulesetManifestSchema, [
         note: "PROVISIONAL. The margin of 20 war-score points (decision 0055) and the monthly proposal chance of 30 percent once a side leads by the margin are Bluewave balance targets with no historical source (research: Discussion 815). Approved as BALANCE_TARGET / LOW placeholders by the coordinator on the owner's behalf under #816 (#708); a human should confirm.",
       },
     },
+    // The AI war-declaration section (#995, SPRINT-PLAN A-1). The manual gives no rule for when an AI nation starts a war,
+    // so both values are PROVISIONAL Bluewave balance targets: an AI at peace declares on the player once their tension
+    // reaches 8 of 10 and the AI's naval budget is at least half the player's. Removing this section returns AI nations to
+    // never declaring war.
+    warDeclaration: {
+      sectionVersion: 1,
+      tensionThreshold: 8,
+      minimumNavalStrengthRatioBp: 5_000,
+      provenance: {
+        sourceStatus: "BALANCE_TARGET",
+        confidence: "LOW",
+        kind: "balance_adjustment",
+        sources: [
+          {
+            title: "Rule the Waves 3 manual",
+            author: "Naval War Simulations / Matrix Games",
+            year: 2023,
+            page: "66",
+            section: "Diplomacy and war",
+          },
+          {
+            title: "Roadmap: what blocks a full playable game (A-1 slice 1)",
+            archiveOrUrl: "https://github.com/joaooliveira92/iron-tide/issues/995",
+          },
+        ],
+        note: "PROVISIONAL. Neither the tension threshold nor the strength ratio has a historical or manual source; both are Bluewave balance targets awaiting a playtest pass.",
+      },
+    },
     // The battle-offer section (T-1, spec #109). Every value is a Bluewave balance decision recorded by ADR-0254 (decision
     // requests 0028-0034, Option C): the manual (p.67) says each quantity exists but supplies no number. Retuning is a
     // ruleset version change with a golden re-pin. Removing this section returns the pack to the dormant behaviour.

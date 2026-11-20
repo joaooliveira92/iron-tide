@@ -3,6 +3,7 @@ import {
   decodePeaceBehaviourRules,
   decodeTensionDriftRules,
   decodeTradeProtectionRules,
+  decodeWarDeclarationRules,
   decodeUnrestRules,
 } from "@bluewave/content-schema";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
@@ -130,12 +131,44 @@ function validatePeaceBehaviourRules(
   }
 }
 
+function validateWarDeclarationRules(
+  rulesets: readonly unknown[],
+  collector: DiagnosticCollector,
+): void {
+  const carriers = rulesets.filter(
+    (ruleset) => (ruleset as Record<string, unknown>)["warDeclaration"] !== undefined,
+  );
+  if (carriers.length > 1)
+    collector.addError(
+      "WAR_DECLARATION_RULES_AMBIGUOUS",
+      `More than one ruleset carries a warDeclaration section (${carriers.map((r) => String((r as Record<string, unknown>)["id"])).join(", ")}); exactly one may`,
+      { stage: "validate" },
+    );
+  for (const ruleset of rulesets) {
+    const record = ruleset as Record<string, unknown>;
+    if (record["warDeclaration"] === undefined) continue;
+    const rulesetId = String(record["id"]);
+    const decoded = decodeWarDeclarationRules(record["warDeclaration"]);
+    if (decoded.ok) continue;
+    collector.addError(
+      "WAR_DECLARATION_RULES_INVALID",
+      `Ruleset '${rulesetId}' warDeclaration section is invalid at '${decoded.field}': ${decoded.message}`,
+      {
+        stage: "validate",
+        entityId: rulesetId,
+        remediation: `Author every warDeclaration value in ruleset '${rulesetId}', or remove the section to leave AI war declaration dormant`,
+      },
+    );
+  }
+}
+
 export function validateDiplomacyRules(
   rulesets: readonly unknown[],
   collector: DiagnosticCollector,
 ): void {
   validateTensionDriftRules(rulesets, collector);
   validatePeaceBehaviourRules(rulesets, collector);
+  validateWarDeclarationRules(rulesets, collector);
   validateFleetMoraleRules(rulesets, collector);
   validateTradeProtectionRules(rulesets, collector);
   validateUnrestRules(rulesets, collector);

@@ -144,6 +144,7 @@ export { tradeProtectionFromRulesets } from "./tradeProtectionRules.js";
 export { unrestFromRulesets } from "./unrestRules.js";
 export { tensionDriftFromRulesets } from "./tensionDriftRules.js";
 export { peaceBehaviourFromRulesets } from "./peaceBehaviourRules.js";
+export { warDeclarationFromRulesets } from "./warDeclarationRules.js";
 export { eventResolutionFromRulesets } from "./eventResolutionRules.js";
 export { gunneryFromRulesets } from "./gunneryRules.js";
 export { missilesFromRulesets } from "./missilesRules.js";

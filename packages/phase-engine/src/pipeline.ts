@@ -21,6 +21,7 @@ import type {
   PeaceBehaviourRules,
   TensionDriftRules,
   TradeProtectionRules,
+  WarDeclarationRules,
   UnrestRules,
   EventResolutionRules,
   GameEvent,
@@ -80,6 +81,7 @@ export interface MonthExecutorEngineOptions {
   readonly tradeProtection?: TradeProtectionRules;
   readonly unrest?: UnrestRules;
   readonly peaceBehaviour?: PeaceBehaviourRules;
+  readonly warDeclaration?: WarDeclarationRules;
   readonly events?: EventEngineContent;
   readonly constructionEvents?: readonly ConstructionEvent[];
 }
