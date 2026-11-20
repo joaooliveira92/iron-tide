@@ -1,0 +1,130 @@
+import {
+  tradeProtectionRevenueBp,
+  type CampaignSnapshot,
+  type WarDeclaration,
+} from "@bluewave/campaign";
+import { SafeInt } from "@bluewave/contracts";
+import { DiagnosticCollector } from "@bluewave/diagnostics";
+import { MonthExecutor, type MonthResult } from "@bluewave/phase-engine";
+import { describe, expect, it } from "vite-plus/test";
+
+import { compileProductionCampaign } from "../src/production-pack.js";
+import { fleetManagementOptions } from "../src/replay-corpus/corpus.js";
+
+const PLAYER = "germany";
+const RAIDER_NATION = "france";
+const MONTHS = 24;
+
+const { state } = compileProductionCampaign();
+const options = fleetManagementOptions(PLAYER);
+const { tradeProtection: rules, ...withoutTrade } = options;
+
+const war: WarDeclaration = {
+  id: "war-trade-1",
+  attackerSideId: "side-a",
+  defenderSideId: "side-d",
+  attackerSideMembers: [RAIDER_NATION],
+  defenderSideMembers: [PLAYER],
+  attackerWarScore: 0,
+  defenderWarScore: 0,
+  attackerId: RAIDER_NATION,
+  defenderId: PLAYER,
+  startDate: "1880-01",
+  status: "ACTIVE",
+};
+
+const atWar: CampaignSnapshot = {
+  ...state.snapshot,
+  wars: { ...state.snapshot.wars, wars: [war] },
+};
+
+function run(from: CampaignSnapshot, trade: boolean, seed: string): MonthResult {
+  return new MonthExecutor().execute(from, [], seed, new DiagnosticCollector(), undefined, {
+    ...(trade ? options : withoutTrade),
+    playerNationId: PLAYER,
+  });
+}
+
+const bodies = (result: MonthResult, kind: string) =>
+  result.eventLedger.all.filter((e) => e.eventType === kind).map((e) => e.body);
+
+const revenueCredit = (result: MonthResult): number =>
+  result.financialLedger.all
+    .filter((entry) => entry.phaseId === "monthly_revenue" && entry.nationId === PLAYER)
+    .reduce((sum, entry) => sum + entry.credit, 0);
+
+const withPool = (from: CampaignSnapshot, merchantPoolBp: number): CampaignSnapshot => {
+  const nations = new Map(from.nations);
+  nations.set(PLAYER, {
+    ...from.nations.get(PLAYER)!,
+    tradeProtection: {
+      month: "1879-12",
+      quota: 5,
+      assigned: 0,
+      shortfall: 5,
+      shortfallBp: 10_000,
+      merchantPoolBp,
+    },
+  });
+  return { ...from, nations };
+};
+
+describe("1880 production trade protection (#1037)", () => {
+  it("has the production pack carry trade-protection rules", () => {
+    expect(rules).toBeDefined();
+  });
+
+  it("assesses the at-war player with no escorts as fully short in the first month", () => {
+    const result = run(atWar, true, "production-trade-1");
+    expect(bodies(result, "TradeProtectionAssessed")).toEqual([
+      {
+        kind: "TradeProtectionAssessed",
+        nationId: PLAYER,
+        month: "1880-01",
+        quota: 5,
+        assigned: 0,
+        shortfall: 5,
+        shortfallBp: 10_000,
+      },
+    ]);
+    expect(result.finalSnapshot.nations.get(PLAYER)?.tradeProtection?.merchantPoolBp).toBe(10_000);
+  });
+
+  it("loses and recovers merchant pool over a war, recording each loss and assessment", () => {
+    let snapshot = atWar;
+    const losses: Array<{ poolBefore: number; poolAfter: number }> = [];
+    let assessments = 0;
+    for (let month = 1; month <= MONTHS; month += 1) {
+      const result = run(snapshot, true, `production-trade-${String(month)}`);
+      assessments += bodies(result, "TradeProtectionAssessed").length;
+      for (const body of bodies(result, "MerchantLossSuffered")) {
+        const loss = body as { poolBefore: number; poolAfter: number };
+        losses.push({ poolBefore: loss.poolBefore, poolAfter: loss.poolAfter });
+      }
+      snapshot = {
+        ...result.finalSnapshot,
+        turnNumber: SafeInt.add(result.finalSnapshot.turnNumber, SafeInt.ONE),
+      };
+    }
+    expect(assessments).toBe(MONTHS);
+    expect(losses.length).toBeGreaterThan(0);
+    for (const loss of losses) expect(loss.poolAfter).toBeLessThan(loss.poolBefore);
+  });
+
+  it("scales monthly revenue by the merchant pool through the authored sensitivity", () => {
+    const damaged = withPool(atWar, 5000);
+    const scaled = revenueCredit(run(damaged, true, "production-trade-rev"));
+    const unscaled = revenueCredit(run(damaged, false, "production-trade-rev"));
+    const bp = tradeProtectionRevenueBp(rules!, 5000);
+    expect(bp).toBeLessThan(10_000);
+    expect(scaled).toBe(Math.floor((unscaled * bp) / 10_000));
+    expect(scaled).toBeLessThan(unscaled);
+  });
+
+  it("leaves revenue untouched while the merchant pool is full", () => {
+    const full = withPool(atWar, 10_000);
+    expect(revenueCredit(run(full, true, "production-trade-rev"))).toBe(
+      revenueCredit(run(full, false, "production-trade-rev")),
+    );
+  });
+});
