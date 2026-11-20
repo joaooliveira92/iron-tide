@@ -57,6 +57,17 @@ test("management orders are queued together, take effect next month, and the com
     await expect(exercise.getByText(/Fleet exercise queued for 1 ship/)).toBeVisible();
   });
 
+  await test.step("reachable:trade-duty", async () => {
+    await openFleetDepartment(page, "Station");
+    const trade = page.getByRole("region", { name: "Trade protection and raiding" });
+    await expect(trade.getByTestId("fleet-trade-quota")).toBeVisible();
+    await expect(trade.getByTestId("fleet-trade-quota-explanation")).toBeVisible();
+
+    await trade.locator("input[type=checkbox]:not([disabled])").last().check();
+    await trade.getByRole("button", { name: "Trade protection", exact: true }).click();
+    await expect(trade.getByText(/1 ship queued for trade protection/)).toBeVisible();
+  });
+
   await test.step("reachable:assign-or-relieve-officer", async () => {
     await openFleetDepartment(page, "Organization");
     const organization = page.getByTestId("fleet-organization");

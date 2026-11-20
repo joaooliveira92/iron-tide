@@ -453,15 +453,15 @@
     },
     {
       "id": "trade-duty",
-      "player_verb": "Assign ships to trade protection or raiding duty",
-      "status": "dormant-by-decision",
+      "player_verb": "Assign trade protection or raider duty",
+      "status": "reachable",
       "engine_package": "phase-engine",
       "engine_modules": [],
       "engine_symbols": ["applyTradeDutyCommand", "applyTradeProtectionForMonth"],
       "main_commands": ["submitTradeDuty"],
-      "renderer_screen": null,
-      "evidence_test": null,
-      "decision": "#1015"
+      "renderer_screen": "screens/fleet/trade/FleetTradeSection.tsx",
+      "evidence_test": "apps/desktop/src/renderer/screens/fleet/trade/FleetTradeView.test.tsx",
+      "decision": null
     },
     {
       "id": "presence-revolt-pressure",
