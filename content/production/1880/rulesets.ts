@@ -70,6 +70,59 @@ export default list(RulesetManifestSchema, [
         note: "PROVISIONAL. With the authored pair frictions the monthly probabilities give one tension step about every nine years for the most hostile pairs and about every eighty for the quietest; they await a sourcing pass and the balance report.",
       },
     },
+    // The trade-protection section (W-1 slice 1, #997, Discussion #1010). The manual (pp.70-72) fixes the structure: a
+    // required number of ships on protection duty, raiders that are not short range, an 8-knot floor for armed merchant
+    // cruisers only, and no raiding effect from a nation that blockades the victim. It gives no numbers, so every value
+    // is a PROVISIONAL Bluewave balance target. Removing this section returns the game to no trade warfare.
+    tradeProtection: {
+      sectionVersion: 1,
+      fleetShareBp: 1000,
+      resourcesPerRequiredShip: 400,
+      contributingHullTypes: [
+        "destroyer",
+        "corvette",
+        "light_cruiser",
+        "protected_cruiser",
+        "heavy_cruiser",
+        "armoured_cruiser",
+        "armed_merchant_cruiser",
+      ],
+      raiderHullTypes: [
+        "light_cruiser",
+        "protected_cruiser",
+        "heavy_cruiser",
+        "armoured_cruiser",
+        "armed_merchant_cruiser",
+      ],
+      amcHullType: "armed_merchant_cruiser",
+      amcMinSpeedUms: 4_115_552,
+      raiderHitBp: 1500,
+      shortfallAmplifyBp: 5000,
+      lossPerHitBp: 150,
+      pressureChanceBp: 1500,
+      pressureLossBp: 100,
+      recoveryBpPerMonth: 50,
+      revenueSensitivityBp: 5000,
+      unrestThresholdBp: 1500,
+      unrestCadenceMonths: 3,
+      unrestStep: 1,
+      provenance: {
+        sourceStatus: "BALANCE_TARGET",
+        confidence: "LOW",
+        kind: "balance_adjustment",
+        sources: [
+          {
+            title: "Rule the Waves 3 manual",
+            author: "Naval War Simulations / Matrix Games",
+            year: 2023,
+            page: "70-72",
+            section:
+              "Trade protection duty proportional to fleet and economy; raiders are not short range; AMC raiders need 8 knots; no raiding effect while blockading the enemy",
+          },
+        ],
+        note: "PROVISIONAL. The shares, hit chances, losses, recovery, revenue sensitivity and unrest values are Bluewave balance targets awaiting the balance report; the submarine term, prestige for a shortfall and interception are deferred (#1013, #1014). The 8-knot floor is 8 x 514444 um/s.",
+      },
+    },
     fleetMorale: {
       sectionVersion: 1,
       unpaidFundsLoss: 10,

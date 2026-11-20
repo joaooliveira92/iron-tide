@@ -287,6 +287,14 @@ export {
   EventTraitAnswerEffectSchema,
   EventTraitShiftSchema,
 } from "./event-resolution-rules.js";
+export type {
+  TradeProtectionRules,
+  TradeProtectionRulesDecoded,
+} from "./trade-protection-rules.js";
+export {
+  decodeTradeProtectionRules,
+  TradeProtectionRulesSchema,
+} from "./trade-protection-rules.js";
 export type { FleetMoraleRules, FleetMoraleRulesDecoded } from "./fleet-morale-rules.js";
 export { decodeFleetMoraleRules, FleetMoraleRulesSchema } from "./fleet-morale-rules.js";
 export type { UnrestRules, UnrestRulesDecoded } from "./unrest-rules.js";

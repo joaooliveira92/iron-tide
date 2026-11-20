@@ -10,6 +10,7 @@ import {
   missilesFromRulesets,
   peaceBehaviourFromRulesets,
   tensionDriftFromRulesets,
+  tradeProtectionFromRulesets,
   warDeclarationFromRulesets,
 } from "@bluewave/content-compiler";
 import { shipBuildingDataFromBundle } from "@bluewave/campaign";
@@ -140,6 +141,26 @@ export function loadFleetMoraleRules(): FleetMoraleRules | undefined {
     );
   fleetMorale = { rules: decoded?.value };
   return fleetMorale.rules;
+}
+
+type TradeProtectionRules = Extract<
+  NonNullable<ReturnType<typeof tradeProtectionFromRulesets>>,
+  { readonly ok: true }
+>["value"];
+
+let tradeProtection: { readonly rules: TradeProtectionRules | undefined } | null = null;
+
+export function loadTradeProtectionRules(): TradeProtectionRules | undefined {
+  if (tradeProtection !== null) return tradeProtection.rules;
+  const { bundle } = readContentArtifact(resolveGeneratedContentDir());
+  const decoded = tradeProtectionFromRulesets(bundle.rulesets);
+  if (decoded !== undefined && !decoded.ok)
+    throw new ContentArtifactError(
+      "CONTENT_ARTIFACT_INVALID",
+      `ruleset tradeProtection section is invalid at '${decoded.field}': ${decoded.message}`,
+    );
+  tradeProtection = { rules: decoded?.value };
+  return tradeProtection.rules;
 }
 
 type WarDeclarationRules = Extract<

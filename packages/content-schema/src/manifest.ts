@@ -25,6 +25,7 @@ export const RulesetManifestSchema = Schema.Struct({
   terrain: Schema.optional(Schema.Unknown),
   tensionDrift: Schema.optional(Schema.Unknown),
   fleetMorale: Schema.optional(Schema.Unknown),
+  tradeProtection: Schema.optional(Schema.Unknown),
   unrest: Schema.optional(Schema.Unknown),
   peaceBehaviour: Schema.optional(Schema.Unknown),
   warDeclaration: Schema.optional(Schema.Unknown),

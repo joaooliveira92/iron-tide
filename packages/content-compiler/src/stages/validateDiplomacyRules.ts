@@ -2,6 +2,7 @@ import {
   decodeFleetMoraleRules,
   decodePeaceBehaviourRules,
   decodeTensionDriftRules,
+  decodeTradeProtectionRules,
   decodeWarDeclarationRules,
   decodeUnrestRules,
 } from "@bluewave/content-schema";
@@ -64,6 +65,36 @@ function validateFleetMoraleRules(
         stage: "validate",
         entityId: rulesetId,
         remediation: `Author every fleetMorale value in ruleset '${rulesetId}', or remove the section to leave fleet morale dormant`,
+      },
+    );
+  }
+}
+
+function validateTradeProtectionRules(
+  rulesets: readonly unknown[],
+  collector: DiagnosticCollector,
+): void {
+  const carriers = rulesets.filter(
+    (ruleset) => (ruleset as Record<string, unknown>)["tradeProtection"] !== undefined,
+  );
+  if (carriers.length > 1)
+    collector.addError(
+      "TRADE_PROTECTION_RULES_AMBIGUOUS",
+      `More than one ruleset carries a tradeProtection section (${carriers.map((r) => String((r as Record<string, unknown>)["id"])).join(", ")}); exactly one may`,
+      { stage: "validate" },
+    );
+  for (const ruleset of carriers) {
+    const record = ruleset as Record<string, unknown>;
+    const rulesetId = String(record["id"]);
+    const decoded = decodeTradeProtectionRules(record["tradeProtection"]);
+    if (decoded.ok) continue;
+    collector.addError(
+      "TRADE_PROTECTION_RULES_INVALID",
+      `Ruleset '${rulesetId}' tradeProtection section is invalid at '${decoded.field}': ${decoded.message}`,
+      {
+        stage: "validate",
+        entityId: rulesetId,
+        remediation: `Author every tradeProtection value in ruleset '${rulesetId}', or remove the section to leave trade protection dormant`,
       },
     );
   }
@@ -139,6 +170,7 @@ export function validateDiplomacyRules(
   validatePeaceBehaviourRules(rulesets, collector);
   validateWarDeclarationRules(rulesets, collector);
   validateFleetMoraleRules(rulesets, collector);
+  validateTradeProtectionRules(rulesets, collector);
   validateUnrestRules(rulesets, collector);
 }
 

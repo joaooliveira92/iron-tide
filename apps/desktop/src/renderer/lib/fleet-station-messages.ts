@@ -6,4 +6,6 @@ export const FLEET_STATION_MESSAGES = {
   "fleet.station.reason.UNKNOWN_STATION":
     "That area is not a station where you owe a presence requirement.",
   "fleet.status.FS.named": "On foreign station at {station}",
+  "fleet.status.TP": "On trade protection duty",
+  "fleet.status.RD": "On commerce raiding duty",
 } as const;

@@ -40,6 +40,8 @@ const EVENT_SUBSYSTEM: Readonly<Record<string, string>> = {
   FleetExerciseScheduled: "command_collection",
   FleetExerciseCompleted: "maintenance",
   ExerciseTensionRaised: "resolve_diplomacy",
+  TradeProtectionAssessed: "resolve_diplomacy",
+  MerchantLossSuffered: "resolve_diplomacy",
   RevoltPressureRequested: "battle_resolution",
   ShipDetachedToFleet: "battle_resolution",
   ShipRemovedFromDivision: "battle_resolution",
@@ -55,6 +57,7 @@ const UNREST_REASON_SUBSYSTEM: ReadonlyMap<string, string | null> = new Map([
   ["PRESENCE_SHORTFALL", null],
   ["DEFEAT", "battle_resolution"],
   ["VICTORY", "battle_resolution"],
+  ["TRADE_LOSS", "resolve_diplomacy"],
 ]);
 
 const DIVISION_EXPERIENCE_REASON_SUBSYSTEM: ReadonlyMap<string, string> = new Map([

@@ -5,7 +5,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | Status | Rows |
 | --- | --- |
 | reachable | 43 |
-| dormant-by-decision | 15 |
+| dormant-by-decision | 16 |
 | internal | 18 |
 
 ## Reachable
@@ -62,6 +62,7 @@ Generated from `scripts/data/reachability-ledger.json` by `node scripts/verify-r
 | --- | --- | --- |
 | construction-events | Learn why a build slipped or cost more | #584 |
 | event-answer-unrest | See unrest rise or fall after a crisis answer | #427 |
+| trade-duty | Assign ships to trade protection or raiding duty | #1015 |
 | division-battle-experience | Divisions gain experience from the battles they fight | #276 |
 | aircraft-and-carriers | Develop aircraft and operate carriers | RULES.md#dormant-by-decision |
 | combat-air-combat | Air combat and air defence in a battle | RULES.md#dormant-by-decision |

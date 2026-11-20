@@ -24,6 +24,7 @@ export type {
   BattleOfferAnswered,
   ForeignStationNoRoute,
   ForeignStationShipMoved,
+  MerchantLossSuffered,
   NationBudgetChanged,
   PossessionTransferred,
   PresenceShortfall,
@@ -38,6 +39,7 @@ export type {
   ShipRemovedFromDivision,
   ShipStationAssignmentChanged,
   TechnologyDiscovered,
+  TradeProtectionAssessed,
 } from "./envelope.js";
 export type {
   ExplanationOperation,
