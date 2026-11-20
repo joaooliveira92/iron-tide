@@ -43,6 +43,7 @@ import type { CommandHandler } from "../runtime/commandProgram.js";
 import { ContentArtifact } from "../runtime/contentArtifact.js";
 import { CommandQueue, type PendingCommandEntry } from "../runtime/commandQueue.js";
 import { queuedPresenceWarnings } from "./fleetPresenceWarnings.js";
+import { tradeProjectionFor } from "./tradeDutyCommands.js";
 import { currentRevision, submitPlayerCommand, verifyEnvelope } from "./playerCommandSupport.js";
 
 interface MovementRequest {
@@ -274,6 +275,11 @@ export const inspectFleetScreenProgram: CommandHandler<"inspectFleetScreen"> = (
                 }
               : {}),
           };
+    const trade = tradeProjectionFor(
+      record,
+      yield* contentArtifact.loadTradeProtectionRules(),
+      view.divisions,
+    );
     const queuedEntries = yield* queue.entries(record.sessionId);
     const presenceWarnings = queuedPresenceWarnings(record, queuedEntries, shipBuilding.presence);
     const projection: FleetScreenProjection = {
@@ -290,6 +296,7 @@ export const inspectFleetScreenProgram: CommandHandler<"inspectFleetScreen"> = (
       ...(presenceWarnings.length === 0 ? {} : { presenceWarnings }),
       ...(training === undefined ? {} : { training }),
       ...(exercise === undefined ? {} : { exercise }),
+      ...(trade === undefined ? {} : { trade }),
     };
 
     return { outcome: "success" as const, value: projection, diagnostics: [] };

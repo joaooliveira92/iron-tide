@@ -86,6 +86,7 @@ import {
   SubmitShipReadinessPayloadSchema,
   SubmitSpecialTrainingPayloadSchema,
   SubmitStationAssignmentPayloadSchema,
+  SubmitTradeDutyPayloadSchema,
   WriteDrawingBoardDraftPayloadSchema,
 } from "./campaignCommandSchemas.js";
 import { WriteUiStatePayloadSchema } from "./ui-state-schemas.js";
@@ -124,6 +125,7 @@ import type {
   ShipReadinessOutcome,
   SpecialTrainingOutcome,
   StationAssignmentOutcome,
+  TradeDutyOutcome,
 } from "./fleet-contract.js";
 import type { NewGameOptions } from "./new-game-contract.js";
 import type { ResearchPriorityOutcome, ResearchScreenProjection } from "./research-contract.js";
@@ -348,6 +350,7 @@ export const campaignCommandShapes = {
     SubmitSpecialTrainingPayloadSchema,
     resultType<SpecialTrainingOutcome>(),
   ),
+  submitTradeDuty: command(SubmitTradeDutyPayloadSchema, resultType<TradeDutyOutcome>()),
   replaceMovementCommand: command(
     ReplaceMovementCommandPayloadSchema,
     resultType<MovementCommandOutcome>(),

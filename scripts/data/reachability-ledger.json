@@ -458,7 +458,7 @@
       "engine_package": "phase-engine",
       "engine_modules": [],
       "engine_symbols": ["applyTradeDutyCommand", "applyTradeProtectionForMonth"],
-      "main_commands": [],
+      "main_commands": ["submitTradeDuty"],
       "renderer_screen": null,
       "evidence_test": null,
       "decision": "#1015"
