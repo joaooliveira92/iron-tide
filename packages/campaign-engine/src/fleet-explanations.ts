@@ -118,6 +118,30 @@ export function explainExerciseGain(experienceGain: number): ExplanationTree {
     .build();
 }
 
+const SERVICE_EXPERIENCE_SOURCE = {
+  kind: "ruleset",
+  ref: "fleet_management.divisionExperience.service",
+} as const;
+
+export function explainServiceExperience(input: {
+  readonly monthlyGrowth: number;
+  readonly cap: number;
+  readonly current: number;
+}): ExplanationTree {
+  const gain = Math.max(
+    0,
+    Math.min(100, input.cap, input.current + input.monthlyGrowth) - input.current,
+  );
+  return new ExplanationBuilder("division_service_experience", FLEET_FORMULA_VERSION)
+    .withInput("monthlyGrowth", input.monthlyGrowth)
+    .withInput("cap", input.cap)
+    .withInput("current", input.current)
+    .withResult(gain)
+    .withOperation("clamp")
+    .withSource(SERVICE_EXPERIENCE_SOURCE)
+    .build();
+}
+
 const EXERCISE_TENSION_SOURCE = {
   kind: "ruleset",
   ref: "fleet_management.exercise.tension",
