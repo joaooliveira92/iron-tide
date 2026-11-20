@@ -196,6 +196,22 @@ describe("monthly division service experience", () => {
     });
   });
 
+  it("records only the clamped gain when the step overshoots the cap", () => {
+    const result = run({
+      ...SERVICE_RULES,
+      divisionExperience: {
+        ...SERVICE_RULES.divisionExperience,
+        service: { monthlyGrowth: 3, cap: 40 },
+      },
+    });
+    expect(experienceOf(result, "GBR", "gbr-a")).toBe(40);
+    expect(experienceOf(result, "GBR", "gbr-b")).toBe(23);
+    const clamped = result.eventLedger.all
+      .map((event) => event.body)
+      .find((body) => body.kind === "DivisionExperienceChanged" && body.divisionId === "gbr-a");
+    expect(clamped).toMatchObject({ before: 39, after: 40, delta: 1 });
+  });
+
   it("refreshes the aggregate hash and is deterministic", () => {
     const find = (r: ReturnType<typeof run>) =>
       r.finalSnapshot.nations.get("GBR")!.divisions.find((d) => d.divisionId === "gbr-b")!;

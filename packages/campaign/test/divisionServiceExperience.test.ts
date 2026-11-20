@@ -79,6 +79,17 @@ describe("growDivisionServiceExperience", () => {
     expect(growDivisionServiceExperience(atCap, ships(), MONTH, RULES)).toBe(atCap);
   });
 
+  it("lands exactly on the cap and stops growing the month after", () => {
+    const landed = growDivisionServiceExperience(
+      division({ experience: SafeInt(39) }),
+      ships(),
+      MONTH,
+      RULES,
+    );
+    expect(landed.experience as number).toBe(40);
+    expect(growDivisionServiceExperience(landed, ships(), "1880-04", RULES)).toBe(landed);
+  });
+
   it("never leaves the 0..100 range even with a cap of 100", () => {
     const grown = growDivisionServiceExperience(
       division({ experience: SafeInt(99) }),
