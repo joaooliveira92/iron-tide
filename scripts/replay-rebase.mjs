@@ -47,6 +47,15 @@ function carriedMetadata(root, paths) {
   return [...found.values()];
 }
 
+function merging(git) {
+  try {
+    git("rev-parse", "-q", "--verify", "MERGE_HEAD");
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function replayRebase({ root, base, git, exec, options, print }) {
   const baseFiles = new Set(
     lines(git("ls-tree", "-r", "--name-only", base, "--", REPLAYS, APPROVALS)),
@@ -75,9 +84,24 @@ export function replayRebase({ root, base, git, exec, options, print }) {
       .map((path) => path.slice(REPLAYS.length + 1, -REPLAY_SUFFIX.length)),
   );
   const differsFromBase = new Set(lines(git("diff", "--name-only", base, "--", REPLAYS)));
+  const newOnBase = merging(git)
+    ? new Set(
+        lines(
+          git(
+            "diff",
+            "--name-only",
+            "--diff-filter=A",
+            git("merge-base", base, "HEAD").trim(),
+            base,
+            "--",
+            REPLAYS,
+          ),
+        ),
+      )
+    : new Set();
   for (const name of present) {
     const path = `${REPLAYS}/${name}`;
-    if (!baseFiles.has(path) || differsFromBase.has(path)) {
+    if (!baseFiles.has(path) || differsFromBase.has(path) || newOnBase.has(path)) {
       toRecord.add(name.slice(0, -REPLAY_SUFFIX.length));
     }
   }

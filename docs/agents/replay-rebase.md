@@ -3,8 +3,8 @@
 Replay files are derived, so never resolve a conflict in `golden/` by hand. Rebase or merge `dev` and, when `golden/` conflicts, run `pnpm replay:rebase [--base origin/dev]`. It:
 
 1. takes the base side of every conflicted file under `golden/`;
-2. re-records each replay that differs from the base, or conflicted, on the merged tree (`pnpm replay:record <id>`);
-3. deletes the approval files this branch added and regenerates one with `pnpm replay:approve` against the base;
+2. re-records each replay that differs from the base, conflicted, or is new on the base since the merge-base, on the merged tree (`pnpm replay:record <id>`);
+3. deletes the approval files this branch added and regenerates one with `pnpm replay:approve` against the base. While `MERGE_HEAD` exists, the approvals base is the base tip, as it will be after the merge commit, not the old merge-base;
 4. stages `golden/`, builds, and runs `pnpm check:replay-approvals`, returning its status.
 
 The cause, migration and class come from the removed approval files. Pass `--cause`, `--migration` and `--class` when the branch had none or they differ; with several different causes the helper stops and asks for the flags. It never edits `legacy.json` or a base approval file, so append-only holds. Afterwards run `pnpm check:replay-corpus`, then `git rebase --continue`.
