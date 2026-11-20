@@ -19,6 +19,7 @@ export {
   buildCoverageReport,
   formatCoverageReport,
   monthCoverage,
+  unrestReasonSubsystem,
 } from "./coverage.js";
 export type { CorpusScenario, CoverageReport, MonthCoverage, ReplayCoverage } from "./coverage.js";
 export { executeScenario } from "./corpus.js";

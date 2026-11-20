@@ -229,7 +229,7 @@ describe("commitMonth", () => {
         bodyLength: 213927,
       });
       expect(updated.state.rawHash).toBe(
-        "69eb3f6d3a6feab4caee4cc5df28ba2ab44ae8a00ee63d8040276a5c6d9977e3",
+        "53165f34a91e51ae990c1e77ffd6575ac0eb50f6532734b9c3c83db54a6f3a17",
       );
       const expectedActiveWars = updated.state.snapshot.wars.wars.filter(
         (w) => w.status !== "ENDED",

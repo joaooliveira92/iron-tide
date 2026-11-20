@@ -20,6 +20,7 @@ import type {
   MissilesRules,
   PeaceBehaviourRules,
   TensionDriftRules,
+  WarDeclarationRules,
   UnrestRules,
   EventResolutionRules,
   GameEvent,
@@ -78,6 +79,7 @@ export interface MonthExecutorEngineOptions {
   readonly fleetMorale?: FleetMoraleRules;
   readonly unrest?: UnrestRules;
   readonly peaceBehaviour?: PeaceBehaviourRules;
+  readonly warDeclaration?: WarDeclarationRules;
   readonly events?: EventEngineContent;
   readonly constructionEvents?: readonly ConstructionEvent[];
 }
