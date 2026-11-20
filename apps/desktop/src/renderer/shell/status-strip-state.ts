@@ -11,7 +11,7 @@ import {
   buildFleetMoraleRow,
   type FleetMoraleGauge,
 } from "./fleet-morale-strip.js";
-import { buildUnrestRow } from "./unrest-strip.js";
+import { buildUnrestGauge, buildUnrestRow, type UnrestGauge } from "./unrest-strip.js";
 
 export const FOREIGN_STATION_RULE_V1 = "controlled-by-another-nation";
 
@@ -121,6 +121,8 @@ export interface StatusStripModel {
   readonly prestigeExplanation?: ExplanationTree;
   readonly fleetMorale: FleetMoraleGauge;
   readonly fleetMoraleExplanation?: ExplanationTree;
+  readonly unrest: UnrestGauge;
+  readonly unrestExplanation?: ExplanationTree;
   readonly outlook: OutlookDetail;
   readonly stations: StationDetail;
   readonly ports: readonly PortDetail[];
@@ -589,6 +591,10 @@ export function buildStatusStrip(input: StatusStripInput): StatusStripModel {
     ...(projection.fleetMorale.changeExplanation === undefined
       ? {}
       : { fleetMoraleExplanation: projection.fleetMorale.changeExplanation }),
+    unrest: buildUnrestGauge(projection),
+    ...(projection.unrestChange === undefined
+      ? {}
+      : { unrestExplanation: projection.unrestChange.changeExplanation }),
     outlook: buildOutlook(projection, balanceStatus, balanceTone, researchRemark, format),
     stations: buildStations(projection, areas, format),
     ports: buildPorts(projection),

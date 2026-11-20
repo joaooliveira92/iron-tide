@@ -1,7 +1,23 @@
+import { UNREST_MAX } from "@bluewave/campaign";
 import type { PlayerProjection } from "@bluewave/campaign-engine";
 
 import { translate } from "../lib/strings.js";
 import type { StripRow } from "./status-strip-state.js";
+
+export interface UnrestGauge {
+  readonly current: number;
+  readonly max: number;
+  readonly fraction: number;
+}
+
+export function buildUnrestGauge(projection: Pick<PlayerProjection, "unrest">): UnrestGauge {
+  const current = projection.unrest ?? 0;
+  return {
+    current,
+    max: UNREST_MAX,
+    fraction: Math.min(1, Math.max(0, current / UNREST_MAX)),
+  };
+}
 
 export function buildUnrestRow(projection: PlayerProjection): StripRow {
   const unrest = projection.unrest ?? 0;
