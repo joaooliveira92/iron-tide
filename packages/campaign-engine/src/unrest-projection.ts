@@ -1,4 +1,6 @@
 import type { NationState } from "@bluewave/campaign";
+import type { ExplanationTree } from "@bluewave/events";
+import { explainUnrestChange } from "./unrest-explanations.js";
 
 export interface PlayerProjectionUnrestChange {
   readonly reasonCodes: readonly string[];
@@ -6,6 +8,7 @@ export interface PlayerProjectionUnrestChange {
   readonly after: number;
   readonly delta: number;
   readonly month: string;
+  readonly changeExplanation: ExplanationTree;
 }
 
 export function unrestChangeField(nation: Pick<NationState, "unrestLastChange">): {
@@ -26,5 +29,6 @@ export function buildUnrestChange(
     after: last.after,
     delta: last.after - last.before,
     month: last.month,
+    changeExplanation: explainUnrestChange(last),
   };
 }
