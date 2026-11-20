@@ -63,6 +63,13 @@ const SetSpecialTrainingBody = Schema.Struct({
   subjects: Schema.Array(Id),
 });
 
+const SetTradeDutyBody = Schema.Struct({
+  type: Schema.Literal("SetTradeDuty"),
+  nationId: Id,
+  shipIds: Schema.Array(Id),
+  duty: Schema.Literals(["TRADE_PROTECTION", "RAIDER", "NONE"]),
+});
+
 const HoldFleetExerciseBody = Schema.Struct({
   type: Schema.Literal("HoldFleetExercise"),
   nationId: Id,
@@ -125,6 +132,7 @@ export const ReplayCommandBodySchema = Schema.Union([
   OrderConstructionBody,
   SetShipReadinessBody,
   SetSpecialTrainingBody,
+  SetTradeDutyBody,
   HoldFleetExerciseBody,
   ChangeDivisionDoctrineBody,
   AssignForeignStationBody,
