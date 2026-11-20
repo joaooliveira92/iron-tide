@@ -49,6 +49,7 @@ Several gates run embedded `--self-test` fixtures first; the `gate:*` DAG in
 - `verify-vitest-config-parity.mjs` — every package spreads `vitest-shared.mjs`.
 - `verify-worktrees.mjs` — warn-only: drift reported by `pnpm worktrees audit`, run offline.
 - `verify-content-lock.mjs`, `verify-content-gate.mjs` — built content matches the lock; no shipping placeholders.
+- `content-lock-promotion.mjs` (`pnpm promote:content-lock`) — cuts `promote/<date>` from `origin/dev`, commits the lock hash; `check-dev` fails if dev has one ([procedure](../docs/agents/content-lock-promotion.md)).
 - `verify-codemod-determinism.mjs` — content codemod byte-identical and idempotent across processes.
 
 ## `pnpm check` extras (also CI)

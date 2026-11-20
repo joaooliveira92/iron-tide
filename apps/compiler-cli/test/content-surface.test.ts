@@ -221,18 +221,16 @@ describe("content:verify over the production pack (CAH-LOCK)", () => {
       }),
     );
 
-  it("rejects the committed lock in release mode because it records no body hash", async () => {
-    expect(
-      await runCli(
-        runContentVerify({
-          manifest,
-          contentDir,
-          outputDir: tempDir(),
-          outputMode: "json",
-          lockMode: "release",
-        }),
-      ),
-    ).toBe("validation-error");
+  it("rejects a lock that records no body hash in release mode, and dev accepts it", async () => {
+    const dir = tempDir();
+    cpSync(contentDir, dir, { recursive: true });
+    writeFileSync(
+      resolve(dir, "content-lock.json"),
+      JSON.stringify({ contentVersion: "0.5.0", algorithm: "sha256" }, null, 2),
+      "utf8",
+    );
+    expect(await verifyIn(dir)).toBe("success");
+    expect(await verifyIn(dir, "release")).toBe("validation-error");
   });
 
   it("passes dev on content drift, fails release until the lock is refreshed", async () => {

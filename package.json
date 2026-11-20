@@ -56,6 +56,7 @@
     "content:verify": "pnpm --filter @bluewave/content-authoring build && pnpm --filter @bluewave/compiler-cli build && node apps/compiler-cli/dist/main.js content:verify --manifest content/production/1880/pack.json --content-dir content/production/1880",
     "content:verify:release": "pnpm --filter @bluewave/content-authoring build && pnpm --filter @bluewave/compiler-cli build && node apps/compiler-cli/dist/main.js content:verify --release --manifest content/production/1880/pack.json --content-dir content/production/1880",
     "content:lock": "pnpm --filter @bluewave/content-authoring build && pnpm --filter @bluewave/compiler-cli build && node apps/compiler-cli/dist/main.js content:verify --write-lock --manifest content/production/1880/pack.json --content-dir content/production/1880",
+    "promote:content-lock": "node scripts/content-lock-promotion.mjs promote",
     "snap": "pnpm --filter @bluewave/desktop build && pnpm --filter @bluewave/desktop run snap",
     "snap:debug": "pnpm --filter @bluewave/desktop exec cross-env VITE_BLUEWAVE_DEBUG=true electron-vite build && pnpm --filter @bluewave/desktop run snap",
     "dev": "pnpm preflight && vp run -r --parallel dev",

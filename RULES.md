@@ -114,8 +114,9 @@ contract wins; fix this file in the same change.
 - Keep validation, normalization, and repair distinct. Repair is explicit,
   narrow, logged, and limited to safely recomputable data.
 - The content lock records the body hash only on a dev to main promotion: run
-  `pnpm content:lock` first, and `pnpm content:verify:release` (main-bound
-  quality workflow) requires it. On dev, `pnpm content:verify` checks version,
+  `pnpm content:lock` first on a `promote/<date>` branch cut from dev
+  ([procedure](docs/agents/content-lock-promotion.md)), and
+  `pnpm content:verify:release` (main-bound quality workflow) requires it. On dev, `pnpm content:verify` checks version,
   algorithm and two identical builds, so content PRs never conflict on the hash.
 - Terrain (`terrain` collection, #935) compiles to the sidecar
   `terrain-artifact.json` (hash domain `bluewave.terrain.v1`), never into
