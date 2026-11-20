@@ -46,6 +46,10 @@ vi.mock("./station/FleetStationSection.js", () => ({
   FleetStationSection: () => <div data-testid="station-stub" />,
 }));
 
+vi.mock("./trade/FleetTradeSection.js", () => ({
+  FleetTradeSection: () => <div data-testid="trade-stub" />,
+}));
+
 vi.mock("./components/FleetReportSections.js", () => ({
   FleetReportSections: () => <div data-testid="report-sections-stub" />,
 }));
