@@ -10,6 +10,7 @@ import { FleetOrganizationSection } from "./organization/FleetOrganizationSectio
 import { FleetStationSection } from "./station/FleetStationSection.js";
 import { FleetExerciseSection } from "./exercise/FleetExerciseSection.js";
 import { FleetTrainingSection } from "./training/FleetTrainingSection.js";
+import { FleetTradeSection } from "./trade/FleetTradeSection.js";
 import { AreaOverviewTable } from "./components/AreaOverviewTable.js";
 import { useFleetWorkspace, type FleetWorkspace } from "./hooks/useFleetWorkspace.js";
 import {
@@ -145,7 +146,12 @@ function FleetWorkspaceView({
         {...(preferredFlagshipId === null ? {} : { preferredFlagshipId })}
       />
     ),
-    station: <FleetStationSection sessionId={sessionId} />,
+    station: (
+      <>
+        <FleetStationSection sessionId={sessionId} />
+        <FleetTradeSection sessionId={sessionId} />
+      </>
+    ),
     training: <FleetTrainingSection sessionId={sessionId} />,
     exercises: <FleetExerciseSection sessionId={sessionId} />,
     orders: <MovementCommandsTable compact rows={movementRows} />,

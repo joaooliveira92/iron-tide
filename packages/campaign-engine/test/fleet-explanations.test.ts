@@ -1,5 +1,10 @@
 import { describe, expect, it } from "vite-plus/test";
 import {
+  explainTradeAssigned,
+  explainTradeQuota,
+  explainTradeShortfall,
+} from "../src/fleet-trade.js";
+import {
   explainExerciseGain,
   explainExerciseTension,
   explainServiceExperience,
@@ -85,5 +90,49 @@ describe("fleet explanations", () => {
       ["fleet_exercise_tension.step", 1],
       ["fleet_exercise_tension.ceiling", 5],
     ]);
+  });
+
+  it("explains the trade protection quota as a fleet share plus an economy term", () => {
+    const tree = explainTradeQuota(
+      { fleetShareBp: 1_000, resourcesPerRequiredShip: 400 },
+      13,
+      1_000,
+      4,
+    );
+    expect(tree.formulaId).toBe("fleet_trade_quota");
+    expect(Number(tree.result)).toBe(4);
+    expect(tree.source).toEqual({ kind: "ruleset", ref: "trade_protection" });
+    expect(tree.inputs).toEqual({
+      fleetShips: 13,
+      baseResources: 1_000,
+      fleetShareBp: 1_000,
+      resourcesPerRequiredShip: 400,
+    });
+    expect((tree.children ?? []).map((c) => [c.formulaId, Number(c.result)])).toEqual([
+      ["fleet_trade_quota.fleet", 2],
+      ["fleet_trade_quota.economy", 2],
+    ]);
+  });
+
+  it("explains the assigned count and names the ships that hold the duty without counting", () => {
+    const tree = explainTradeAssigned(3, 5);
+    expect(tree.formulaId).toBe("fleet_trade_assigned");
+    expect(Number(tree.result)).toBe(3);
+    expect((tree.children ?? []).map((c) => [c.formulaId, Number(c.result)])).toEqual([
+      ["fleet_trade_assigned.holding", 5],
+      ["fleet_trade_assigned.excluded", -2],
+    ]);
+    expect(explainTradeAssigned(4, 4).children?.map((c) => c.formulaId)).toEqual([
+      "fleet_trade_assigned.holding",
+    ]);
+  });
+
+  it("explains the shortfall in basis points of the quota", () => {
+    const tree = explainTradeShortfall(4, 1, 3, 7_500);
+    expect(tree.formulaId).toBe("fleet_trade_shortfall");
+    expect(Number(tree.result)).toBe(7_500);
+    expect(tree.inputs).toEqual({ quota: 4, assigned: 1 });
+    expect(Number(tree.intermediate["shortfall"])).toBe(3);
+    expect(Number(explainTradeShortfall(4, 6, 0, 0).result)).toBe(0);
   });
 });

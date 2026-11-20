@@ -71,6 +71,7 @@ import {
   submitSpecialTrainingProgram,
   submitStationAssignmentProgram,
 } from "./commands/fleetCommands.js";
+import { submitTradeDutyProgram } from "./commands/tradeDutyCommands.js";
 import {
   inspectBudgetScreenProgram,
   submitBudgetAllocationProgram,
@@ -149,6 +150,7 @@ export const commandHandlers: CommandHandlers = {
   submitShipReadiness: submitShipReadinessProgram,
   submitSpecialTraining: submitSpecialTrainingProgram,
   submitFleetExercise: submitFleetExerciseProgram,
+  submitTradeDuty: submitTradeDutyProgram,
   replaceMovementCommand: replaceMovementCommandProgram,
   cancelMovementCommand: cancelMovementCommandProgram,
   submitDesignCommand: submitDesignCommandProgram,

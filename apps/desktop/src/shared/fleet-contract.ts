@@ -11,6 +11,8 @@ import type {
 import type { ExplanationTree } from "@bluewave/events";
 import type { CommandEnvelope } from "./bridge-contract.js";
 
+import type { FleetTradeProjection } from "@bluewave/campaign-engine";
+
 export type {
   FleetArea,
   FleetAreaEdge,
@@ -18,6 +20,9 @@ export type {
   FleetOverBaseShip,
   FleetPort,
   FleetShipView,
+  FleetTradeDuty,
+  FleetTradeProjection,
+  FleetTradeShipView,
   PlayerProjectionPresence,
   PlayerProjectionStation,
   PresenceWarningView,
@@ -38,6 +43,21 @@ export interface FleetScreenProjection {
   readonly presenceWarnings?: readonly PresenceWarningView[];
   readonly training?: FleetTrainingProjection;
   readonly exercise?: FleetExerciseProjection;
+  readonly trade?: FleetTradeProjection;
+}
+
+export type TradeDutyRequest = "TRADE_PROTECTION" | "RAIDER" | "NONE";
+
+export interface SubmitTradeDutyPayload extends CommandEnvelope {
+  readonly duty: TradeDutyRequest;
+  readonly shipIds: readonly string[];
+}
+
+export interface TradeDutyOutcome {
+  readonly commandId: string;
+  readonly duty: TradeDutyRequest;
+  readonly shipCount: number;
+  readonly appliedOnNextTurn: true;
 }
 
 export type TrainingSubjectId = "GUNNERY" | "NIGHT_FIGHTING" | "TORPEDO_TACTICS" | "DAMAGE_CONTROL";

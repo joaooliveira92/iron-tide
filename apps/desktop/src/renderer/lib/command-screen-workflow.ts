@@ -19,6 +19,7 @@ export type RequestKind =
   | "clear-station"
   | "set-readiness"
   | "set-training"
+  | "set-trade-duty"
   | "hold-exercise"
   | "authorize-dock-expansion"
   | "advance-battle"
