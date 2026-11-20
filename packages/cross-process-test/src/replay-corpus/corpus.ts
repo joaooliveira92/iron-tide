@@ -11,6 +11,7 @@ import {
   peaceBehaviourFromRulesets,
   tensionDriftFromRulesets,
   tradeProtectionFromRulesets,
+  unrestFromRulesets,
   warDeclarationFromRulesets,
 } from "@bluewave/content-compiler";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
@@ -151,6 +152,7 @@ const SETUPS: Readonly<Record<ReplaySetupId, (snapshot: CampaignSnapshot) => Cam
   "armed-adriatic-war": (snapshot) => armedWar(ADRIATIC_NATIONS, snapshot),
   "armed-malta-war": (snapshot) => armedWar(MALTA_NATIONS, snapshot),
   "certain-construction-events": (snapshot) => snapshot,
+  "unrest-phase": (snapshot) => snapshot,
 };
 
 const CERTAIN_PROBABILITY_BP = 10_000;
@@ -274,6 +276,18 @@ function productionEvents(): EventEngineContent | undefined {
   return catalogue.length === 0 ? undefined : { rules: decoded.value, catalogue };
 }
 
+function productionUnrest(setup?: ReplaySetupId) {
+  if (setup !== "unrest-phase") return undefined;
+  const decoded = unrestFromRulesets(production().bundle.rulesets);
+  if (decoded === undefined)
+    throw new ReplayFileError({ message: "production rulesets have no unrest section" });
+  if (!decoded.ok)
+    throw new ReplayFileError({
+      message: `production unrest section is invalid at '${decoded.field}'`,
+    });
+  return decoded.value;
+}
+
 let answerPrestigeCodes: ReadonlySet<string> | undefined;
 export function eventAnswerPrestigeReasonCodes(): ReadonlySet<string> {
   if (answerPrestigeCodes !== undefined) return answerPrestigeCodes;
@@ -305,8 +319,10 @@ export function fleetManagementOptions(playerNationId?: string, setup?: ReplaySe
   const events = productionEvents();
   const constructionEvents = productionConstructionEvents(setup);
   const terrain = productionBattleTerrain();
+  const unrest = productionUnrest(setup);
   return {
     ...(terrain === undefined ? {} : { terrain }),
+    ...(unrest === undefined ? {} : { unrest }),
     ...(fleetManagement === undefined ? {} : { fleetManagement }),
     ...(tensionDrift === undefined ? {} : { tensionDrift }),
     ...(tradeProtection === undefined ? {} : { tradeProtection }),

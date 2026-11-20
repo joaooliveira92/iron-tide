@@ -1,6 +1,7 @@
 import type { NationState, Ship } from "@bluewave/campaign";
 import { growDivisionCohesion, readinessAfterCrewRamp, rampCrewQuality } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
+import { growDivisionServiceExperienceForMonth } from "./divisionServiceExperience.js";
 import { shipReadinessChangedEvent } from "./events.js";
 import type { PhaseContext } from "./pipeline.js";
 import { completeFleetExerciseForMonth } from "./fleetExercise.js";
@@ -102,6 +103,7 @@ export function applyReadinessEvolution(ctx: PhaseContext): void {
 
   if (changed) ctx.snapshot.write("nations", updatedNations);
   growDivisionCohesionForMonth(ctx);
+  growDivisionServiceExperienceForMonth(ctx);
   advanceSpecialTrainingForMonth(ctx);
   completeFleetExerciseForMonth(ctx);
 }

@@ -17,8 +17,10 @@ export { REPLAY_SCENARIOS } from "./scenarios.js";
 export {
   SUBSYSTEMS,
   buildCoverageReport,
+  divisionExperienceReasonSubsystem,
   formatCoverageReport,
   monthCoverage,
+  unrestReasonSubsystem,
 } from "./coverage.js";
 export type { CorpusScenario, CoverageReport, MonthCoverage, ReplayCoverage } from "./coverage.js";
 export { executeScenario } from "./corpus.js";

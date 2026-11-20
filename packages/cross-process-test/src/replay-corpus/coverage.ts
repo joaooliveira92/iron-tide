@@ -19,6 +19,7 @@ export const SUBSYSTEMS = [
   { id: "resolve_carrier_operations", label: "Carrier operations" },
   { id: "battle_generation", label: "Battle generation" },
   { id: "battle_resolution", label: "Battle resolution" },
+  { id: "unrest", label: "Unrest" },
   { id: "closing_validation", label: "Closing validation" },
 ] as const;
 
@@ -36,20 +37,42 @@ const EVENT_SUBSYSTEM: Readonly<Record<string, string>> = {
   PresenceShortfall: "battle_resolution",
   PrestigeLossRequested: "battle_resolution",
   PrestigeChanged: "battle_resolution",
-  DivisionExperienceChanged: "battle_resolution",
   FleetExerciseScheduled: "command_collection",
   FleetExerciseCompleted: "maintenance",
   ExerciseTensionRaised: "resolve_diplomacy",
   TradeProtectionAssessed: "resolve_diplomacy",
   MerchantLossSuffered: "resolve_diplomacy",
-  UnrestChanged: "resolve_diplomacy",
   RevoltPressureRequested: "battle_resolution",
   ShipDetachedToFleet: "battle_resolution",
   ShipRemovedFromDivision: "battle_resolution",
   ForeignStationShipMoved: "battle_resolution",
   ForeignStationNoRoute: "battle_resolution",
   PossessionTransferred: "command_collection",
+  UnrestChanged: "unrest",
+  UnrestConsequence: "unrest",
 };
+
+const UNREST_REASON_SUBSYSTEM: ReadonlyMap<string, string | null> = new Map([
+  ["EVENT", null],
+  ["PRESENCE_SHORTFALL", null],
+  ["DEFEAT", "battle_resolution"],
+  ["VICTORY", "battle_resolution"],
+  ["TRADE_LOSS", "resolve_diplomacy"],
+]);
+
+const DIVISION_EXPERIENCE_REASON_SUBSYSTEM: ReadonlyMap<string, string> = new Map([
+  ["BATTLE_PARTICIPATION", "battle_resolution"],
+  ["SERVICE_TIME", "maintenance"],
+]);
+
+export function divisionExperienceReasonSubsystem(reasonCode: string): string {
+  return DIVISION_EXPERIENCE_REASON_SUBSYSTEM.get(reasonCode) ?? "maintenance";
+}
+
+export function unrestReasonSubsystem(reasonCode: string): string | null {
+  const owner = UNREST_REASON_SUBSYSTEM.get(reasonCode);
+  return owner === undefined ? "unrest" : owner;
+}
 
 const NEUTRAL_EVENT_TYPES: ReadonlySet<string> = new Set(["NationBudgetChanged"]);
 
@@ -73,6 +96,15 @@ export function monthCoverage(result: MonthResult): MonthCoverage {
   for (const entry of result.eventLedger.all) {
     const type = entry.eventType;
     if (entry.body.kind === "PrestigeChanged" && eventPrestige.has(entry.body.reasonCode)) {
+      continue;
+    }
+    if (entry.body.kind === "UnrestChanged") {
+      const owner = unrestReasonSubsystem(entry.body.reasonCode);
+      if (owner !== null) add(owner);
+      continue;
+    }
+    if (entry.body.kind === "DivisionExperienceChanged") {
+      add(divisionExperienceReasonSubsystem(entry.body.reasonCode));
       continue;
     }
     const subsystem = EVENT_SUBSYSTEM[type];

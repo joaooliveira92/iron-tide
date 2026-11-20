@@ -2,6 +2,7 @@ import { describe, expect, it } from "vite-plus/test";
 import {
   explainExerciseGain,
   explainExerciseTension,
+  explainServiceExperience,
   explainTrainingMaintenanceAdder,
   explainTrainingProgress,
 } from "../src/fleet-explanations.js";
@@ -44,6 +45,22 @@ describe("fleet explanations", () => {
   it("never reports negative months after the threshold is met", () => {
     expect(Number(explainTrainingProgress(12, 12).result)).toBe(0);
     expect(Number(explainTrainingProgress(15, 12).result)).toBe(0);
+  });
+
+  it("explains service experience as the monthly step limited by the cap", () => {
+    const step = explainServiceExperience({ monthlyGrowth: 1, cap: 40, current: 20 });
+    expect(step.formulaId).toBe("division_service_experience");
+    expect(Number(step.result)).toBe(1);
+    expect(step.source).toEqual({
+      kind: "ruleset",
+      ref: "fleet_management.divisionExperience.service",
+    });
+    expect(
+      Number(explainServiceExperience({ monthlyGrowth: 3, cap: 40, current: 39 }).result),
+    ).toBe(1);
+    expect(
+      Number(explainServiceExperience({ monthlyGrowth: 1, cap: 40, current: 55 }).result),
+    ).toBe(0);
   });
 
   it("explains the exercise gain from the fleet-management content value", () => {

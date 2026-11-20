@@ -9,9 +9,12 @@ import {
   SUBSYSTEMS,
   buildCoverageReport,
   decodeReplayFile,
+  divisionExperienceReasonSubsystem,
+  executeScenario,
   formatCoverageReport,
   fuzzSubsystems,
   recordReplay,
+  unrestReasonSubsystem,
 } from "../src/replay-corpus/index.js";
 import { Result } from "effect";
 
@@ -54,6 +57,38 @@ describe("replay coverage report", () => {
     expect(text).not.toContain("\r");
     expect(text).toContain("cov-a (1 month): first month");
     expect(text).toContain("uncovered:");
+  });
+});
+
+describe("unrest attribution", () => {
+  it("credits the unrest phase only for the reasons it emits itself", () => {
+    expect(unrestReasonSubsystem("MILITARY_SPENDING")).toBe("unrest");
+    expect(unrestReasonSubsystem("WAR_DURATION")).toBe("unrest");
+    expect(unrestReasonSubsystem("DEFEAT")).toBe("battle_resolution");
+    expect(unrestReasonSubsystem("VICTORY")).toBe("battle_resolution");
+    expect(unrestReasonSubsystem("EVENT")).toBeNull();
+    expect(unrestReasonSubsystem("PRESENCE_SHORTFALL")).toBeNull();
+    expect(unrestReasonSubsystem("constructor")).toBe("unrest");
+  });
+
+  it("credits division experience to the phase that grants it", () => {
+    expect(divisionExperienceReasonSubsystem("BATTLE_PARTICIPATION")).toBe("battle_resolution");
+    expect(divisionExperienceReasonSubsystem("SERVICE_TIME")).toBe("maintenance");
+    expect(divisionExperienceReasonSubsystem("constructor")).toBe("maintenance");
+  });
+
+  it("raises unrest from spending and lands a strike in the unrest-strike replay", () => {
+    const scenario = REPLAY_SCENARIOS.find((s) => s.id === "production-1880-5m-unrest-strike");
+    expect(scenario).toBeDefined();
+    if (scenario === undefined) return;
+    const bodies = [...executeScenario(scenario)].flatMap(({ result }) =>
+      result.eventLedger.all.map((entry) => entry.body),
+    );
+    expect(
+      bodies.some((b) => b.kind === "UnrestChanged" && b.reasonCode === "MILITARY_SPENDING"),
+    ).toBe(true);
+    expect(bodies.some((b) => b.kind === "UnrestConsequence")).toBe(true);
+    expect(buildCoverageReport([scenario]).replays[0]?.subsystems).toContain("unrest");
   });
 });
 
