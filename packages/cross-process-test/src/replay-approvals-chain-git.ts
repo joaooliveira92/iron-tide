@@ -34,6 +34,10 @@ export function readApprovalsAt(
   return merged.success;
 }
 
+export function gateBaseCommit(git: (...args: string[]) => string, ref: string): string {
+  return git("merge-base", ref, "HEAD").trim();
+}
+
 export interface ChainRefs {
   readonly main: string;
   readonly head: string;
