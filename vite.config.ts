@@ -302,7 +302,7 @@ export default defineConfig({
       },
       "gate:codemod-determinism": {
         command: "node scripts/verify-codemod-determinism.mjs",
-        dependsOn: ["gate:git-state"],
+        dependsOn: ["gate:content-lock"],
       },
       "gate:yaml-boundary-self-test": {
         command: "node scripts/assert-no-foreign-yaml.mjs --self-test",
