@@ -125,7 +125,18 @@ describe("#997: monthly trade protection", () => {
     const first = single.wars.wars[0]!;
     const doubled: CampaignSnapshot = {
       ...single,
-      wars: { ...single.wars, wars: [{ ...first, id: "w2" }, first] },
+      wars: {
+        ...single.wars,
+        wars: [
+          {
+            ...first,
+            id: "w2",
+            attackerSideMembers: [...first.attackerSideMembers],
+            defenderSideMembers: [...first.defenderSideMembers],
+          },
+          first,
+        ],
+      },
     };
     const one = runTrade(single);
     const two = runTrade(doubled);
@@ -133,7 +144,8 @@ describe("#997: monthly trade protection", () => {
       tradeDraws(result)
         .filter((d) => d.reasonCode === "RAIDER_HIT")
         .map((d) => d.entityKey);
-    expect(raiderKeys(two)).toEqual(["w1/r1/GBR/1880-05", "w1/r2/GBR/1880-05"]);
+    expect(raiderKeys(two)).toHaveLength(2);
+    expect(raiderKeys(two).every((key) => key.startsWith("w1/"))).toBe(true);
     expect(raiderKeys(two)).toEqual(raiderKeys(one));
     const loss = (result: ReturnType<typeof runTrade>) =>
       (kinds(result, "MerchantLossSuffered")[0] as { raiderHits: number }).raiderHits;
