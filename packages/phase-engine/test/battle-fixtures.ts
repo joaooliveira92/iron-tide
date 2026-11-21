@@ -62,6 +62,7 @@ export interface FixtureShipOpts {
   stationAreaId?: Ship["stationAreaId"];
   colonialServiceFitted?: Ship["colonialServiceFitted"];
   overBase?: Ship["overBase"];
+  internment?: Ship["internment"];
 }
 
 export function makeShip(
@@ -96,6 +97,7 @@ export function makeShip(
     inBattleId: opts.inBattleId,
     availability: opts.availability,
     availabilityProjectId: opts.availabilityProjectId,
+    internment: opts.internment,
   };
 }
 
