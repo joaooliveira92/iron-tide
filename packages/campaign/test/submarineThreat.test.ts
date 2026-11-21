@@ -87,19 +87,21 @@ describe("submarine term of the requirement", () => {
   });
 });
 
+const attackRules = { shortfallAmplifyBp: rules.shortfallAmplifyBp, submarineThreat };
+
 describe("submarine attack chance", () => {
   it("amplifies with the victim shortfall like a raider hit", () => {
-    expect(submarineAttackChanceBp(rules, 0, false)).toBe(1000);
-    expect(submarineAttackChanceBp(rules, 4000, false)).toBe(3000);
+    expect(submarineAttackChanceBp(attackRules, 0, false)).toBe(1000);
+    expect(submarineAttackChanceBp(attackRules, 4000, false)).toBe(3000);
   });
 
   it("is sharply reduced when the attacker blockades the victim", () => {
-    expect(submarineAttackChanceBp(rules, 0, true)).toBe(200);
-    expect(submarineAttackChanceBp(rules, 4000, true)).toBe(600);
+    expect(submarineAttackChanceBp(attackRules, 0, true)).toBe(200);
+    expect(submarineAttackChanceBp(attackRules, 4000, true)).toBe(600);
   });
 
   it("caps at certainty", () => {
-    expect(submarineAttackChanceBp(rules, 10_000, false)).toBe(6000);
+    expect(submarineAttackChanceBp(attackRules, 10_000, false)).toBe(6000);
   });
 });
 
