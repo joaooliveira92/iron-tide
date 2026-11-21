@@ -1,5 +1,6 @@
 {
   "comment": "Content lock (ADR-0145): the compiled 1880 content artifact's semantic version and algorithm. On dev `pnpm content:verify` checks reproducibility (two builds, identical hash) and the version; the SHA-256 body hash is recorded by `pnpm content:lock` only for a dev to main promotion and checked there by `pnpm content:verify:release`.",
   "contentVersion": "0.5.0",
-  "algorithm": "sha256"
+  "algorithm": "sha256",
+  "bodyHash": "f6a8e160db85e142d6c8fbfd2e44b5be69d2eebe34c3b42d220a718ba6c56c78"
 }
