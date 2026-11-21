@@ -94,6 +94,7 @@ export function makeShip(
     stationAreaId: opts.stationAreaId,
     colonialServiceFitted: opts.colonialServiceFitted,
     overBase: opts.overBase,
+    internment: opts.internment,
     inBattleId: opts.inBattleId,
     availability: opts.availability,
     availabilityProjectId: opts.availabilityProjectId,
