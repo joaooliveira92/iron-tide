@@ -81,9 +81,9 @@ describe("1880 production trade protection (#1037)", () => {
         kind: "TradeProtectionAssessed",
         nationId: PLAYER,
         month: "1880-01",
-        quota: 5,
+        quota: 1,
         assigned: 0,
-        shortfall: 5,
+        shortfall: 1,
         shortfallBp: 10_000,
       },
     ]);
