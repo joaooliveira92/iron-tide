@@ -27,9 +27,14 @@ const WORKTREE_PORCELAIN = (branches) =>
     .join("\n");
 
 const GREEN_RUNS = [
-  { workflowName: "CI", conclusion: "success", status: "completed" },
-  { workflowName: "Determinism Gate", conclusion: "success", status: "completed" },
+  { workflowName: "CI", conclusion: "success", status: "completed", event: "push" },
+  { workflowName: "Determinism Gate", conclusion: "success", status: "completed", event: "push" },
 ];
+
+const runsForEvent = (runs, args) => {
+  const index = args.indexOf("--event");
+  return index === -1 ? runs : runs.filter((entry) => entry.event === args[index + 1]);
+};
 
 function fixture(overrides = {}) {
   const base = {
@@ -63,7 +68,9 @@ function fixture(overrides = {}) {
       return JSON.stringify(args.includes("open") ? base.openPrs : base.mergedPrs);
     }
     if (command === "git" && args[0] === "worktree") return WORKTREE_PORCELAIN(base.branches);
-    if (command === "gh" && args[0] === "run") return JSON.stringify(base.runs);
+    if (command === "gh" && args[0] === "run") {
+      return JSON.stringify(runsForEvent(base.runs, args));
+    }
     throw new Error(`unexpected command: ${key}`);
   };
   return { run, calls, readRegistryRows: () => base.registry };
@@ -149,6 +156,38 @@ void test("collectDevHealth takes the latest completed run per workflow and skip
     { workflowName: "C", conclusion: "skipped", status: "completed" },
   ]);
   assert.deepEqual(health, { red: ["A"], workflows: 3 });
+});
+
+void test("a failed pull_request run on dev does not turn dev red", () => {
+  const { code, lines } = check(["10"], {
+    runs: [
+      {
+        workflowName: "Quality Gate",
+        conclusion: "failure",
+        status: "completed",
+        event: "pull_request",
+      },
+      { workflowName: "Quality Gate", conclusion: "success", status: "completed", event: "push" },
+    ],
+  });
+  assert.equal(code, 0);
+  assert.match(lines[0], /^DEV-GREEN worktrees 1\/5$/u);
+});
+
+void test("dev health asks gh only for push-event runs", () => {
+  const { calls } = check(["10"]);
+  assert.ok(
+    calls.some((call) => call.startsWith("gh run list ") && call.includes(" --event push ")),
+    calls.join("\n"),
+  );
+});
+
+void test("collectDevHealth ignores runs whose event is not push", () => {
+  const health = collectDevHealth([
+    { workflowName: "Q", conclusion: "failure", status: "completed", event: "pull_request" },
+    { workflowName: "Q", conclusion: "success", status: "completed", event: "push" },
+  ]);
+  assert.deepEqual(health, { red: [], workflows: 1 });
 });
 
 void test("an untouched open issue is CLEAR with DEV-GREEN and exits 0", () => {
@@ -255,8 +294,13 @@ void test("STALE outranks CLAIMED and CLAIMED outranks NEEDS-DECISION", () => {
 void test("a red dev workflow prints DEV-RED and exits 2 even when every issue is CLEAR", () => {
   const { code, lines } = check(["21"], {
     runs: [
-      { workflowName: "Determinism Gate", conclusion: "failure", status: "completed" },
-      { workflowName: "CI", conclusion: "success", status: "completed" },
+      {
+        workflowName: "Determinism Gate",
+        conclusion: "failure",
+        status: "completed",
+        event: "push",
+      },
+      { workflowName: "CI", conclusion: "success", status: "completed", event: "push" },
     ],
   });
   assert.equal(code, 2);
