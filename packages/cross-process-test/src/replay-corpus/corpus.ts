@@ -276,8 +276,7 @@ function productionEvents(): EventEngineContent | undefined {
   return catalogue.length === 0 ? undefined : { rules: decoded.value, catalogue };
 }
 
-function productionUnrest(setup?: ReplaySetupId) {
-  if (setup !== "unrest-phase") return undefined;
+function productionUnrest() {
   const decoded = unrestFromRulesets(production().bundle.rulesets);
   if (decoded === undefined)
     throw new ReplayFileError({ message: "production rulesets have no unrest section" });
@@ -319,7 +318,7 @@ export function fleetManagementOptions(playerNationId?: string, setup?: ReplaySe
   const events = productionEvents();
   const constructionEvents = productionConstructionEvents(setup);
   const terrain = productionBattleTerrain();
-  const unrest = productionUnrest(setup);
+  const unrest = productionUnrest();
   return {
     ...(terrain === undefined ? {} : { terrain }),
     ...(unrest === undefined ? {} : { unrest }),
