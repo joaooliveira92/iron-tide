@@ -147,7 +147,6 @@ function assess(
       shortfall: 0,
       shortfallBp: 0,
       merchantPoolBp: pool,
-      ...(previous?.lastLossMonth === undefined ? {} : { lastLossMonth: previous.lastLossMonth }),
     };
   }
   const operational = ships.filter((ship) => !ship.isUnderConstruction).length;
@@ -159,7 +158,6 @@ function assess(
     assigned,
     ...tradeProtectionShortfall(quota, assigned),
     merchantPoolBp: pool,
-    ...(previous?.lastLossMonth === undefined ? {} : { lastLossMonth: previous.lastLossMonth }),
   };
 }
 
@@ -260,7 +258,6 @@ export function applyTradeProtectionForMonth(ctx: PhaseContext): void {
     const next: TradeProtectionState = {
       ...state,
       merchantPoolBp: poolAfter,
-      ...(lossBp > 0 ? { lastLossMonth: month } : {}),
     };
 
     if (isPlayer) {

@@ -53,7 +53,6 @@ export interface TradeProtectionState {
   readonly shortfall: number;
   readonly shortfallBp: number;
   readonly merchantPoolBp: number;
-  readonly lastLossMonth?: string;
 }
 
 export interface TradeDutyShip {

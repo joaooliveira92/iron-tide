@@ -89,8 +89,8 @@ describe("#997: monthly trade protection", () => {
       shortfall: 1,
       shortfallBp: 10_000,
       merchantPoolBp: 9_500,
-      lastLossMonth: "1880-06",
     });
+    expect(gbr(result.finalSnapshot).tradeProtection).not.toHaveProperty("lastLossMonth");
     const draws = tradeDraws(result);
     expect(draws).toHaveLength(1);
     expect(draws[0]!.phase).toBe("resolve_diplomacy");
