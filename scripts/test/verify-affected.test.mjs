@@ -210,10 +210,10 @@ void test("verify:affected reports a failure, keeps the log and releases the loc
           released += 1;
         },
         registerSignal: () => {},
-        spawnCommand: async ({ logPath, onChild }) => {
+        spawnCommand: async ({ argv, logPath, onChild }) => {
           writeFileSync(logPath, "boom: expected 1\n");
           onChild({ kill: () => {} });
-          return { code: 1 };
+          return { code: argv.some((arg) => arg.endsWith("...")) ? 0 : 1 };
         },
       },
     );
@@ -262,4 +262,94 @@ void test("verify:affected cancels the running command and releases the lock", a
 void test("verify:affected rejects a base that does not resolve", async () => {
   const code = await run(["--base", "definitely-not-a-ref", "--dry-run"], ROOT);
   assert.equal(code, 2);
+});
+
+function recordingSpawn(calls, codeFor = () => 0) {
+  return async ({ argv, logPath, onChild }) => {
+    calls.push(argv);
+    writeFileSync(logPath, "");
+    onChild({ kill: () => {} });
+    return { code: codeFor(argv) };
+  };
+}
+
+async function executeWith(paths, spawnCommand, workspaces = WORKSPACES) {
+  const dir = mkdtempSync(join(tmpdir(), "bw-verify-prebuild-"));
+  const output = sink();
+  try {
+    const plan = planAffected({ paths, workspaces });
+    const code = await execute(
+      plan,
+      { root: dir, dryRun: false, verbose: false, out: output.stream, err: output.stream },
+      { acquireLock: async () => () => {}, registerSignal: () => {}, spawnCommand },
+    );
+    return { code, text: output.text() };
+  } finally {
+    rmSync(dir, { recursive: true, force: true });
+  }
+}
+
+void test("verify:affected builds the workspace dependency closure before any unit runs", async () => {
+  const calls = [];
+  const { code } = await executeWith(["packages/a/src/x.ts"], recordingSpawn(calls));
+  assert.equal(code, 0);
+  assert.deepEqual(calls[0], ["pnpm", "--filter", "@x/a^...", "--filter", "@x/b^...", "build"]);
+  assert.deepEqual(calls[1], ["pnpm", "--filter", "@x/a", "build"]);
+});
+
+void test("verify:affected builds a unit without its own build script, closure included", async () => {
+  const calls = [];
+  const workspaces = [
+    ...WORKSPACES,
+    {
+      dir: "packages/c",
+      name: "@x/c",
+      kind: "package",
+      scripts: { test: "vp test run" },
+      dependencies: ["@x/a"],
+      exports: null,
+    },
+  ];
+  await executeWith(["packages/c/src/x.ts"], recordingSpawn(calls), workspaces);
+  assert.deepEqual(calls[0], ["pnpm", "--filter", "@x/c...", "build"]);
+});
+
+void test("verify:affected builds the replay corpus runner before the golden unit", async () => {
+  const calls = [];
+  await executeWith(["golden/replays/x.replay.json"], recordingSpawn(calls));
+  assert.deepEqual(calls[0], ["pnpm", "--filter", "@bluewave/cross-process-test...", "build"]);
+  assert.deepEqual(calls[1], ["pnpm", "check:replay-corpus"]);
+});
+
+void test("verify:affected skips the dependency build when no workspace unit is affected", async () => {
+  const calls = [];
+  await executeWith(["docs/x.md"], recordingSpawn(calls));
+  assert.equal(
+    calls.some((argv) => argv.includes("--filter")),
+    false,
+  );
+});
+
+void test("verify:affected stops and reports when the dependency build fails", async () => {
+  const calls = [];
+  const { code, text } = await executeWith(
+    ["packages/a/src/x.ts"],
+    recordingSpawn(calls, () => 1),
+  );
+  assert.equal(code, 1);
+  assert.equal(calls.length, 1);
+  assert.match(text, /FAIL workspace-deps build \(exit 1\)/u);
+});
+
+void test("verify:affected lists the dependency build in a dry run", async () => {
+  const output = sink();
+  const plan = planAffected({ paths: ["packages/a/src/x.ts"], workspaces: WORKSPACES });
+  await execute(plan, {
+    root: tmpdir(),
+    dryRun: true,
+    verbose: false,
+    out: output.stream,
+    err: output.stream,
+  });
+  assert.match(output.text(), /PLAN workspace-deps \(build\)/u);
 });
