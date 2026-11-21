@@ -5,7 +5,8 @@ import { ProvenanceSchema } from "./provenance.js";
 
 const bp = Schema.Finite.check(Schema.isInt(), Schema.isBetween({ minimum: 1, maximum: 10_000 }));
 const positiveInt = Schema.Finite.check(Schema.isInt(), Schema.isGreaterThan(0));
-const hullTypes = Schema.Array(Schema.String).check(Schema.isMinLength(1), Schema.isUnique());
+const hullType = Schema.String.check(Schema.isMinLength(1));
+const hullTypes = Schema.Array(hullType).check(Schema.isMinLength(1), Schema.isUnique());
 
 export const TradeProtectionRulesSchema = Schema.Struct({
   sectionVersion: Schema.Literal(1),
@@ -13,7 +14,7 @@ export const TradeProtectionRulesSchema = Schema.Struct({
   resourcesPerRequiredShip: positiveInt,
   contributingHullTypes: hullTypes,
   raiderHullTypes: hullTypes,
-  amcHullType: Schema.String,
+  amcHullType: hullType,
   amcMinSpeedUms: positiveInt,
   raiderHitBp: bp,
   shortfallAmplifyBp: bp,

@@ -9,7 +9,7 @@ const FIXTURE_TRADE_PROTECTION = {
   fleetShareBp: 1000,
   resourcesPerRequiredShip: 400,
   contributingHullTypes: ["destroyer"],
-  raiderHullTypes: ["protected_cruiser"],
+  raiderHullTypes: ["protected_cruiser", "armed_merchant_cruiser"],
   amcHullType: "armed_merchant_cruiser",
   amcMinSpeedUms: 4_115_552,
   raiderHitBp: 1500,
@@ -86,6 +86,16 @@ describe("tradeProtection ruleset section validation", () => {
     expect(codes(collector)).toContain("TRADE_PROTECTION_RULES_INVALID");
     expect(
       collector.all.find((d) => d.code === "TRADE_PROTECTION_RULES_INVALID")?.message,
+    ).toContain("core");
+  });
+
+  it("rejects an AMC hull type that is not among the raider hull types", () => {
+    const collector = validate([
+      ruleset("core", { ...FIXTURE_TRADE_PROTECTION, raiderHullTypes: ["protected_cruiser"] }),
+    ]);
+    expect(codes(collector)).toContain("TRADE_PROTECTION_AMC_NOT_RAIDER");
+    expect(
+      collector.all.find((d) => d.code === "TRADE_PROTECTION_AMC_NOT_RAIDER")?.message,
     ).toContain("core");
   });
 

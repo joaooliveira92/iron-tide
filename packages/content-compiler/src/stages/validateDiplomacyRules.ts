@@ -87,7 +87,19 @@ function validateTradeProtectionRules(
     const record = ruleset as Record<string, unknown>;
     const rulesetId = String(record["id"]);
     const decoded = decodeTradeProtectionRules(record["tradeProtection"]);
-    if (decoded.ok) continue;
+    if (decoded.ok) {
+      if (!decoded.value.raiderHullTypes.includes(decoded.value.amcHullType))
+        collector.addError(
+          "TRADE_PROTECTION_AMC_NOT_RAIDER",
+          `Ruleset '${rulesetId}' tradeProtection amcHullType '${decoded.value.amcHullType}' is not listed in raiderHullTypes, so its speed floor would never apply`,
+          {
+            stage: "validate",
+            entityId: rulesetId,
+            remediation: `Add '${decoded.value.amcHullType}' to raiderHullTypes in ruleset '${rulesetId}', or author a different amcHullType`,
+          },
+        );
+      continue;
+    }
     collector.addError(
       "TRADE_PROTECTION_RULES_INVALID",
       `Ruleset '${rulesetId}' tradeProtection section is invalid at '${decoded.field}': ${decoded.message}`,
