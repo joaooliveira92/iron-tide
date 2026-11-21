@@ -1,6 +1,7 @@
 import {
   tradeProtectionRevenueBp,
   type CampaignSnapshot,
+  type Ship,
   type WarDeclaration,
 } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
@@ -120,6 +121,79 @@ describe("1880 production trade protection (#1037)", () => {
     expect(scaled).toBe(Math.floor((unscaled * bp) / 10_000));
     expect(scaled).toBeLessThan(unscaled);
   });
+
+  it("authors the raider interception block for 1880", () => {
+    expect(rules!.raiderInterception).toBeDefined();
+  });
+
+  it("interdicts, engages and resolves a player raider with authored chances", () => {
+    const cruiser = [...state.snapshot.designs.values()].find(
+      (design) =>
+        design.hullType !== rules!.amcHullType &&
+        rules!.raiderHullTypes.includes(design.hullType) &&
+        design.shortRange !== true,
+    );
+    expect(cruiser).toBeDefined();
+    const german = state.snapshot.nations.get(PLAYER)!;
+    const raider: Ship = {
+      ...german.fleets.flatMap((fleet) => fleet.ships).find((ship) => ship.readiness === "ACTIVE")!,
+      designVersionId: cruiser!.designVersionId,
+      stationAssignment: "RAIDER",
+    };
+    const nations = new Map(state.snapshot.nations);
+    nations.set(PLAYER, {
+      ...german,
+      fleets: german.fleets.map((fleet) => ({
+        ...fleet,
+        ships: fleet.ships.map((ship) => (ship.id === raider.id ? raider : ship)),
+      })),
+    });
+    const raiding: CampaignSnapshot = {
+      ...atWar,
+      nations,
+      wars: {
+        ...atWar.wars,
+        wars: [
+          {
+            ...war,
+            attackerSideMembers: [PLAYER],
+            defenderSideMembers: [RAIDER_NATION],
+            attackerId: PLAYER,
+            defenderId: RAIDER_NATION,
+          },
+        ],
+      },
+    };
+
+    const engaged: unknown[] = [];
+    const interned: unknown[] = [];
+    const draws = new Set<string>();
+    for (let seed = 1; seed <= 200 && interned.length === 0; seed += 1) {
+      const result = run(raiding, true, `production-raider-${String(seed)}`);
+      engaged.push(...bodies(result, "RaiderEngaged"));
+      interned.push(...bodies(result, "RaiderInterned"));
+      for (const entry of result.randomLedger.all) {
+        if (entry.streamId.startsWith("trade/") && entry.entityKey.includes(raider.id)) {
+          draws.add(entry.streamId);
+        }
+      }
+    }
+    expect(draws.has("trade/interception")).toBe(true);
+    expect(draws.has("trade/internment")).toBe(true);
+    expect(draws.has("trade/engagement")).toBe(true);
+    expect(engaged.length).toBeGreaterThan(0);
+    for (const body of engaged as Array<{
+      nationId: string;
+      encounter: string;
+      chanceBp: number;
+    }>) {
+      expect(body.nationId).toBe(PLAYER);
+      expect(body.encounter).toBe("INTERCEPTION");
+      expect(body.chanceBp).toBeGreaterThanOrEqual(rules!.raiderInterception!.interceptBaseBp);
+      expect(body.chanceBp).toBeLessThanOrEqual(10_000);
+    }
+    expect(interned.length).toBeGreaterThan(0);
+  }, 240_000);
 
   it("leaves revenue untouched while the merchant pool is full", () => {
     const full = withPool(atWar, 10_000);
