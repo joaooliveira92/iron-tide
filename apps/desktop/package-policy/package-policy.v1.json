@@ -135,6 +135,30 @@
       "patterns": ["**/*.tsbuildinfo"]
     },
     {
+      "id": "source-map",
+      "class": "dev-artifact",
+      "reason": "source maps are debugging artefacts; no runtime path reads them, and dependency maps alone were 61 MB of app.asar (issue #1050)",
+      "patterns": ["**/*.map"],
+      "includeNodeModules": true
+    },
+    {
+      "id": "renderer-bundled-library",
+      "class": "renderer-only-dependency",
+      "reason": "the renderer bundles these libraries into its own chunks; the main process and preload never require them, so their node_modules copies are dead weight in app.asar (issue #1050)",
+      "patterns": [
+        "**/node_modules/react/**",
+        "**/node_modules/react-dom/**",
+        "**/node_modules/maplibre-gl/**",
+        "**/node_modules/lucide-react/**",
+        "**/node_modules/motion/**",
+        "**/node_modules/motion-dom/**",
+        "**/node_modules/framer-motion/**",
+        "**/node_modules/@base-ui/**",
+        "**/node_modules/@paper-design/**"
+      ],
+      "includeNodeModules": true
+    },
+    {
       "id": "package-guard-self",
       "class": "investigation",
       "reason": "the packaging policy and its tooling are build-time files",

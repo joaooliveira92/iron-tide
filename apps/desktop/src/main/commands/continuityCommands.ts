@@ -350,6 +350,8 @@ export const replayCampaignProgram: CommandHandler<"replayCampaign"> = withPacka
         const missilesRules =
           input === null ? undefined : yield* contentArtifact.loadMissilesRules();
         const terrain = input === null ? undefined : yield* contentArtifact.loadBattleTerrain();
+        const minefields =
+          input === null ? undefined : yield* contentArtifact.loadBattleMinefields();
         const tensionDrift =
           input === null ? undefined : yield* contentArtifact.loadTensionDriftRules();
         const fleetMorale =
@@ -376,6 +378,7 @@ export const replayCampaignProgram: CommandHandler<"replayCampaign"> = withPacka
                 ...(gunneryRules !== undefined ? { gunneryRules } : {}),
                 ...(missilesRules !== undefined ? { missilesRules } : {}),
                 ...(terrain !== undefined ? { terrain } : {}),
+                ...(minefields !== undefined ? { minefields } : {}),
                 ...(tensionDrift !== undefined ? { tensionDrift } : {}),
                 ...(fleetMorale !== undefined
                   ? { fleetMorale, playerNationId: metadata.playerSlotId }

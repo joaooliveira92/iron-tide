@@ -28,6 +28,7 @@
     "!test-results/**",
     "!dist-electron/**",
     "!**/*.tsbuildinfo",
+    "!**/*.map",
     "!dist/**/*.test.*",
     "!dist/**"
   ],
