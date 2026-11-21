@@ -73,7 +73,7 @@ const BASE_ARCHIVE = (): Map<string, Uint8Array> =>
     ["out/renderer/index.html", text("<html></html>")],
     ["out/renderer/assets/index-abc.js", randomBytes(300_000)],
     ["out/renderer/assets/coastline-data-abc.js", randomBytes(200_000)],
-    ["node_modules/maplibre-gl/dist/maplibre-gl.js", randomBytes(2_500_000)],
+    ["node_modules/effect/dist/index.js", randomBytes(2_500_000)],
   ]);
 
 function withProductionAssets(archive: Map<string, Uint8Array>): Map<string, Uint8Array> {
@@ -248,6 +248,25 @@ describe("contamination of the default package", () => {
     const archive = DEFAULT_ARCHIVE();
     archive.set("out/renderer/tiny.bwtp", new Uint8Array([1]));
     expect(rules({ archive }, "default")).toContain("spike-runtime-asset@out/renderer/tiny.bwtp");
+  });
+
+  it("rejects source maps shipped inside dependencies", () => {
+    const archive = DEFAULT_ARCHIVE();
+    archive.set("node_modules/maplibre-gl/dist/maplibre-gl.mjs.map", text('{"version":3}'));
+    expect(rules({ archive }, "default")).toContain(
+      "source-map@node_modules/maplibre-gl/dist/maplibre-gl.mjs.map",
+    );
+  });
+
+  it("rejects renderer-bundled libraries shipped as runtime dependencies", () => {
+    const archive = DEFAULT_ARCHIVE();
+    archive.set("node_modules/react-dom/index.js", text("module.exports = {};"));
+    archive.set("node_modules/maplibre-gl/dist/maplibre-gl.js", text("module.exports = {};"));
+    const found = rules({ archive }, "default");
+    expect(found).toContain("renderer-bundled-library@node_modules/react-dom/index.js");
+    expect(found).toContain(
+      "renderer-bundled-library@node_modules/maplibre-gl/dist/maplibre-gl.js",
+    );
   });
 
   it("rejects byte-identical duplicates of a map asset", () => {
