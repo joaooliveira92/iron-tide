@@ -21,6 +21,7 @@ import {
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import type { DomainEventEnvelope } from "@bluewave/events";
+import { Result } from "effect";
 import type { PhaseContext } from "./pipeline.js";
 import { applyUnrestContributions } from "./unrestApplication.js";
 
@@ -28,6 +29,7 @@ const TRADE_EVENT_VERSION = "0.1.0" as const;
 const TRADE_STREAM_FAMILY = "trade/loss";
 const TRADE_DRAW_RANGE_BP = 10_000;
 
+export const TRADE_MONTH_INVALID = "TRADE_PROTECTION_MONTH_INVALID";
 export const TRADE_RAIDER_HIT_REASON = "RAIDER_HIT";
 export const TRADE_SHORTFALL_PRESSURE_REASON = "SHORTFALL_PRESSURE";
 
@@ -145,7 +147,6 @@ function assess(
       shortfall: 0,
       shortfallBp: 0,
       merchantPoolBp: pool,
-      ...(previous?.lastLossMonth === undefined ? {} : { lastLossMonth: previous.lastLossMonth }),
     };
   }
   const operational = ships.filter((ship) => !ship.isUnderConstruction).length;
@@ -157,7 +158,6 @@ function assess(
     assigned,
     ...tradeProtectionShortfall(quota, assigned),
     merchantPoolBp: pool,
-    ...(previous?.lastLossMonth === undefined ? {} : { lastLossMonth: previous.lastLossMonth }),
   };
 }
 
@@ -196,8 +196,11 @@ export function applyTradeProtectionForMonth(ctx: PhaseContext): void {
     const state = assess(rules, nation, designs, nation.tradeProtection, isPlayer, month);
 
     let hits = 0;
+    const raidedBy = new Set<string>();
     for (const war of atWar) {
       for (const opponentId of opponentsOf(war, victimId)) {
+        if (raidedBy.has(opponentId)) continue;
+        raidedBy.add(opponentId);
         const opponent = nations.get(opponentId);
         if (opponent === undefined) continue;
         if (isRaiderBlockedByBlockade(blockades, opponentId, victimId)) continue;
@@ -255,7 +258,6 @@ export function applyTradeProtectionForMonth(ctx: PhaseContext): void {
     const next: TradeProtectionState = {
       ...state,
       merchantPoolBp: poolAfter,
-      ...(lossBp > 0 ? { lastLossMonth: month } : {}),
     };
 
     if (isPlayer) {
@@ -265,14 +267,26 @@ export function applyTradeProtectionForMonth(ctx: PhaseContext): void {
       ctx.eventLedger.append(
         merchantLossSufferedEvent(
           victimId,
-          { raiderHits: hits, pressureHit, lossBp, poolBefore, poolAfter },
+          {
+            raiderHits: hits,
+            pressureHit,
+            lossBp: SafeInt.sub(SafeInt(poolBefore), SafeInt(poolAfter)),
+            poolBefore,
+            poolAfter,
+          },
           ctx.nextSeq(),
           month,
         ),
       );
     }
 
-    const step = tradeProtectionUnrestStep(rules, poolAfter, month);
+    const stepResult = tradeProtectionUnrestStep(rules, poolAfter, month);
+    if (Result.isFailure(stepResult))
+      ctx.collector.addError(TRADE_MONTH_INVALID, stepResult.failure.message, {
+        stage: "resolve_diplomacy",
+        entityId: victimId,
+      });
+    const step = Result.isSuccess(stepResult) ? stepResult.success : 0;
     updated.set(victimId, { ...nation, tradeProtection: next });
     const delta = step > 0 ? applyUnrestDelta(nation.unrest, step) - unrestOf(nation) : 0;
     if (delta !== 0) unrestRises.push([victimId, delta]);

@@ -1,7 +1,9 @@
 import type { CampaignSnapshot, Ship } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
+import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
+import { MonthExecutor } from "../src/index.js";
 import {
   TRADE_RULES,
   runTrade,
@@ -49,10 +51,11 @@ describe("#997: monthly trade protection", () => {
     expect(gbr(dormant.finalSnapshot).tradeProtection).toBeUndefined();
     expect(kinds(dormant, "TradeProtectionAssessed")).toEqual([]);
     expect(tradeDraws(dormant)).toEqual([]);
-    const again = runTrade(from, [], null);
-    expect(sha256Hex(canonicalSerialize(again.finalSnapshot))).toBe(
-      sha256Hex(canonicalSerialize(dormant.finalSnapshot)),
-    );
+    const baseline = new MonthExecutor().execute(from, [], "trade-seed", new DiagnosticCollector());
+    const digest = (value: unknown) => sha256Hex(canonicalSerialize(value));
+    expect(digest(dormant.finalSnapshot)).toBe(digest(baseline.finalSnapshot));
+    expect(digest(dormant.eventLedger.all)).toBe(digest(baseline.eventLedger.all));
+    expect(digest(dormant.randomLedger.all)).toBe(digest(baseline.randomLedger.all));
   });
 
   it("assesses quota, assigned ships and no shortfall when enough escorts are on duty", () => {
@@ -86,8 +89,8 @@ describe("#997: monthly trade protection", () => {
       shortfall: 1,
       shortfallBp: 10_000,
       merchantPoolBp: 9_500,
-      lastLossMonth: "1880-06",
     });
+    expect(gbr(result.finalSnapshot).tradeProtection).not.toHaveProperty("lastLossMonth");
     const draws = tradeDraws(result);
     expect(draws).toHaveLength(1);
     expect(draws[0]!.phase).toBe("resolve_diplomacy");
@@ -115,6 +118,50 @@ describe("#997: monthly trade protection", () => {
       lossBp: number;
     }[];
     expect(loss).toMatchObject({ raiderHits: 2, lossBp: 2_000 });
+  });
+
+  it("records the pool actually lost when the loss exceeds what is left", () => {
+    const result = runTrade(
+      tradeSnapshot(
+        escorted({ frashipsRaiders: [raider("r1")], gbr: { tradeProtection: POOL(300) } }),
+      ),
+    );
+    expect(gbr(result.finalSnapshot).tradeProtection!.merchantPoolBp).toBe(0);
+    expect(kinds(result, "MerchantLossSuffered")).toEqual([
+      expect.objectContaining({ lossBp: 300, poolBefore: 300, poolAfter: 0 }),
+    ]);
+  });
+
+  it("draws once per raider and victim when two active wars pair the same nations", () => {
+    const single = tradeSnapshot(escorted({ frashipsRaiders: [raider("r2"), raider("r1")] }));
+    const first = single.wars.wars[0]!;
+    const doubled: CampaignSnapshot = {
+      ...single,
+      wars: {
+        ...single.wars,
+        wars: [
+          {
+            ...first,
+            id: "w2",
+            attackerSideMembers: [...first.attackerSideMembers],
+            defenderSideMembers: [...first.defenderSideMembers],
+          },
+          first,
+        ],
+      },
+    };
+    const one = runTrade(single);
+    const two = runTrade(doubled);
+    const raiderKeys = (result: ReturnType<typeof runTrade>) =>
+      tradeDraws(result)
+        .filter((d) => d.reasonCode === "RAIDER_HIT")
+        .map((d) => d.entityKey);
+    expect(raiderKeys(two)).toHaveLength(2);
+    expect(raiderKeys(two).every((key) => key.startsWith("w1/"))).toBe(true);
+    expect(raiderKeys(two)).toEqual(raiderKeys(one));
+    const loss = (result: ReturnType<typeof runTrade>) =>
+      (kinds(result, "MerchantLossSuffered")[0] as { raiderHits: number }).raiderHits;
+    expect(loss(two)).toBe(loss(one));
   });
 
   it("ignores raiders that are short range, ineligible hulls or not ACTIVE", () => {

@@ -19,7 +19,6 @@ export const EVENT_STATE_FIXTURE: Pick<
     shortfall: 2,
     shortfallBp: 5000,
     merchantPoolBp: 9000,
-    lastLossMonth: "1880-02",
   },
   governmentType: "liberal_democracy",
   traits: ["cautious"],

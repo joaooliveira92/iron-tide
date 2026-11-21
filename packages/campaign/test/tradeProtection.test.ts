@@ -1,3 +1,4 @@
+import { Result } from "effect";
 import { describe, expect, it } from "vite-plus/test";
 import {
   countTradeProtectionShips,
@@ -6,6 +7,7 @@ import {
   merchantLossChanceBp,
   tradeProtectionQuota,
   tradeProtectionRevenueBp,
+  tradeProtectionShortfall,
   tradeProtectionUnrestStep,
   type TradeProtectionRules,
 } from "../src/tradeProtection.js";
@@ -120,8 +122,39 @@ describe("loss chance and effects", () => {
   });
 
   it("raises unrest on the cadence once losses cross the threshold", () => {
-    expect(tradeProtectionUnrestStep(rules, 9500, "1880-03")).toBe(0);
-    expect(tradeProtectionUnrestStep(rules, 8900, "1880-03")).toBe(1);
-    expect(tradeProtectionUnrestStep(rules, 8900, "1880-04")).toBe(0);
+    expect(tradeProtectionUnrestStep(rules, 9500, "1880-03")).toEqual(Result.succeed(0));
+    expect(tradeProtectionUnrestStep(rules, 8900, "1880-03")).toEqual(Result.succeed(1));
+    expect(tradeProtectionUnrestStep(rules, 8900, "1880-04")).toEqual(Result.succeed(0));
+  });
+});
+
+describe("checked arithmetic and month parsing (#1037)", () => {
+  it.each(["", "1880", "1880-", "1880-13", "1880-00", "abcd-ef", "1880-3", "1880-03-01"])(
+    "rejects the malformed month %j in the unrest cadence",
+    (month) => {
+      const step = tradeProtectionUnrestStep(rules, 8900, month);
+      expect(Result.isFailure(step)).toBe(true);
+      if (Result.isFailure(step)) expect(step.failure._tag).toBe("TradeProtectionMonthInvalid");
+    },
+  );
+
+  it("raises a quota overflow instead of returning an imprecise count", () => {
+    expect(() => tradeProtectionQuota(rules, Number.MAX_SAFE_INTEGER, 0)).toThrow();
+  });
+
+  it("raises a revenue overflow instead of returning an imprecise rate", () => {
+    expect(() =>
+      tradeProtectionRevenueBp({ ...rules, revenueSensitivityBp: Number.MAX_SAFE_INTEGER }, 0),
+    ).toThrow();
+  });
+
+  it("raises a shortfall overflow instead of returning an imprecise share", () => {
+    expect(() => tradeProtectionShortfall(Number.MAX_SAFE_INTEGER, 0)).toThrow();
+  });
+
+  it("keeps the authored arithmetic exact", () => {
+    expect(tradeProtectionQuota(rules, 5, 250)).toBe(4);
+    expect(tradeProtectionShortfall(3, 1)).toEqual({ shortfall: 2, shortfallBp: 6666 });
+    expect(merchantLossChanceBp(rules, 3333)).toBe(3166);
   });
 });

@@ -71,12 +71,13 @@ export function runMonthlyRevenuePhase(ctx: PhaseContext): PhaseRunOutcome {
     const revenue =
       tradeRules === undefined || nation.tradeProtection === undefined
         ? unscaled
-        : SafeInt(
-            Math.floor(
-              ((unscaled as number) *
-                tradeProtectionRevenueBp(tradeRules, nation.tradeProtection.merchantPoolBp)) /
-                10_000,
+        : SafeInt.div(
+            SafeInt.mul(
+              unscaled,
+              SafeInt(tradeProtectionRevenueBp(tradeRules, nation.tradeProtection.merchantPoolBp)),
             ),
+            SafeInt(10_000),
+            "floor",
           );
     if ((revenue as number) <= 0) continue;
 
