@@ -106,6 +106,17 @@ export default list(RulesetManifestSchema, [
       unrestThresholdBp: 1500,
       unrestCadenceMonths: 3,
       unrestStep: 1,
+      raiderInterception: {
+        interceptBaseBp: 500,
+        interceptPatrolBp: 3000,
+        breakoutInterceptBp: 4000,
+        raiderSunkBp: 1500,
+        maxEngagementDamageBp: 6000,
+        scuttleThresholdBp: 3000,
+        scuttleShareBp: 5000,
+        fuelInternBp: 200,
+        breakdownInternBp: 100,
+      },
       provenance: {
         sourceStatus: "BALANCE_TARGET",
         confidence: "LOW",
@@ -120,7 +131,7 @@ export default list(RulesetManifestSchema, [
               "Trade protection duty proportional to fleet and economy; raiders are not short range; AMC raiders need 8 knots; no raiding effect while blockading the enemy",
           },
         ],
-        note: "PROVISIONAL. The shares, hit chances, losses, recovery, revenue sensitivity and unrest values are Bluewave balance targets awaiting the balance report; the submarine term, prestige for a shortfall and interception are deferred (#1013, #1014). The 8-knot floor is 8 x 514444 um/s. resourcesPerRequiredShip is 2000 (#1042): at 400 the 1880 United Kingdom quota was 16 to 17 against 7 contributing hulls, and France and Russia also exceeded theirs; at 2000 every playable nation starts at no more than 75 percent of its contributing hulls and the quota still scales with the economy.",
+        note: "PROVISIONAL. The shares, hit chances, losses, recovery, revenue sensitivity and unrest values are Bluewave balance targets awaiting the balance report; the submarine term and prestige for a shortfall are deferred (#1014). The raiderInterception block (#1013) gives the monthly interception chance (base plus patrol coverage, or the breakout chance for a blockaded raider), the engagement sunk share and maximum damage, the scuttle threshold and share, and the monthly fuel and breakdown internment chances; the manual (pp.71-72) fixes only that patrols and blockades can intercept, that fuel exhaustion or breakdown can intern a raider and that a damaged raider may scuttle, so every magnitude is PROVISIONAL and the engagement stands in for the deferred tactical battle. The 8-knot floor is 8 x 514444 um/s. resourcesPerRequiredShip is 2000 (#1042): at 400 the 1880 United Kingdom quota was 16 to 17 against 7 contributing hulls, and France and Russia also exceeded theirs; at 2000 every playable nation starts at no more than 75 percent of its contributing hulls and the quota still scales with the economy.",
       },
     },
     fleetMorale: {
