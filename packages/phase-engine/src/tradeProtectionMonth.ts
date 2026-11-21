@@ -12,7 +12,6 @@ import {
   tradeProtectionUnrestStep,
   unrestOf,
   type NationState,
-  type Ship,
   type TradeDutyDesign,
   type TradeProtectionRules,
   type TradeProtectionState,
