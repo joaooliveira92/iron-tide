@@ -120,6 +120,26 @@ describe("#997: monthly trade protection", () => {
     expect(loss).toMatchObject({ raiderHits: 2, lossBp: 2_000 });
   });
 
+  it("draws once per raider and victim when two active wars pair the same nations", () => {
+    const single = tradeSnapshot(escorted({ frashipsRaiders: [raider("r2"), raider("r1")] }));
+    const first = single.wars.wars[0]!;
+    const doubled: CampaignSnapshot = {
+      ...single,
+      wars: { ...single.wars, wars: [{ ...first, id: "w2" }, first] },
+    };
+    const one = runTrade(single);
+    const two = runTrade(doubled);
+    const raiderKeys = (result: ReturnType<typeof runTrade>) =>
+      tradeDraws(result)
+        .filter((d) => d.reasonCode === "RAIDER_HIT")
+        .map((d) => d.entityKey);
+    expect(raiderKeys(two)).toEqual(["w1/r1/GBR/1880-05", "w1/r2/GBR/1880-05"]);
+    expect(raiderKeys(two)).toEqual(raiderKeys(one));
+    const loss = (result: ReturnType<typeof runTrade>) =>
+      (kinds(result, "MerchantLossSuffered")[0] as { raiderHits: number }).raiderHits;
+    expect(loss(two)).toBe(loss(one));
+  });
+
   it("ignores raiders that are short range, ineligible hulls or not ACTIVE", () => {
     const shortRange = tradeDesign("d-sr", "protected_cruiser", { shortRange: true });
     const result = runTrade(

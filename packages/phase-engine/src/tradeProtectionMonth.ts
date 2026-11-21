@@ -198,8 +198,11 @@ export function applyTradeProtectionForMonth(ctx: PhaseContext): void {
     const state = assess(rules, nation, designs, nation.tradeProtection, isPlayer, month);
 
     let hits = 0;
+    const raidedBy = new Set<string>();
     for (const war of atWar) {
       for (const opponentId of opponentsOf(war, victimId)) {
+        if (raidedBy.has(opponentId)) continue;
+        raidedBy.add(opponentId);
         const opponent = nations.get(opponentId);
         if (opponent === undefined) continue;
         if (isRaiderBlockedByBlockade(blockades, opponentId, victimId)) continue;
