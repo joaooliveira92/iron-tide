@@ -23,6 +23,8 @@ import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import type { DomainEventEnvelope } from "@bluewave/events";
 import { Result } from "effect";
 import type { PhaseContext } from "./pipeline.js";
+import { applyRaiderInterceptionForMonth } from "./raiderInterceptionMonth.js";
+import { activeWars, byId, designMap, opponentsOf, shipsOf } from "./tradeWarContext.js";
 import { applyUnrestContributions } from "./unrestApplication.js";
 
 const TRADE_EVENT_VERSION = "0.1.0" as const;
@@ -32,8 +34,6 @@ const TRADE_DRAW_RANGE_BP = 10_000;
 export const TRADE_MONTH_INVALID = "TRADE_PROTECTION_MONTH_INVALID";
 export const TRADE_RAIDER_HIT_REASON = "RAIDER_HIT";
 export const TRADE_SHORTFALL_PRESSURE_REASON = "SHORTFALL_PRESSURE";
-
-const byId = (a: string, b: string): number => (a < b ? -1 : a > b ? 1 : 0);
 
 export function tradeProtectionAssessedEvent(
   nationId: string,
@@ -94,41 +94,6 @@ export function merchantLossSufferedEvent(
   };
 }
 
-function activeWars(ctx: PhaseContext): readonly WarDeclaration[] {
-  return ctx.snapshot
-    .read("wars")
-    .wars.filter((war) => war.status === "ACTIVE")
-    .sort((a, b) => byId(a.id, b.id));
-}
-
-function sideOf(war: WarDeclaration, nationId: string): "attacker" | "defender" | undefined {
-  if (war.attackerSideMembers.includes(nationId)) return "attacker";
-  if (war.defenderSideMembers.includes(nationId)) return "defender";
-  return undefined;
-}
-
-function opponentsOf(war: WarDeclaration, nationId: string): readonly string[] {
-  const side = sideOf(war, nationId);
-  if (side === undefined) return [];
-  return [...(side === "attacker" ? war.defenderSideMembers : war.attackerSideMembers)].sort(byId);
-}
-
-function shipsOf(nation: NationState): readonly Ship[] {
-  return nation.fleets.flatMap((fleet) => fleet.ships).sort((a, b) => byId(a.id, b.id));
-}
-
-function designMap(ctx: PhaseContext): ReadonlyMap<string, TradeDutyDesign> {
-  const designs = new Map<string, TradeDutyDesign>();
-  for (const [id, design] of ctx.snapshot.read("designs")) {
-    designs.set(id, {
-      hullType: design.hullType,
-      normalizedSpeedUms: Number(design.normalizedSpeedUms),
-      ...(design.shortRange === true ? { shortRange: true as const } : {}),
-    });
-  }
-  return designs;
-}
-
 function assess(
   rules: TradeProtectionRules,
   nation: NationState,
@@ -165,6 +130,7 @@ export function applyTradeProtectionForMonth(ctx: PhaseContext): void {
   const rules = ctx.engineOptions?.tradeProtection;
   const playerNationId = ctx.engineOptions?.playerNationId;
   if (rules === undefined) return;
+  applyRaiderInterceptionForMonth(ctx, rules, playerNationId);
   const wars = activeWars(ctx);
   const nations = ctx.snapshot.read("nations");
   const designs = designMap(ctx);

@@ -453,11 +453,15 @@
     },
     {
       "id": "trade-duty",
-      "player_verb": "Assign trade protection or raider duty",
+      "player_verb": "Assign trade or raider duty",
       "status": "reachable",
       "engine_package": "phase-engine",
       "engine_modules": [],
-      "engine_symbols": ["applyTradeDutyCommand", "applyTradeProtectionForMonth"],
+      "engine_symbols": [
+        "applyTradeDutyCommand",
+        "applyTradeProtectionForMonth",
+        "applyRaiderInterceptionForMonth"
+      ],
       "main_commands": ["submitTradeDuty"],
       "renderer_screen": "screens/fleet/trade/FleetTradeSection.tsx",
       "evidence_test": "apps/desktop/src/renderer/screens/fleet/trade/FleetTradeView.test.tsx",

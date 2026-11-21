@@ -288,6 +288,7 @@ export {
   EventTraitShiftSchema,
 } from "./event-resolution-rules.js";
 export type {
+  RaiderInterceptionRules,
   TradeProtectionRules,
   TradeProtectionRulesDecoded,
 } from "./trade-protection-rules.js";

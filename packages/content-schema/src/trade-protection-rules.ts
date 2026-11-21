@@ -8,6 +8,18 @@ const positiveInt = Schema.Finite.check(Schema.isInt(), Schema.isGreaterThan(0))
 const hullType = Schema.String.check(Schema.isMinLength(1));
 const hullTypes = Schema.Array(hullType).check(Schema.isMinLength(1), Schema.isUnique());
 
+export const RaiderInterceptionRulesSchema = Schema.Struct({
+  interceptBaseBp: bp,
+  interceptPatrolBp: bp,
+  breakoutInterceptBp: bp,
+  raiderSunkBp: bp,
+  maxEngagementDamageBp: bp,
+  scuttleThresholdBp: bp,
+  scuttleShareBp: bp,
+  fuelInternBp: bp,
+  breakdownInternBp: bp,
+});
+
 export const TradeProtectionRulesSchema = Schema.Struct({
   sectionVersion: Schema.Literal(1),
   fleetShareBp: bp,
@@ -29,8 +41,11 @@ export const TradeProtectionRulesSchema = Schema.Struct({
     Schema.isBetween({ minimum: 1, maximum: 24 }),
   ),
   unrestStep: Schema.Finite.check(Schema.isInt(), Schema.isBetween({ minimum: 1, maximum: 10 })),
+  raiderInterception: Schema.optional(RaiderInterceptionRulesSchema),
   provenance: ProvenanceSchema,
 });
+
+export type RaiderInterceptionRules = typeof RaiderInterceptionRulesSchema.Type;
 
 export type TradeProtectionRules = typeof TradeProtectionRulesSchema.Type;
 

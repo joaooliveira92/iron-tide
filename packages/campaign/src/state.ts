@@ -14,6 +14,7 @@ import type { FleetMoraleLastChange } from "./fleetMorale.js";
 import type { UnrestLastChange } from "./unrest.js";
 import type { TrainingSubjectEntry } from "./specialTraining.js";
 import type { TradeProtectionState } from "./tradeProtection.js";
+import type { ShipInternment } from "./raiderInterception.js";
 import type { WarOptionalRecords } from "./warRecords.js";
 import type { PermanentDivision } from "./division.js";
 import type { Officer } from "./officers.js";
@@ -48,6 +49,7 @@ export interface Ship {
   inBattleId?: string;
   availability?: ShipAvailability;
   availabilityProjectId?: string;
+  internment?: ShipInternment;
 }
 
 export interface OverBaseFlag {

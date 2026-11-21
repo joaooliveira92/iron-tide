@@ -94,9 +94,8 @@ function cloneValue(value: unknown, seen = new WeakMap<object, unknown>()): unkn
     return out;
   }
   if (ArrayBuffer.isView(value)) {
-    if (value instanceof DataView) {
+    if (value instanceof DataView)
       return new DataView((value as DataView).buffer.slice(0), value.byteOffset, value.byteLength);
-    }
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     return new (value as any).constructor(value as any);
   }
@@ -164,6 +163,7 @@ const F = {
     "inBattleId",
     "availability",
     "availabilityProjectId",
+    "internment",
   ),
   FleetState: FLEET_STATE_FIELDS,
   TechnologyProgress: fields<TechnologyProgress>()("techId", "investedPoints", "completed"),

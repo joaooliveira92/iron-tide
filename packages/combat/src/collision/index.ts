@@ -39,6 +39,11 @@ export {
   type TacticalMinefieldRecord,
 } from "./knownMinefields.js";
 export {
+  layTacticalMinefield,
+  recordMinefieldSweep,
+  type LayTacticalMinefieldInput,
+} from "./minefieldProducer.js";
+export {
   LAND_LOOKAHEAD_SECONDS,
   steerClearOfHazards,
   steerClearOfLand,

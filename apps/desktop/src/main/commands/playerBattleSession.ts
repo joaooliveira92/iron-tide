@@ -14,6 +14,7 @@ import {
 } from "@bluewave/combat/battleResolution";
 import { isBluewaveError } from "@bluewave/contracts";
 import {
+  battleMinefieldsOf,
   battleTerrainOf,
   gunQualityRulesForBattle,
   trainingEffectsFor,
@@ -28,6 +29,7 @@ import type {
 } from "../../shared/player-battle-contract.js";
 import { toCombatOrders } from "../../shared/player-battle-orders.js";
 import { BATTLE_VIEW_INVALID, boundaryBattleView } from "./battleViewBoundary.js";
+import type { BattleMinefieldsByArea } from "../battleMinefields.js";
 import type { BattleTerrainByArea } from "../battleTerrain.js";
 import type { PlayerBattleSave, PlayerBattleStep } from "../playerBattleSidecar.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
@@ -127,6 +129,7 @@ export function projectSession(
   missilesRules?: MissilesRules,
   shipBuilding?: ShipBuildingContent,
   terrain?: BattleTerrainByArea,
+  minefields?: BattleMinefieldsByArea,
 ): PlayerBattleSession | PlayerBattleRefusal {
   const manifest = (snapshot.wars.battleManifests ?? []).find(
     (candidate) => candidate.battleId === battleId,
@@ -165,6 +168,7 @@ export function projectSession(
       ...(gunQuality === undefined ? {} : { gunQuality }),
       ...(missilesRules === undefined ? {} : { missilesRules }),
       ...battleTerrainOf(terrain, manifest.areaId),
+      ...battleMinefieldsOf(minefields, manifest.areaId),
     });
   } catch (error) {
     return refuse("PLAYER_BATTLE_PROJECTION_FAILED", projectionFailureReason(error));
@@ -223,6 +227,7 @@ export const startPlayerBattle = (input: {
     const missilesRules = yield* (yield* ContentArtifact).loadMissilesRules();
     const shipBuilding = yield* (yield* ContentArtifact).loadShipBuildingContent();
     const terrain = yield* (yield* ContentArtifact).loadBattleTerrain();
+    const minefields = yield* (yield* ContentArtifact).loadBattleMinefields();
     const projected = projectSession(
       outcome.snapshot,
       input.battleId,
@@ -233,6 +238,7 @@ export const startPlayerBattle = (input: {
       missilesRules,
       shipBuilding,
       terrain,
+      minefields,
     );
     if (isRefusal(projected)) return projected;
 
