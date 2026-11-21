@@ -161,6 +161,18 @@ const MonthlyReportTradeProtectionSchema = Schema.Struct({
       poolAfter: nonNegativeInt,
     }),
   ),
+  raiders: Schema.optional(
+    Schema.Array(
+      Schema.Struct({
+        shipId: nonEmptyString,
+        event: Schema.Literals(["ENGAGED", "INTERNED", "RELEASED"]),
+        encounter: Schema.optional(Schema.Literals(["INTERCEPTION", "BREAKOUT"])),
+        victimNationId: Schema.optional(nonEmptyString),
+        outcome: Schema.optional(Schema.Literals(["SURVIVED", "SUNK", "SCUTTLED", "INTERNED"])),
+        cause: Schema.optional(Schema.Literals(["FUEL_EXHAUSTION", "BREAKDOWN", "DAMAGE"])),
+      }),
+    ),
+  ),
 });
 
 const MonthlyReportUnrestSchema = Schema.Struct({

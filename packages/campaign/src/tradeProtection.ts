@@ -1,5 +1,6 @@
 import { SafeInt } from "@bluewave/contracts";
 import { Data, Result } from "effect";
+import type { RaiderInterceptionRules } from "./raiderInterception.js";
 import type { BlockadeState } from "./state.js";
 
 export const MERCHANT_POOL_FULL_BP = 10_000;
@@ -44,6 +45,7 @@ export interface TradeProtectionRules {
   readonly unrestThresholdBp: number;
   readonly unrestCadenceMonths: number;
   readonly unrestStep: number;
+  readonly raiderInterception?: RaiderInterceptionRules;
 }
 
 export interface TradeProtectionState {

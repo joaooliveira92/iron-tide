@@ -66,7 +66,7 @@ function shipProblem(
 ): ReadinessCommandReason | null {
   if (ship === undefined) return "NOT_OWNED";
   if (ship.isUnderConstruction) return "UNDER_CONSTRUCTION";
-  if (ship.availability === "UNAVAILABLE") return "UNAVAILABLE";
+  if (ship.availability === "UNAVAILABLE" || ship.internment !== undefined) return "UNAVAILABLE";
   if (ship.readiness === "WORKING_UP") return "WORKING_UP";
   if (ship.readiness === "REPAIR" && target !== "MOTHBALLED") return "REPAIR_IN_PROGRESS";
   if (ship.inBattleId !== undefined) return "IN_BATTLE";
