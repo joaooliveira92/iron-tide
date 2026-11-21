@@ -196,6 +196,25 @@ export function unitCommands(unit) {
     .map((script) => ({ label: script, argv: ["pnpm", "--filter", unit.name, script] }));
 }
 
+const REPLAY_CORPUS_RUNNER = "@bluewave/cross-process-test";
+
+export function dependencyBuildCommand(units) {
+  const filters = [];
+  for (const unit of units) {
+    if (unit.kind === "package" || unit.kind === "app") {
+      const selfBuilds = typeof unit.scripts.build === "string";
+      filters.push(`${unit.name}${selfBuilds ? "^..." : "..."}`);
+    } else if (unit.kind === "golden") {
+      filters.push(`${REPLAY_CORPUS_RUNNER}...`);
+    }
+  }
+  if (filters.length === 0) return null;
+  return {
+    label: "workspace-deps",
+    argv: ["pnpm", ...filters.flatMap((filter) => ["--filter", filter]), "build"],
+  };
+}
+
 function safeName(name) {
   return name.replace(/[^A-Za-z0-9-]/gu, "_");
 }
@@ -272,7 +291,9 @@ export async function execute(
     out.write("verify:affected: no affected packages; nothing to verify\n");
     return 0;
   }
+  const prebuild = dependencyBuildCommand(targets);
   if (dryRun) {
+    if (prebuild !== null) out.write("PLAN workspace-deps (build)\n");
     for (const unit of targets) {
       const labels = unitCommands(unit)
         .map((command) => command.label)
@@ -309,6 +330,26 @@ export async function execute(
   }
   const failures = [];
   const started = now();
+  if (prebuild !== null) {
+    const logPath = resolve(logDir, "workspace-deps-build.log");
+    const result = await spawnCommand({
+      argv: prebuild.argv,
+      cwd: root,
+      logPath,
+      verbose,
+      onChild: (child) => {
+        active = child;
+      },
+    });
+    active = null;
+    if (result.code !== 0 && !interrupted) {
+      release();
+      out.write(`FAIL workspace-deps build (exit ${String(result.code)}) log: ${logPath}\n`);
+      err.write(`\n--- workspace-deps build ---\n${logTail(logPath)}\n`);
+      out.write("verify:affected: workspace dependency build failed; no unit ran\n");
+      return 1;
+    }
+  }
   for (const unit of targets) {
     if (interrupted) break;
     const commands = unitCommands(unit);
