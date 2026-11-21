@@ -33,7 +33,6 @@ const lost = (nationId: string) =>
     nationId,
     month: "1880-03",
     raiderHits: SafeInt(2),
-    submarineHits: SafeInt(1),
     pressureHit: true,
     lossBp: SafeInt(2_500),
     poolBefore: SafeInt(10_000),
@@ -59,7 +58,6 @@ describe("tradeProtectionFromEvents", () => {
       shortfallBp: 7_500,
       loss: {
         raiderHits: 2,
-        submarineHits: 1,
         pressureHit: true,
         lossBp: 2_500,
         poolBefore: 10_000,

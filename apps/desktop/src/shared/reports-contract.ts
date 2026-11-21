@@ -102,7 +102,6 @@ export interface MonthlyReportTradeProtection {
   readonly shortfallBp: number;
   readonly loss?: {
     readonly raiderHits: number;
-    readonly submarineHits?: number;
     readonly pressureHit: boolean;
     readonly lossBp: number;
     readonly poolBefore: number;
