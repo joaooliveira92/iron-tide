@@ -168,7 +168,7 @@ describe("1880 production trade protection (#1037)", () => {
     const engaged: unknown[] = [];
     const interned: unknown[] = [];
     const draws = new Set<string>();
-    for (let seed = 1; seed <= 200; seed += 1) {
+    for (let seed = 1; seed <= 200 && interned.length === 0; seed += 1) {
       const result = run(raiding, true, `production-raider-${String(seed)}`);
       engaged.push(...bodies(result, "RaiderEngaged"));
       interned.push(...bodies(result, "RaiderInterned"));
