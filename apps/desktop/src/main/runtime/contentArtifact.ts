@@ -20,6 +20,7 @@ import type {
   PresentationContentDto,
   UiCatalogueDto,
 } from "../../shared/content-contract.js";
+import { loadBattleMinefields, type BattleMinefieldsByArea } from "../battleMinefields.js";
 import { loadBattleTerrain, type BattleTerrainByArea } from "../battleTerrain.js";
 import { compileProductionCampaignFromArtifact } from "../compiler.js";
 import { ContentArtifactError } from "../contentArtifact.js";
@@ -84,6 +85,10 @@ export class ContentArtifact extends Context.Service<
     readonly loadGunneryRules: () => Effect.Effect<GunneryRules | undefined, CommandFailed>;
     readonly loadMissilesRules: () => Effect.Effect<MissilesRules | undefined, CommandFailed>;
     readonly loadBattleTerrain: () => Effect.Effect<BattleTerrainByArea | undefined, CommandFailed>;
+    readonly loadBattleMinefields: () => Effect.Effect<
+      BattleMinefieldsByArea | undefined,
+      CommandFailed
+    >;
     readonly loadFleetMoraleRules: () => Effect.Effect<FleetMoraleRules | undefined, CommandFailed>;
     readonly loadTradeProtectionRules: () => Effect.Effect<
       TradeProtectionRules | undefined,
@@ -160,6 +165,8 @@ export function contentArtifactLayer(
       Effect.try({ try: () => loadMissilesRules(), catch: contentUnavailable }),
     loadBattleTerrain: () =>
       Effect.try({ try: () => loadBattleTerrain(), catch: contentUnavailable }),
+    loadBattleMinefields: () =>
+      Effect.try({ try: () => loadBattleMinefields(), catch: contentUnavailable }),
     loadFleetMoraleRules: () =>
       Effect.try({ try: () => loadFleetMoraleRules(), catch: contentUnavailable }),
     loadTradeProtectionRules: () =>
