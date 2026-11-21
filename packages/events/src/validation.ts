@@ -301,6 +301,33 @@ export const MerchantLossSufferedSchema = Schema.Struct({
   poolAfter: basisPoints,
 });
 
+export const RaiderEngagedSchema = Schema.Struct({
+  kind: Schema.Literal("RaiderEngaged"),
+  nationId: nonEmptyString,
+  shipId: nonEmptyString,
+  victimNationId: nonEmptyString,
+  month: discoveryMonth,
+  encounter: Schema.Literals(["INTERCEPTION", "BREAKOUT"]),
+  chanceBp: basisPoints,
+  outcome: Schema.Literals(["SURVIVED", "SUNK", "SCUTTLED", "INTERNED"]),
+  damageBp: basisPoints,
+});
+
+export const RaiderInternedSchema = Schema.Struct({
+  kind: Schema.Literal("RaiderInterned"),
+  nationId: nonEmptyString,
+  shipId: nonEmptyString,
+  month: discoveryMonth,
+  cause: Schema.Literals(["FUEL_EXHAUSTION", "BREAKDOWN", "DAMAGE"]),
+});
+
+export const RaiderReleasedSchema = Schema.Struct({
+  kind: Schema.Literal("RaiderReleased"),
+  nationId: nonEmptyString,
+  shipId: nonEmptyString,
+  month: discoveryMonth,
+});
+
 export const PrestigeLossRequestedSchema = Schema.Struct({
   kind: Schema.Literal("PrestigeLossRequested"),
   nationId: nonEmptyString,
@@ -395,6 +422,9 @@ export const DomainEventBodySchema = Schema.Union([
   ExerciseTensionRaisedSchema,
   TradeProtectionAssessedSchema,
   MerchantLossSufferedSchema,
+  RaiderEngagedSchema,
+  RaiderInternedSchema,
+  RaiderReleasedSchema,
 ]);
 
 const eventKindList = [
@@ -432,6 +462,9 @@ const eventKindList = [
   "ExerciseTensionRaised",
   "TradeProtectionAssessed",
   "MerchantLossSuffered",
+  "RaiderEngaged",
+  "RaiderInterned",
+  "RaiderReleased",
 ] as const;
 
 export const DomainEventEnvelopeSchema = Schema.Struct({
@@ -482,6 +515,9 @@ export type FleetExerciseCompleted = Schema.Schema.Type<typeof FleetExerciseComp
 export type ExerciseTensionRaised = Schema.Schema.Type<typeof ExerciseTensionRaisedSchema>;
 export type TradeProtectionAssessed = Schema.Schema.Type<typeof TradeProtectionAssessedSchema>;
 export type MerchantLossSuffered = Schema.Schema.Type<typeof MerchantLossSufferedSchema>;
+export type RaiderEngaged = Schema.Schema.Type<typeof RaiderEngagedSchema>;
+export type RaiderInterned = Schema.Schema.Type<typeof RaiderInternedSchema>;
+export type RaiderReleased = Schema.Schema.Type<typeof RaiderReleasedSchema>;
 export type PrestigeLossRequested = Schema.Schema.Type<typeof PrestigeLossRequestedSchema>;
 export type RevoltPressureRequested = Schema.Schema.Type<typeof RevoltPressureRequestedSchema>;
 export type ShipDetachedToFleet = Schema.Schema.Type<typeof ShipDetachedToFleetSchema>;
