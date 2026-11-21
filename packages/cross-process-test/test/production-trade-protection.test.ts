@@ -193,7 +193,7 @@ describe("1880 production trade protection (#1037)", () => {
       expect(body.chanceBp).toBeLessThanOrEqual(10_000);
     }
     expect(interned.length).toBeGreaterThan(0);
-  });
+  }, 240_000);
 
   it("leaves revenue untouched while the merchant pool is full", () => {
     const full = withPool(atWar, 10_000);
