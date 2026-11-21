@@ -6,6 +6,7 @@ import {
 } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
+import { parseDomainEventBody, type DomainEventBody } from "@bluewave/events";
 import { MonthExecutor, type MonthResult } from "@bluewave/phase-engine";
 import { describe, expect, it } from "vite-plus/test";
 
@@ -48,6 +49,18 @@ function run(from: CampaignSnapshot, trade: boolean, seed: string): MonthResult 
 
 const bodies = (result: MonthResult, kind: string) =>
   result.eventLedger.all.filter((e) => e.eventType === kind).map((e) => e.body);
+
+const ENGAGEMENT_SEED = "production-raider-2";
+const INTERNMENT_SEED = "production-raider-115";
+
+type RaiderEventKind = "RaiderEngaged" | "RaiderInterned";
+type RaiderBody<K extends RaiderEventKind> = Extract<DomainEventBody, { readonly kind: K }>;
+
+const raiderBodies = <K extends RaiderEventKind>(result: MonthResult, kind: K): RaiderBody<K>[] =>
+  result.eventLedger.all
+    .filter((event) => event.eventType === kind)
+    .map((event) => parseDomainEventBody(event.body))
+    .filter((body): body is RaiderBody<K> => body.kind === kind);
 
 const revenueCredit = (result: MonthResult): number =>
   result.financialLedger.all
@@ -126,7 +139,7 @@ describe("1880 production trade protection (#1037)", () => {
     expect(rules!.raiderInterception).toBeDefined();
   });
 
-  it("interdicts, engages and resolves a player raider with authored chances", () => {
+  it("interdicts a player raider on pinned seeds at the exact authored chance", () => {
     const cruiser = [...state.snapshot.designs.values()].find(
       (design) =>
         design.hullType !== rules!.amcHullType &&
@@ -165,35 +178,54 @@ describe("1880 production trade protection (#1037)", () => {
       },
     };
 
-    const engaged: unknown[] = [];
-    const interned: unknown[] = [];
-    const draws = new Set<string>();
-    for (let seed = 1; seed <= 200 && interned.length === 0; seed += 1) {
-      const result = run(raiding, true, `production-raider-${String(seed)}`);
-      engaged.push(...bodies(result, "RaiderEngaged"));
-      interned.push(...bodies(result, "RaiderInterned"));
-      for (const entry of result.randomLedger.all) {
-        if (entry.streamId.startsWith("trade/") && entry.entityKey.includes(raider.id)) {
-          draws.add(entry.streamId);
-        }
-      }
-    }
-    expect(draws.has("trade/interception")).toBe(true);
-    expect(draws.has("trade/internment")).toBe(true);
-    expect(draws.has("trade/engagement")).toBe(true);
-    expect(engaged.length).toBeGreaterThan(0);
-    for (const body of engaged as Array<{
-      nationId: string;
-      encounter: string;
-      chanceBp: number;
-    }>) {
-      expect(body.nationId).toBe(PLAYER);
-      expect(body.encounter).toBe("INTERCEPTION");
-      expect(body.chanceBp).toBeGreaterThanOrEqual(rules!.raiderInterception!.interceptBaseBp);
-      expect(body.chanceBp).toBeLessThanOrEqual(10_000);
-    }
-    expect(interned.length).toBeGreaterThan(0);
-  }, 240_000);
+    const streamsFor = (result: MonthResult): string[] =>
+      [
+        ...new Set(
+          result.randomLedger.all
+            .filter(
+              (entry) => entry.streamId.startsWith("trade/") && entry.entityKey.includes(raider.id),
+            )
+            .map((entry) => entry.streamId),
+        ),
+      ].sort();
+    const { interceptBaseBp, interceptPatrolBp } = rules!.raiderInterception!;
+    const fullPatrolChanceBp = interceptBaseBp + interceptPatrolBp;
+
+    const engagement = run(raiding, true, ENGAGEMENT_SEED);
+    expect(streamsFor(engagement)).toEqual([
+      "trade/engagement",
+      "trade/interception",
+      "trade/loss",
+    ]);
+    expect(raiderBodies(engagement, "RaiderInterned")).toEqual([]);
+    const engaged = raiderBodies(engagement, "RaiderEngaged");
+    expect(engaged).toHaveLength(1);
+    expect(engaged).toMatchObject([
+      {
+        kind: "RaiderEngaged",
+        nationId: PLAYER,
+        shipId: raider.id,
+        victimNationId: RAIDER_NATION,
+        month: "1880-01",
+        encounter: "INTERCEPTION",
+        chanceBp: fullPatrolChanceBp,
+        outcome: "SURVIVED",
+      },
+    ]);
+
+    const internment = run(raiding, true, INTERNMENT_SEED);
+    expect(streamsFor(internment)).toEqual(["trade/interception", "trade/internment"]);
+    expect(raiderBodies(internment, "RaiderEngaged")).toEqual([]);
+    expect(raiderBodies(internment, "RaiderInterned")).toEqual([
+      {
+        kind: "RaiderInterned",
+        nationId: PLAYER,
+        shipId: raider.id,
+        month: "1880-01",
+        cause: "FUEL_EXHAUSTION",
+      },
+    ]);
+  });
 
   it("leaves revenue untouched while the merchant pool is full", () => {
     const full = withPool(atWar, 10_000);
