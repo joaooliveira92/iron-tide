@@ -270,7 +270,13 @@ export function applyTradeProtectionForMonth(ctx: PhaseContext): void {
       ctx.eventLedger.append(
         merchantLossSufferedEvent(
           victimId,
-          { raiderHits: hits, pressureHit, lossBp, poolBefore, poolAfter },
+          {
+            raiderHits: hits,
+            pressureHit,
+            lossBp: SafeInt.sub(SafeInt(poolBefore), SafeInt(poolAfter)),
+            poolBefore,
+            poolAfter,
+          },
           ctx.nextSeq(),
           month,
         ),

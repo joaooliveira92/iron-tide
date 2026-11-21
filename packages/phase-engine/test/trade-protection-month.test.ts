@@ -120,6 +120,18 @@ describe("#997: monthly trade protection", () => {
     expect(loss).toMatchObject({ raiderHits: 2, lossBp: 2_000 });
   });
 
+  it("records the pool actually lost when the loss exceeds what is left", () => {
+    const result = runTrade(
+      tradeSnapshot(
+        escorted({ frashipsRaiders: [raider("r1")], gbr: { tradeProtection: POOL(300) } }),
+      ),
+    );
+    expect(gbr(result.finalSnapshot).tradeProtection!.merchantPoolBp).toBe(0);
+    expect(kinds(result, "MerchantLossSuffered")).toEqual([
+      expect.objectContaining({ lossBp: 300, poolBefore: 300, poolAfter: 0 }),
+    ]);
+  });
+
   it("draws once per raider and victim when two active wars pair the same nations", () => {
     const single = tradeSnapshot(escorted({ frashipsRaiders: [raider("r2"), raider("r1")] }));
     const first = single.wars.wars[0]!;
