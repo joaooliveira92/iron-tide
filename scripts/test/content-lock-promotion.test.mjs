@@ -51,14 +51,14 @@ function withRepo(body) {
   }
 }
 
-test("promotionBranchName cuts promote/<date> and rejects anything but a real calendar date", () => {
+void test("promotionBranchName cuts promote/<date> and rejects anything but a real calendar date", () => {
   assert.equal(promotionBranchName("2026-11-20"), "promote/2026-11-20");
   assert.throws(() => promotionBranchName("2026-02-30"), /YYYY-MM-DD/u);
   assert.throws(() => promotionBranchName("20-11-2026"), /YYYY-MM-DD/u);
   assert.throws(() => promotionBranchName("2026-11-20; rm -rf ."), /YYYY-MM-DD/u);
 });
 
-test("devLockProblems accepts a lock without a body hash and rejects one that records it", () => {
+void test("devLockProblems accepts a lock without a body hash and rejects one that records it", () => {
   assert.deepEqual(devLockProblems({ contentVersion: "0.5.0", algorithm: "sha256" }), []);
   const problems = devLockProblems({
     contentVersion: "0.5.0",
@@ -69,7 +69,7 @@ test("devLockProblems accepts a lock without a body hash and rejects one that re
   assert.match(problems[0], /must not carry it/u);
 });
 
-test("promote cuts the branch from base and commits only the lock body hash", () => {
+void test("promote cuts the branch from base and commits only the lock body hash", () => {
   withRepo((dir) => {
     const baseBefore = git(dir, ["rev-parse", "dev"]).trim();
     const result = promote({ cwd: dir, date: "2026-11-20", base: "dev", runLock: recordHash });
@@ -87,7 +87,7 @@ test("promote cuts the branch from base and commits only the lock body hash", ()
   });
 });
 
-test("promote refuses a dirty working tree before touching any branch", () => {
+void test("promote refuses a dirty working tree before touching any branch", () => {
   withRepo((dir) => {
     writeFileSync(join(dir, "scratch.txt"), "wip\n");
     assert.throws(
@@ -98,7 +98,7 @@ test("promote refuses a dirty working tree before touching any branch", () => {
   });
 });
 
-test("promote refuses to reuse an existing promote branch", () => {
+void test("promote refuses to reuse an existing promote branch", () => {
   withRepo((dir) => {
     git(dir, ["branch", "promote/2026-11-20", "dev"]);
     assert.throws(
@@ -109,7 +109,7 @@ test("promote refuses to reuse an existing promote branch", () => {
   });
 });
 
-test("promote fails when content:lock changes a path other than the lock", () => {
+void test("promote fails when content:lock changes a path other than the lock", () => {
   withRepo((dir) => {
     const touchOtherFile = (cwd) => {
       recordHash(cwd);
@@ -126,7 +126,7 @@ test("promote fails when content:lock changes a path other than the lock", () =>
   });
 });
 
-test("promote fails when content:lock leaves the lock unchanged", () => {
+void test("promote fails when content:lock leaves the lock unchanged", () => {
   withRepo((dir) => {
     assert.throws(
       () => promote({ cwd: dir, date: "2026-11-20", base: "dev", runLock: () => {} }),
