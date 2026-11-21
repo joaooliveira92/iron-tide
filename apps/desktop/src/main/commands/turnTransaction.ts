@@ -146,6 +146,7 @@ export const runTurnTransaction = (
     const gunneryRules = yield* contentArtifact.loadGunneryRules();
     const missilesRules = yield* contentArtifact.loadMissilesRules();
     const terrain = yield* contentArtifact.loadBattleTerrain();
+    const minefields = yield* contentArtifact.loadBattleMinefields();
     const tensionDrift = yield* contentArtifact.loadTensionDriftRules();
     const fleetMorale = yield* contentArtifact.loadFleetMoraleRules();
     const tradeProtection = yield* contentArtifact.loadTradeProtectionRules();
@@ -190,6 +191,7 @@ export const runTurnTransaction = (
         ...(gunneryRules !== undefined ? { gunneryRules } : {}),
         ...(missilesRules !== undefined ? { missilesRules } : {}),
         ...(terrain !== undefined ? { terrain } : {}),
+        ...(minefields !== undefined ? { minefields } : {}),
         ...(tensionDrift !== undefined ? { tensionDrift } : {}),
         ...(fleetMorale !== undefined ? { fleetMorale, playerNationId: record.playerSlotId } : {}),
         ...(tradeProtection !== undefined
