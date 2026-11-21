@@ -28,6 +28,7 @@ export * from "./eventEffects.js";
 export * from "./fleetMorale.js";
 export * from "./tradeProtection.js";
 export * from "./raiderInterception.js";
+export * from "./submarineThreat.js";
 export * from "./tradeDuty.js";
 export * from "./unrest.js";
 export * from "./designUnits.js";

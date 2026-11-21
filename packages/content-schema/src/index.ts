@@ -289,6 +289,8 @@ export {
 } from "./event-resolution-rules.js";
 export type {
   RaiderInterceptionRules,
+  ShortfallPrestigeRules,
+  SubmarineThreatRules,
   TradeProtectionRules,
   TradeProtectionRulesDecoded,
 } from "./trade-protection-rules.js";

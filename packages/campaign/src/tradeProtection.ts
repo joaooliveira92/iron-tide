@@ -1,6 +1,11 @@
 import { SafeInt } from "@bluewave/contracts";
 import { Data, Result } from "effect";
 import type { RaiderInterceptionRules } from "./raiderInterception.js";
+import {
+  submarineQuotaTerm,
+  type ShortfallPrestigeRules,
+  type SubmarineThreatRules,
+} from "./submarineThreat.js";
 import type { BlockadeState } from "./state.js";
 
 export const MERCHANT_POOL_FULL_BP = 10_000;
@@ -46,6 +51,8 @@ export interface TradeProtectionRules {
   readonly unrestCadenceMonths: number;
   readonly unrestStep: number;
   readonly raiderInterception?: RaiderInterceptionRules;
+  readonly submarineThreat?: SubmarineThreatRules;
+  readonly shortfallPrestige?: ShortfallPrestigeRules;
 }
 
 export interface TradeProtectionState {
@@ -73,6 +80,7 @@ export function tradeProtectionQuota(
   rules: TradeProtectionRules,
   fleetShips: number,
   baseResources: number,
+  enemySubmarines: number = 0,
 ): number {
   const fleetTerm = scaleBp(fleetShips, rules.fleetShareBp, "ceil");
   const economyTerm = SafeInt.div(
@@ -80,7 +88,11 @@ export function tradeProtectionQuota(
     SafeInt(rules.resourcesPerRequiredShip),
     "floor",
   );
-  return SafeInt.add(SafeInt(fleetTerm), economyTerm);
+  const submarineTerm =
+    rules.submarineThreat === undefined
+      ? 0
+      : submarineQuotaTerm(rules.submarineThreat, enemySubmarines);
+  return SafeInt.add(SafeInt.add(SafeInt(fleetTerm), economyTerm), SafeInt(submarineTerm));
 }
 
 export function countTradeProtectionShips(

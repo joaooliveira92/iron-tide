@@ -105,7 +105,7 @@ function describeDomainEventBody(body: DomainEventBody): string {
     case "TradeProtectionAssessed":
       return `${body.nationId}: trade protection ${String(body.assigned)} of ${String(body.quota)} ships on duty (short ${String(body.shortfall)})`;
     case "MerchantLossSuffered":
-      return `${body.nationId}: merchant shipping lost ${String(body.lossBp)} bp (pool ${String(body.poolBefore)} to ${String(body.poolAfter)}; ${String(body.raiderHits)} raider hits${body.pressureHit ? ", shortfall pressure" : ""})`;
+      return `${body.nationId}: merchant shipping lost ${String(body.lossBp)} bp (pool ${String(body.poolBefore)} to ${String(body.poolAfter)}; ${String(body.raiderHits)} raider hits, ${String(body.submarineHits)} submarine hits${body.pressureHit ? ", shortfall pressure" : ""})`;
     case "RaiderEngaged":
       return `${body.nationId}: raider ${body.shipId} ${body.encounter === "BREAKOUT" ? "broke out against" : "intercepted raiding"} ${body.victimNationId} in ${body.month}: ${body.outcome} (${String(body.damageBp)} bp damage)`;
     case "RaiderInterned":
