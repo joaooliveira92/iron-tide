@@ -108,6 +108,7 @@ export function collectDevHealth(runs) {
   const latest = new Map();
   for (const entry of runs) {
     if (entry.status !== undefined && entry.status !== "completed") continue;
+    if (entry.event !== undefined && entry.event !== "push") continue;
     if (IGNORED_CONCLUSIONS.has(entry.conclusion) || !entry.conclusion) continue;
     if (!latest.has(entry.workflowName)) latest.set(entry.workflowName, entry.conclusion);
   }
@@ -168,12 +169,14 @@ export function collectFacts({ run, readRegistryRows }, numbers) {
     "list",
     "--branch",
     "dev",
+    "--event",
+    "push",
     "--status",
     "completed",
     "--limit",
     "100",
     "--json",
-    "workflowName,conclusion,status",
+    "workflowName,conclusion,status,event",
   ]);
   return {
     issues,
