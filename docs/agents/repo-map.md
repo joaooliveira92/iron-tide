@@ -19,6 +19,7 @@ Where to start reading, by task. Every link here is a living entry point.
 | Work several efforts at once | [task lifecycle](task-lifecycle.md) |
 | Brief or hand off an agent task | [`.ai/templates/task-brief.md`](../../.ai/templates/task-brief.md) |
 | Undo a merge or release | [rollback](rollback.md) |
+| Promote dev to main (content lock) | [content lock on promotion](content-lock-promotion.md) |
 | Record a decision | [`RULES.md`](../../RULES.md) |
 
 `engine-suite.md` and `.ai/ROADMAP.md` are historical (superseded); keep them only
