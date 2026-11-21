@@ -107,6 +107,16 @@ export interface MonthlyReportTradeProtection {
     readonly poolBefore: number;
     readonly poolAfter: number;
   };
+  readonly raiders?: readonly MonthlyReportRaiderEntry[];
+}
+
+export interface MonthlyReportRaiderEntry {
+  readonly shipId: string;
+  readonly event: "ENGAGED" | "INTERNED" | "RELEASED";
+  readonly encounter?: "INTERCEPTION" | "BREAKOUT";
+  readonly victimNationId?: string;
+  readonly outcome?: "SURVIVED" | "SUNK" | "SCUTTLED" | "INTERNED";
+  readonly cause?: "FUEL_EXHAUSTION" | "BREAKDOWN" | "DAMAGE";
 }
 
 export interface MonthlyReportUnrestChange {

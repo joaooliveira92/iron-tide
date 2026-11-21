@@ -65,4 +65,48 @@ describe("tradeProtectionFromEvents", () => {
       },
     });
   });
+
+  it("lists the player's own raider engagements, internments and releases (#1013)", () => {
+    const engaged = (nationId: string) =>
+      envelope({
+        kind: "RaiderEngaged",
+        nationId,
+        shipId: `${nationId}-r1`,
+        victimNationId: "france",
+        month: "1880-03",
+        encounter: "BREAKOUT",
+        chanceBp: SafeInt(3_500),
+        outcome: "INTERNED",
+        damageBp: SafeInt(5_000),
+      });
+    const interned = envelope({
+      kind: "RaiderInterned",
+      nationId: "uk",
+      shipId: "uk-r1",
+      month: "1880-03",
+      cause: "DAMAGE",
+    });
+    const released = envelope({
+      kind: "RaiderReleased",
+      nationId: "uk",
+      shipId: "uk-r2",
+      month: "1880-03",
+    });
+    expect(
+      tradeProtectionFromEvents(
+        [assessed("uk"), engaged("uk"), engaged("france"), interned, released],
+        "uk",
+      )?.raiders,
+    ).toEqual([
+      {
+        shipId: "uk-r1",
+        event: "ENGAGED",
+        encounter: "BREAKOUT",
+        victimNationId: "france",
+        outcome: "INTERNED",
+      },
+      { shipId: "uk-r1", event: "INTERNED", cause: "DAMAGE" },
+      { shipId: "uk-r2", event: "RELEASED" },
+    ]);
+  });
 });
