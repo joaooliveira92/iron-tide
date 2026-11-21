@@ -98,7 +98,6 @@ export function makeShip(
     inBattleId: opts.inBattleId,
     availability: opts.availability,
     availabilityProjectId: opts.availabilityProjectId,
-    internment: opts.internment,
   };
 }
 
