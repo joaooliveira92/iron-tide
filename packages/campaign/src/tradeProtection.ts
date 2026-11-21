@@ -1,6 +1,31 @@
+import { SafeInt } from "@bluewave/contracts";
+import { Data, Result } from "effect";
 import type { BlockadeState } from "./state.js";
 
 export const MERCHANT_POOL_FULL_BP = 10_000;
+
+const BP_DENOMINATOR = SafeInt(10_000);
+const CAMPAIGN_MONTH_PATTERN = /^\d{4}-(0[1-9]|1[0-2])$/;
+
+export class TradeProtectionMonthInvalid extends Data.TaggedError("TradeProtectionMonthInvalid")<{
+  readonly campaignMonth: string;
+}> {
+  override get message(): string {
+    return `Campaign month '${this.campaignMonth}' is not YYYY-MM`;
+  }
+}
+
+function calendarMonthOf(
+  campaignMonth: string,
+): Result.Result<number, TradeProtectionMonthInvalid> {
+  if (!CAMPAIGN_MONTH_PATTERN.test(campaignMonth))
+    return Result.fail(new TradeProtectionMonthInvalid({ campaignMonth }));
+  return Result.succeed(Number(campaignMonth.slice(5, 7)));
+}
+
+function scaleBp(value: number, factorBp: number, rounding: "floor" | "ceil"): number {
+  return SafeInt.div(SafeInt.mul(SafeInt(value), SafeInt(factorBp)), BP_DENOMINATOR, rounding);
+}
 
 export interface TradeProtectionRules {
   readonly fleetShareBp: number;
@@ -48,9 +73,13 @@ export function tradeProtectionQuota(
   fleetShips: number,
   baseResources: number,
 ): number {
-  const fleetTerm = Math.ceil((fleetShips * rules.fleetShareBp) / 10_000);
-  const economyTerm = Math.floor(baseResources / rules.resourcesPerRequiredShip);
-  return fleetTerm + economyTerm;
+  const fleetTerm = scaleBp(fleetShips, rules.fleetShareBp, "ceil");
+  const economyTerm = SafeInt.div(
+    SafeInt(baseResources),
+    SafeInt(rules.resourcesPerRequiredShip),
+    "floor",
+  );
+  return SafeInt.add(SafeInt(fleetTerm), economyTerm);
 }
 
 export function countTradeProtectionShips(
@@ -73,7 +102,12 @@ export function tradeProtectionShortfall(
 ): { readonly shortfall: number; readonly shortfallBp: number } {
   if (quota <= 0 || assigned >= quota) return { shortfall: 0, shortfallBp: 0 };
   const shortfall = quota - assigned;
-  return { shortfall, shortfallBp: Math.floor((shortfall * 10_000) / quota) };
+  const shortfallBp = SafeInt.div(
+    SafeInt.mul(SafeInt(shortfall), BP_DENOMINATOR),
+    SafeInt(quota),
+    "floor",
+  );
+  return { shortfall, shortfallBp };
 }
 
 export function isRaiderEligible(
@@ -105,7 +139,10 @@ export function merchantLossChanceBp(
   victimShortfallBp: number,
   baseBp: number = rules.raiderHitBp,
 ): number {
-  const amplified = baseBp + Math.floor((victimShortfallBp * rules.shortfallAmplifyBp) / 10_000);
+  const amplified = SafeInt.add(
+    SafeInt(baseBp),
+    SafeInt(scaleBp(victimShortfallBp, rules.shortfallAmplifyBp, "floor")),
+  );
   return Math.min(10_000, amplified);
 }
 
@@ -113,24 +150,31 @@ export function tradeProtectionRevenueBp(
   rules: TradeProtectionRules,
   merchantPoolBp: number,
 ): number {
-  const loss = MERCHANT_POOL_FULL_BP - merchantPoolBp;
-  return MERCHANT_POOL_FULL_BP - Math.floor((loss * rules.revenueSensitivityBp) / 10_000);
+  const loss = SafeInt.sub(SafeInt(MERCHANT_POOL_FULL_BP), SafeInt(merchantPoolBp));
+  return SafeInt.sub(
+    SafeInt(MERCHANT_POOL_FULL_BP),
+    SafeInt(scaleBp(loss, rules.revenueSensitivityBp, "floor")),
+  );
 }
 
 export function tradeProtectionUnrestStep(
   rules: TradeProtectionRules,
   merchantPoolBp: number,
   campaignMonth: string,
-): number {
-  if (MERCHANT_POOL_FULL_BP - merchantPoolBp < rules.unrestThresholdBp) return 0;
-  const calendarMonth = Number(campaignMonth.split("-")[1]);
-  return calendarMonth % rules.unrestCadenceMonths === 0 ? rules.unrestStep : 0;
+): Result.Result<number, TradeProtectionMonthInvalid> {
+  return Result.map(calendarMonthOf(campaignMonth), (calendarMonth) => {
+    if (MERCHANT_POOL_FULL_BP - merchantPoolBp < rules.unrestThresholdBp) return 0;
+    return calendarMonth % rules.unrestCadenceMonths === 0 ? rules.unrestStep : 0;
+  });
 }
 
 export function recoverMerchantPool(rules: TradeProtectionRules, merchantPoolBp: number): number {
-  return Math.min(MERCHANT_POOL_FULL_BP, merchantPoolBp + rules.recoveryBpPerMonth);
+  return Math.min(
+    MERCHANT_POOL_FULL_BP,
+    SafeInt.add(SafeInt(merchantPoolBp), SafeInt(rules.recoveryBpPerMonth)),
+  );
 }
 
 export function applyMerchantLoss(merchantPoolBp: number, lossBp: number): number {
-  return Math.max(0, merchantPoolBp - lossBp);
+  return Math.max(0, SafeInt.sub(SafeInt(merchantPoolBp), SafeInt(lossBp)));
 }
