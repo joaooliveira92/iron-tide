@@ -45,6 +45,16 @@ const interception = {
   breakdownInternBp: 100,
 };
 
+const submarine = {
+  hullType: "submarine",
+  quotaPerBoatBp: 2500,
+  attackBp: 1000,
+  lossPerHitBp: 120,
+  blockadeReductionBp: 8000,
+};
+
+const prestige = { thresholdBp: 2000, lossBp: 150 };
+
 describe("decodeTradeProtectionRules", () => {
   it("accepts a complete section", () => {
     expect(decodeTradeProtectionRules(rules())).toEqual({ ok: true, value: rules() });
@@ -96,6 +106,42 @@ describe("decodeTradeProtectionRules", () => {
     const decoded = decodeTradeProtectionRules(partial);
     expect(decoded.ok).toBe(false);
     if (!decoded.ok) expect(decoded.field).toContain(key);
+  });
+
+  it("accepts the optional submarineThreat and shortfallPrestige blocks", () => {
+    const overrides = { submarineThreat: submarine, shortfallPrestige: prestige };
+    expect(decodeTradeProtectionRules(rules(overrides))).toEqual({
+      ok: true,
+      value: rules(overrides),
+    });
+  });
+
+  it.each(Object.keys(submarine))("rejects a submarineThreat block missing %s", (key) => {
+    const { [key]: _removed, ...rest } = submarine as Record<string, unknown>;
+    expect(decodeTradeProtectionRules(rules({ submarineThreat: rest }))).toMatchObject({
+      ok: false,
+      field: `submarineThreat.${key}`,
+    });
+  });
+
+  it.each(Object.keys(prestige))("rejects a shortfallPrestige block missing %s", (key) => {
+    const { [key]: _removed, ...rest } = prestige as Record<string, unknown>;
+    expect(decodeTradeProtectionRules(rules({ shortfallPrestige: rest }))).toMatchObject({
+      ok: false,
+      field: `shortfallPrestige.${key}`,
+    });
+  });
+
+  it.each([
+    ["an empty submarine hull", { submarineThreat: { ...submarine, hullType: "" } }],
+    ["a submarine attack of zero", { submarineThreat: { ...submarine, attackBp: 0 } }],
+    [
+      "a blockade reduction above 10000",
+      { submarineThreat: { ...submarine, blockadeReductionBp: 10_001 } },
+    ],
+    ["a prestige loss above 10000", { shortfallPrestige: { ...prestige, lossBp: 10_001 } }],
+  ])("rejects %s", (_label, override) => {
+    expect(decodeTradeProtectionRules(rules(override)).ok).toBe(false);
   });
 
   it("rejects an excess key", () => {

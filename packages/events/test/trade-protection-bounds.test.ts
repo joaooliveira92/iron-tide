@@ -18,6 +18,7 @@ const lost = (poolBefore: number, poolAfter: number) => ({
   month: "1880-04",
   raiderHits: SafeInt(1),
   pressureHit: false,
+  submarineHits: 0,
   lossBp: SafeInt(100),
   poolBefore: SafeInt(poolBefore),
   poolAfter: SafeInt(poolAfter),

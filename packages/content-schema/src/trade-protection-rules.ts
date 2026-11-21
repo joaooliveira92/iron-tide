@@ -20,6 +20,19 @@ export const RaiderInterceptionRulesSchema = Schema.Struct({
   breakdownInternBp: bp,
 });
 
+export const SubmarineThreatRulesSchema = Schema.Struct({
+  hullType,
+  quotaPerBoatBp: bp,
+  attackBp: bp,
+  lossPerHitBp: bp,
+  blockadeReductionBp: bp,
+});
+
+export const ShortfallPrestigeRulesSchema = Schema.Struct({
+  thresholdBp: bp,
+  lossBp: bp,
+});
+
 export const TradeProtectionRulesSchema = Schema.Struct({
   sectionVersion: Schema.Literal(1),
   fleetShareBp: bp,
@@ -42,10 +55,16 @@ export const TradeProtectionRulesSchema = Schema.Struct({
   ),
   unrestStep: Schema.Finite.check(Schema.isInt(), Schema.isBetween({ minimum: 1, maximum: 10 })),
   raiderInterception: Schema.optional(RaiderInterceptionRulesSchema),
+  submarineThreat: Schema.optional(SubmarineThreatRulesSchema),
+  shortfallPrestige: Schema.optional(ShortfallPrestigeRulesSchema),
   provenance: ProvenanceSchema,
 });
 
 export type RaiderInterceptionRules = typeof RaiderInterceptionRulesSchema.Type;
+
+export type SubmarineThreatRules = typeof SubmarineThreatRulesSchema.Type;
+
+export type ShortfallPrestigeRules = typeof ShortfallPrestigeRulesSchema.Type;
 
 export type TradeProtectionRules = typeof TradeProtectionRulesSchema.Type;
 

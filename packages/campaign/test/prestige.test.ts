@@ -38,11 +38,8 @@ function fixtureSet(overrides: Record<string, unknown> = {}): PrestigeValueSet {
 describe("the closed vocabularies", () => {
   it("exports exactly the three prestige reason codes and the career end reasons", () => {
     const required = ["UNPAID_FUNDS", "BATTLE_LOST", "BATTLE_WON"];
-    expect([...PRESTIGE_REASON_CODES]).toEqual([
-      ...required,
-      "DECLINED_BATTLE",
-      "PRESENCE_SHORTFALL",
-    ]);
+    const optional = ["DECLINED_BATTLE", "PRESENCE_SHORTFALL", "TRADE_SHORTFALL"];
+    expect([...PRESTIGE_REASON_CODES]).toEqual([...required, ...optional]);
     expect([...REQUIRED_PRESTIGE_REASON_CODES]).toEqual(required);
     expect([...CAREER_END_REASONS]).toEqual(["SACKED", "CAMPAIGN_END", "REVOLUTION"]);
   });

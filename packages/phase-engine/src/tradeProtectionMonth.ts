@@ -7,6 +7,7 @@ import {
   merchantLossChanceBp,
   MERCHANT_POOL_FULL_BP,
   recoverMerchantPool,
+  shortfallPrestigeLossBp,
   tradeProtectionQuota,
   tradeProtectionShortfall,
   tradeProtectionUnrestStep,
@@ -22,6 +23,8 @@ import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import type { DomainEventEnvelope } from "@bluewave/events";
 import { Result } from "effect";
 import type { PhaseContext } from "./pipeline.js";
+import { applyPrestigeChange } from "./prestigeApplication.js";
+import { drawSubmarineAttacks, opposingSubmarines, type TradeAttacker } from "./tradeSubmarines.js";
 import { applyRaiderInterceptionForMonth } from "./raiderInterceptionMonth.js";
 import { activeWars, byId, designMap, opponentsOf, shipsOf } from "./tradeWarContext.js";
 import { applyUnrestContributions } from "./unrestApplication.js";
@@ -64,6 +67,7 @@ export function merchantLossSufferedEvent(
   nationId: string,
   loss: {
     readonly raiderHits: number;
+    readonly submarineHits: number;
     readonly pressureHit: boolean;
     readonly lossBp: number;
     readonly poolBefore: number;
@@ -84,6 +88,7 @@ export function merchantLossSufferedEvent(
       nationId,
       month: campaignMonth,
       raiderHits: SafeInt(loss.raiderHits),
+      submarineHits: SafeInt(loss.submarineHits),
       pressureHit: loss.pressureHit,
       lossBp: SafeInt(loss.lossBp),
       poolBefore: SafeInt(loss.poolBefore),
@@ -100,6 +105,7 @@ function assess(
   previous: TradeProtectionState | undefined,
   isPlayer: boolean,
   campaignMonth: string,
+  enemySubmarines: number,
 ): TradeProtectionState {
   const ships = shipsOf(nation);
   const pool = previous?.merchantPoolBp ?? MERCHANT_POOL_FULL_BP;
@@ -114,7 +120,12 @@ function assess(
     };
   }
   const operational = ships.filter((ship) => !ship.isUnderConstruction).length;
-  const quota = tradeProtectionQuota(rules, operational, Number(nation.baseResources ?? 0));
+  const quota = tradeProtectionQuota(
+    rules,
+    operational,
+    Number(nation.baseResources ?? 0),
+    enemySubmarines,
+  );
   const assigned = countTradeProtectionShips(rules, ships, designs);
   return {
     month: campaignMonth,
@@ -153,14 +164,13 @@ export function applyTradeProtectionForMonth(ctx: PhaseContext): void {
 
   const updated = new Map(nations);
   const unrestRises: Array<readonly [string, number]> = [];
+  const prestigeLosses: Array<readonly [string, number]> = [];
   for (const victimId of [...victims].sort(byId)) {
     const nation = nations.get(victimId);
     if (nation === undefined) continue;
     const atWar = warsOfVictim.get(victimId) ?? [];
     const isPlayer = victimId === playerNationId && atWar.length > 0;
-    const state = assess(rules, nation, designs, nation.tradeProtection, isPlayer, month);
-
-    let hits = 0;
+    const attackers: TradeAttacker[] = [];
     const raidedBy = new Set<string>();
     for (const war of atWar) {
       for (const opponentId of opponentsOf(war, victimId)) {
@@ -168,35 +178,71 @@ export function applyTradeProtectionForMonth(ctx: PhaseContext): void {
         raidedBy.add(opponentId);
         const opponent = nations.get(opponentId);
         if (opponent === undefined) continue;
-        if (isRaiderBlockedByBlockade(blockades, opponentId, victimId)) continue;
-        for (const ship of shipsOf(opponent)) {
-          const design = designs.get(ship.designVersionId);
-          if (design === undefined || !isRaiderEligible(rules, ship, design)) continue;
-          const chanceBp = merchantLossChanceBp(rules, state.shortfallBp);
-          const entityKey = `${war.id}/${ship.id}/${victimId}/${month}`;
-          const draw = Math.floor(
-            engine.stream(`${TRADE_STREAM_FAMILY}/${entityKey}`).next() * TRADE_DRAW_RANGE_BP,
-          );
-          const hit = draw < chanceBp;
-          ctx.randomLedger.record({
-            streamId: TRADE_STREAM_FAMILY,
-            entityKey,
-            phase: "resolve_diplomacy",
-            rulesetVersion,
-            inputHash: sha256Hex(
-              canonicalSerialize({ entityKey, chanceBp, hullType: design.hullType }),
-            ),
-            draw,
-            outcome: hit ? "HIT" : "MISS",
-            reasonCode: TRADE_RAIDER_HIT_REASON,
-          });
-          if (hit) hits += 1;
-        }
+        attackers.push({ warId: war.id, nationId: opponentId, ships: shipsOf(opponent) });
+      }
+    }
+    const threat = rules.submarineThreat;
+    const enemySubmarines =
+      isPlayer && threat !== undefined ? opposingSubmarines(threat, attackers, designs) : 0;
+    const state = assess(
+      rules,
+      nation,
+      designs,
+      nation.tradeProtection,
+      isPlayer,
+      month,
+      enemySubmarines,
+    );
+
+    let hits = 0;
+    for (const { warId, nationId: opponentId, ships } of attackers) {
+      if (isRaiderBlockedByBlockade(blockades, opponentId, victimId)) continue;
+      for (const ship of ships) {
+        const design = designs.get(ship.designVersionId);
+        if (design === undefined || !isRaiderEligible(rules, ship, design)) continue;
+        const chanceBp = merchantLossChanceBp(rules, state.shortfallBp);
+        const entityKey = `${warId}/${ship.id}/${victimId}/${month}`;
+        const draw = Math.floor(
+          engine.stream(`${TRADE_STREAM_FAMILY}/${entityKey}`).next() * TRADE_DRAW_RANGE_BP,
+        );
+        const hit = draw < chanceBp;
+        ctx.randomLedger.record({
+          streamId: TRADE_STREAM_FAMILY,
+          entityKey,
+          phase: "resolve_diplomacy",
+          rulesetVersion,
+          inputHash: sha256Hex(
+            canonicalSerialize({ entityKey, chanceBp, hullType: design.hullType }),
+          ),
+          draw,
+          outcome: hit ? "HIT" : "MISS",
+          reasonCode: TRADE_RAIDER_HIT_REASON,
+        });
+        if (hit) hits += 1;
       }
     }
 
+    const submarineHits =
+      threat === undefined
+        ? 0
+        : drawSubmarineAttacks({
+            ctx,
+            engine,
+            streamFamily: TRADE_STREAM_FAMILY,
+            drawRange: TRADE_DRAW_RANGE_BP,
+            rulesetVersion,
+            shortfallAmplifyBp: rules.shortfallAmplifyBp,
+            threat,
+            attackers,
+            victimId,
+            victimShortfallBp: state.shortfallBp,
+            blockades,
+            designs,
+            month,
+          });
+
     let pressureHit = false;
-    if (isPlayer && state.shortfallBp > 0) {
+    if (isPlayer && state.shortfallBp > 0 && threat === undefined) {
       const entityKey = `pressure/${victimId}/${month}`;
       const draw = Math.floor(
         engine.stream(`${TRADE_STREAM_FAMILY}/${entityKey}`).next() * TRADE_DRAW_RANGE_BP,
@@ -216,7 +262,10 @@ export function applyTradeProtectionForMonth(ctx: PhaseContext): void {
       });
     }
 
-    const lossBp = hits * rules.lossPerHitBp + (pressureHit ? rules.pressureLossBp : 0);
+    const lossBp =
+      hits * rules.lossPerHitBp +
+      submarineHits * (threat?.lossPerHitBp ?? 0) +
+      (pressureHit ? rules.pressureLossBp : 0);
     const poolBefore = state.merchantPoolBp;
     const poolAfter =
       lossBp > 0 ? applyMerchantLoss(poolBefore, lossBp) : recoverMerchantPool(rules, poolBefore);
@@ -234,6 +283,7 @@ export function applyTradeProtectionForMonth(ctx: PhaseContext): void {
           victimId,
           {
             raiderHits: hits,
+            submarineHits,
             pressureHit,
             lossBp: SafeInt.sub(SafeInt(poolBefore), SafeInt(poolAfter)),
             poolBefore,
@@ -255,9 +305,19 @@ export function applyTradeProtectionForMonth(ctx: PhaseContext): void {
     updated.set(victimId, { ...nation, tradeProtection: next });
     const delta = step > 0 ? applyUnrestDelta(nation.unrest, step) - unrestOf(nation) : 0;
     if (delta !== 0) unrestRises.push([victimId, delta]);
+    if (isPlayer && rules.shortfallPrestige !== undefined) {
+      const prestigeLossBp = shortfallPrestigeLossBp(rules.shortfallPrestige, state.shortfallBp);
+      if (prestigeLossBp > 0) prestigeLosses.push([victimId, prestigeLossBp]);
+    }
   }
   ctx.snapshot.write("nations", updated);
   for (const [victimId, delta] of unrestRises) {
     applyUnrestContributions(ctx, victimId, [{ reasonCode: "TRADE_LOSS", delta }]);
+  }
+  for (const [victimId, lossBp] of prestigeLosses) {
+    applyPrestigeChange(ctx, victimId, "TRADE_SHORTFALL", {
+      kind: "PROPORTIONAL_LOSS",
+      basisPoints: SafeInt(lossBp),
+    });
   }
 }

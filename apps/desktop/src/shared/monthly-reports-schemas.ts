@@ -155,6 +155,7 @@ const MonthlyReportTradeProtectionSchema = Schema.Struct({
   loss: Schema.optional(
     Schema.Struct({
       raiderHits: nonNegativeInt,
+      submarineHits: Schema.optional(nonNegativeInt),
       pressureHit: Schema.Boolean,
       lossBp: nonNegativeInt,
       poolBefore: nonNegativeInt,

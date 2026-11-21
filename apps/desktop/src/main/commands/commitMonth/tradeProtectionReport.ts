@@ -22,6 +22,7 @@ export function tradeProtectionFromEvents(
     } else if (body.kind === "MerchantLossSuffered" && body.nationId === nationId) {
       loss = {
         raiderHits: Number(body.raiderHits),
+        submarineHits: Number(body.submarineHits),
         pressureHit: body.pressureHit,
         lossBp: Number(body.lossBp),
         poolBefore: Number(body.poolBefore),
