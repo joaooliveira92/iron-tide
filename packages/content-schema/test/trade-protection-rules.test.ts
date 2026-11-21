@@ -33,9 +33,44 @@ function rules(overrides: Record<string, unknown> = {}): Record<string, unknown>
   };
 }
 
+const interception = {
+  interceptBaseBp: 300,
+  interceptPatrolBp: 2000,
+  breakoutInterceptBp: 3500,
+  raiderSunkBp: 2500,
+  maxEngagementDamageBp: 6000,
+  scuttleThresholdBp: 2500,
+  scuttleShareBp: 5000,
+  fuelInternBp: 150,
+  breakdownInternBp: 100,
+};
+
 describe("decodeTradeProtectionRules", () => {
   it("accepts a complete section", () => {
     expect(decodeTradeProtectionRules(rules())).toEqual({ ok: true, value: rules() });
+  });
+
+  it("accepts the optional raiderInterception block and decodes the section without it", () => {
+    expect(decodeTradeProtectionRules(rules({ raiderInterception: interception }))).toEqual({
+      ok: true,
+      value: rules({ raiderInterception: interception }),
+    });
+  });
+
+  it.each(Object.keys(interception))("rejects a raiderInterception block missing %s", (key) => {
+    const { [key]: _removed, ...rest } = interception as Record<string, number>;
+    expect(decodeTradeProtectionRules(rules({ raiderInterception: rest }))).toMatchObject({
+      ok: false,
+      field: `raiderInterception.${key}`,
+    });
+  });
+
+  it("rejects a raiderInterception basis point above 10_000", () => {
+    expect(
+      decodeTradeProtectionRules(
+        rules({ raiderInterception: { ...interception, scuttleShareBp: 10_001 } }),
+      ),
+    ).toMatchObject({ ok: false, field: "raiderInterception.scuttleShareBp" });
   });
 
   it.each([
