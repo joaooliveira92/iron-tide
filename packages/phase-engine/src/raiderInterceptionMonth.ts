@@ -239,7 +239,7 @@ export function applyRaiderInterceptionForMonth(
           areaId: fleet.locationAreaId,
           breakout,
           raiderNationId: nationId,
-          raiderShipId: ship.id,
+          raiderShip: ship,
           interceptorNation: nations.get(blockader ?? target.victimId),
         });
         if (queued) {

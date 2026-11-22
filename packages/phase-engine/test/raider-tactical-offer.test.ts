@@ -1,4 +1,5 @@
 import type { RaiderInterceptionRules } from "@bluewave/campaign";
+import { SafeInt } from "@bluewave/contracts";
 import type { TradeProtectionRules } from "@bluewave/content-schema";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { makeRecordedInput, type OfferRequest, type RecordedInput } from "@bluewave/messages";
@@ -126,6 +127,29 @@ describe("#1052: player raider encounters become tactical offers", () => {
     expect(result.outcome).toBe("completed");
     expect(kinds(result, "RaiderEngaged")).toHaveLength(1);
     expect(draws(result, "trade/engagement")).toHaveLength(1);
+  });
+
+  it("falls back to the abstract engagement when the raider is too green to be built into a battle", () => {
+    const result = run(
+      tradeSnapshot({
+        gbrShips: [patrol("p1")],
+        frashipsRaiders: [{ ...fraRaider("r1"), crewQuality: SafeInt(10) }],
+      }),
+    );
+    expect(result.outcome).toBe("completed");
+    expect(kinds(result, "RaiderEngaged")).toHaveLength(1);
+    expect(draws(result, "trade/engagement")).toHaveLength(1);
+  });
+
+  it("falls back to the abstract engagement when every interceptor is too green to be built into a battle", () => {
+    const result = run(
+      tradeSnapshot({
+        gbrShips: [{ ...patrol("p1"), crewQuality: SafeInt(10) }],
+        frashipsRaiders: [fraRaider("r1")],
+      }),
+    );
+    expect(result.outcome).toBe("completed");
+    expect(kinds(result, "RaiderEngaged")).toHaveLength(1);
   });
 
   it("keeps the abstract engagement when offers are not configured", () => {

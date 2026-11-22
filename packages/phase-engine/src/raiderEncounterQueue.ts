@@ -1,5 +1,11 @@
-import type { NationState, Ship, TradeDutyDesign, TradeProtectionRules } from "@bluewave/campaign";
-import type { RaiderEncounter } from "@bluewave/combat/generation";
+import {
+  battleReadiness,
+  type NationState,
+  type Ship,
+  type TradeDutyDesign,
+  type TradeProtectionRules,
+} from "@bluewave/campaign";
+import { BATTLE_READINESS_FLOOR, queuedEncounterShipIds } from "@bluewave/combat/generation";
 import type { PhaseContext } from "./pipeline.js";
 import { byId } from "./tradeWarContext.js";
 
@@ -10,7 +16,7 @@ export interface RaiderEncounterRequest {
   readonly areaId: string;
   readonly breakout: boolean;
   readonly raiderNationId: string;
-  readonly raiderShipId: string;
+  readonly raiderShip: Ship;
   readonly interceptorNation: NationState | undefined;
 }
 
@@ -27,9 +33,12 @@ export function playerTakesPartInEncounter(
   );
 }
 
-function queuedShipIds(encounters: readonly RaiderEncounter[]): ReadonlySet<string> {
-  return new Set(
-    encounters.flatMap((encounter) => [encounter.raiderShipId, ...encounter.interceptorShipIds]),
+function canBeBuiltIntoBattle(ship: Ship): boolean {
+  return (
+    ship.readiness !== "WORKING_UP" &&
+    ship.readiness !== "RESERVE" &&
+    ship.readiness !== "MOTHBALLED" &&
+    battleReadiness(ship.crewQuality) >= BATTLE_READINESS_FLOOR
   );
 }
 
@@ -57,6 +66,7 @@ export function selectInterceptors(
       (ship) =>
         !ship.isUnderConstruction &&
         ship.readiness === "ACTIVE" &&
+        canBeBuiltIntoBattle(ship) &&
         ship.internment === undefined &&
         ship.inBattleId === undefined &&
         ship.stationAssignment !== "RAIDER" &&
@@ -82,12 +92,12 @@ export function queueRaiderEncounter(
   if (interceptorNation === undefined) return false;
   if (!playerTakesPartInEncounter(ctx, request.raiderNationId, interceptorNation.id)) return false;
   const queue = ctx.raiderEncounters;
-  if (queue === undefined) return false;
+  if (queue === undefined || !canBeBuiltIntoBattle(request.raiderShip)) return false;
   const interceptorShipIds = selectInterceptors(
     rules,
     interceptorNation,
     designs,
-    queuedShipIds(queue),
+    queuedEncounterShipIds(queue),
     request.areaId,
   );
   if (interceptorShipIds.length === 0) return false;
@@ -96,7 +106,7 @@ export function queueRaiderEncounter(
     warId: request.warId,
     areaId: request.areaId,
     raiderNationId: request.raiderNationId,
-    raiderShipId: request.raiderShipId,
+    raiderShipId: request.raiderShip.id,
     interceptorNationId: interceptorNation.id,
     interceptorShipIds,
   });

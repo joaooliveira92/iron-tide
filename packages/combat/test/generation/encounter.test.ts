@@ -5,7 +5,11 @@ import {
   generateBattles,
   type RaiderEncounter,
 } from "@bluewave/combat/generation";
-import { buildGenerationSnapshot, buildShip } from "../fixtures/generation-fixture.js";
+import {
+  buildGenerationSnapshot,
+  buildShip,
+  makeActiveWar,
+} from "../fixtures/generation-fixture.js";
 
 const ship = (id: string, area: string) =>
   buildShip({
@@ -132,5 +136,41 @@ describe("#1052: encounter missions", () => {
       "FLEET_BATTLE",
       "RAIDER_INTERCEPTION",
     ]);
+  });
+});
+
+describe("#1112: queued encounters keep their ships against ordinary battles", () => {
+  function collidingRun(encounter: RaiderEncounter) {
+    const snap = buildGenerationSnapshot(
+      [ship("gb_raider", "area_sea"), ship("gb_a", "area_sea")],
+      [ship("fra_p1", "area_sea"), ship("fra_b", "area_sea")],
+    );
+    snap.wars.wars.unshift(makeActiveWar("war_0"));
+    return generateBattles({
+      snapshot: snap,
+      campaignMonth: "1880-02",
+      campaignSeed: "seed",
+      rngVersion: "1",
+      formulaVersion: "1",
+      rulesetVersion: "1",
+      contentVersion: "0.3.0",
+      resolveStrength: () => 1_000,
+      resolveShipType: () => "CL",
+      resolveReadiness: () => 80,
+      raiderEncounters: [encounter],
+    });
+  }
+
+  it("still builds the encounter when an earlier-sorting war's fleet battle shares its area", () => {
+    const result = collidingRun({ ...interception, interceptorShipIds: ["fra_p1"] });
+    const encounter = result.manifests.find((m) => m.missionType === "RAIDER_INTERCEPTION");
+    expect([...(encounter?.persistentAssets ?? [])].sort()).toEqual(["fra_p1", "gb_raider"]);
+    expect(result.rejections.filter((id) => id.includes("raider_interception"))).toEqual([]);
+  });
+
+  it("keeps the raider and its interceptors out of the ordinary battle", () => {
+    const result = collidingRun({ ...interception, interceptorShipIds: ["fra_p1"] });
+    const ordinary = result.manifests.find((m) => m.missionType === "FLEET_BATTLE");
+    expect([...(ordinary?.persistentAssets ?? [])].sort()).toEqual(["fra_b", "gb_a"]);
   });
 });
