@@ -23,6 +23,7 @@ content/generated/
 # Local git worktrees (AGENTS.md "dedicated worktree") — never tracked.
 .worktrees/
 apps/desktop/dist-electron/
+apps/desktop/dist-electron-spike/
 # tsc -b emits alongside the sources it compiles
 *.tsbuildinfo
 apps/*/src/**/*.js

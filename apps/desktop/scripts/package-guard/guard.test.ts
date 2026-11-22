@@ -30,7 +30,6 @@ function budgeted(policy: PackagePolicy, archive: number, outside: number): Pack
     modes: {
       default: { ...policy.modes.default, budget: budget("default") },
       spike: { ...policy.modes.spike, budget: budget("spike") },
-      adapter: { ...policy.modes.adapter, budget: budget("adapter") },
     },
   };
 }
@@ -346,6 +345,26 @@ describe("spike package policy", () => {
     );
   });
 
+  it("passes a spike package carrying the production-size pack and corrupt fixture", () => {
+    const archive = spikeArchive();
+    const pack = randomBytes(14_820_604);
+    archive.set("out/renderer/map-spike/land-tiles/land.bwtp", pack);
+    archive.set(
+      "out/renderer/map-spike/land-tiles/manifest.json",
+      text(
+        JSON.stringify({ integrity: { packSha256: sha(pack) }, sizes: { packBytes: pack.length } }),
+      ),
+    );
+    archive.set("out/renderer/map-spike/land-tiles-corrupt/land.bwtp", randomBytes(1_145_769));
+    archive.set("out/renderer/map-spike/land-tiles-corrupt/manifest.json", text("{}"));
+    const generous = budgeted(realPolicy, 210_000_000, 2_000_000);
+    expect(run({ archive }, "spike", generous).violations).toEqual([]);
+  });
+
+  it("defines exactly the modes a build or harness invokes", () => {
+    expect(Object.keys(realPolicy.modes).sort()).toEqual(["default", "spike"]);
+  });
+
   it("rejects an allowed asset that outgrows its cap", () => {
     const archive = spikeArchive();
     archive.set("out/renderer/map-spike/glyphs/Inter Regular/256-511.pbf", randomBytes(300_000));
@@ -421,14 +440,13 @@ describe("size policy", () => {
 
   it("keeps each mode's archive budget within a fixed headroom of its measured size", () => {
     const measured: Record<PackageMode, number> = {
-      default: 105_984_545,
-      spike: 106_804_140,
-      adapter: 122_219_447,
+      default: 105_999_736,
+      spike: 107_077_675,
     };
     for (const mode of Object.keys(measured) as PackageMode[]) {
       const headroom = realPolicy.modes[mode].budget.archiveBytesMax - measured[mode];
       expect(headroom, mode).toBeGreaterThanOrEqual(0);
-      expect(headroom, mode).toBeLessThanOrEqual(16_000_000);
+      expect(headroom, mode).toBeLessThanOrEqual(7_000_000);
     }
   });
 });
