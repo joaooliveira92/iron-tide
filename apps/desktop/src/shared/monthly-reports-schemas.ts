@@ -217,6 +217,15 @@ const MonthlyReportEntrySchema = Schema.Struct({
   fleetExercise: Schema.optional(MonthlyReportFleetExerciseSchema),
   tradeProtection: Schema.optional(MonthlyReportTradeProtectionSchema),
   unrest: Schema.optional(MonthlyReportUnrestSchema),
+  foreignRevolutions: Schema.optional(
+    Schema.Array(
+      Schema.Struct({
+        nationId: nonEmptyString,
+        governmentBefore: nonEmptyString,
+        governmentAfter: nonEmptyString,
+      }),
+    ),
+  ),
 });
 
 export const MonthlyReportsSchema = Schema.Struct({
