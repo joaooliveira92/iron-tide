@@ -116,6 +116,24 @@ describe("decodeTradeProtectionRules", () => {
     });
   });
 
+  it("accepts an optional anti-submarine escort reduction and keeps it absent otherwise", () => {
+    const withReduction = { submarineThreat: { ...submarine, aswEscortReductionBp: 2000 } };
+    expect(decodeTradeProtectionRules(rules(withReduction))).toEqual({
+      ok: true,
+      value: rules(withReduction),
+    });
+    const decoded = decodeTradeProtectionRules(rules({ submarineThreat: submarine }));
+    expect(decoded.ok && decoded.value.submarineThreat).toEqual(submarine);
+  });
+
+  it.each([0, 10_001, 1.5])("rejects an anti-submarine escort reduction of %s", (value) => {
+    const override = { submarineThreat: { ...submarine, aswEscortReductionBp: value } };
+    expect(decodeTradeProtectionRules(rules(override))).toMatchObject({
+      ok: false,
+      field: "submarineThreat.aswEscortReductionBp",
+    });
+  });
+
   it.each(Object.keys(submarine))("rejects a submarineThreat block missing %s", (key) => {
     const { [key]: _removed, ...rest } = submarine as Record<string, unknown>;
     expect(decodeTradeProtectionRules(rules({ submarineThreat: rest }))).toMatchObject({

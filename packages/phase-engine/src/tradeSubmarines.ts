@@ -1,4 +1,6 @@
 import {
+  aswEscortAttackChanceBp,
+  countAswEscorts,
   countEnemySubmarines,
   isRaiderBlockedByBlockade,
   submarineAttackChanceBp,
@@ -41,6 +43,8 @@ export interface SubmarineAttackInput {
   readonly attackers: readonly TradeAttacker[];
   readonly victimId: string;
   readonly victimShortfallBp: number;
+  readonly victimShips: readonly Ship[];
+  readonly contributingHullTypes: readonly string[];
   readonly blockades: readonly Pick<BlockadeState, "blockaderId" | "blockadedNationId">[];
   readonly designs: ReadonlyMap<string, TradeDutyDesign>;
   readonly month: string;
@@ -48,11 +52,20 @@ export interface SubmarineAttackInput {
 
 export function drawSubmarineAttacks(input: SubmarineAttackInput): number {
   let hits = 0;
+  const aswEscorts = countAswEscorts(
+    { contributingHullTypes: input.contributingHullTypes },
+    input.victimShips,
+    input.designs,
+  );
   for (const attacker of input.attackers) {
-    const chanceBp = submarineAttackChanceBp(
-      { shortfallAmplifyBp: input.shortfallAmplifyBp, submarineThreat: input.threat },
-      input.victimShortfallBp,
-      isRaiderBlockedByBlockade(input.blockades, attacker.nationId, input.victimId),
+    const chanceBp = aswEscortAttackChanceBp(
+      input.threat,
+      submarineAttackChanceBp(
+        { shortfallAmplifyBp: input.shortfallAmplifyBp, submarineThreat: input.threat },
+        input.victimShortfallBp,
+        isRaiderBlockedByBlockade(input.blockades, attacker.nationId, input.victimId),
+      ),
+      aswEscorts,
     );
     for (const ship of attacker.ships) {
       if (countEnemySubmarines(input.threat, [ship], input.designs) === 0) continue;

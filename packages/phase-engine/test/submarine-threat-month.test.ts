@@ -138,6 +138,51 @@ describe("#1014: submarine threat to trade", () => {
     expect(tradeDraws(reverse).map((d) => d.outcome)).toEqual(["HIT"]);
   });
 
+  describe("anti-submarine escorts (#1070)", () => {
+    const WITH_ASW: TradeProtectionRules = {
+      ...WITH_SUBS,
+      submarineThreat: { ...WITH_SUBS.submarineThreat!, aswEscortReductionBp: 10_000 },
+    };
+    const aswDesigns = [
+      ...DESIGNS,
+      tradeDesign("d-dd-asw", "destroyer", { capabilities: [{ kind: "asw_attack", level: 2 }] }),
+    ];
+    const aswEscort = (id: string, over: Partial<Ship> = {}) =>
+      tradeShip(id, "d-dd-asw", { stationAssignment: "TRADE_PROTECTION", ...over });
+    const attacked = (gbrShips: Ship[], rules: TradeProtectionRules) =>
+      tradeDraws(
+        runTrade(
+          tradeSnapshot({ gbrShips, designs: aswDesigns, frashipsRaiders: [sub("s1")] }),
+          [],
+          rules,
+        ),
+      ).map((d) => d.outcome);
+
+    it("negates the attack at a full reduction when a protecting escort is anti-submarine capable", () => {
+      expect(attacked([aswEscort("e1")], WITH_ASW)).toEqual(["MISS"]);
+    });
+
+    it("leaves the attack unchanged for escorts without anti-submarine capability", () => {
+      expect(attacked([escort("e1")], WITH_ASW)).toEqual(["HIT"]);
+    });
+
+    it("ignores capable ships that are not on trade protection duty or not active", () => {
+      expect(
+        attacked(
+          [
+            aswEscort("e1", { stationAssignment: "EXERCISE" }),
+            aswEscort("e2", { readiness: "RESERVE" }),
+          ],
+          WITH_ASW,
+        ),
+      ).toEqual(["HIT"]);
+    });
+
+    it("changes nothing when the reduction is not authored", () => {
+      expect(attacked([aswEscort("e1")], WITH_SUBS)).toEqual(["HIT"]);
+    });
+  });
+
   it("draws identically for the same seed", () => {
     const run = (seed: string) =>
       runTrade(

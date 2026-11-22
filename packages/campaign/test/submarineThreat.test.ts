@@ -1,5 +1,7 @@
 import { describe, expect, it } from "vite-plus/test";
 import {
+  aswEscortAttackChanceBp,
+  countAswEscorts,
   countEnemySubmarines,
   shortfallPrestigeLossBp,
   submarineAttackChanceBp,
@@ -15,6 +17,7 @@ const submarineThreat: SubmarineThreatRules = {
   attackBp: 1000,
   lossPerHitBp: 120,
   blockadeReductionBp: 8000,
+  aswEscortReductionBp: 2000,
 };
 
 const shortfallPrestige: ShortfallPrestigeRules = { thresholdBp: 2000, lossBp: 150 };
@@ -111,5 +114,64 @@ describe("shortfall prestige", () => {
     expect(shortfallPrestigeLossBp(shortfallPrestige, 1999)).toBe(0);
     expect(shortfallPrestigeLossBp(shortfallPrestige, 2000)).toBe(150);
     expect(shortfallPrestigeLossBp(shortfallPrestige, 10_000)).toBe(150);
+  });
+});
+
+describe("anti-submarine escorts", () => {
+  const designs = new Map([
+    ["dd-asw", { hullType: "destroyer", normalizedSpeedUms: 1, aswLevel: 2 }],
+    ["dd", { hullType: "destroyer", normalizedSpeedUms: 1 }],
+    ["cl-asw", { hullType: "light_cruiser", normalizedSpeedUms: 1, aswLevel: 1 }],
+  ]);
+  const escort = (
+    id: string,
+    designVersionId: string,
+    readiness = "ACTIVE",
+    station = "TRADE_PROTECTION",
+  ) => ({ id, designVersionId, readiness, stationAssignment: station });
+
+  it("counts only active, contributing, trade-protection ships fitted for anti-submarine attack", () => {
+    const ships = [
+      escort("a", "dd-asw"),
+      escort("b", "dd"),
+      escort("c", "dd-asw", "RESERVE"),
+      escort("d", "dd-asw", "ACTIVE", "RAIDER"),
+      escort("e", "cl-asw"),
+      escort("f", "missing"),
+      escort("g", "dd-asw"),
+    ];
+    expect(countAswEscorts(rules, ships, designs)).toBe(2);
+  });
+
+  it("is the identity with no escorts", () => {
+    expect(aswEscortAttackChanceBp(submarineThreat, 3000, 0)).toBe(3000);
+  });
+
+  it("is the identity when no reduction is authored", () => {
+    const unauthored: SubmarineThreatRules = {
+      hullType: "submarine",
+      quotaPerBoatBp: 2500,
+      attackBp: 1000,
+      lossPerHitBp: 120,
+      blockadeReductionBp: 8000,
+    };
+    expect(aswEscortAttackChanceBp(unauthored, 3000, 5)).toBe(3000);
+  });
+
+  it("reduces the chance per escort and never raises it", () => {
+    expect(aswEscortAttackChanceBp(submarineThreat, 3000, 1)).toBe(2400);
+    expect(aswEscortAttackChanceBp(submarineThreat, 3000, 2)).toBe(1920);
+    let previous = 3000;
+    for (let escorts = 0; escorts <= 40; escorts += 1) {
+      const chance = aswEscortAttackChanceBp(submarineThreat, 3000, escorts);
+      expect(chance).toBeLessThanOrEqual(previous);
+      expect(chance).toBeGreaterThanOrEqual(0);
+      previous = chance;
+    }
+  });
+
+  it("removes the chance entirely at a full reduction", () => {
+    const full = { ...submarineThreat, aswEscortReductionBp: 10_000 };
+    expect(aswEscortAttackChanceBp(full, 3000, 1)).toBe(0);
   });
 });

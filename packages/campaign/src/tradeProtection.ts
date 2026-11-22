@@ -74,6 +74,7 @@ export interface TradeDutyDesign {
   readonly hullType: string;
   readonly normalizedSpeedUms: number;
   readonly shortRange?: true | undefined;
+  readonly aswLevel?: number | undefined;
 }
 
 export function tradeProtectionQuota(

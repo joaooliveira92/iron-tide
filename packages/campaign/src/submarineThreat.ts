@@ -1,5 +1,5 @@
 import { SafeInt } from "@bluewave/contracts";
-import type { TradeDutyDesign } from "./tradeProtection.js";
+import type { TradeDutyDesign, TradeDutyShip } from "./tradeProtection.js";
 
 const BP_DENOMINATOR = SafeInt(10_000);
 
@@ -9,6 +9,7 @@ export interface SubmarineThreatRules {
   readonly attackBp: number;
   readonly lossPerHitBp: number;
   readonly blockadeReductionBp: number;
+  readonly aswEscortReductionBp?: number | undefined;
 }
 
 export interface ShortfallPrestigeRules {
@@ -67,6 +68,35 @@ export function submarineAttackChanceBp(
   if (!attackerBlockadesVictim) return capped;
   const remaining = SafeInt.sub(BP_DENOMINATOR, SafeInt(rules.submarineThreat.blockadeReductionBp));
   return SafeInt.div(SafeInt.mul(SafeInt(capped), remaining), BP_DENOMINATOR, "floor");
+}
+
+export function countAswEscorts(
+  rules: { readonly contributingHullTypes: readonly string[] },
+  ships: readonly TradeDutyShip[],
+  designs: ReadonlyMap<string, TradeDutyDesign>,
+): number {
+  let count = 0;
+  for (const ship of ships) {
+    if (ship.stationAssignment !== "TRADE_PROTECTION" || ship.readiness !== "ACTIVE") continue;
+    const design = designs.get(ship.designVersionId);
+    if (design === undefined || !rules.contributingHullTypes.includes(design.hullType)) continue;
+    if (design.aswLevel !== undefined && design.aswLevel > 0) count += 1;
+  }
+  return count;
+}
+
+export function aswEscortAttackChanceBp(
+  rules: Pick<SubmarineThreatRules, "aswEscortReductionBp">,
+  chanceBp: number,
+  aswEscorts: number,
+): number {
+  if (rules.aswEscortReductionBp === undefined || aswEscorts <= 0) return chanceBp;
+  const remaining = SafeInt.sub(BP_DENOMINATOR, SafeInt(rules.aswEscortReductionBp));
+  let chance = SafeInt(chanceBp);
+  for (let escort = 0; escort < aswEscorts && chance > 0; escort += 1) {
+    chance = SafeInt.div(SafeInt.mul(chance, remaining), BP_DENOMINATOR, "floor");
+  }
+  return chance;
 }
 
 export function shortfallPrestigeLossBp(
