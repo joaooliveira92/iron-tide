@@ -262,10 +262,23 @@ describe("contamination of the default package", () => {
     const archive = DEFAULT_ARCHIVE();
     archive.set("node_modules/react-dom/index.js", text("module.exports = {};"));
     archive.set("node_modules/maplibre-gl/dist/maplibre-gl.js", text("module.exports = {};"));
+    archive.set("node_modules/clsx/dist/clsx.js", text("module.exports = {};"));
+    archive.set("node_modules/cmdk/dist/index.js", text("module.exports = {};"));
+    archive.set("node_modules/tailwind-merge/dist/index.js", text("module.exports = {};"));
+    archive.set(
+      "node_modules/class-variance-authority/dist/index.js",
+      text("module.exports = {};"),
+    );
     const found = rules({ archive }, "default");
     expect(found).toContain("renderer-bundled-library@node_modules/react-dom/index.js");
     expect(found).toContain(
       "renderer-bundled-library@node_modules/maplibre-gl/dist/maplibre-gl.js",
+    );
+    expect(found).toContain("renderer-bundled-library@node_modules/clsx/dist/clsx.js");
+    expect(found).toContain("renderer-bundled-library@node_modules/cmdk/dist/index.js");
+    expect(found).toContain("renderer-bundled-library@node_modules/tailwind-merge/dist/index.js");
+    expect(found).toContain(
+      "renderer-bundled-library@node_modules/class-variance-authority/dist/index.js",
     );
   });
 
@@ -404,6 +417,19 @@ describe("size policy", () => {
       realPolicy.modes.default.budget.archiveBytesMax;
     const allowedCaps = realPolicy.modes.spike.allow.reduce((sum, rule) => sum + rule.maxBytes, 0);
     expect(growth).toBeLessThanOrEqual(allowedCaps);
+  });
+
+  it("keeps each mode's archive budget within a fixed headroom of its measured size", () => {
+    const measured: Record<PackageMode, number> = {
+      default: 105_984_545,
+      spike: 106_804_140,
+      adapter: 122_219_447,
+    };
+    for (const mode of Object.keys(measured) as PackageMode[]) {
+      const headroom = realPolicy.modes[mode].budget.archiveBytesMax - measured[mode];
+      expect(headroom, mode).toBeGreaterThanOrEqual(0);
+      expect(headroom, mode).toBeLessThanOrEqual(16_000_000);
+    }
   });
 });
 
