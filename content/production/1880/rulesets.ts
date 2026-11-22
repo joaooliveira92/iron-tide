@@ -199,6 +199,14 @@ export default list(RulesetManifestSchema, [
       revolutionProbabilityBp: 1_500,
       liberalDemocracyDampingBp: 4_000,
       aftermathUnrest: 5,
+      governmentAfterRevolution: {
+        liberal_democracy: "communist",
+        limited_democracy: "fascist",
+        autocratic: "communist",
+        fascist: "limited_democracy",
+        communist: "autocratic",
+        eastern: "limited_democracy",
+      },
       provenance: {
         sourceStatus: "BALANCE_TARGET",
         confidence: "LOW",
@@ -208,12 +216,12 @@ export default list(RulesetManifestSchema, [
             title: "Rule the Waves 3 manual",
             author: "Naval War Simulations / Matrix Games",
             year: 2023,
-            page: "62",
+            page: "60, 62",
             section:
-              "Unrest drivers and brakes; strikes demand lower military budgets; revolution is less likely in liberal democracies",
+              "Unrest drivers and brakes; strikes demand lower military budgets; revolution is less likely in liberal democracies; the government type can change, mostly through revolutions",
           },
         ],
-        note: "BALANCE_TARGET under ADR-0240 decision 0010. The scale is 0 to 10 as stored; every threshold, magnitude and the revolution chance are tunable balance values, not sourced. A single month can raise unrest by at most a few points, so strikes need sustained pressure.",
+        note: "BALANCE_TARGET under ADR-0240 decision 0010. The scale is 0 to 10 as stored; every threshold, magnitude and the revolution chance are tunable balance values, not sourced. A single month can raise unrest by at most a few points, so strikes need sustained pressure. The government table (#1018) is PROVISIONAL: the manual (p.60) says only that the government type can change, mostly through revolutions, and names no successor, so each AI revolution moves the nation to the listed type; omitting the table keeps the government.",
       },
     },
     // The peace-behaviour section (#777, decisions 0054 and 0055). Every value is a PROVISIONAL Bluewave balance target:

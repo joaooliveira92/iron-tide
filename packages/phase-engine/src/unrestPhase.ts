@@ -4,6 +4,7 @@ import {
   resolveUnrestDrivers,
   resolveUnrestMonthInput,
   revolutionEligible,
+  revolutionGovernment,
   revolutionProbabilityBp,
   strikeActive,
   unrestOf,
@@ -80,6 +81,7 @@ function emitConsequence(
   rateBeforeBp: number,
   rateAfterBp: number,
   careerEnded: boolean,
+  government?: { readonly before: string; readonly after: string },
 ): void {
   ctx.eventLedger.append(
     unrestConsequenceEvent(
@@ -92,6 +94,7 @@ function emitConsequence(
       ctx.snapshot.read("rulesetVersion"),
       ctx.nextSeq(),
       ctx.campaignMonth,
+      government,
     ),
   );
 }
@@ -183,7 +186,22 @@ function applyRevolution(
   applyUnrestContributions(ctx, nation.id, [
     { reasonCode: "REVOLUTION_AFTERMATH", delta: rules.aftermathUnrest - unrest },
   ]);
-  emitConsequence(ctx, nation.id, "REVOLUTION", unrest, rateBp, rateBp, false);
+  const before = nation.governmentType;
+  const after = revolutionGovernment(rules, before);
+  if (before !== undefined && after !== undefined) {
+    const current = freshNation(ctx, nation.id);
+    if (current !== undefined) writeNation(ctx, { ...current, governmentType: after });
+  }
+  emitConsequence(
+    ctx,
+    nation.id,
+    "REVOLUTION",
+    unrest,
+    rateBp,
+    rateBp,
+    false,
+    before !== undefined && after !== undefined ? { before, after } : undefined,
+  );
 }
 
 export const unrestPhase: MonthPhase = {

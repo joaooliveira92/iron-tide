@@ -243,6 +243,8 @@ export const UnrestConsequenceSchema = Schema.Struct({
   rateBeforeBp: nonNegativeSafeInt,
   rateAfterBp: nonNegativeSafeInt,
   careerEnded: Schema.Boolean,
+  governmentBefore: Schema.optional(nonEmptyString),
+  governmentAfter: Schema.optional(nonEmptyString),
   rulesetVersion: nonEmptyString,
 });
 
