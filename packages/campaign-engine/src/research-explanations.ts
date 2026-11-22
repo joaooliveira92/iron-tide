@@ -68,6 +68,8 @@ export function explainResearchBudget(
     .addChild(moneyChild("research_budget.requested", requested));
   if (!hasEligibleField) {
     builder.addChild(moneyChild("research_budget.unfunded", -requested));
+  } else if (requested > cap) {
+    builder.addChild(moneyChild("research_budget.aboveCap", cap - requested));
   }
   return builder.build();
 }

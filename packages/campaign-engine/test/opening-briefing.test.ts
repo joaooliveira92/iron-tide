@@ -171,7 +171,7 @@ describe("buildOpeningBriefingProjection", () => {
       id: "uk",
       income: SafeInt(10_000),
       baseResources: baseFor(2_000),
-      expenses: SafeInt(400),
+      expenses: SafeInt(640),
       navalAppropriationRateBp: SafeInt(2_000),
       research: {
         nationId: "uk",
@@ -231,9 +231,9 @@ describe("buildOpeningBriefingProjection", () => {
     expect(projection.treasury.governmentAllocation).toBe(2_000);
     expect(projection.treasury.fleetMaintenance).toBe(700);
     expect(projection.treasury.constructionCommitted).toBe(400);
-    expect(projection.treasury.researchExpenditure).toBe(500);
-    expect(projection.treasury.obligations).toBe(400);
-    expect(projection.treasury.projectedSurplus).toBe(2_000 - 400 - 700 - 500);
+    expect(projection.treasury.researchExpenditure).toBe(240);
+    expect(projection.treasury.obligations).toBe(640);
+    expect(projection.treasury.projectedSurplus).toBe(2_000 - 640 - 700 - 240);
     expect(projection.treasury.status).toBe("narrow");
   });
 

@@ -12,6 +12,7 @@ import {
   monthlyNetBeforeConstruction,
   monthlyResearchSpend,
   monthlyRevenue,
+  fundedResearch,
   researchCap,
   runwayMonths,
   settleOutflow,
@@ -106,6 +107,14 @@ describe("economy calculators", () => {
   it("rejects non-integer and unsafe operands at construction, so no float reaches a calculator", () => {
     for (const bad of [1.5, Number.NaN, Number.POSITIVE_INFINITY, Number.MAX_SAFE_INTEGER + 1])
       expect(() => SafeInt(bad)).toThrow();
+  });
+
+  it("funds the requested research up to the cap and the cap beyond it", () => {
+    expect(fundedResearch(SafeInt(10), SafeInt(100))).toBe(10);
+    expect(fundedResearch(SafeInt(12), SafeInt(100))).toBe(12);
+    expect(fundedResearch(SafeInt(13), SafeInt(100))).toBe(12);
+    expect(fundedResearch(SafeInt(5), SafeInt(3))).toBe(0);
+    expect(fundedResearch(SafeInt(0), SafeInt(100))).toBe(0);
   });
 
   it("caps research at 12% of monthly revenue and pays floor(annual/12)", () => {

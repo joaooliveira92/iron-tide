@@ -152,8 +152,8 @@ describe("economy explanations", () => {
     const projection = projectionWith({
       ...healthy,
       treasury: SafeInt(30),
-      baseResources: baseFor(1),
-      expenses: SafeInt(0),
+      baseResources: baseFor(50),
+      expenses: SafeInt(49),
     });
     expect(projection.economy.runwayMonths).toBe(1);
     const tree = projection.economy.runwayExplanation;
