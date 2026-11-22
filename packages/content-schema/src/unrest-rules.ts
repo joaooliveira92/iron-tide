@@ -1,6 +1,7 @@
 import { Result, Schema, SchemaIssue } from "effect";
 
 import { CONTENT_DECODE_OPTIONS } from "./decode.js";
+import { GovernmentTypeSchema } from "./nation.js";
 import { ProvenanceSchema } from "./provenance.js";
 
 const level = Schema.Finite.check(Schema.isInt(), Schema.isBetween({ minimum: 0, maximum: 10 }));
@@ -33,6 +34,16 @@ export const UnrestRulesSchema = Schema.Struct({
   revolutionProbabilityBp: basisPoints,
   liberalDemocracyDampingBp: basisPoints,
   aftermathUnrest: level,
+  governmentAfterRevolution: Schema.optional(
+    Schema.Struct({
+      liberal_democracy: GovernmentTypeSchema,
+      limited_democracy: GovernmentTypeSchema,
+      autocratic: GovernmentTypeSchema,
+      fascist: GovernmentTypeSchema,
+      communist: GovernmentTypeSchema,
+      eastern: GovernmentTypeSchema,
+    }),
+  ),
   provenance: ProvenanceSchema,
 });
 

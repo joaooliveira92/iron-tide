@@ -54,6 +54,7 @@ export function unrestConsequenceEvent(
   rulesetVersion: string,
   seq: SafeInt,
   campaignMonth: string,
+  government?: { readonly before: string; readonly after: string },
 ): DomainEventEnvelope {
   return {
     eventId: `UnrestConsequence-${nationId}-${consequence}-${String(seq)}`,
@@ -70,6 +71,9 @@ export function unrestConsequenceEvent(
       rateBeforeBp: SafeInt(rateBeforeBp),
       rateAfterBp: SafeInt(rateAfterBp),
       careerEnded,
+      ...(government === undefined
+        ? {}
+        : { governmentBefore: government.before, governmentAfter: government.after }),
       rulesetVersion,
     },
     sequenceNumber: seq,
