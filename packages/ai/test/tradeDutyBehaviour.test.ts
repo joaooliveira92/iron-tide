@@ -4,13 +4,23 @@ import { decideTradeDuty } from "../src/tradeDutyBehaviour";
 
 type Snapshot = Parameters<typeof decideTradeDuty>[0];
 
-const RULES = {
+const RULES: TradeProtectionRules = {
   fleetShareBp: 5000,
   resourcesPerRequiredShip: 100,
   contributingHullTypes: ["destroyer"],
   raiderHullTypes: ["protected_cruiser"],
   amcHullType: "armed_merchant_cruiser",
   amcMinSpeedUms: 4_115_552,
+  raiderHitBp: 10_000,
+  shortfallAmplifyBp: 5000,
+  lossPerHitBp: 1000,
+  pressureChanceBp: 10_000,
+  pressureLossBp: 500,
+  recoveryBpPerMonth: 200,
+  revenueSensitivityBp: 5000,
+  unrestThresholdBp: 1000,
+  unrestCadenceMonths: 1,
+  unrestStep: 1,
   submarineThreat: {
     hullType: "submarine",
     quotaPerBoatBp: 10_000,
@@ -18,7 +28,7 @@ const RULES = {
     lossPerHitBp: 500,
     blockadeReductionBp: 5000,
   },
-} as TradeProtectionRules;
+};
 
 const idle = { engaged: true, sortieFleetIds: new Set<string>(), enemyAreas: new Set<string>() };
 
