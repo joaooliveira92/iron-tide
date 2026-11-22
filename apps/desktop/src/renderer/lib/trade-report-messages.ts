@@ -1,3 +1,13 @@
+import type { MonthlyReportRaiderEntry } from "../../shared/reports-contract.js";
+
+type Slot<K extends keyof MonthlyReportRaiderEntry> =
+  | NonNullable<MonthlyReportRaiderEntry[K]>
+  | "NONE";
+
+type RaiderSentenceKey =
+  | `reports.trade.raider.engaged.${Slot<"encounter">}.${Slot<"outcome">}`
+  | `reports.trade.raider.interned.${Slot<"cause">}`;
+
 export const TRADE_REPORT_MESSAGES = {
   "reports.trade.title": "Trade protection",
   "reports.trade.noQuota": "No trade protection quota was in force.",
@@ -39,4 +49,4 @@ export const TRADE_REPORT_MESSAGES = {
   "reports.trade.raider.interned.DAMAGE": "{ship} was interned after taking damage.",
   "reports.trade.raider.interned.NONE": "{ship} was interned.",
   "reports.trade.raider.released": "{ship} was released from internment.",
-} as const;
+} as const satisfies Readonly<Record<string, string>> & Record<RaiderSentenceKey, string>;
