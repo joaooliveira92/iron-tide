@@ -91,6 +91,17 @@ jobs:
         run: pnpm --filter @bluewave/desktop exec electron-builder ${{ matrix.target }} --dir --config electron-builder.json
       - name: Enforce the production package policy
         run: pnpm --filter @bluewave/desktop exec node scripts/package-guard/cli.ts --mode default --package dist-electron
+      - name: Build the globe spike
+        if: matrix.os == 'ubuntu-latest'
+        run: pnpm --filter @bluewave/desktop run build:globe-spike
+      - name: Package the globe spike (unpacked)
+        if: matrix.os == 'ubuntu-latest'
+        env:
+          CSC_IDENTITY_AUTO_DISCOVERY: "false"
+        run: pnpm --filter @bluewave/desktop exec electron-builder ${{ matrix.target }} --dir --config electron-builder.json --config.directories.output=dist-electron-spike
+      - name: Enforce the spike package policy
+        if: matrix.os == 'ubuntu-latest'
+        run: pnpm --filter @bluewave/desktop exec node scripts/package-guard/cli.ts --mode spike --package dist-electron-spike
 
   globe-ok:
     name: globe-ok
