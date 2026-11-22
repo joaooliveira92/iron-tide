@@ -473,11 +473,11 @@
       "status": "dormant-by-decision",
       "engine_package": "phase-engine",
       "engine_modules": [],
-      "engine_symbols": ["applySubmarinePolicyCommand"],
+      "engine_symbols": ["applySubmarinePolicyCommand", "applySubmarineIncidentsForMonth"],
       "main_commands": [],
       "renderer_screen": null,
       "evidence_test": null,
-      "decision": "#1071"
+      "decision": "#1097"
     },
     {
       "id": "presence-revolt-pressure",
