@@ -32,7 +32,7 @@ function makeResearchNation(
     treasury: overrides.treasury ?? SafeInt(1000),
     income: SafeInt(0),
     expenses: SafeInt(0),
-    baseResources: overrides.baseResources ?? SafeInt(0),
+    baseResources: overrides.baseResources ?? SafeInt(60_000),
     navalAppropriationRateBp: SafeInt(2000),
     maintenanceCost: SafeInt(0),
     fleets: [],
@@ -206,7 +206,7 @@ describe("B10b research acceptance (criteria 1-10)", () => {
     const { result } = runMonth(snapshot, []);
 
     const final = result.finalSnapshot.nations.get("GBR")!;
-    expect(final.treasury as number).toBeLessThan(1000);
+    expect(final.treasury as number).toBe(1000 + 1000 - 100);
 
     const spendEntries = result.financialLedger.all.filter(
       (e) => e.nationId === "GBR" && e.categoryId === "RESEARCH_EXPENDITURE",

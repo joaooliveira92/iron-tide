@@ -1,7 +1,11 @@
 import {
   discoveryDrawWeight,
+  effectiveAppropriationRateBp,
   eligibleResearchFields,
   eligibleTechnologiesForField,
+  fundedResearch,
+  monthlyRevenue,
+  researchCap,
   settleOutflow,
   technologyCatalogueOf,
   type CampaignSnapshot,
@@ -114,7 +118,20 @@ export function resolveResearchNations(
       continue;
     }
 
-    const settlement = settleOutflow(research["researchBudget"], nation["treasury"]);
+    const revenue = monthlyRevenue(
+      nation["baseResources"],
+      effectiveAppropriationRateBp(nation, campaignMonth),
+    );
+    const requested = research["researchBudget"];
+    const funded = fundedResearch(requested, revenue);
+    if (funded < requested)
+      collector.addInfo(
+        "RESEARCH_CLAMPED_TO_CAP",
+        `Nation ${nationId} research budget ${String(requested)} is above the cap of ${String(researchCap(revenue))} at the current appropriation rate; ${String(funded)} is paid`,
+        { stage: "resolve_research", entityId: nationId },
+      );
+
+    const settlement = settleOutflow(funded, nation["treasury"]);
     reportOutflowShortfall(collector, nationId, "research", settlement, "resolve_research");
     const actualPaidExpenditure = settlement.paid;
     const effectiveResources = computeResearchResources(actualPaidExpenditure);
