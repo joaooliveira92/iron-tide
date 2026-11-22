@@ -1,6 +1,9 @@
+import { createRequire } from "node:module";
+import { resolve } from "node:path";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
-import { baseGrowthFromRulesets } from "../src/index.js";
+import { baseGrowthFromRulesets, ValidateStage } from "../src/index.js";
+import type { ParseOutput } from "../src/stages/parse.js";
 import { validateBaseGrowthRules } from "../src/stages/validateBaseGrowthRules.js";
 
 const provenance = {
@@ -37,5 +40,45 @@ describe("baseGrowth ruleset section (S-3 D7)", () => {
     expect(codes([ruleset("fixture", 600)])).toEqual(["BASE_GROWTH_RULES_INVALID"]);
     expect(codes([ruleset("fixture", 400, "XXX")])).toEqual(["BASE_GROWTH_NATION_UNKNOWN"]);
     expect(codes([ruleset("a", 400), ruleset("b", 400)])).toContain("BASE_GROWTH_RULES_AMBIGUOUS");
+  });
+});
+
+describe("baseGrowth through the validate stage", () => {
+  const stageCodes = (rulesets: unknown[], countries: unknown[]) => {
+    const input: ParseOutput = {
+      manifest: { name: "test-pack", version: "0.1.0", type: "fixture", files: {} },
+      collectionDocs: new Map<string, unknown[]>([
+        ["rulesets", rulesets],
+        ["countries", countries],
+      ]),
+      sourcePaths: new Map(),
+      objectDocs: new Map(),
+      objectSourcePaths: new Map(),
+      contentDir: ".",
+    };
+    const collector = new DiagnosticCollector();
+    new ValidateStage().run(input, new AbortController().signal, collector);
+    return collector.all.map((d) => d.code as string);
+  };
+  const stageRuleset = (nationId: string) => ({
+    ...ruleset("fixture", 400, nationId),
+    name: "fixture",
+    version: "1.0",
+  });
+
+  const countries = () =>
+    structuredClone(
+      (
+        createRequire(import.meta.url)(
+          resolve(import.meta.dirname, "../../../content/production/1880/countries.ts"),
+        ) as { readonly default: unknown[] }
+      ).default,
+    );
+
+  it("resolves section nations against the pack's country ids", () => {
+    expect(stageCodes([stageRuleset("uk")], countries())).not.toContain(
+      "BASE_GROWTH_NATION_UNKNOWN",
+    );
+    expect(stageCodes([stageRuleset("XXX")], countries())).toContain("BASE_GROWTH_NATION_UNKNOWN");
   });
 });
