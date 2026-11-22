@@ -3,6 +3,8 @@ import {
   aswEscortAttackChanceBp,
   countAswEscorts,
   countEnemySubmarines,
+  countQShips,
+  qShipAttackChanceBp,
   shortfallPrestigeLossBp,
   submarineAttackChanceBp,
   submarineQuotaTerm,
@@ -173,5 +175,62 @@ describe("anti-submarine escorts", () => {
   it("removes the chance entirely at a full reduction", () => {
     const full = { ...submarineThreat, aswEscortReductionBp: 10_000 };
     expect(aswEscortAttackChanceBp(full, 3000, 1)).toBe(0);
+  });
+});
+
+describe("Q-ships", () => {
+  const designs = new Map([
+    ["amc", { hullType: "armed_merchant_cruiser", normalizedSpeedUms: 1 }],
+    ["amc-asw", { hullType: "armed_merchant_cruiser", normalizedSpeedUms: 1, aswLevel: 1 }],
+    ["dd-asw", { hullType: "destroyer", normalizedSpeedUms: 1, aswLevel: 2 }],
+  ]);
+  const duty = (
+    id: string,
+    designVersionId: string,
+    readiness = "ACTIVE",
+    station = "TRADE_PROTECTION",
+  ) => ({ id, designVersionId, readiness, stationAssignment: station });
+  const qShipRules = { ...submarineThreat, qShipReductionBp: 1000 };
+
+  it("counts only active armed merchant cruisers on trade protection duty", () => {
+    const ships = [
+      duty("a", "amc"),
+      duty("b", "amc", "RESERVE"),
+      duty("c", "amc", "ACTIVE", "RAIDER"),
+      duty("d", "dd-asw"),
+      duty("e", "missing"),
+      duty("f", "amc-asw"),
+    ];
+    expect(countQShips(rules, ships, designs)).toBe(2);
+  });
+
+  it("stops an armed merchant cruiser counting as an anti-submarine escort once Q-ships are authored", () => {
+    const ships = [duty("a", "amc-asw"), duty("b", "dd-asw")];
+    const contributing = { contributingHullTypes: ["destroyer", "armed_merchant_cruiser"] };
+    expect(countAswEscorts(contributing, ships, designs)).toBe(2);
+    expect(
+      countAswEscorts({ ...contributing, qShipHullType: "armed_merchant_cruiser" }, ships, designs),
+    ).toBe(1);
+  });
+
+  it("is the identity with no Q-ships or no authored reduction", () => {
+    expect(qShipAttackChanceBp(qShipRules, 3000, 0)).toBe(3000);
+    expect(qShipAttackChanceBp(submarineThreat, 3000, 4)).toBe(3000);
+  });
+
+  it("reduces the chance per Q-ship, compounding and never raising it", () => {
+    expect(qShipAttackChanceBp(qShipRules, 3000, 1)).toBe(2700);
+    expect(qShipAttackChanceBp(qShipRules, 3000, 2)).toBe(2430);
+    let previous = 3000;
+    for (let ships = 0; ships <= 40; ships += 1) {
+      const chance = qShipAttackChanceBp(qShipRules, 3000, ships);
+      expect(chance).toBeLessThanOrEqual(previous);
+      expect(chance).toBeGreaterThanOrEqual(0);
+      previous = chance;
+    }
+  });
+
+  it("removes the chance entirely at a full reduction", () => {
+    expect(qShipAttackChanceBp({ ...submarineThreat, qShipReductionBp: 10_000 }, 3000, 1)).toBe(0);
   });
 });

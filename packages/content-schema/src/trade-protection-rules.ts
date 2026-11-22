@@ -27,6 +27,7 @@ export const SubmarineThreatRulesSchema = Schema.Struct({
   lossPerHitBp: bp,
   blockadeReductionBp: bp,
   aswEscortReductionBp: Schema.optional(bp),
+  qShipReductionBp: Schema.optional(bp),
 });
 
 export const ShortfallPrestigeRulesSchema = Schema.Struct({
