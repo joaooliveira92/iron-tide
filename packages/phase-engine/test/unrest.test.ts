@@ -1,5 +1,5 @@
 import type { CampaignSnapshot, NationState, Ship, WarState } from "@bluewave/campaign";
-import type { UnrestRules } from "@bluewave/content-schema";
+import type { GovernmentType, UnrestRules } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
@@ -26,6 +26,14 @@ const RULES: UnrestRules = {
   revolutionProbabilityBp: 10_000,
   liberalDemocracyDampingBp: 4_000,
   aftermathUnrest: 5,
+  governmentAfterRevolution: {
+    liberal_democracy: "communist",
+    limited_democracy: "fascist",
+    autocratic: "communist",
+    fascist: "limited_democracy",
+    communist: "autocratic",
+    eastern: "limited_democracy",
+  },
   provenance: {
     sourceStatus: "BALANCE_TARGET",
     confidence: "LOW",
@@ -152,6 +160,8 @@ interface Scenario {
   readonly rateBp?: number;
   readonly unrest?: number;
   readonly aiUnrest?: number;
+  readonly aiGovernment?: GovernmentType;
+  readonly playerGovernment?: GovernmentType;
   readonly warStart?: string;
   readonly prestige?: number;
   readonly sackingBp?: number;
@@ -179,10 +189,17 @@ function snapshot(s: Scenario): CampaignSnapshot {
         "GBR",
         {
           ...nation("GBR", s.rateBp ?? 2_000, s.unrest),
+          ...(s.playerGovernment === undefined ? {} : { governmentType: s.playerGovernment }),
           ...(s.prestige === undefined ? {} : { prestige: SafeInt(s.prestige) }),
         },
       ],
-      ["FRA", nation("FRA", 2_000, s.aiUnrest)],
+      [
+        "FRA",
+        {
+          ...nation("FRA", 2_000, s.aiUnrest),
+          ...(s.aiGovernment === undefined ? {} : { governmentType: s.aiGovernment }),
+        },
+      ],
     ]),
     wars: wars(s.warStart),
     politics: { relations: [], shells: {} },
@@ -337,5 +354,35 @@ describe("#996: revolution", () => {
     );
     expect(result.finalSnapshot.wars.wars.every((w) => w.status === "ENDED")).toBe(true);
     expect(result.finalSnapshot.careerResult).toBeUndefined();
+  });
+
+  it("replaces an AI nation's government by the ruleset table and logs both ends", () => {
+    const result = run({ aiUnrest: 9, warStart: "1880-01", aiGovernment: "autocratic" });
+    expect(result.finalSnapshot.nations.get("FRA")?.governmentType).toBe("communist");
+    expect(result.eventLedger.all.map((e) => e.body)).toContainEqual(
+      expect.objectContaining({
+        kind: "UnrestConsequence",
+        nationId: "FRA",
+        consequence: "REVOLUTION",
+        governmentBefore: "autocratic",
+        governmentAfter: "communist",
+      }),
+    );
+  });
+
+  it("leaves an AI nation without a government type untouched", () => {
+    const result = run({ aiUnrest: 9, warStart: "1880-01" });
+    expect(result.finalSnapshot.nations.get("FRA")?.governmentType).toBeUndefined();
+  });
+
+  it("keeps the government when the ruleset has no table", () => {
+    const { governmentAfterRevolution: _table, ...bare } = RULES;
+    const result = run({ aiUnrest: 9, warStart: "1880-01", aiGovernment: "autocratic" }, bare);
+    expect(result.finalSnapshot.nations.get("FRA")?.governmentType).toBe("autocratic");
+  });
+
+  it("keeps the player's government when the career ends", () => {
+    const result = run({ unrest: 9, warStart: "1880-01", playerGovernment: "autocratic" });
+    expect(result.finalSnapshot.nations.get("GBR")?.governmentType).toBe("autocratic");
   });
 });

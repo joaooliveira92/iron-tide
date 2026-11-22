@@ -1,3 +1,4 @@
+import type { GovernmentType } from "@bluewave/content-schema";
 import { APPROPRIATION_RATE_MIN_BP } from "./budgetConstants.js";
 import { UNREST_MAX, UNREST_MIN } from "./eventEffects.js";
 import { monthIndex } from "./eventDraw.js";
@@ -41,6 +42,7 @@ export interface UnrestRules {
   readonly revolutionProbabilityBp: number;
   readonly liberalDemocracyDampingBp: number;
   readonly aftermathUnrest: number;
+  readonly governmentAfterRevolution?: Readonly<Record<GovernmentType, GovernmentType>>;
 }
 
 export interface UnrestContribution {
@@ -184,6 +186,14 @@ export function rateAfterStrike(rateBp: number, rules: UnrestRules): number {
 
 export function revolutionEligible(unrest: number, atWar: boolean, rules: UnrestRules): boolean {
   return atWar && unrest >= rules.revolutionThreshold;
+}
+
+export function revolutionGovernment(
+  rules: UnrestRules,
+  governmentType: NationState["governmentType"],
+): NationState["governmentType"] {
+  if (governmentType === undefined) return undefined;
+  return rules.governmentAfterRevolution?.[governmentType];
 }
 
 export function revolutionProbabilityBp(
