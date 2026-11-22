@@ -63,6 +63,7 @@ export function runBattleGenerationPhase(ctx: PhaseContext): PhaseRunOutcome {
     resolveShipType: resolveGenerationShipType,
     resolveReadiness: (shipId) => resolveCampaignBattleReadiness(ctx.snapshot.current, shipId),
     ...(minimumStrength === undefined ? {} : { minimumStrength }),
+    raiderEncounters: ctx.raiderEncounters ?? [],
   });
 
   const surviving = applyEnemyDeclines(ctx, generated);

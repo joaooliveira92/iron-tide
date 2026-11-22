@@ -20,6 +20,7 @@ import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import type { DomainEventEnvelope } from "@bluewave/events";
 import type { PhaseContext } from "./pipeline.js";
+import { queueRaiderEncounter } from "./raiderEncounterQueue.js";
 import { activeWars, byId, designMap, opponentsOf, shipsOf } from "./tradeWarContext.js";
 
 const STREAM_INTERCEPTION = "trade/interception";
@@ -227,6 +228,22 @@ export function applyRaiderInterceptionForMonth(
           ships.push(interned(ship, month, cause));
           ctx.eventLedger.append(internedEvent(nationId, ship.id, month, ctx.nextSeq(), cause));
           changed = true;
+          continue;
+        }
+
+        const blockader = breakout
+          ? blockades.find((blockade) => blockade.blockadedNationId === nationId)?.blockaderId
+          : undefined;
+        const queued = queueRaiderEncounter(ctx, tradeRules, designs, {
+          warId: target.war.id,
+          areaId: ship.locationAreaId,
+          breakout,
+          raiderNationId: nationId,
+          raiderShipId: ship.id,
+          interceptorNation: nations.get(blockader ?? target.victimId),
+        });
+        if (queued) {
+          ships.push(ship);
           continue;
         }
 
