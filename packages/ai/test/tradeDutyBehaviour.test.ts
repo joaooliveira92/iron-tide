@@ -161,6 +161,67 @@ describe("decideTradeDuty (#1069)", () => {
     expect(decideTradeDuty(snapshot, "FRA", "GBR", RULES, idle).assign).toEqual(["b1", "b2"]);
   });
 
+  it("releases duty fleets mid-war when the enemy no longer fields a raider or a submarine", () => {
+    const duty = { stationAssignment: "TRADE_PROTECTION" };
+    const snapshot = world(
+      [
+        fleet("b", [ship("b2", "dd", duty), ship("b1", "dd", duty)]),
+        fleet("a", [ship("a1", "dd", duty)]),
+        fleet("c", [ship("c1", "dd")]),
+      ],
+      [ship("e", "dd")],
+    );
+    expect(decideTradeDuty(snapshot, "FRA", "GBR", RULES, idle)).toEqual({
+      assign: [],
+      release: ["a1", "b1", "b2"],
+    });
+  });
+
+  it("releases surplus whole duty fleets in fleet id order while the quota stays met", () => {
+    const duty = { stationAssignment: "TRADE_PROTECTION" };
+    const snapshot = world(
+      [
+        fleet("c", [ship("c1", "dd", duty), ship("c2", "dd", duty)]),
+        fleet("a", [ship("a1", "dd", duty), ship("a2", "dd", duty)]),
+        fleet("b", [ship("b1", "dd", duty), ship("b2", "dd", duty)]),
+        fleet("d", [ship("d1", "dd"), ship("d2", "dd")]),
+      ],
+      [raider],
+    );
+    expect(decideTradeDuty(snapshot, "FRA", "GBR", RULES, idle)).toEqual({
+      assign: [],
+      release: ["a1", "a2"],
+    });
+  });
+
+  it("keeps duty fleets whose release would leave the quota unmet", () => {
+    const duty = { stationAssignment: "TRADE_PROTECTION" };
+    const snapshot = world(
+      [
+        fleet("a", [ship("a1", "dd", duty), ship("a2", "dd", duty)]),
+        fleet("b", [ship("b1", "dd", duty), ship("b2", "dd", duty)]),
+        fleet("c", [ship("c1", "dd"), ship("c2", "dd")]),
+      ],
+      [raider],
+    );
+    expect(decideTradeDuty(snapshot, "FRA", "GBR", RULES, idle)).toEqual({
+      assign: [],
+      release: [],
+    });
+  });
+
+  it("does not release a fleet that mixes duty and idle ships as surplus", () => {
+    const duty = { stationAssignment: "TRADE_PROTECTION" };
+    const snapshot = world(
+      [
+        fleet("a", [ship("a1", "dd", duty), ship("a2", "dd")]),
+        fleet("b", [ship("b1", "dd", duty), ship("b2", "dd", duty)]),
+      ],
+      [raider],
+    );
+    expect(decideTradeDuty(snapshot, "FRA", "GBR", RULES, idle).release).toEqual([]);
+  });
+
   it("releases escorts when no war is engaged", () => {
     const snapshot = world(
       [
