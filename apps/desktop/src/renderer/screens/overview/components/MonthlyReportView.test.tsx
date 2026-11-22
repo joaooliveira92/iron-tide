@@ -160,6 +160,97 @@ describe("MonthlyReportView", () => {
     expect(screen.getByText(/tension 2 to 3/)).toBeTruthy();
   });
 
+  it("renders the trade block with quota, shortfall, merchant pool and losses only when the month had one", () => {
+    const { rerender } = render(
+      <MonthlyReportView report={report(1)} previous={undefined} areaName={areaName} />,
+    );
+    expect(screen.queryByText("Trade protection")).toBeNull();
+
+    rerender(
+      <MonthlyReportView
+        report={report(1, {
+          tradeProtection: { quota: 4, assigned: 4, shortfall: 0, shortfallBp: 0 },
+        })}
+        previous={undefined}
+        areaName={areaName}
+      />,
+    );
+    expect(screen.getByText("Trade protection")).toBeTruthy();
+    expect(screen.getByText("Quota 4 ships, 4 counted. The quota was met.")).toBeTruthy();
+    expect(screen.queryByTestId("month-report-trade-loss")).toBeNull();
+
+    rerender(
+      <MonthlyReportView
+        report={report(1, {
+          tradeProtection: {
+            quota: 4,
+            assigned: 1,
+            shortfall: 3,
+            shortfallBp: 7500,
+            loss: {
+              raiderHits: 2,
+              submarineHits: 1,
+              pressureHit: true,
+              lossBp: 900,
+              poolBefore: 10000,
+              poolAfter: 9100,
+            },
+          },
+        })}
+        previous={undefined}
+        areaName={areaName}
+      />,
+    );
+    expect(
+      screen.getByText("Quota 4 ships, 1 counted. Short by 3 ships (75% of the quota)."),
+    ).toBeTruthy();
+    expect(screen.getByTestId("month-report-trade-loss").textContent).toBe(
+      "Merchant pool fell from 100% to 91% (-9%): 2 raider hits, 1 submarine hit, blockade pressure.",
+    );
+  });
+
+  it("lists every raider engagement, internment and release", () => {
+    render(
+      <MonthlyReportView
+        report={report(1, {
+          tradeProtection: {
+            quota: 0,
+            assigned: 0,
+            shortfall: 0,
+            shortfallBp: 0,
+            raiders: [
+              {
+                shipId: "ship_a",
+                event: "ENGAGED",
+                encounter: "INTERCEPTION",
+                victimNationId: "france",
+                outcome: "SUNK",
+              },
+              {
+                shipId: "ship_b",
+                event: "ENGAGED",
+                encounter: "BREAKOUT",
+                victimNationId: "france",
+                outcome: "SURVIVED",
+              },
+              { shipId: "ship_c", event: "INTERNED", cause: "FUEL_EXHAUSTION" },
+              { shipId: "ship_d", event: "RELEASED" },
+            ],
+          },
+        })}
+        previous={undefined}
+        areaName={areaName}
+      />,
+    );
+    const rows = screen.getAllByTestId("month-report-raider").map((row) => row.textContent);
+    expect(rows).toEqual([
+      "ship_a intercepted a convoy of France and was sunk.",
+      "ship_b broke out against the trade of France and survived.",
+      "ship_c was interned after running out of fuel.",
+      "ship_d was released from internment.",
+    ]);
+  });
+
   it("offers the previous month as a disclosure when one exists", () => {
     render(<MonthlyReportView report={report(2)} previous={report(1)} areaName={areaName} />);
 

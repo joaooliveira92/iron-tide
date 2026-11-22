@@ -3,6 +3,7 @@ import { monthLabel } from "../month-report-format.js";
 import { NarrativeMonthSummary } from "../NarrativeMonthSummary.js";
 import { MonthReportExerciseSection } from "./MonthReportExerciseSection.js";
 import { MonthReportPresenceSection } from "./MonthReportPresenceSection.js";
+import { MonthReportTradeSection } from "./MonthReportTradeSection.js";
 import { MonthReportTreasurySection } from "./MonthReportTreasurySection.js";
 
 export function MonthlyReportView({
@@ -22,6 +23,9 @@ export function MonthlyReportView({
       )}
       {report.fleetExercise === undefined ? null : (
         <MonthReportExerciseSection exercise={report.fleetExercise} />
+      )}
+      {report.tradeProtection === undefined ? null : (
+        <MonthReportTradeSection trade={report.tradeProtection} />
       )}
       <NarrativeMonthSummary reports={[report]} areaName={areaName} />
       {previous !== undefined && (
