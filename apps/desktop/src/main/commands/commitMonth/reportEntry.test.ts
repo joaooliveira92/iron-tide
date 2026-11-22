@@ -10,6 +10,7 @@ import {
   newlyActiveProjectIds,
   presenceFromEvents,
   researchProgressFromEvents,
+  shipNameLookup,
   unrestFromEvents,
   type FleetSnapshot,
   type ProjectSnapshot,
@@ -56,6 +57,18 @@ describe("completedShips (pre→post fleet delta)", () => {
     const before = fleetSnapshot([ship("a", false), ship("c", true)]);
     const after = fleetSnapshot([ship("a", false), ship("b", true), ship("c", true)]);
     expect(completedShips(before, after)).toEqual([]);
+  });
+});
+
+describe("shipNameLookup", () => {
+  it("names a ship lost during the month from the pre-month fleet and a survivor from either", () => {
+    const lookup = shipNameLookup(
+      fleetSnapshot([ship("sunk", false), ship("kept", false)]),
+      fleetSnapshot([ship("kept", false)]),
+    );
+    expect(lookup("sunk")).toBe("Name sunk");
+    expect(lookup("kept")).toBe("Name kept");
+    expect(lookup("unknown")).toBe(undefined);
   });
 });
 

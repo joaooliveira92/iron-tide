@@ -59,25 +59,15 @@ function lossLine(loss: NonNullable<MonthlyReportTradeProtection["loss"]>): stri
 }
 
 function raiderLine(entry: MonthlyReportRaiderEntry): string {
-  if (entry.event === "RELEASED") {
-    return translate("reports.trade.raider.released", { ship: entry.shipId });
-  }
+  const ship = entry.shipName ?? entry.shipId;
+  if (entry.event === "RELEASED") return translate("reports.trade.raider.released", { ship });
   if (entry.event === "INTERNED") {
-    return translate("reports.trade.raider.interned", {
-      ship: entry.shipId,
-      cause:
-        entry.cause === undefined ? "" : translate(`reports.trade.raider.cause.${entry.cause}`),
-    });
+    return translate(`reports.trade.raider.interned.${entry.cause ?? "NONE"}`, { ship });
   }
-  const lead =
-    entry.encounter === undefined
-      ? translate("reports.trade.raider.engaged", { ship: entry.shipId })
-      : translate(`reports.trade.raider.${entry.encounter}`, {
-          ship: entry.shipId,
-          nation: campaignNationLabel(entry.victimNationId ?? ""),
-        });
-  if (entry.outcome === undefined) return `${lead}.`;
-  return `${lead} ${translate(`reports.trade.raider.outcome.${entry.outcome}`)}`;
+  return translate(
+    `reports.trade.raider.engaged.${entry.encounter ?? "NONE"}.${entry.outcome ?? "NONE"}`,
+    { ship, nation: campaignNationLabel(entry.victimNationId ?? "") },
+  );
 }
 
 export function MonthReportTradeSection({
