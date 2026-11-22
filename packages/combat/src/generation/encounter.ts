@@ -66,6 +66,22 @@ export function encounterOpportunities(
   });
 }
 
+export function queuedEncounterShipIds(
+  encounters: readonly RaiderEncounter[],
+): ReadonlySet<string> {
+  return new Set(
+    encounters.flatMap((encounter) => [encounter.raiderShipId, ...encounter.interceptorShipIds]),
+  );
+}
+
+export function reservedForOpportunity(
+  opportunity: { encounter?: RaiderEncounter | undefined },
+  reserved: ReadonlySet<string>,
+  held: ReadonlySet<string>,
+): ReadonlySet<string> {
+  return opportunity.encounter === undefined ? new Set([...reserved, ...held]) : reserved;
+}
+
 export function encounterShipIds(
   opportunity: { encounter?: RaiderEncounter | undefined },
   nationId: string,

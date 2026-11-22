@@ -18,7 +18,12 @@ import { optionalAssetSelectionV1, optionalAssetStreamKey } from "./optional.js"
 import { revalidateReachabilityAndLegality } from "./reachability.js";
 import { battleCompositionRepairV1 } from "./repair.js";
 import { minimumStrengthFor, type BattleMinimumStrength } from "./mission.js";
-import { encounterShipIds, type RaiderEncounter } from "./encounter.js";
+import {
+  encounterShipIds,
+  queuedEncounterShipIds,
+  reservedForOpportunity,
+  type RaiderEncounter,
+} from "./encounter.js";
 import { stageRecord, type BattleGenerationStageRecord } from "./stages.js";
 import {
   BATTLE_MANDATORY_ROLE_UNFILLED,
@@ -105,6 +110,7 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
   });
   const generatedPerArea = new Map<string, number>();
   const reservedThisRun = new Set<string>(inputs.reservedAssetIds ?? []);
+  const heldForEncounters = queuedEncounterShipIds(inputs.raiderEncounters ?? []);
 
   const records: BattleGenerationRecord[] = [];
   const manifests: BattleManifest[] = [];
@@ -184,7 +190,7 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
         nationId,
         areaId: opp.areaId,
         anyArea: named !== undefined,
-        reservedAssetIds: reservedThisRun,
+        reservedAssetIds: reservedForOpportunity(opp, reservedThisRun, heldForEncounters),
         resolveStrength: (ship) => inputs.resolveStrength(ship.id),
         resolveShipType: (ship) => inputs.resolveShipType(ship.id),
         resolveReadiness: (ship) => inputs.resolveReadiness(ship.id),
