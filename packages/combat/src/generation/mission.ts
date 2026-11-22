@@ -52,6 +52,7 @@ export function minimumStrengthFor(
   missionType: BattleMissionType,
   minimumStrength: BattleMinimumStrength = DEFAULT_BATTLE_MINIMUM_STRENGTH,
 ): number {
+  if (missionType === "RAIDER_INTERCEPTION" || missionType === "BLOCKADE_BREAKOUT") return 0;
   return missionType === "FLEET_BATTLE"
     ? minimumStrength.FLEET_BATTLE
     : minimumStrength.CRUISER_BATTLE;
@@ -188,7 +189,7 @@ export const MISSION_REGISTRY: Record<BattleMissionType, BattleMissionDefinition
   RAIDER_INTERCEPTION: {
     missionType: "RAIDER_INTERCEPTION",
     priority: MISSION_PRIORITIES.RAIDER_INTERCEPTION,
-    opportunityPredicateId: "raider_interception_unreachable_v1",
+    opportunityPredicateId: "opportunity_encounter_v1",
     sideSelectionPolicyId: "side_selection_v1",
     forceRequirementPolicyId: "raider_interception_force_v1",
     mandatoryRoles: { ATTACKER: ["CORE"] },
@@ -206,7 +207,7 @@ export const MISSION_REGISTRY: Record<BattleMissionType, BattleMissionDefinition
   BLOCKADE_BREAKOUT: {
     missionType: "BLOCKADE_BREAKOUT",
     priority: MISSION_PRIORITIES.BLOCKADE_BREAKOUT,
-    opportunityPredicateId: "blockade_breakout_unreachable_v1",
+    opportunityPredicateId: "opportunity_encounter_v1",
     sideSelectionPolicyId: "side_selection_v1",
     forceRequirementPolicyId: "blockade_breakout_force_v1",
     mandatoryRoles: { ATTACKER: ["CORE"] },

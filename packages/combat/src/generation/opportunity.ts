@@ -5,6 +5,7 @@ import { BATTLE_OPPORTUNITY_INELIGIBLE, BATTLE_MONTHLY_LIMIT_REACHED } from "./r
 import type { BattleMissionType } from "./mission.js";
 import { getMission, REACHABLE_MISSION_SUBSET_V1 } from "./mission.js";
 import { compareStrings } from "../core/ordering.js";
+import { encounterOpportunities, type RaiderEncounter } from "./encounter.js";
 
 export const OPPORTUNITY_REACHABILITY_V1 = "opportunity_reachability_v1" as const;
 
@@ -35,6 +36,7 @@ export interface BattleMissionOpportunity {
   status: BattleOpportunityStatus;
   inputStateHash: string;
   opportunityHash: string;
+  encounter?: RaiderEncounter;
 }
 
 export interface OpportunityInputs {
@@ -43,6 +45,7 @@ export interface OpportunityInputs {
   acceptedOpportunityIds: ReadonlySet<string>;
   acceptedWarAreaPairs: ReadonlySet<string>;
   deferAreaLimit?: boolean;
+  raiderEncounters?: readonly RaiderEncounter[];
 }
 
 function presenceByArea(snapshot: CampaignSnapshot, nationId: string): Set<string> {
@@ -108,6 +111,8 @@ export function determineMissionOpportunities(
     }
   }
 
+  opportunities.push(...encounterOpportunities(inputs.raiderEncounters ?? [], campaignMonth));
+
   opportunities.sort((a, b) => {
     if (a.warId !== b.warId) return compareStrings(a.warId, b.warId);
     if (a.areaId !== b.areaId) return compareStrings(a.areaId, b.areaId);
@@ -120,6 +125,10 @@ export function determineMissionOpportunities(
   const perArea = new Map<string, number>();
   const limited: BattleMissionOpportunity[] = [];
   for (const opp of opportunities) {
+    if (opp.encounter !== undefined) {
+      limited.push(opp);
+      continue;
+    }
     const areaCount = (perArea.get(opp.areaId) ?? 0) + 1;
     if (inputs.acceptedOpportunityIds.has(opp.opportunityId)) {
       limited.push(opp);

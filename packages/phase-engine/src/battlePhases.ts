@@ -63,6 +63,7 @@ export function runBattleGenerationPhase(ctx: PhaseContext): PhaseRunOutcome {
     resolveShipType: resolveGenerationShipType,
     resolveReadiness: (shipId) => resolveCampaignBattleReadiness(ctx.snapshot.current, shipId),
     ...(minimumStrength === undefined ? {} : { minimumStrength }),
+    raiderEncounters: ctx.raiderEncounters ?? [],
   });
 
   const surviving = applyEnemyDeclines(ctx, generated);
@@ -104,18 +105,24 @@ export function runBattleGenerationPhase(ctx: PhaseContext): PhaseRunOutcome {
     };
   });
 
-  const reservedShipIds = new Set(generationResult.manifests.flatMap((m) => m["persistentAssets"]));
+  const battleOfShip = new Map<string, string>();
+  generationResult.manifests.forEach((manifest, i) => {
+    for (const shipId of manifest["persistentAssets"]) {
+      if (!battleOfShip.has(shipId)) battleOfShip.set(shipId, generationResult.battleIds[i]!);
+    }
+  });
   const updatedNations = new Map<string, NationState>();
   for (const [nid, nation] of ctx.snapshot.current["nations"]) {
-    if (reservedShipIds.size === 0) {
+    if (battleOfShip.size === 0) {
       updatedNations.set(nid, nation);
       continue;
     }
     const fleets = nation["fleets"].map((f) => ({
       ...f,
-      ships: f["ships"].map((s) =>
-        reservedShipIds.has(s["id"]) ? { ...s, inBattleId: generationResult.battleIds[0] } : s,
-      ),
+      ships: f["ships"].map((s) => {
+        const battleId = battleOfShip.get(s["id"]);
+        return battleId === undefined ? s : { ...s, inBattleId: battleId };
+      }),
     }));
     updatedNations.set(nid, { ...nation, fleets });
   }

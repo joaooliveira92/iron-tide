@@ -2,6 +2,7 @@ export * from "./reasonCodes.js";
 export * from "./capabilities.js";
 export * from "./mission.js";
 export * from "./opportunity.js";
+export * from "./encounter.js";
 export * from "./sides.js";
 export * from "./force.js";
 export * from "./eligibility.js";

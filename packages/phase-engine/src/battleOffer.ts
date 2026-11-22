@@ -7,7 +7,6 @@ import type {
   Ship,
   WarDeclaration,
 } from "@bluewave/campaign";
-import type { BattleMissionType } from "@bluewave/combat/generation";
 import {
   BATTLE_DECLINE_NOT_ALLOWED,
   BATTLE_ENEMY_DECLINED,
@@ -56,15 +55,12 @@ import {
   enemyDeclinedBattleEvent,
 } from "./events.js";
 import { suspend, type InterruptionState } from "./interruption.js";
+import { OFFERED_MISSION_TYPES, isOfferedMission } from "./offeredMissions.js";
 import type { PhaseContext } from "./pipeline.js";
 import { applyPrestigeChange } from "./prestigeApplication.js";
 
 export type { OfferContent } from "@bluewave/messages";
-
-export const OFFERED_MISSION_TYPES: readonly BattleMissionType[] = [
-  "FLEET_BATTLE",
-  "CRUISER_BATTLE",
-];
+export { OFFERED_MISSION_TYPES };
 
 export const BATTLE_OFFER_ESTIMATE_STREAM = "battle-offer/estimate";
 export const BATTLE_OFFER_ESTIMATE_PERTURBED = "BATTLE_OFFER_ESTIMATE_PERTURBED";
@@ -159,7 +155,7 @@ export function offeredManifestFor(
   const manifest = resolveBattleManifest(snapshot, battle);
   if (manifest === null) return null;
   const mission = manifest["missionType"];
-  return OFFERED_MISSION_TYPES.some((offered) => offered === mission) ? manifest : null;
+  return isOfferedMission(mission) ? manifest : null;
 }
 
 export function buildOfferContent(input: {

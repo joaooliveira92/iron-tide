@@ -7,6 +7,7 @@ import type {
   CommandLifecycle,
 } from "@bluewave/commands";
 import type { TacticalMinefieldRecord } from "@bluewave/combat/collision";
+import type { RaiderEncounter } from "@bluewave/combat/generation";
 import type { TerrainView } from "@bluewave/combat/terrain";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import type { EventLedger } from "@bluewave/events";
@@ -106,6 +107,7 @@ export interface MonthRunState {
   readonly playerNationId?: string;
   readonly battleOffers?: BattleOfferRules;
   readonly fleetManagement?: FleetManagementRules;
+  readonly raiderEncounters?: RaiderEncounter[];
   readonly nextSeq: () => SafeInt;
 }
 

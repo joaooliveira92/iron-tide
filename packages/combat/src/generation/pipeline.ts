@@ -18,48 +18,19 @@ import { optionalAssetSelectionV1, optionalAssetStreamKey } from "./optional.js"
 import { revalidateReachabilityAndLegality } from "./reachability.js";
 import { battleCompositionRepairV1 } from "./repair.js";
 import { minimumStrengthFor, type BattleMinimumStrength } from "./mission.js";
+import { encounterShipIds, type RaiderEncounter } from "./encounter.js";
+import { stageRecord, type BattleGenerationStageRecord } from "./stages.js";
 import {
   BATTLE_MANDATORY_ROLE_UNFILLED,
   BATTLE_COMPOSITION_IRREPARABLE,
   BATTLE_REACHABILITY_FAILED,
 } from "./reasonCodes.js";
 
-export const GENERATION_STAGES = [
-  "DETERMINE_MISSION_OPPORTUNITIES",
-  "DETERMINE_PARTICIPATING_SIDES",
-  "CREATE_FORCE_REQUIREMENTS",
-  "GATHER_ELIGIBLE_ASSETS",
-  "PRESERVE_PERMANENT_DIVISIONS",
-  "ASSIGN_MANDATORY_ROLES",
-  "SELECT_OPTIONAL_ASSETS",
-  "ADD_ALLIED_SUPPORT",
-  "INSTANTIATE_GENERATED_ELEMENTS",
-  "VALIDATE_REACHABILITY_AND_LEGALITY",
-  "REPAIR_GENERATED_COMPOSITION",
-  "REJECT_IRREPARABLE_ENGAGEMENTS",
-  "CANONICALIZE_BATTLE_MANIFEST",
-  "ASSIGN_BATTLE_SEED",
-  "CREATE_INTELLIGENCE_LIMITED_PRESENTATION",
-] as const;
-export type GenerationStage = (typeof GENERATION_STAGES)[number];
-
-export interface BattleGenerationStageRecord {
-  opportunityId: string;
-  prospectiveBattleId: string;
-  stageId: GenerationStage;
-  ordinal: number;
-  inputHashes: string[];
-  orderedCandidates: string[];
-  predicateResults: string[];
-  selections: string[];
-  exclusions: string[];
-  randomDecisionRefs: string[];
-  repairs: string[];
-  resultCode: string;
-  outputHash: string;
-  rulesetVersion: string;
-  formulaVersion: string;
-}
+export {
+  GENERATION_STAGES,
+  type BattleGenerationStageRecord,
+  type GenerationStage,
+} from "./stages.js";
 
 export interface BattleGenerationRecord {
   month: string;
@@ -104,6 +75,7 @@ export interface BattleGenerationInputs {
   resolveReadiness: (shipId: string) => number;
   reservedAssetIds?: ReadonlySet<string>;
   minimumStrength?: BattleMinimumStrength;
+  raiderEncounters?: readonly RaiderEncounter[];
 }
 
 export interface BattleGenerationResult {
@@ -111,34 +83,6 @@ export interface BattleGenerationResult {
   manifests: BattleManifest[];
   battleIds: string[];
   rejections: string[];
-}
-
-function stageRecord(
-  opp: BattleMissionOpportunity,
-  prospectiveBattleId: string,
-  stageId: GenerationStage,
-  rulesetVersion: string,
-  formulaVersion: string,
-  extra: Partial<BattleGenerationStageRecord> = {},
-): BattleGenerationRecord["stageRecords"][number] {
-  return {
-    opportunityId: opp.opportunityId,
-    prospectiveBattleId,
-    stageId,
-    ordinal: GENERATION_STAGES.indexOf(stageId) + 1,
-    inputHashes: [],
-    orderedCandidates: [],
-    predicateResults: [],
-    selections: [],
-    exclusions: [],
-    randomDecisionRefs: [],
-    repairs: [],
-    resultCode: "OK",
-    outputHash: sha256Hex(canonicalSerialize({ stageId, opportunityId: opp.opportunityId })),
-    rulesetVersion,
-    formulaVersion,
-    ...extra,
-  };
 }
 
 function roleScoreFor(a: EligibleAsset): number {
@@ -157,8 +101,10 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
     acceptedOpportunityIds: new Set(),
     acceptedWarAreaPairs: new Set(),
     deferAreaLimit: true,
+    ...(inputs.raiderEncounters === undefined ? {} : { raiderEncounters: inputs.raiderEncounters }),
   });
   const generatedPerArea = new Map<string, number>();
+  const reservedThisRun = new Set<string>(inputs.reservedAssetIds ?? []);
 
   const records: BattleGenerationRecord[] = [];
   const manifests: BattleManifest[] = [];
@@ -171,7 +117,7 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
       continue;
     }
 
-    const prospectiveBattleId = `battle_${opp.warId}_${opp.areaId}_${opp.missionType.toLowerCase()}_${inputs.campaignMonth}`;
+    const prospectiveBattleId = `battle_${opp.warId}_${opp.areaId}_${opp.missionType.toLowerCase()}_${opp.encounter === undefined ? "" : `${opp.encounter.raiderShipId}_`}${inputs.campaignMonth}`;
     const stageRecords: BattleGenerationStageRecord[] = [];
 
     stageRecords.push(
@@ -228,13 +174,17 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
       return nation ? nation.fleets.flatMap((f) => f.ships) : [];
     };
     const gatherSideSync = (nationId: string, sideId: string): EligibleAsset[] => {
-      const ships = shipsOfNation(nationId).filter((s) => !s.isUnderConstruction);
+      const named = encounterShipIds(opp, nationId);
+      const ships = shipsOfNation(nationId).filter(
+        (s) => !s.isUnderConstruction && (named === undefined || named.includes(s.id)),
+      );
       const { eligible } = gatherEligibleAssets({
         ships,
         sideId,
         nationId,
         areaId: opp.areaId,
-        reservedAssetIds: inputs.reservedAssetIds ?? new Set(),
+        anyArea: named !== undefined,
+        reservedAssetIds: reservedThisRun,
         resolveStrength: (ship) => inputs.resolveStrength(ship.id),
         resolveShipType: (ship) => inputs.resolveShipType(ship.id),
         resolveReadiness: (ship) => inputs.resolveReadiness(ship.id),
@@ -263,7 +213,10 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
     const attackerStrength = attackerEligible.reduce((s, e) => s + e.effectiveStrength, 0);
     const defenderStrength = defenderEligible.reduce((s, e) => s + e.effectiveStrength, 0);
     const minStrength = minimumStrengthFor(opp.missionType, inputs.minimumStrength);
-    if (attackerStrength < minStrength || defenderStrength < minStrength) {
+    const encounterSideEmpty =
+      opp.encounter !== undefined &&
+      (attackerEligible.length === 0 || defenderEligible.length === 0);
+    if (encounterSideEmpty || attackerStrength < minStrength || defenderStrength < minStrength) {
       stageRecords.push(
         stageRecord(
           opp,
@@ -290,7 +243,10 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
       continue;
     }
 
-    if ((generatedPerArea.get(opp.areaId) ?? 0) >= MAX_BATTLES_PER_AREA_PER_MONTH) {
+    if (
+      opp.encounter === undefined &&
+      (generatedPerArea.get(opp.areaId) ?? 0) >= MAX_BATTLES_PER_AREA_PER_MONTH
+    ) {
       rejections.push(opp.opportunityId);
       continue;
     }
@@ -592,7 +548,9 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
 
     reserveAssets(manifestWithSeed.battleId, manifestWithSeed.persistentAssets, new Set());
 
-    generatedPerArea.set(opp.areaId, (generatedPerArea.get(opp.areaId) ?? 0) + 1);
+    for (const assetId of manifestWithSeed.persistentAssets) reservedThisRun.add(assetId);
+    if (opp.encounter === undefined)
+      generatedPerArea.set(opp.areaId, (generatedPerArea.get(opp.areaId) ?? 0) + 1);
     manifests.push(manifestWithSeed);
     battleIds.push(manifestWithSeed.battleId);
 

@@ -73,6 +73,7 @@ export class MonthExecutor {
       ...(engineOptions?.fleetManagement === undefined
         ? {}
         : { fleetManagement: engineOptions.fleetManagement }),
+      raiderEncounters: [],
       interruption:
         engineOptions?.interruptions !== undefined
           ? createInterruptionState(engineOptions.interruptions)

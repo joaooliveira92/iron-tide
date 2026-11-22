@@ -79,7 +79,10 @@ describe("mission registry (AC-4)", () => {
     ]);
     for (const t of deferred) {
       expect(MISSION_REGISTRY[t]).toBeDefined();
-      expect(MISSION_REGISTRY[t]!.opportunityPredicateId).toMatch(/_unreachable_v1$/);
+      const encounter = t === "RAIDER_INTERCEPTION" || t === "BLOCKADE_BREAKOUT";
+      expect(MISSION_REGISTRY[t]!.opportunityPredicateId).toMatch(
+        encounter ? /^opportunity_encounter_v1$/ : /_unreachable_v1$/,
+      );
     }
   });
 

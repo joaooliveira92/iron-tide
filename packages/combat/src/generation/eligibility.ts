@@ -44,6 +44,7 @@ export interface GatherEligibleAssetsInput {
   divisionIdFor?: (shipId: string) => string | undefined;
   divisionPositionFor?: (shipId: string) => number | undefined;
   engagementKind?: BattleEngagementKind;
+  anyArea?: boolean;
 }
 
 export function gatherEligibleAssets(input: GatherEligibleAssetsInput): {
@@ -70,7 +71,7 @@ export function gatherEligibleAssets(input: GatherEligibleAssetsInput): {
       exclusions.push({ assetId: ship.id, reason: SHIP_ALREADY_RESERVED_FOR_BATTLE });
       continue;
     }
-    if (ship.locationAreaId !== input.areaId) {
+    if (input.anyArea !== true && ship.locationAreaId !== input.areaId) {
       exclusions.push({ assetId: ship.id, reason: BATTLE_RANGE_INELIGIBLE });
       continue;
     }
