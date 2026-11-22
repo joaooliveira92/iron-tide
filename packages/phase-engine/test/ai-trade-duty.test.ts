@@ -111,4 +111,13 @@ describe("#1069: AI assigns trade protection duty", () => {
     const result = run(from);
     expect(dutyOf(result.finalSnapshot)).toEqual({ f1: undefined });
   });
+
+  it("releases duty mid-war once the enemy fields no raider and no submarine (#1089)", () => {
+    const from = scenario([french("f1", { stationAssignment: "TRADE_PROTECTION" })], {
+      gbrShips: [tradeShip("gbr-dd", "d-dd")],
+    });
+    const result = run(from);
+    expect(dutyOf(result.finalSnapshot)).toEqual({ f1: undefined });
+    expect(result.collector.errors).toEqual([]);
+  });
 });

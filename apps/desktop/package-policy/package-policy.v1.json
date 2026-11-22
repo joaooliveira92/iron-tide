@@ -314,7 +314,7 @@
         "pack": "out/renderer/map-assets/land-tiles/land.bwtp"
       },
       "budget": {
-        "archiveBytesMax": 121000000,
+        "archiveBytesMax": 112000000,
         "outsideArchiveBytesMax": 2100000,
         "unlistedFileBytesMax": 1000000
       }
@@ -324,9 +324,9 @@
         {
           "id": "spike-tile-pack",
           "class": "generated-spike-runtime",
-          "reason": "the baked offline tile pack the spike reads",
+          "reason": "the baked offline tile pack the spike reads, the same bake as the production pack",
           "pattern": "out/renderer/map-spike/land-tiles/land.bwtp",
-          "maxBytes": 6000000,
+          "maxBytes": 20000000,
           "required": true
         },
         {
@@ -348,17 +348,25 @@
         {
           "id": "spike-glyphs",
           "class": "generated-spike-runtime",
-          "reason": "glyph ranges the spike labels read from the app, never from a network",
+          "reason": "the production Inter glyph ranges the spike build copies into its own asset directory, read from the app and never from a network",
           "pattern": "out/renderer/map-spike/glyphs/**/*.pbf",
           "maxBytes": 200000,
           "required": true
+        },
+        {
+          "id": "spike-glyph-licence",
+          "class": "generated-spike-runtime",
+          "reason": "the SIL OFL notice for the Inter glyph derivative",
+          "pattern": "out/renderer/map-spike/glyphs/*.txt",
+          "maxBytes": 20000,
+          "required": false
         },
         {
           "id": "spike-corrupt-fixture",
           "class": "packaged-test-fixture",
           "reason": "the packaged validation harness loads a deliberately corrupt pack to prove the integrity fallback",
           "pattern": "out/renderer/map-spike/land-tiles-corrupt/*",
-          "maxBytes": 1000000,
+          "maxBytes": 1500000,
           "required": false
         },
         {
@@ -383,76 +391,7 @@
         "pack": "out/renderer/map-spike/land-tiles/land.bwtp"
       },
       "budget": {
-        "archiveBytesMax": 122000000,
-        "outsideArchiveBytesMax": 2100000,
-        "unlistedFileBytesMax": 1000000
-      }
-    },
-    "adapter": {
-      "allow": [
-        {
-          "id": "adapter-tile-pack",
-          "class": "generated-spike-runtime",
-          "reason": "the baked offline tile pack the adapter reads",
-          "pattern": "out/renderer/map-spike/land-tiles/land.bwtp",
-          "maxBytes": 6000000,
-          "required": true
-        },
-        {
-          "id": "adapter-tile-manifest",
-          "class": "generated-spike-runtime",
-          "reason": "the manifest carrying the pack size and SHA-256 the loader verifies",
-          "pattern": "out/renderer/map-spike/land-tiles/manifest.json",
-          "maxBytes": 64000,
-          "required": true
-        },
-        {
-          "id": "adapter-licences",
-          "class": "generated-spike-runtime",
-          "reason": "Natural Earth licence and version notices shipped with the tiles",
-          "pattern": "out/renderer/map-spike/land-tiles/licences/*",
-          "maxBytes": 200000,
-          "required": false
-        },
-        {
-          "id": "adapter-glyphs",
-          "class": "generated-spike-runtime",
-          "reason": "glyph ranges the adapter labels read from the app, never from a network",
-          "pattern": "out/renderer/map-spike/glyphs/**/*.pbf",
-          "maxBytes": 200000,
-          "required": true
-        },
-        {
-          "id": "adapter-corrupt-fixture",
-          "class": "packaged-test-fixture",
-          "reason": "the packaged validation harness loads a deliberately corrupt pack to prove the integrity fallback",
-          "pattern": "out/renderer/map-spike/land-tiles-corrupt/*",
-          "maxBytes": 1000000,
-          "required": false
-        },
-        {
-          "id": "adapter-code-chunk",
-          "class": "dev-feature-flag",
-          "reason": "the lazy adapter renderer chunk built when the adapter flag is set",
-          "pattern": "out/renderer/assets/GlobeAdapter-*.js",
-          "maxBytes": 3000000,
-          "required": true
-        },
-        {
-          "id": "adapter-style-chunk",
-          "class": "dev-feature-flag",
-          "reason": "the stylesheet emitted with the lazy adapter renderer chunk",
-          "pattern": "out/renderer/assets/GlobeAdapter-*.css",
-          "maxBytes": 100000,
-          "required": false
-        }
-      ],
-      "integrity": {
-        "manifest": "out/renderer/map-spike/land-tiles/manifest.json",
-        "pack": "out/renderer/map-spike/land-tiles/land.bwtp"
-      },
-      "budget": {
-        "archiveBytesMax": 138000000,
+        "archiveBytesMax": 113000000,
         "outsideArchiveBytesMax": 2100000,
         "unlistedFileBytesMax": 1000000
       }

@@ -47,11 +47,16 @@ const copyGlobeRuntimeAssets = {
 const copyGlobeSpikeAssets = {
   name: "bluewave-globe-spike-assets",
   closeBundle() {
+    if (!GLOBE_SPIKE) return;
     const source = resolve(__dirname, "map-spike-assets");
-    if (!(GLOBE_SPIKE || GLOBE_ADAPTER) || !existsSync(source)) return;
-    cpSync(source, resolve(__dirname, "out/renderer/map-spike"), {
+    if (!existsSync(source)) return;
+    const target = resolve(__dirname, "out/renderer/map-spike");
+    cpSync(source, target, {
       recursive: true,
       filter: (path) => !HARNESS_ONLY_FILES.has(basename(path)),
+    });
+    cpSync(resolve(__dirname, "map-assets/glyphs"), resolve(target, "glyphs"), {
+      recursive: true,
     });
   },
 };

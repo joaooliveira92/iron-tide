@@ -27,6 +27,7 @@
     "!test/**",
     "!test-results/**",
     "!dist-electron/**",
+    "!dist-electron-spike/**",
     "!**/*.tsbuildinfo",
     "!**/*.map",
     "!dist/**/*.test.*",
