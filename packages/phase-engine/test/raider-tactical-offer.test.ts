@@ -170,4 +170,18 @@ describe("#1052: player raider encounters become tactical offers", () => {
     expect(battle?.phase).toBe("resolved");
     expect(kinds(done, "RaiderEngaged")).toEqual([]);
   });
+
+  it("reserves each encounter's ships for their own battle", () => {
+    const result = run(
+      tradeSnapshot({
+        gbrShips: ["p1", "p2", "p3", "p4", "p5"].map(patrol),
+        frashipsRaiders: [fraRaider("r1"), fraRaider("r2")],
+      }),
+    );
+    const ships = result.finalSnapshot.nations.get("FRA")?.fleets.flatMap((fleet) => fleet.ships);
+    const stamps = ["r1", "r2"].map((id) => ships?.find((ship) => ship.id === id)?.inBattleId);
+    expect(stamps[0]).toBeDefined();
+    expect(stamps[1]).toBeDefined();
+    expect(stamps[0]).not.toBe(stamps[1]);
+  });
 });
