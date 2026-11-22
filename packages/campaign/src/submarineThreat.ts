@@ -1,4 +1,5 @@
 import { SafeInt } from "@bluewave/contracts";
+import type { SubmarinePolicy } from "./submarinePolicy.js";
 import type { TradeDutyDesign, TradeDutyShip } from "./tradeProtection.js";
 
 const BP_DENOMINATOR = SafeInt(10_000);
@@ -11,6 +12,12 @@ export interface SubmarineThreatRules {
   readonly blockadeReductionBp: number;
   readonly aswEscortReductionBp?: number | undefined;
   readonly qShipReductionBp?: number | undefined;
+  readonly unrestricted?: UnrestrictedWarfareRules | undefined;
+}
+
+export interface UnrestrictedWarfareRules {
+  readonly chanceMultiplierBp: number;
+  readonly incidentBp: number;
 }
 
 export interface ShortfallPrestigeRules {
@@ -52,12 +59,16 @@ export function submarineQuotaTerm(
 export function submarineAttackChanceBp(
   rules: {
     readonly shortfallAmplifyBp: number;
-    readonly submarineThreat: Pick<SubmarineThreatRules, "attackBp" | "blockadeReductionBp">;
+    readonly submarineThreat: Pick<
+      SubmarineThreatRules,
+      "attackBp" | "blockadeReductionBp" | "unrestricted"
+    >;
   },
   victimShortfallBp: number,
   attackerBlockadesVictim: boolean,
+  attackerPolicy?: SubmarinePolicy,
 ): number {
-  const amplified = SafeInt.add(
+  const base = SafeInt.add(
     SafeInt(rules.submarineThreat.attackBp),
     SafeInt.div(
       SafeInt.mul(SafeInt(victimShortfallBp), SafeInt(rules.shortfallAmplifyBp)),
@@ -65,6 +76,15 @@ export function submarineAttackChanceBp(
       "floor",
     ),
   );
+  const unrestricted = rules.submarineThreat.unrestricted;
+  const amplified =
+    attackerPolicy === "UNRESTRICTED" && unrestricted !== undefined
+      ? SafeInt.div(
+          SafeInt.mul(base, SafeInt(unrestricted.chanceMultiplierBp)),
+          BP_DENOMINATOR,
+          "floor",
+        )
+      : base;
   const capped = Math.min(10_000, amplified);
   if (!attackerBlockadesVictim) return capped;
   const remaining = SafeInt.sub(BP_DENOMINATOR, SafeInt(rules.submarineThreat.blockadeReductionBp));

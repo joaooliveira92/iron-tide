@@ -13,6 +13,7 @@ import type { FleetExerciseRecord } from "./fleetExercise.js";
 import type { FleetMoraleLastChange } from "./fleetMorale.js";
 import type { UnrestLastChange } from "./unrest.js";
 import type { TrainingSubjectEntry } from "./specialTraining.js";
+import type { SubmarinePolicy } from "./submarinePolicy.js";
 import type { TradeProtectionState } from "./tradeProtection.js";
 import type { ShipInternment } from "./raiderInterception.js";
 import type { WarOptionalRecords } from "./warRecords.js";
@@ -393,6 +394,7 @@ export interface NationState {
   specialTraining?: TrainingSubjectEntry[];
   fleetExercise?: FleetExerciseRecord;
   tradeProtection?: TradeProtectionState;
+  submarinePolicy?: SubmarinePolicy;
   isPlayable: boolean;
   isAI: boolean;
 }
