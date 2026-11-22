@@ -83,6 +83,41 @@ const withPool = (from: CampaignSnapshot, merchantPoolBp: number): CampaignSnaps
   return { ...from, nations };
 };
 
+const dutyDesign = [...state.snapshot.designs.values()].find(
+  (design) =>
+    design.hullType !== rules!.amcHullType &&
+    rules!.raiderHullTypes.includes(design.hullType) &&
+    rules!.contributingHullTypes.includes(design.hullType) &&
+    design.shortRange !== true,
+)!;
+
+const withDuty = (
+  from: CampaignSnapshot,
+  nationId: string,
+  duty: "RAIDER" | "TRADE_PROTECTION",
+): CampaignSnapshot => {
+  const nation = from.nations.get(nationId)!;
+  const ship = nation.fleets.flatMap((fleet) => fleet.ships).find((s) => s.readiness === "ACTIVE")!;
+  const nations = new Map(from.nations);
+  nations.set(nationId, {
+    ...nation,
+    fleets: nation.fleets.map((fleet) => ({
+      ...fleet,
+      ships: fleet.ships.map((s) =>
+        s.id === ship.id
+          ? { ...s, designVersionId: dutyDesign.designVersionId, stationAssignment: duty }
+          : s,
+      ),
+    })),
+  });
+  return { ...from, nations };
+};
+
+const nextMonth = (result: MonthResult): CampaignSnapshot => ({
+  ...result.finalSnapshot,
+  turnNumber: SafeInt.add(result.finalSnapshot.turnNumber, SafeInt.ONE),
+});
+
 describe("1880 production trade protection (#1037)", () => {
   it("has the production pack carry trade-protection rules", () => {
     expect(rules).toBeDefined();
@@ -105,24 +140,66 @@ describe("1880 production trade protection (#1037)", () => {
   });
 
   it("loses and recovers merchant pool over a war, recording each loss and assessment", () => {
-    let snapshot = atWar;
-    const losses: Array<{ poolBefore: number; poolAfter: number }> = [];
+    let snapshot = withDuty(withDuty(atWar, RAIDER_NATION, "RAIDER"), PLAYER, "TRADE_PROTECTION");
+    const losses: Array<{ poolBefore: number; poolAfter: number; raiderHits: number }> = [];
     let assessments = 0;
     for (let month = 1; month <= MONTHS; month += 1) {
       const result = run(snapshot, true, `production-trade-${String(month)}`);
       assessments += bodies(result, "TradeProtectionAssessed").length;
       for (const body of bodies(result, "MerchantLossSuffered")) {
-        const loss = body as { poolBefore: number; poolAfter: number };
-        losses.push({ poolBefore: loss.poolBefore, poolAfter: loss.poolAfter });
+        const loss = body as { poolBefore: number; poolAfter: number; raiderHits: number };
+        losses.push({
+          poolBefore: loss.poolBefore,
+          poolAfter: loss.poolAfter,
+          raiderHits: loss.raiderHits,
+        });
       }
-      snapshot = {
-        ...result.finalSnapshot,
-        turnNumber: SafeInt.add(result.finalSnapshot.turnNumber, SafeInt.ONE),
-      };
+      snapshot = nextMonth(result);
     }
     expect(assessments).toBe(MONTHS);
     expect(losses.length).toBeGreaterThan(0);
     for (const loss of losses) expect(loss.poolAfter).toBeLessThan(loss.poolBefore);
+    for (const loss of losses) expect(loss.raiderHits).toBeGreaterThan(0);
+    expect(snapshot.careerResult).toBeUndefined();
+    expect(snapshot.nations.get(PLAYER)?.tradeProtection?.merchantPoolBp).toBeGreaterThan(
+      Math.min(...losses.map((loss) => loss.poolAfter)),
+    );
+  });
+
+  it("costs an unescorted player at war shortfall prestige monthly with no pressure draw (#1014)", () => {
+    let snapshot = atWar;
+    const prestige: unknown[] = [];
+    for (let month = 1; month <= MONTHS && snapshot.careerResult === undefined; month += 1) {
+      const result = run(snapshot, true, `production-trade-${String(month)}`);
+      prestige.push(
+        ...bodies(result, "PrestigeChanged").filter(
+          (body) => (body as { nationId: string }).nationId === PLAYER,
+        ),
+      );
+      expect(bodies(result, "MerchantLossSuffered")).toEqual([]);
+      expect(result.randomLedger.all.filter((e) => e.entityKey.startsWith("pressure/"))).toEqual(
+        [],
+      );
+      snapshot = nextMonth(result);
+    }
+    expect(prestige).toEqual(
+      [20, 19, 18, 17, 16].map((before) => ({
+        kind: "PrestigeChanged",
+        nationId: PLAYER,
+        reasonCode: "TRADE_SHORTFALL",
+        ruleKind: "PROPORTIONAL_LOSS",
+        before,
+        after: before - 1,
+        delta: -1,
+        rulesetVersion: "1.0",
+      })),
+    );
+    expect(snapshot.careerResult).toEqual({
+      nationId: PLAYER,
+      score: 15,
+      reason: "SACKED",
+      month: { year: 1880, month: 5 },
+    });
   });
 
   it("scales monthly revenue by the merchant pool through the authored sensitivity", () => {
