@@ -70,6 +70,12 @@ const SetTradeDutyBody = Schema.Struct({
   duty: Schema.Literals(["TRADE_PROTECTION", "RAIDER", "NONE"]),
 });
 
+const SetSubmarinePolicyBody = Schema.Struct({
+  type: Schema.Literal("SetSubmarinePolicy"),
+  nationId: Id,
+  policy: Schema.Literals(["PRIZE_RULES", "UNRESTRICTED"]),
+});
+
 const HoldFleetExerciseBody = Schema.Struct({
   type: Schema.Literal("HoldFleetExercise"),
   nationId: Id,
@@ -133,6 +139,7 @@ export const ReplayCommandBodySchema = Schema.Union([
   SetShipReadinessBody,
   SetSpecialTrainingBody,
   SetTradeDutyBody,
+  SetSubmarinePolicyBody,
   HoldFleetExerciseBody,
   ChangeDivisionDoctrineBody,
   AssignForeignStationBody,

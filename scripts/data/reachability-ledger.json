@@ -468,6 +468,18 @@
       "decision": null
     },
     {
+      "id": "submarine-policy",
+      "player_verb": "Set submarine warfare policy",
+      "status": "dormant-by-decision",
+      "engine_package": "phase-engine",
+      "engine_modules": [],
+      "engine_symbols": ["applySubmarinePolicyCommand"],
+      "main_commands": [],
+      "renderer_screen": null,
+      "evidence_test": null,
+      "decision": "#1071"
+    },
+    {
       "id": "presence-revolt-pressure",
       "player_verb": "See unrest after uncovered stations",
       "status": "reachable",

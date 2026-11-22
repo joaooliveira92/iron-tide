@@ -8,6 +8,7 @@ import {
   submarineAttackChanceBp,
   type BlockadeState,
   type Ship,
+  type SubmarinePolicy,
   type SubmarineThreatRules,
   type TradeDutyDesign,
 } from "@bluewave/campaign";
@@ -21,6 +22,7 @@ export interface TradeAttacker {
   readonly warId: string;
   readonly nationId: string;
   readonly ships: readonly Ship[];
+  readonly policy: SubmarinePolicy;
 }
 
 export function opposingSubmarines(
@@ -74,6 +76,7 @@ export function drawSubmarineAttacks(input: SubmarineAttackInput): number {
           { shortfallAmplifyBp: input.shortfallAmplifyBp, submarineThreat: input.threat },
           input.victimShortfallBp,
           isRaiderBlockedByBlockade(input.blockades, attacker.nationId, input.victimId),
+          attacker.policy,
         ),
         aswEscorts,
       ),
