@@ -151,6 +151,7 @@ export const runTurnTransaction = (
     const fleetMorale = yield* contentArtifact.loadFleetMoraleRules();
     const tradeProtection = yield* contentArtifact.loadTradeProtectionRules();
     const unrest = yield* contentArtifact.loadUnrestRules();
+    const baseGrowth = yield* contentArtifact.loadBaseGrowthRules();
     const peaceBehaviour = yield* contentArtifact.loadPeaceBehaviourRules();
     const warDeclaration = yield* contentArtifact.loadWarDeclarationRules();
     const events = yield* contentArtifact.loadEventContent();
@@ -198,6 +199,7 @@ export const runTurnTransaction = (
           ? { tradeProtection, playerNationId: record.playerSlotId }
           : {}),
         ...(unrest !== undefined ? { unrest, playerNationId: record.playerSlotId } : {}),
+        ...(baseGrowth !== undefined ? { baseGrowth } : {}),
         ...(peaceBehaviour !== undefined
           ? { peaceBehaviour, playerNationId: record.playerSlotId }
           : {}),

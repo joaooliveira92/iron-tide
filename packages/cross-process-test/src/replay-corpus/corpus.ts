@@ -12,6 +12,7 @@ import {
   tensionDriftFromRulesets,
   tradeProtectionFromRulesets,
   unrestFromRulesets,
+  baseGrowthFromRulesets,
   warDeclarationFromRulesets,
 } from "@bluewave/content-compiler";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
@@ -287,6 +288,16 @@ function productionUnrest() {
   return decoded.value;
 }
 
+function productionBaseGrowth() {
+  const decoded = baseGrowthFromRulesets(production().bundle.rulesets);
+  if (decoded === undefined) return undefined;
+  if (!decoded.ok)
+    throw new ReplayFileError({
+      message: `production baseGrowth section is invalid at '${decoded.field}'`,
+    });
+  return decoded.value;
+}
+
 let answerPrestigeCodes: ReadonlySet<string> | undefined;
 export function eventAnswerPrestigeReasonCodes(): ReadonlySet<string> {
   if (answerPrestigeCodes !== undefined) return answerPrestigeCodes;
@@ -319,8 +330,10 @@ export function fleetManagementOptions(playerNationId?: string, setup?: ReplaySe
   const constructionEvents = productionConstructionEvents(setup);
   const terrain = productionBattleTerrain();
   const unrest = productionUnrest();
+  const baseGrowth = productionBaseGrowth();
   return {
     ...(terrain === undefined ? {} : { terrain }),
+    ...(baseGrowth === undefined ? {} : { baseGrowth }),
     ...(unrest === undefined ? {} : { unrest }),
     ...(fleetManagement === undefined ? {} : { fleetManagement }),
     ...(tensionDrift === undefined ? {} : { tensionDrift }),
