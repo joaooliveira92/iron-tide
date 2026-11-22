@@ -238,6 +238,7 @@ export function applyTradeProtectionForMonth(ctx: PhaseContext): void {
             victimShortfallBp: state.shortfallBp,
             victimShips: shipsOf(nation),
             contributingHullTypes: rules.contributingHullTypes,
+            amcHullType: rules.amcHullType,
             blockades,
             designs,
             month,
