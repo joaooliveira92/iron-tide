@@ -67,7 +67,7 @@ function makeRichSnapshot(): CampaignSnapshot {
   };
   const gbr = snapshot.nations.get(ATTACKER_NATION)!;
   gbr.fleets[0]!.destinationAreaId = "a-3";
-  Object.assign(gbr, EVENT_STATE_FIXTURE, { homeAreaId: "a-2" });
+  Object.assign(gbr, EVENT_STATE_FIXTURE, { homeAreaId: "a-2", submarinePolicy: "UNRESTRICTED" });
   gbr.prestigeLastChange = {
     reasonCode: "BATTLE_LOST",
     before: SafeInt(20),

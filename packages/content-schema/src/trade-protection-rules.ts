@@ -20,6 +20,14 @@ export const RaiderInterceptionRulesSchema = Schema.Struct({
   breakdownInternBp: bp,
 });
 
+export const UnrestrictedWarfareRulesSchema = Schema.Struct({
+  chanceMultiplierBp: Schema.Finite.check(
+    Schema.isInt(),
+    Schema.isBetween({ minimum: 10_000, maximum: 100_000 }),
+  ),
+  incidentBp: bp,
+});
+
 export const SubmarineThreatRulesSchema = Schema.Struct({
   hullType,
   quotaPerBoatBp: bp,
@@ -27,6 +35,8 @@ export const SubmarineThreatRulesSchema = Schema.Struct({
   lossPerHitBp: bp,
   blockadeReductionBp: bp,
   aswEscortReductionBp: Schema.optional(bp),
+  qShipReductionBp: Schema.optional(bp),
+  unrestricted: Schema.optional(UnrestrictedWarfareRulesSchema),
 });
 
 export const ShortfallPrestigeRulesSchema = Schema.Struct({

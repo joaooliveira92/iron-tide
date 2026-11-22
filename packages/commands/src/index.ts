@@ -33,6 +33,7 @@ export type {
   SetSpecialTrainingCommand,
   HoldFleetExerciseCommand,
   SetTradeDutyCommand,
+  SetSubmarinePolicyCommand,
   ClearForeignStationCommand,
   ResumeConstructionCommand,
   AssignOfficerCommand,

@@ -134,6 +134,58 @@ describe("decodeTradeProtectionRules", () => {
     });
   });
 
+  it("accepts an optional Q-ship reduction", () => {
+    const withReduction = { submarineThreat: { ...submarine, qShipReductionBp: 1000 } };
+    expect(decodeTradeProtectionRules(rules(withReduction))).toEqual({
+      ok: true,
+      value: rules(withReduction),
+    });
+  });
+
+  it.each([0, 10_001, 1.5])("rejects a Q-ship reduction of %s", (value) => {
+    const override = { submarineThreat: { ...submarine, qShipReductionBp: value } };
+    expect(decodeTradeProtectionRules(rules(override))).toMatchObject({
+      ok: false,
+      field: "submarineThreat.qShipReductionBp",
+    });
+  });
+
+  it("accepts an optional unrestricted warfare block", () => {
+    const withBlock = {
+      submarineThreat: {
+        ...submarine,
+        unrestricted: { chanceMultiplierBp: 20_000, incidentBp: 2000 },
+      },
+    };
+    expect(decodeTradeProtectionRules(rules(withBlock))).toEqual({
+      ok: true,
+      value: rules(withBlock),
+    });
+  });
+
+  it.each([
+    ["chanceMultiplierBp", 9999],
+    ["chanceMultiplierBp", 100_001],
+    ["chanceMultiplierBp", 15_000.5],
+    ["incidentBp", 0],
+    ["incidentBp", 10_001],
+  ])("rejects an unrestricted %s of %s", (key, value) => {
+    const block = { chanceMultiplierBp: 20_000, incidentBp: 2000, [key]: value };
+    expect(
+      decodeTradeProtectionRules(rules({ submarineThreat: { ...submarine, unrestricted: block } })),
+    ).toMatchObject({ ok: false, field: `submarineThreat.unrestricted.${key}` });
+  });
+
+  it("rejects an unrestricted block missing a key", () => {
+    expect(
+      decodeTradeProtectionRules(
+        rules({
+          submarineThreat: { ...submarine, unrestricted: { chanceMultiplierBp: 20_000 } },
+        }),
+      ),
+    ).toMatchObject({ ok: false, field: "submarineThreat.unrestricted.incidentBp" });
+  });
+
   it.each(Object.keys(submarine))("rejects a submarineThreat block missing %s", (key) => {
     const { [key]: _removed, ...rest } = submarine as Record<string, unknown>;
     expect(decodeTradeProtectionRules(rules({ submarineThreat: rest }))).toMatchObject({

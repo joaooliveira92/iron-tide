@@ -2,10 +2,13 @@ import {
   aswEscortAttackChanceBp,
   countAswEscorts,
   countEnemySubmarines,
+  countQShips,
   isRaiderBlockedByBlockade,
+  qShipAttackChanceBp,
   submarineAttackChanceBp,
   type BlockadeState,
   type Ship,
+  type SubmarinePolicy,
   type SubmarineThreatRules,
   type TradeDutyDesign,
 } from "@bluewave/campaign";
@@ -19,6 +22,7 @@ export interface TradeAttacker {
   readonly warId: string;
   readonly nationId: string;
   readonly ships: readonly Ship[];
+  readonly policy: SubmarinePolicy;
 }
 
 export function opposingSubmarines(
@@ -45,6 +49,7 @@ export interface SubmarineAttackInput {
   readonly victimShortfallBp: number;
   readonly victimShips: readonly Ship[];
   readonly contributingHullTypes: readonly string[];
+  readonly amcHullType: string;
   readonly blockades: readonly Pick<BlockadeState, "blockaderId" | "blockadedNationId">[];
   readonly designs: ReadonlyMap<string, TradeDutyDesign>;
   readonly month: string;
@@ -52,20 +57,30 @@ export interface SubmarineAttackInput {
 
 export function drawSubmarineAttacks(input: SubmarineAttackInput): number {
   let hits = 0;
+  const qShipsAuthored = input.threat.qShipReductionBp !== undefined;
   const aswEscorts = countAswEscorts(
-    { contributingHullTypes: input.contributingHullTypes },
+    {
+      contributingHullTypes: input.contributingHullTypes,
+      qShipHullType: qShipsAuthored ? input.amcHullType : undefined,
+    },
     input.victimShips,
     input.designs,
   );
+  const qShips = countQShips({ amcHullType: input.amcHullType }, input.victimShips, input.designs);
   for (const attacker of input.attackers) {
-    const chanceBp = aswEscortAttackChanceBp(
+    const chanceBp = qShipAttackChanceBp(
       input.threat,
-      submarineAttackChanceBp(
-        { shortfallAmplifyBp: input.shortfallAmplifyBp, submarineThreat: input.threat },
-        input.victimShortfallBp,
-        isRaiderBlockedByBlockade(input.blockades, attacker.nationId, input.victimId),
+      aswEscortAttackChanceBp(
+        input.threat,
+        submarineAttackChanceBp(
+          { shortfallAmplifyBp: input.shortfallAmplifyBp, submarineThreat: input.threat },
+          input.victimShortfallBp,
+          isRaiderBlockedByBlockade(input.blockades, attacker.nationId, input.victimId),
+          attacker.policy,
+        ),
+        aswEscorts,
       ),
-      aswEscorts,
+      qShips,
     );
     for (const ship of attacker.ships) {
       if (countEnemySubmarines(input.threat, [ship], input.designs) === 0) continue;
