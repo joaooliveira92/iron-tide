@@ -409,7 +409,11 @@ export function runAiPlanningPhase(ctx: PhaseContext): PhaseRunOutcome {
   const warOptions =
     warRules === undefined || ctx.playerNationId === undefined
       ? undefined
-      : { rules: warRules, playerNationId: ctx.playerNationId };
+      : {
+          rules: warRules,
+          playerNationId: ctx.playerNationId,
+          tradeProtection: ctx.engineOptions?.tradeProtection,
+        };
   for (const slot of ctx.slots) {
     if (slot["type"] !== "ai") continue;
     const nationId = slot["nationId"];
@@ -470,6 +474,8 @@ export function runAiPlanningPhase(ctx: PhaseContext): PhaseRunOutcome {
           eventLedger,
           collector,
         );
+      } else {
+        applyTradeDutyCommand(ctx, body);
       }
     }
   }

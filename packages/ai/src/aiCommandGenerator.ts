@@ -4,6 +4,7 @@ import type {
   DeclareWarCommand,
   MoveFleetCommand,
   SetResearchPriorityCommand,
+  SetTradeDutyCommand,
   SubmitDesignCommand,
 } from "@bluewave/commands";
 import { SafeInt } from "@bluewave/contracts";
@@ -16,6 +17,7 @@ export const AI_COMMAND_TYPE_RESEARCH = "SetResearchPriority" as const;
 
 export const AI_COMMAND_TYPE_DECLARE_WAR = "DeclareWar" as const;
 export const AI_COMMAND_TYPE_MOVE_FLEET = "MoveFleet" as const;
+export const AI_COMMAND_TYPE_SET_TRADE_DUTY = "SetTradeDuty" as const;
 
 export type AiCommandType = typeof AI_COMMAND_TYPE_BUDGET | typeof AI_COMMAND_TYPE_RESEARCH;
 
@@ -201,6 +203,27 @@ export class AiCommandGenerator {
       issuerParticipantId: nationId,
     };
     return Object.freeze(envelope) as CommandEnvelope<MoveFleetCommand>;
+  }
+
+  buildSetTradeDutyCommand(
+    nationId: string,
+    shipIds: readonly string[],
+    duty: SetTradeDutyCommand["duty"],
+  ): CommandEnvelope<SetTradeDutyCommand> {
+    assertNonEmptyString(nationId, "nationId");
+    if (shipIds.length === 0) throw new AiError({ message: `shipIds must be non-empty` });
+    const key = this.idempotencyKeyFor(nationId, `${AI_COMMAND_TYPE_SET_TRADE_DUTY}:${duty}`);
+    const envelope: CommandEnvelope<SetTradeDutyCommand> = {
+      commandId: this.commandIdFromKey(key),
+      version: AI_ENVELOPE_VERSION,
+      expectedSnapshotHash: this.expectedSnapshotHash,
+      idempotencyKey: key,
+      timestamp: this.deterministicTimestamp(),
+      body: { type: AI_COMMAND_TYPE_SET_TRADE_DUTY, nationId, shipIds: [...shipIds], duty },
+      issuerClass: "AI",
+      issuerParticipantId: nationId,
+    };
+    return Object.freeze(envelope) as CommandEnvelope<SetTradeDutyCommand>;
   }
 
   buildSubmitDesignCommand(

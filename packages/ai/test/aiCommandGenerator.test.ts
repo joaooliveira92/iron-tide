@@ -58,6 +58,23 @@ describe("AiCommandGenerator determinism", () => {
     expect(() => new AiCommandGenerator({ ...ctx, expectedSnapshotHash: "bad" })).toThrow();
   });
 
+  it("trade duty commands are byte-stable, keyed per duty and refuse an empty batch", () => {
+    const g = new AiCommandGenerator(ctx);
+    const assign = g.buildSetTradeDutyCommand("usa", ["s1", "s2"], "TRADE_PROTECTION");
+    expect(assign).toEqual(g.buildSetTradeDutyCommand("usa", ["s1", "s2"], "TRADE_PROTECTION"));
+    expect(assign.body).toEqual({
+      type: "SetTradeDuty",
+      nationId: "usa",
+      shipIds: ["s1", "s2"],
+      duty: "TRADE_PROTECTION",
+    });
+    expect(assign.issuerClass).toBe("AI");
+    expect(assign.idempotencyKey).not.toBe(
+      g.buildSetTradeDutyCommand("usa", ["s1"], "NONE").idempotencyKey,
+    );
+    expect(() => g.buildSetTradeDutyCommand("usa", [], "NONE")).toThrow();
+  });
+
   it("version pinned", () => {
     const g = new AiCommandGenerator(ctx);
     expect(g.buildBudgetCommand("usa", "p", SafeInt(1) as SafeInt).version).toBe(

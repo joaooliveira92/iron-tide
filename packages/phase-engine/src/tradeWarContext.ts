@@ -1,9 +1,9 @@
-import type {
-  CompiledDesignVersion,
-  NationState,
-  Ship,
-  TradeDutyDesign,
-  WarDeclaration,
+import {
+  tradeDutyDesigns,
+  type NationState,
+  type Ship,
+  type TradeDutyDesign,
+  type WarDeclaration,
 } from "@bluewave/campaign";
 import type { PhaseContext } from "./pipeline.js";
 
@@ -32,24 +32,6 @@ export function shipsOf(nation: NationState): readonly Ship[] {
   return nation.fleets.flatMap((fleet) => fleet.ships).sort((a, b) => byId(a.id, b.id));
 }
 
-function aswLevelOf(design: CompiledDesignVersion): number {
-  let level = 0;
-  for (const capability of design.capabilities ?? []) {
-    if (capability.kind === "asw_attack") level = Math.max(level, capability.level);
-  }
-  return level;
-}
-
 export function designMap(ctx: PhaseContext): ReadonlyMap<string, TradeDutyDesign> {
-  const designs = new Map<string, TradeDutyDesign>();
-  for (const [id, design] of ctx.snapshot.read("designs")) {
-    const aswLevel = aswLevelOf(design);
-    designs.set(id, {
-      hullType: design.hullType,
-      normalizedSpeedUms: Number(design.normalizedSpeedUms),
-      ...(design.shortRange === true ? { shortRange: true as const } : {}),
-      ...(aswLevel > 0 ? { aswLevel } : {}),
-    });
-  }
-  return designs;
+  return tradeDutyDesigns(ctx.snapshot.read("designs"));
 }

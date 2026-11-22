@@ -23,5 +23,7 @@ export {
 export type { AiWarOptions } from "./aiWarPlanner.js";
 export type { WarDeclarationDecision, WarDeclarationReason, WarSortie } from "./warBehaviour.js";
 export { decideWarDeclaration, decideWarSorties } from "./warBehaviour.js";
+export type { TradeDutyDecision } from "./tradeDutyBehaviour.js";
+export { decideTradeDuty } from "./tradeDutyBehaviour.js";
 export type { AiPlanningResult } from "./aiPlanner.js";
 export { AI_RNG_STREAM_PREFIX, AiPlanner } from "./aiPlanner.js";

@@ -54,7 +54,7 @@ function navalBudgetOf(snapshot: WarSnapshot, nationId: string): number {
   return Math.floor((Number(nation.income) * Number(nation.navalAppropriationRateBp)) / BP);
 }
 
-function fleetAreasOf(snapshot: WarSnapshot, nationId: string): string[] {
+export function fleetAreasOf(snapshot: WarSnapshot, nationId: string): string[] {
   const areas = new Set<string>();
   for (const fleet of snapshot.nations.get(nationId)?.fleets ?? []) {
     for (const ship of fleet.ships) {

@@ -1,4 +1,4 @@
-import type { CampaignSlot, CampaignSnapshot } from "@bluewave/campaign";
+import type { CampaignSlot, CampaignSnapshot, TradeProtectionRules } from "@bluewave/campaign";
 import type {
   CommandBody,
   CommandEnvelope,
@@ -8,10 +8,12 @@ import type {
 import type { WarDeclarationRules } from "@bluewave/content-schema";
 import type { Diagnostic } from "@bluewave/diagnostics";
 import type { AiCommandGenerator } from "./aiCommandGenerator.js";
-import { decideWarDeclaration, decideWarSorties } from "./warBehaviour.js";
+import { decideTradeDuty } from "./tradeDutyBehaviour.js";
+import { decideWarDeclaration, decideWarSorties, fleetAreasOf } from "./warBehaviour.js";
 
 export interface AiWarOptions {
   readonly rules: WarDeclarationRules;
+  readonly tradeProtection?: TradeProtectionRules | undefined;
   readonly playerNationId: string;
 }
 
@@ -71,9 +73,22 @@ export function planWar(
       engaged = plan.accepted.length > before;
     }
   }
+
+  const sorties = engaged ? decideWarSorties(snapshot, nationId, enemyId) : [];
+  if (options.tradeProtection !== undefined) {
+    const duty = decideTradeDuty(snapshot, nationId, enemyId, options.tradeProtection, {
+      engaged,
+      sortieFleetIds: new Set(sorties.map((sortie) => sortie.fleetId)),
+      enemyAreas: new Set(fleetAreasOf(snapshot, enemyId)),
+    });
+    if (duty.release.length > 0)
+      submit(generator.buildSetTradeDutyCommand(nationId, duty.release, "NONE"));
+    if (duty.assign.length > 0)
+      submit(generator.buildSetTradeDutyCommand(nationId, duty.assign, "TRADE_PROTECTION"));
+  }
   if (!engaged) return plan;
 
-  for (const sortie of decideWarSorties(snapshot, nationId, enemyId)) {
+  for (const sortie of sorties) {
     submit(generator.buildMoveFleetCommand(nationId, sortie.fleetId, sortie.toAreaId));
   }
   return plan;
