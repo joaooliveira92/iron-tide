@@ -1,7 +1,7 @@
 import type { NationState, Ship, TradeDutyDesign, TradeProtectionRules } from "@bluewave/campaign";
 import type { RaiderEncounter } from "@bluewave/combat/generation";
 import type { PhaseContext } from "./pipeline.js";
-import { byId, shipsOf } from "./tradeWarContext.js";
+import { byId } from "./tradeWarContext.js";
 
 export const PROVISIONAL_MAX_INTERCEPTORS = 4;
 
@@ -48,8 +48,11 @@ export function selectInterceptors(
   nation: NationState,
   designs: ReadonlyMap<string, TradeDutyDesign>,
   taken: ReadonlySet<string>,
+  areaId: string,
 ): readonly string[] {
-  return shipsOf(nation)
+  return nation.fleets
+    .filter((fleet) => fleet.locationAreaId === areaId)
+    .flatMap((fleet) => fleet.ships)
     .filter(
       (ship) =>
         !ship.isUnderConstruction &&
@@ -85,6 +88,7 @@ export function queueRaiderEncounter(
     interceptorNation,
     designs,
     queuedShipIds(queue),
+    request.areaId,
   );
   if (interceptorShipIds.length === 0) return false;
   queue.push({

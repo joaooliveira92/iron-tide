@@ -236,7 +236,7 @@ export function applyRaiderInterceptionForMonth(
           : undefined;
         const queued = queueRaiderEncounter(ctx, tradeRules, designs, {
           warId: target.war.id,
-          areaId: ship.locationAreaId,
+          areaId: fleet.locationAreaId,
           breakout,
           raiderNationId: nationId,
           raiderShipId: ship.id,

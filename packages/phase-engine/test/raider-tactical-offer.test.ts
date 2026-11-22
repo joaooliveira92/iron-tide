@@ -171,6 +171,53 @@ describe("#1052: player raider encounters become tactical offers", () => {
     expect(kinds(done, "RaiderEngaged")).toEqual([]);
   });
 
+  it("draws interceptors only from the raider's area, so every reserved ship's fleet is in its battle", () => {
+    const base = tradeSnapshot({ gbrShips: [patrol("p1")], frashipsRaiders: [fraRaider("r1")] });
+    const gbr = base.nations.get("GBR")!;
+    const far = { ...patrol("p-far"), locationAreaId: "a-2" };
+    const snapshot = {
+      ...base,
+      nations: new Map([
+        ...base.nations,
+        [
+          "GBR",
+          {
+            ...gbr,
+            fleets: [
+              ...gbr.fleets,
+              {
+                id: "fleet-GBR-far",
+                nationId: "GBR",
+                name: "far",
+                locationAreaId: "a-2",
+                ships: [far],
+              },
+            ],
+          },
+        ],
+      ]),
+    };
+    const result = run(snapshot);
+    expect(offerOf(result).playerForce.map((s) => s.shipId)).toEqual(["p1"]);
+    const battles = new Map(result.finalSnapshot.wars.battles.map((b) => [b.id, b]));
+    const outsideTheirBattle = [...result.finalSnapshot.nations.values()]
+      .flatMap((nation) =>
+        nation.fleets.flatMap((fleet) =>
+          fleet.ships
+            .filter((ship) => ship.inBattleId !== undefined)
+            .filter((ship) => {
+              const battle = battles.get(ship.inBattleId!);
+              return ![
+                ...(battle?.attackerFleetIds ?? []),
+                ...(battle?.defenderFleetIds ?? []),
+              ].includes(fleet.id);
+            }),
+        ),
+      )
+      .map((ship) => ship.id);
+    expect(outsideTheirBattle).toEqual([]);
+  });
+
   it("reserves each encounter's ships for their own battle", () => {
     const result = run(
       tradeSnapshot({
