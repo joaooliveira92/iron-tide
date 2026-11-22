@@ -30,6 +30,7 @@ import type { DomainEventEnvelope } from "@bluewave/events";
 import { Result } from "effect";
 
 import { exerciseTensionRaisedEvent } from "./fleetExercise.js";
+import { applySubmarineIncidentsForMonth } from "./submarineIncidents.js";
 import { applyTradeProtectionForMonth } from "./tradeProtectionMonth.js";
 import { possessionTransferredEvent } from "./events.js";
 import { applyEventsForMonth } from "./eventDraw.js";
@@ -486,6 +487,7 @@ export function runDiplomacyPhase(ctx: PhaseContext): PhaseRunOutcome {
   applyExerciseTensionForMonth(ctx);
   applyTensionDriftForMonth(ctx);
   applyTradeProtectionForMonth(ctx);
+  applySubmarineIncidentsForMonth(ctx);
   runPeaceProposals(ctx);
   applyEventsForMonth(ctx);
   return { status: "continue" };

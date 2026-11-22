@@ -2,7 +2,7 @@
   "apps/compiler-cli/src/commands.ts": { "lines": 1406 },
   "apps/compiler-cli/test/commands.test.ts": { "lines": 1640 },
   "apps/desktop/src/main/campaignBridge.test.ts": { "lines": 694 },
-  "apps/desktop/src/main/campaignCommandSchemas.test.ts": { "lines": 897 },
+  "apps/desktop/src/main/campaignCommandSchemas.test.ts": { "lines": 834 },
   "apps/desktop/src/main/commands/commitMonth.test.ts": { "lines": 711 },
   "apps/desktop/src/main/commands/constructionCommands.test.ts": { "lines": 782 },
   "apps/desktop/src/main/commands/continuityCommands.test.ts": { "lines": 761 },

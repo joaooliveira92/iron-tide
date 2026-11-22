@@ -183,6 +183,42 @@ describe("#1014: submarine threat to trade", () => {
     });
   });
 
+  describe("Q-ships (#1071)", () => {
+    const WITH_Q: TradeProtectionRules = {
+      ...WITH_SUBS,
+      submarineThreat: { ...WITH_SUBS.submarineThreat!, qShipReductionBp: 10_000 },
+    };
+    const qDesigns = [...DESIGNS, tradeDesign("d-amc", "armed_merchant_cruiser")];
+    const amc = (id: string, over: Partial<Ship> = {}) =>
+      tradeShip(id, "d-amc", { stationAssignment: "TRADE_PROTECTION", ...over });
+    const attacked = (gbrShips: Ship[], rules: TradeProtectionRules) =>
+      tradeDraws(
+        runTrade(
+          tradeSnapshot({ gbrShips, designs: qDesigns, frashipsRaiders: [sub("s1")] }),
+          [],
+          rules,
+        ),
+      ).map((d) => d.outcome);
+
+    it("negates the attack at a full reduction when an armed merchant cruiser protects trade", () => {
+      expect(attacked([amc("q1")], WITH_Q)).toEqual(["MISS"]);
+    });
+
+    it("ignores armed merchant cruisers that are not on trade protection duty or not active", () => {
+      expect(
+        attacked(
+          [amc("q1", { stationAssignment: "EXERCISE" }), amc("q2", { readiness: "RESERVE" })],
+          WITH_Q,
+        ),
+      ).toEqual(["HIT"]);
+    });
+
+    it("leaves other escorts unchanged and changes nothing when not authored", () => {
+      expect(attacked([escort("e1")], WITH_Q)).toEqual(["HIT"]);
+      expect(attacked([amc("q1")], WITH_SUBS)).toEqual(["HIT"]);
+    });
+  });
+
   it("draws identically for the same seed", () => {
     const run = (seed: string) =>
       runTrade(

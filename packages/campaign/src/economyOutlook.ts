@@ -3,6 +3,7 @@ import type { AccelerationTerms } from "@bluewave/ship-design";
 import { monthlyAbsorbable } from "./constructionDraw.js";
 import { allocateConstructionFunds } from "./constructionFunding.js";
 import {
+  fundedResearch,
   monthlyNetBeforeConstruction,
   monthlyRevenue,
   researchCap,
@@ -124,7 +125,7 @@ export function economyOutlook(
       snapshot["turnNumber"],
       technologyCatalogueOf(snapshot),
     ).length > 0;
-  const research = hasField ? requested : SafeInt.ZERO;
+  const research = hasField ? fundedResearch(requested, revenue) : SafeInt.ZERO;
   let unfundedReason: ResearchUnfundedReason | undefined;
   if ((requested as number) > 0 && !hasField) unfundedReason = "NO_ELIGIBLE_RESEARCH_FIELD";
   else if ((requested as number) > (cap as number)) unfundedReason = "ABOVE_CAP";

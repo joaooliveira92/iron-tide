@@ -221,6 +221,7 @@ describe("MonthlyReportView", () => {
             raiders: [
               {
                 shipId: "ship_a",
+                shipName: "HMS Alert",
                 event: "ENGAGED",
                 encounter: "INTERCEPTION",
                 victimNationId: "france",
@@ -228,13 +229,19 @@ describe("MonthlyReportView", () => {
               },
               {
                 shipId: "ship_b",
+                shipName: "HMS Bold",
                 event: "ENGAGED",
                 encounter: "BREAKOUT",
                 victimNationId: "france",
                 outcome: "SURVIVED",
               },
-              { shipId: "ship_c", event: "INTERNED", cause: "FUEL_EXHAUSTION" },
-              { shipId: "ship_d", event: "RELEASED" },
+              {
+                shipId: "ship_c",
+                shipName: "HMS Cutlass",
+                event: "INTERNED",
+                cause: "FUEL_EXHAUSTION",
+              },
+              { shipId: "ship_d", shipName: "HMS Dauntless", event: "RELEASED" },
             ],
           },
         })}
@@ -244,10 +251,10 @@ describe("MonthlyReportView", () => {
     );
     const rows = screen.getAllByTestId("month-report-raider").map((row) => row.textContent);
     expect(rows).toEqual([
-      "ship_a intercepted a convoy of France and was sunk.",
-      "ship_b broke out against the trade of France and survived.",
-      "ship_c was interned after running out of fuel.",
-      "ship_d was released from internment.",
+      "HMS Alert intercepted a convoy of France and was sunk.",
+      "HMS Bold broke out against the trade of France and survived.",
+      "HMS Cutlass was interned after running out of fuel.",
+      "HMS Dauntless was released from internment.",
     ]);
   });
 

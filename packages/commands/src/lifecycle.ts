@@ -338,6 +338,13 @@ export class CommandLifecycle {
         snapshotHash,
         result: { nationId: body.nationId, shipIds: [...body.shipIds] },
       };
+    if (body.type === "SetSubmarinePolicy")
+      return {
+        type: "success",
+        commandId: envelope.commandId,
+        snapshotHash,
+        result: { nationId: body.nationId, policy: body.policy },
+      };
     if (body.type === "SetSpecialTraining")
       return {
         type: "success",

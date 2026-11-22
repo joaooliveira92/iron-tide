@@ -133,6 +133,7 @@ function minimalSnapshot(): CampaignSnapshot {
             shortfallBp: 6666,
             merchantPoolBp: 9000,
           },
+          submarinePolicy: "UNRESTRICTED",
           dock: {
             maximumNewConstructionMassKg: 1,
             maximumMajorRepairMassKg: 1,

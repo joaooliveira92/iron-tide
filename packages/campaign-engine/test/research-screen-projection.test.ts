@@ -224,8 +224,12 @@ describe("research explanations", () => {
 
   it("explains the paid budget from the requested one, and the cap and floor from appropriation", () => {
     const projection = funded();
-    expect(projection.researchSpend).toBe(60);
+    expect(projection.researchBudget).toBe(60);
+    expect(projection.researchSpend).toBe(12);
     expect(Number(projection.budgetExplanation?.result)).toBe(projection.researchSpend);
+    expect(projection.budgetExplanation?.children?.map((child) => Number(child.result))).toEqual([
+      60, -48,
+    ]);
     expect(Number(projection.budgetExplanation?.children?.[0]?.result)).toBe(
       projection.researchBudget,
     );

@@ -25,6 +25,11 @@ export function researchCap(revenue: SafeInt): SafeInt {
   );
 }
 
+export function fundedResearch(requested: SafeInt, revenue: SafeInt): SafeInt {
+  const cap = researchCap(revenue);
+  return requested < cap ? requested : cap;
+}
+
 export function monthlyResearchSpend(annual: SafeInt): SafeInt {
   return SafeInt.div(annual, SafeInt(12), "floor");
 }

@@ -8,6 +8,7 @@ import {
   MERCHANT_POOL_FULL_BP,
   recoverMerchantPool,
   shortfallPrestigeLossBp,
+  submarinePolicyOf,
   tradeProtectionQuota,
   tradeProtectionShortfall,
   tradeProtectionUnrestStep,
@@ -178,7 +179,12 @@ export function applyTradeProtectionForMonth(ctx: PhaseContext): void {
         raidedBy.add(opponentId);
         const opponent = nations.get(opponentId);
         if (opponent === undefined) continue;
-        attackers.push({ warId: war.id, nationId: opponentId, ships: shipsOf(opponent) });
+        attackers.push({
+          warId: war.id,
+          nationId: opponentId,
+          ships: shipsOf(opponent),
+          policy: submarinePolicyOf(opponent),
+        });
       }
     }
     const threat = rules.submarineThreat;
@@ -238,6 +244,7 @@ export function applyTradeProtectionForMonth(ctx: PhaseContext): void {
             victimShortfallBp: state.shortfallBp,
             victimShips: shipsOf(nation),
             contributingHullTypes: rules.contributingHullTypes,
+            amcHullType: rules.amcHullType,
             blockades,
             designs,
             month,

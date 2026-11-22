@@ -113,6 +113,7 @@ export interface MonthlyReportTradeProtection {
 
 export interface MonthlyReportRaiderEntry {
   readonly shipId: string;
+  readonly shipName?: string;
   readonly event: "ENGAGED" | "INTERNED" | "RELEASED";
   readonly encounter?: "INTERCEPTION" | "BREAKOUT";
   readonly victimNationId?: string;

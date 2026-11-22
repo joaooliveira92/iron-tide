@@ -183,8 +183,8 @@ describe("economy ledger identity and shortfall", () => {
     const { result, collector } = run(
       nation({
         treasury: SafeInt(0),
-        baseResources: SafeInt(0),
-        expenses: SafeInt(0),
+        baseResources: SafeInt(6000),
+        expenses: SafeInt(100),
         researchBudget: SafeInt(4),
       }),
       TEST_RESEARCH_CATALOGUE,

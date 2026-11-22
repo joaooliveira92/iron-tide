@@ -111,4 +111,39 @@ describe("tradeProtectionFromEvents", () => {
       { shipId: "uk-r2", event: "RELEASED" },
     ]);
   });
+
+  it("names a raider from the lookup and omits the name when the ship is unknown", () => {
+    const sunk = envelope({
+      kind: "RaiderEngaged",
+      nationId: "uk",
+      shipId: "uk-r1",
+      victimNationId: "france",
+      month: "1880-03",
+      encounter: "INTERCEPTION",
+      chanceBp: SafeInt(3_500),
+      outcome: "SUNK",
+      damageBp: SafeInt(0),
+    });
+    const released = envelope({
+      kind: "RaiderReleased",
+      nationId: "uk",
+      shipId: "uk-r2",
+      month: "1880-03",
+    });
+    const names = new Map([["uk-r1", "HMS Alert"]]);
+    expect(
+      tradeProtectionFromEvents([assessed("uk"), sunk, released], "uk", (id) => names.get(id))
+        ?.raiders,
+    ).toEqual([
+      {
+        shipId: "uk-r1",
+        shipName: "HMS Alert",
+        event: "ENGAGED",
+        encounter: "INTERCEPTION",
+        victimNationId: "france",
+        outcome: "SUNK",
+      },
+      { shipId: "uk-r2", event: "RELEASED" },
+    ]);
+  });
 });

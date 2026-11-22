@@ -166,6 +166,7 @@ const MonthlyReportTradeProtectionSchema = Schema.Struct({
     Schema.Array(
       Schema.Struct({
         shipId: nonEmptyString,
+        shipName: Schema.optional(nonEmptyString),
         event: Schema.Literals(["ENGAGED", "INTERNED", "RELEASED"]),
         encounter: Schema.optional(Schema.Literals(["INTERCEPTION", "BREAKOUT"])),
         victimNationId: Schema.optional(nonEmptyString),
