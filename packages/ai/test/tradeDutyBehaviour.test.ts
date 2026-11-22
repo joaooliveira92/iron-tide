@@ -146,6 +146,21 @@ describe("decideTradeDuty (#1069)", () => {
     expect(decideTradeDuty(snapshot, "FRA", "GBR", RULES, idle).assign).toEqual([]);
   });
 
+  it("covers a remaining shortfall from idle fleets, not from fleets already on duty", () => {
+    const snapshot = world(
+      [
+        fleet("a", [
+          ship("a1", "dd", { stationAssignment: "TRADE_PROTECTION" }),
+          ship("a2", "dd", { stationAssignment: "TRADE_PROTECTION" }),
+        ]),
+        fleet("b", [ship("b1", "dd"), ship("b2", "dd")]),
+        fleet("c", [ship("c1", "dd"), ship("c2", "dd")]),
+      ],
+      [raider],
+    );
+    expect(decideTradeDuty(snapshot, "FRA", "GBR", RULES, idle).assign).toEqual(["b1", "b2"]);
+  });
+
   it("releases escorts when no war is engaged", () => {
     const snapshot = world(
       [

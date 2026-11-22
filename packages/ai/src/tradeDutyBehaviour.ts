@@ -62,6 +62,7 @@ function canEscort(
 ): boolean {
   if (fleet.ships.length === 0 || fleet.destinationAreaId !== undefined) return false;
   if (sortieFleetIds.has(fleet.id) || enemyAreas.has(fleet.locationAreaId)) return false;
+  if (fleet.ships.some((ship) => ship.stationAssignment === "TRADE_PROTECTION")) return false;
   const contributing = fleet.ships.every((ship) => {
     const hull = designs.get(ship.designVersionId)?.hullType;
     return hull !== undefined && rules.contributingHullTypes.includes(hull);
