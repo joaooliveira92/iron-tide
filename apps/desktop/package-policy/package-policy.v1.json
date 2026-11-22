@@ -154,7 +154,11 @@
         "**/node_modules/motion-dom/**",
         "**/node_modules/framer-motion/**",
         "**/node_modules/@base-ui/**",
-        "**/node_modules/@paper-design/**"
+        "**/node_modules/@paper-design/**",
+        "**/node_modules/clsx/**",
+        "**/node_modules/cmdk/**",
+        "**/node_modules/tailwind-merge/**",
+        "**/node_modules/class-variance-authority/**"
       ],
       "includeNodeModules": true
     },
@@ -310,7 +314,7 @@
         "pack": "out/renderer/map-assets/land-tiles/land.bwtp"
       },
       "budget": {
-        "archiveBytesMax": 224000000,
+        "archiveBytesMax": 121000000,
         "outsideArchiveBytesMax": 2100000,
         "unlistedFileBytesMax": 1000000
       }
@@ -379,7 +383,7 @@
         "pack": "out/renderer/map-spike/land-tiles/land.bwtp"
       },
       "budget": {
-        "archiveBytesMax": 227200000,
+        "archiveBytesMax": 122000000,
         "outsideArchiveBytesMax": 2100000,
         "unlistedFileBytesMax": 1000000
       }
@@ -448,7 +452,7 @@
         "pack": "out/renderer/map-spike/land-tiles/land.bwtp"
       },
       "budget": {
-        "archiveBytesMax": 227200000,
+        "archiveBytesMax": 138000000,
         "outsideArchiveBytesMax": 2100000,
         "unlistedFileBytesMax": 1000000
       }
