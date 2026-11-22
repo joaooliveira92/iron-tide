@@ -13,6 +13,7 @@ import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import type { EventLedger } from "@bluewave/events";
 import { RandomEngine, type RandomLedger } from "@bluewave/random";
 import type {
+  BaseGrowthRules,
   BattleOfferRules,
   ConstructionEvent,
   FleetManagementRules,
@@ -81,6 +82,7 @@ export interface MonthExecutorEngineOptions {
   readonly fleetMorale?: FleetMoraleRules;
   readonly tradeProtection?: TradeProtectionRules;
   readonly unrest?: UnrestRules;
+  readonly baseGrowth?: BaseGrowthRules;
   readonly peaceBehaviour?: PeaceBehaviourRules;
   readonly warDeclaration?: WarDeclarationRules;
   readonly events?: EventEngineContent;

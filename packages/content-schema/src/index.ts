@@ -300,6 +300,8 @@ export {
 } from "./trade-protection-rules.js";
 export type { FleetMoraleRules, FleetMoraleRulesDecoded } from "./fleet-morale-rules.js";
 export { decodeFleetMoraleRules, FleetMoraleRulesSchema } from "./fleet-morale-rules.js";
+export type { BaseGrowthRules, BaseGrowthRulesDecoded } from "./base-growth-rules.js";
+export { BaseGrowthRulesSchema, decodeBaseGrowthRules } from "./base-growth-rules.js";
 export type { UnrestRules, UnrestRulesDecoded } from "./unrest-rules.js";
 export { decodeUnrestRules, UnrestRulesSchema } from "./unrest-rules.js";
 export type { TensionDriftRules, TensionDriftRulesDecoded } from "./tension-drift-rules.js";

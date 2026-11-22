@@ -27,6 +27,7 @@ export const RulesetManifestSchema = Schema.Struct({
   fleetMorale: Schema.optional(Schema.Unknown),
   tradeProtection: Schema.optional(Schema.Unknown),
   unrest: Schema.optional(Schema.Unknown),
+  baseGrowth: Schema.optional(Schema.Unknown),
   peaceBehaviour: Schema.optional(Schema.Unknown),
   warDeclaration: Schema.optional(Schema.Unknown),
   eventResolution: Schema.optional(Schema.Unknown),

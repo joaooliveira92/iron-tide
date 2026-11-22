@@ -34,6 +34,7 @@ import {
   nationAccelerationPressureOf,
   resolveAccelerationCapacityPressure,
 } from "./constructionAcceleration.js";
+import { growNationBase } from "./baseGrowthMonth.js";
 import { fundDesignStudies } from "./designStudies.js";
 import { resolvePrivateDockExpansion } from "./dockExpansion.js";
 import { runForeignContractPhase } from "./foreignContractPhase.js";
@@ -56,7 +57,8 @@ export function runMonthlyRevenuePhase(ctx: PhaseContext): PhaseRunOutcome {
 
   for (const [nationId, nation] of ctx.snapshot.read("nations")) {
     if (!nation["isPlayable"] && !nation["isAI"]) continue;
-    const baseResources = nation["baseResources"] ?? (0 as SafeInt);
+    const grown = growNationBase(ctx, nationId, nation);
+    const baseResources = grown["baseResources"] ?? (0 as SafeInt);
     const rateBp = effectiveAppropriationRateBp(
       {
         navalAppropriationRateBp: nation["navalAppropriationRateBp"] ?? (0 as SafeInt),
@@ -79,13 +81,20 @@ export function runMonthlyRevenuePhase(ctx: PhaseContext): PhaseRunOutcome {
             SafeInt(10_000),
             "floor",
           );
-    if ((revenue as number) <= 0) continue;
+    if ((revenue as number) <= 0) {
+      if (grown !== nation) {
+        const grownNations = new Map(ctx.snapshot.read("nations"));
+        grownNations.set(nationId, grown);
+        ctx.snapshot.write("nations", grownNations);
+      }
+      continue;
+    }
 
     const previousBalance = nation["treasury"];
     const newBalance = SafeInt.add(previousBalance, revenue);
 
     const updatedNation: NationState = {
-      ...nation,
+      ...grown,
       treasury: newBalance,
     };
     const updatedNations = new Map(ctx.snapshot.read("nations"));

@@ -276,7 +276,7 @@ export class ValidateStage implements CompilerStage<ParseOutput, ValidateOutput>
     validateGunneryRules(validated["rulesets"] ?? [], collector);
     validateMissilesRules(validated["rulesets"] ?? [], collector);
     validateNavigationRules(validated["rulesets"] ?? [], collector);
-    validateDiplomacyRules(validated["rulesets"] ?? [], collector);
+    validateDiplomacyRules(validated["rulesets"] ?? [], validated["countries"] ?? [], collector);
     validateMissingReferences(validated, collector);
     validateTechnologyGraph(validated, input, collector);
 

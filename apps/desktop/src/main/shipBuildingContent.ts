@@ -1,6 +1,7 @@
 import { hashWithContext } from "@bluewave/deterministic";
 import type { EventEngineContent, MonthExecutorEngineOptions } from "@bluewave/phase-engine";
 import {
+  baseGrowthFromRulesets,
   battleOffersFromRulesets,
   eventResolutionFromRulesets,
   fleetManagementFromRulesets,
@@ -201,6 +202,26 @@ export function loadUnrestRules(): UnrestRules | undefined {
     );
   unrest = { rules: decoded?.value };
   return unrest.rules;
+}
+
+type BaseGrowthRules = Extract<
+  NonNullable<ReturnType<typeof baseGrowthFromRulesets>>,
+  { readonly ok: true }
+>["value"];
+
+let baseGrowth: { readonly rules: BaseGrowthRules | undefined } | null = null;
+
+export function loadBaseGrowthRules(): BaseGrowthRules | undefined {
+  if (baseGrowth !== null) return baseGrowth.rules;
+  const { bundle } = readContentArtifact(resolveGeneratedContentDir());
+  const decoded = baseGrowthFromRulesets(bundle.rulesets);
+  if (decoded !== undefined && !decoded.ok)
+    throw new ContentArtifactError(
+      "CONTENT_ARTIFACT_INVALID",
+      `ruleset baseGrowth section is invalid at '${decoded.field}': ${decoded.message}`,
+    );
+  baseGrowth = { rules: decoded?.value };
+  return baseGrowth.rules;
 }
 
 type PeaceBehaviourRules = Extract<

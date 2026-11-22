@@ -359,6 +359,8 @@ export const replayCampaignProgram: CommandHandler<"replayCampaign"> = withPacka
         const tradeProtection =
           input === null ? undefined : yield* contentArtifact.loadTradeProtectionRules();
         const unrest = input === null ? undefined : yield* contentArtifact.loadUnrestRules();
+        const baseGrowth =
+          input === null ? undefined : yield* contentArtifact.loadBaseGrowthRules();
         const peaceBehaviour =
           input === null ? undefined : yield* contentArtifact.loadPeaceBehaviourRules();
         const warDeclaration =
@@ -387,6 +389,7 @@ export const replayCampaignProgram: CommandHandler<"replayCampaign"> = withPacka
                   ? { tradeProtection, playerNationId: metadata.playerSlotId }
                   : {}),
                 ...(unrest !== undefined ? { unrest, playerNationId: metadata.playerSlotId } : {}),
+                ...(baseGrowth !== undefined ? { baseGrowth } : {}),
                 ...(peaceBehaviour !== undefined
                   ? { peaceBehaviour, playerNationId: metadata.playerSlotId }
                   : {}),
