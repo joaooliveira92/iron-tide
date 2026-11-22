@@ -38,6 +38,14 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm preflight
       - run: pnpm test:scripts
+      - name: Build the replay approvals CLI
+        if: github.event_name == 'pull_request'
+        run: pnpm --filter @bluewave/cross-process-test build
+      - name: Replay approvals
+        if: github.event_name == 'pull_request'
+        env:
+          REPLAY_APPROVALS_BASE: ${{ github.event.pull_request.base.sha }}
+        run: pnpm check:replay-approvals
       - name: Dev carries no content lock body hash
         if: github.ref == 'refs/heads/dev' || github.base_ref == 'dev'
         run: node scripts/content-lock-promotion.mjs check-dev
