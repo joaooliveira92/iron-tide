@@ -258,6 +258,26 @@ describe("MonthlyReportView", () => {
     ]);
   });
 
+  it("shows a revolution row only when a foreign government changed", () => {
+    const { rerender } = render(
+      <MonthlyReportView report={report(1)} previous={undefined} areaName={areaName} />,
+    );
+    expect(screen.queryByTestId("month-report-revolution")).toBeNull();
+
+    rerender(
+      <MonthlyReportView
+        report={report(1, {
+          foreignRevolutions: [
+            { nationId: "france", governmentBefore: "autocratic", governmentAfter: "communist" },
+          ],
+        })}
+        previous={undefined}
+        areaName={areaName}
+      />,
+    );
+    expect(screen.getAllByTestId("month-report-revolution")).toHaveLength(1);
+  });
+
   it("offers the previous month as a disclosure when one exists", () => {
     render(<MonthlyReportView report={report(2)} previous={report(1)} areaName={areaName} />);
 

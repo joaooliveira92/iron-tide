@@ -21,6 +21,7 @@ import type {
   MonthlyReportUnrestChange,
   MonthlyReportUnrestConsequence,
 } from "../../../shared/reports-contract.js";
+import { foreignRevolutionsFromEvents } from "./revolutionReport.js";
 import { tradeProtectionFromEvents } from "./tradeProtectionReport.js";
 import { sumByCategory } from "./responseMappers.js";
 
@@ -253,6 +254,7 @@ export function buildMonthlyReportEntry(input: MonthlyReportEntryInput): Monthly
     shipNameLookup(playerNationBefore, playerNationAfter),
   );
   const unrest = unrestFromEvents(input.domainEvents, playerNationId);
+  const foreignRevolutions = foreignRevolutionsFromEvents(input.domainEvents, playerNationId);
 
   return {
     reportId: input.reportId,
@@ -312,5 +314,6 @@ export function buildMonthlyReportEntry(input: MonthlyReportEntryInput): Monthly
     ...(fleetExercise === undefined ? {} : { fleetExercise }),
     ...(tradeProtection === undefined ? {} : { tradeProtection }),
     ...(unrest === undefined ? {} : { unrest }),
+    ...(foreignRevolutions.length === 0 ? {} : { foreignRevolutions }),
   };
 }

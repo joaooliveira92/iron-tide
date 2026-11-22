@@ -121,6 +121,12 @@ export interface MonthlyReportRaiderEntry {
   readonly cause?: "FUEL_EXHAUSTION" | "BREAKDOWN" | "DAMAGE";
 }
 
+export interface MonthlyReportRevolution {
+  readonly nationId: string;
+  readonly governmentBefore: string;
+  readonly governmentAfter: string;
+}
+
 export interface MonthlyReportUnrestChange {
   readonly reasonCode: string;
   readonly delta: number;
@@ -159,6 +165,7 @@ export interface MonthlyReportEntry {
   readonly fleetExercise?: MonthlyReportFleetExercise;
   readonly tradeProtection?: MonthlyReportTradeProtection;
   readonly unrest?: MonthlyReportUnrest;
+  readonly foreignRevolutions?: readonly MonthlyReportRevolution[];
 }
 
 export interface MonthlyReports {
