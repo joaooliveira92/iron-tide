@@ -5,11 +5,7 @@ import {
   type TradeDutyDesign,
   type TradeProtectionRules,
 } from "@bluewave/campaign";
-import {
-  BATTLE_READINESS_FLOOR,
-  queuedEncounterShipIds,
-  type RaiderEncounter,
-} from "@bluewave/combat/generation";
+import { BATTLE_READINESS_FLOOR, queuedEncounterShipIds } from "@bluewave/combat/generation";
 import type { PhaseContext } from "./pipeline.js";
 import { byId } from "./tradeWarContext.js";
 
