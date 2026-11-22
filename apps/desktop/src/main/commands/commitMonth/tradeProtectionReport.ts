@@ -4,13 +4,22 @@ import type {
   MonthlyReportTradeProtection,
 } from "../../../shared/reports-contract.js";
 
+export type ShipNameLookup = (shipId: string) => string | undefined;
+
+const NO_NAMES: ShipNameLookup = () => undefined;
+
 export function tradeProtectionFromEvents(
   events: readonly DomainEventEnvelope[],
   nationId: string,
+  shipName: ShipNameLookup = NO_NAMES,
 ): MonthlyReportTradeProtection | undefined {
   let assessed: Omit<MonthlyReportTradeProtection, "loss" | "raiders"> | undefined;
   let loss: MonthlyReportTradeProtection["loss"];
   const raiders: MonthlyReportRaiderEntry[] = [];
+  const named = (shipId: string) => {
+    const name = shipName(shipId);
+    return name === undefined || name.length === 0 ? { shipId } : { shipId, shipName: name };
+  };
   for (const { body } of events) {
     if (body.kind === "TradeProtectionAssessed" && body.nationId === nationId) {
       assessed = {
@@ -30,16 +39,16 @@ export function tradeProtectionFromEvents(
       };
     } else if (body.kind === "RaiderEngaged" && body.nationId === nationId) {
       raiders.push({
-        shipId: body.shipId,
+        ...named(body.shipId),
         event: "ENGAGED",
         encounter: body.encounter,
         victimNationId: body.victimNationId,
         outcome: body.outcome,
       });
     } else if (body.kind === "RaiderInterned" && body.nationId === nationId) {
-      raiders.push({ shipId: body.shipId, event: "INTERNED", cause: body.cause });
+      raiders.push({ ...named(body.shipId), event: "INTERNED", cause: body.cause });
     } else if (body.kind === "RaiderReleased" && body.nationId === nationId) {
-      raiders.push({ shipId: body.shipId, event: "RELEASED" });
+      raiders.push({ ...named(body.shipId), event: "RELEASED" });
     }
   }
   if (assessed === undefined) return undefined;

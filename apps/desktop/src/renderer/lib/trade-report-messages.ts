@@ -11,16 +11,32 @@ export const TRADE_REPORT_MESSAGES = {
   "reports.trade.loss.submarineHits.many": "{n} submarine hits",
   "reports.trade.loss.pressure": "blockade pressure",
   "reports.trade.loss.unattributed": "no single cause recorded",
-  "reports.trade.raider.INTERCEPTION": "{ship} intercepted a convoy of {nation}",
-  "reports.trade.raider.BREAKOUT": "{ship} broke out against the trade of {nation}",
-  "reports.trade.raider.engaged": "{ship} was engaged",
-  "reports.trade.raider.outcome.SURVIVED": "and survived.",
-  "reports.trade.raider.outcome.SUNK": "and was sunk.",
-  "reports.trade.raider.outcome.SCUTTLED": "and was scuttled.",
-  "reports.trade.raider.outcome.INTERNED": "and was interned.",
-  "reports.trade.raider.interned": "{ship} was interned{cause}.",
-  "reports.trade.raider.cause.FUEL_EXHAUSTION": " after running out of fuel",
-  "reports.trade.raider.cause.BREAKDOWN": " after a breakdown",
-  "reports.trade.raider.cause.DAMAGE": " after taking damage",
+  "reports.trade.raider.engaged.INTERCEPTION.SURVIVED":
+    "{ship} intercepted a convoy of {nation} and survived.",
+  "reports.trade.raider.engaged.INTERCEPTION.SUNK":
+    "{ship} intercepted a convoy of {nation} and was sunk.",
+  "reports.trade.raider.engaged.INTERCEPTION.SCUTTLED":
+    "{ship} intercepted a convoy of {nation} and was scuttled.",
+  "reports.trade.raider.engaged.INTERCEPTION.INTERNED":
+    "{ship} intercepted a convoy of {nation} and was interned.",
+  "reports.trade.raider.engaged.INTERCEPTION.NONE": "{ship} intercepted a convoy of {nation}.",
+  "reports.trade.raider.engaged.BREAKOUT.SURVIVED":
+    "{ship} broke out against the trade of {nation} and survived.",
+  "reports.trade.raider.engaged.BREAKOUT.SUNK":
+    "{ship} broke out against the trade of {nation} and was sunk.",
+  "reports.trade.raider.engaged.BREAKOUT.SCUTTLED":
+    "{ship} broke out against the trade of {nation} and was scuttled.",
+  "reports.trade.raider.engaged.BREAKOUT.INTERNED":
+    "{ship} broke out against the trade of {nation} and was interned.",
+  "reports.trade.raider.engaged.BREAKOUT.NONE": "{ship} broke out against the trade of {nation}.",
+  "reports.trade.raider.engaged.NONE.SURVIVED": "{ship} was engaged and survived.",
+  "reports.trade.raider.engaged.NONE.SUNK": "{ship} was engaged and was sunk.",
+  "reports.trade.raider.engaged.NONE.SCUTTLED": "{ship} was engaged and was scuttled.",
+  "reports.trade.raider.engaged.NONE.INTERNED": "{ship} was engaged and was interned.",
+  "reports.trade.raider.engaged.NONE.NONE": "{ship} was engaged.",
+  "reports.trade.raider.interned.FUEL_EXHAUSTION": "{ship} was interned after running out of fuel.",
+  "reports.trade.raider.interned.BREAKDOWN": "{ship} was interned after a breakdown.",
+  "reports.trade.raider.interned.DAMAGE": "{ship} was interned after taking damage.",
+  "reports.trade.raider.interned.NONE": "{ship} was interned.",
   "reports.trade.raider.released": "{ship} was released from internment.",
 } as const;

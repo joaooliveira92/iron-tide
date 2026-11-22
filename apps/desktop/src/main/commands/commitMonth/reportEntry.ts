@@ -52,6 +52,18 @@ export function completedShips(
     .map((ship) => ({ shipId: ship.id, name: ship.name }));
 }
 
+export function shipNameLookup(
+  ...states: readonly FleetSnapshot[]
+): (shipId: string) => string | undefined {
+  const names = new Map<string, string>();
+  for (const state of states) {
+    for (const fleet of state.fleets) {
+      for (const ship of fleet.ships) names.set(ship.id, ship.name);
+    }
+  }
+  return (shipId) => names.get(shipId);
+}
+
 export function newlyActiveProjectIds(
   before: ProjectSnapshot,
   after: ProjectSnapshot,
@@ -235,7 +247,11 @@ export function buildMonthlyReportEntry(input: MonthlyReportEntryInput): Monthly
 
   const presence = presenceFromEvents(input.domainEvents, playerNationId);
   const fleetExercise = fleetExerciseFromEvents(input.domainEvents, playerNationId);
-  const tradeProtection = tradeProtectionFromEvents(input.domainEvents, playerNationId);
+  const tradeProtection = tradeProtectionFromEvents(
+    input.domainEvents,
+    playerNationId,
+    shipNameLookup(playerNationBefore, playerNationAfter),
+  );
   const unrest = unrestFromEvents(input.domainEvents, playerNationId);
 
   return {
