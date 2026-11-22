@@ -78,6 +78,42 @@ function canEscort(
   );
 }
 
+function onTradeProtection(ship: Ship): boolean {
+  return ship.stationAssignment === "TRADE_PROTECTION";
+}
+
+function dutyShipIds(fleets: readonly Fleet[]): string[] {
+  return [...fleets]
+    .sort((a, b) => compareCodePoints(a.id, b.id))
+    .flatMap((fleet) =>
+      fleet.ships
+        .filter(onTradeProtection)
+        .map((ship) => ship.id)
+        .sort(compareCodePoints),
+    );
+}
+
+function surplusDutyFleets(
+  fleets: readonly Fleet[],
+  quota: number,
+  onDuty: number,
+  rules: TradeProtectionRules,
+  designs: ReadonlyMap<string, TradeDutyDesign>,
+): string[] {
+  const release: string[] = [];
+  let remaining = onDuty;
+  const wholeDuty = [...fleets]
+    .filter((fleet) => fleet.ships.length > 0 && fleet.ships.every(onTradeProtection))
+    .sort((a, b) => compareCodePoints(a.id, b.id));
+  for (const fleet of wholeDuty) {
+    const contribution = countTradeProtectionShips(rules, fleet.ships, designs);
+    if (contribution === 0 || remaining - contribution < quota) continue;
+    remaining -= contribution;
+    release.push(...fleet.ships.map((ship) => ship.id).sort(compareCodePoints));
+  }
+  return release;
+}
+
 export function decideTradeDuty(
   snapshot: DutySnapshot,
   nationId: string,
@@ -103,7 +139,9 @@ export function decideTradeDuty(
 
   const designs = tradeDutyDesigns(snapshot.designs);
   const { exposed, submarines } = enemyExposure(rules, shipsOf(enemy), designs);
-  if (!exposed) return NO_DUTY;
+  if (!exposed) {
+    return { assign: [], release: dutyShipIds(nation.fleets) };
+  }
 
   const quota = tradeProtectionQuota(
     rules,
@@ -111,10 +149,10 @@ export function decideTradeDuty(
     Number(nation.baseResources ?? 0),
     submarines,
   );
-  let remaining = tradeProtectionShortfall(
-    quota,
-    countTradeProtectionShips(rules, ships, designs),
-  ).shortfall;
+  const onDuty = countTradeProtectionShips(rules, ships, designs);
+  const surplus = surplusDutyFleets(nation.fleets, quota, onDuty, rules, designs);
+  if (surplus.length > 0) return { assign: [], release: surplus };
+  let remaining = tradeProtectionShortfall(quota, onDuty).shortfall;
 
   const candidates = [...nation.fleets]
     .filter((fleet) =>
