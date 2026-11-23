@@ -2,6 +2,7 @@ import {
   discoveryDrawWeight,
   effectiveAppropriationRateBp,
   eligibleResearchFields,
+  effectiveResearchResources,
   eligibleTechnologiesForField,
   fundedResearch,
   monthlyRevenue,
@@ -10,6 +11,7 @@ import {
   technologyCatalogueOf,
   type CampaignSnapshot,
   type NationState,
+  type ResearchReturnsRules,
   type TechnologyCatalogue,
 } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
@@ -44,10 +46,17 @@ function drawWeighted(
   return weights[weights.length - 1]?.[0] ?? "";
 }
 
-function computeResearchResources(actualPaidExpenditure: SafeInt): SafeInt {
+function computeResearchResources(
+  actualPaidExpenditure: SafeInt,
+  revenue: SafeInt,
+  returns: ResearchReturnsRules | undefined,
+): SafeInt {
   if ((actualPaidExpenditure as number) <= 0) return SafeInt.ZERO;
   return SafeInt.div(
-    SafeInt.mul(actualPaidExpenditure, RESEARCH_RESOURCE_CONVERSION_BP),
+    SafeInt.mul(
+      effectiveResearchResources(actualPaidExpenditure, revenue, returns),
+      RESEARCH_RESOURCE_CONVERSION_BP,
+    ),
     SafeInt(10_000),
     "floor",
   );
@@ -99,6 +108,7 @@ export function resolveResearchNations(
   collector: DiagnosticCollector,
   nextSeq: () => SafeInt,
   campaignMonth: string,
+  returns?: ResearchReturnsRules,
 ): CampaignSnapshot["nations"] {
   let nextNations: Map<string, NationState> | null = null;
 
@@ -134,7 +144,7 @@ export function resolveResearchNations(
     const settlement = settleOutflow(funded, nation["treasury"]);
     reportOutflowShortfall(collector, nationId, "research", settlement, "resolve_research");
     const actualPaidExpenditure = settlement.paid;
-    const effectiveResources = computeResearchResources(actualPaidExpenditure);
+    const effectiveResources = computeResearchResources(actualPaidExpenditure, revenue, returns);
 
     if ((effectiveResources as number) <= 0) {
       if ((settlement.shortfall as number) > 0)
@@ -379,6 +389,7 @@ export function runResearchPhase(ctx: PhaseContext): PhaseRunOutcome {
     ctx.collector,
     ctx.nextSeq,
     ctx.campaignMonth,
+    ctx.engineOptions?.researchReturns,
   );
   if (next !== nations) ctx.snapshot.write("nations", next);
   return { status: "continue" };

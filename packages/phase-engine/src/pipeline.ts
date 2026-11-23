@@ -1,4 +1,8 @@
-import type { CampaignSnapshot, PresenceMeasurementRules } from "@bluewave/campaign";
+import type {
+  CampaignSnapshot,
+  PresenceMeasurementRules,
+  ResearchReturnsRules,
+} from "@bluewave/campaign";
 import { BluewaveError, TURN_PHASES, type SafeInt, type TurnPhase } from "@bluewave/contracts";
 import type {
   CommandBody,
@@ -83,6 +87,7 @@ export interface MonthExecutorEngineOptions {
   readonly tradeProtection?: TradeProtectionRules;
   readonly unrest?: UnrestRules;
   readonly baseGrowth?: BaseGrowthRules;
+  readonly researchReturns?: ResearchReturnsRules;
   readonly peaceBehaviour?: PeaceBehaviourRules;
   readonly warDeclaration?: WarDeclarationRules;
   readonly events?: EventEngineContent;
