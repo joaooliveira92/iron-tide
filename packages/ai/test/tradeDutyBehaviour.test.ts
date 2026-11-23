@@ -222,6 +222,39 @@ describe("decideTradeDuty (#1069)", () => {
     expect(decideTradeDuty(snapshot, "FRA", "GBR", RULES, idle).release).toEqual([]);
   });
 
+  it("keeps the anti-submarine fleet on duty when the only quota-safe release is that fleet (#1094)", () => {
+    const duty = { stationAssignment: "TRADE_PROTECTION" };
+    const snapshot = world(
+      [
+        fleet("z", [ship("z1", "dd-asw", duty)]),
+        fleet("a", [ship("a1", "dd", duty), ship("a2", "dd", duty), ship("a3", "dd", duty)]),
+      ],
+      [sub, ship("s2", "sub")],
+    );
+    const submarinesOnly = { ...RULES, fleetShareBp: 0 };
+    expect(decideTradeDuty(snapshot, "FRA", "GBR", submarinesOnly, idle)).toEqual({
+      assign: [],
+      release: [],
+    });
+  });
+
+  it("releases plain surplus fleets before anti-submarine fleets while submarines are present (#1094)", () => {
+    const duty = { stationAssignment: "TRADE_PROTECTION" };
+    const snapshot = world(
+      [
+        fleet("a", [ship("a1", "dd-asw", duty)]),
+        fleet("b", [ship("b1", "dd", duty)]),
+        fleet("c", [ship("c1", "dd", duty), ship("c2", "dd", duty)]),
+      ],
+      [sub, ship("s2", "sub")],
+    );
+    const submarinesOnly = { ...RULES, fleetShareBp: 0 };
+    expect(decideTradeDuty(snapshot, "FRA", "GBR", submarinesOnly, idle)).toEqual({
+      assign: [],
+      release: ["b1"],
+    });
+  });
+
   it("releases escorts when no war is engaged", () => {
     const snapshot = world(
       [
