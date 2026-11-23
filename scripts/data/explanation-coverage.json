@@ -898,6 +898,26 @@
         "nextInterruptionOrdinal": "Turn counter, not a derived value.",
         "recordedInputCount": "Count of recorded inputs, not a derived value."
       }
+    },
+    {
+      "file": "apps/desktop/src/shared/reports-contract.ts",
+      "type": "MonthlyReportTradeProtection",
+      "area": "reports",
+      "issue": "#1143",
+      "covered": {
+        "submarineExplanation": "submarine_trade"
+      },
+      "exempt": {
+        "quota": "Recorded TradeProtectionAssessed value; the fleet screen explains it with fleet_trade_quota and submarineExplanation explains the submarine term.",
+        "assigned": "Recorded TradeProtectionAssessed value; the fleet screen explains it with the assigned-ships tree.",
+        "shortfall": "Recorded TradeProtectionAssessed value; the fleet screen explains it with the shortfall tree.",
+        "shortfallBp": "Recorded TradeProtectionAssessed value; the fleet screen explains it and submarineExplanation records it as an input.",
+        "loss.raiderHits": "Count of recorded raider draw outcomes, not a derived value.",
+        "loss.submarineHits": "Count of recorded submarine draw outcomes; submarineExplanation explains the chance each draw used.",
+        "loss.lossBp": "Recorded MerchantLossSuffered value: pool before minus pool after.",
+        "loss.poolBefore": "Recorded merchant pool at the start of the month.",
+        "loss.poolAfter": "Recorded merchant pool at the end of the month."
+      }
     }
   ]
 }

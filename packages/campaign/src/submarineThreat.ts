@@ -81,35 +81,76 @@ function policyChanceMultiplierBp(
   return undefined;
 }
 
+export interface SubmarineAttackChanceRules {
+  readonly shortfallAmplifyBp: number;
+  readonly submarineThreat: Pick<
+    SubmarineThreatRules,
+    "attackBp" | "blockadeReductionBp" | "unrestricted" | "fleetSupport"
+  >;
+}
+
+export interface SubmarineAttackChanceStages {
+  readonly attackBp: number;
+  readonly shortfallTermBp: number;
+  readonly baseBp: number;
+  readonly policyMultiplierBp: number | undefined;
+  readonly amplifiedBp: number;
+  readonly cappedBp: number;
+  readonly blockadedBp: number;
+}
+
+export function submarineAttackChanceStages(
+  rules: SubmarineAttackChanceRules,
+  victimShortfallBp: number,
+  attackerBlockadesVictim: boolean,
+  attackerPolicy?: SubmarinePolicy,
+): SubmarineAttackChanceStages {
+  const attackBp = SafeInt(rules.submarineThreat.attackBp);
+  const shortfallTermBp = SafeInt.div(
+    SafeInt.mul(SafeInt(victimShortfallBp), SafeInt(rules.shortfallAmplifyBp)),
+    BP_DENOMINATOR,
+    "floor",
+  );
+  const baseBp = SafeInt.add(attackBp, shortfallTermBp);
+  const policyMultiplierBp = policyChanceMultiplierBp(rules.submarineThreat, attackerPolicy);
+  const amplifiedBp =
+    policyMultiplierBp === undefined
+      ? baseBp
+      : SafeInt.div(SafeInt.mul(baseBp, SafeInt(policyMultiplierBp)), BP_DENOMINATOR, "floor");
+  const cappedBp = Math.min(10_000, amplifiedBp);
+  const blockadedBp = attackerBlockadesVictim
+    ? SafeInt.div(
+        SafeInt.mul(
+          SafeInt(cappedBp),
+          SafeInt.sub(BP_DENOMINATOR, SafeInt(rules.submarineThreat.blockadeReductionBp)),
+        ),
+        BP_DENOMINATOR,
+        "floor",
+      )
+    : cappedBp;
+  return {
+    attackBp,
+    shortfallTermBp,
+    baseBp,
+    policyMultiplierBp,
+    amplifiedBp,
+    cappedBp,
+    blockadedBp,
+  };
+}
+
 export function submarineAttackChanceBp(
-  rules: {
-    readonly shortfallAmplifyBp: number;
-    readonly submarineThreat: Pick<
-      SubmarineThreatRules,
-      "attackBp" | "blockadeReductionBp" | "unrestricted" | "fleetSupport"
-    >;
-  },
+  rules: SubmarineAttackChanceRules,
   victimShortfallBp: number,
   attackerBlockadesVictim: boolean,
   attackerPolicy?: SubmarinePolicy,
 ): number {
-  const base = SafeInt.add(
-    SafeInt(rules.submarineThreat.attackBp),
-    SafeInt.div(
-      SafeInt.mul(SafeInt(victimShortfallBp), SafeInt(rules.shortfallAmplifyBp)),
-      BP_DENOMINATOR,
-      "floor",
-    ),
-  );
-  const policyMultiplierBp = policyChanceMultiplierBp(rules.submarineThreat, attackerPolicy);
-  const amplified =
-    policyMultiplierBp === undefined
-      ? base
-      : SafeInt.div(SafeInt.mul(base, SafeInt(policyMultiplierBp)), BP_DENOMINATOR, "floor");
-  const capped = Math.min(10_000, amplified);
-  if (!attackerBlockadesVictim) return capped;
-  const remaining = SafeInt.sub(BP_DENOMINATOR, SafeInt(rules.submarineThreat.blockadeReductionBp));
-  return SafeInt.div(SafeInt.mul(SafeInt(capped), remaining), BP_DENOMINATOR, "floor");
+  return submarineAttackChanceStages(
+    rules,
+    victimShortfallBp,
+    attackerBlockadesVictim,
+    attackerPolicy,
+  ).blockadedBp;
 }
 
 export function countAswEscorts(

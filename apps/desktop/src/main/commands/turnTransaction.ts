@@ -367,6 +367,8 @@ export const runTurnTransaction = (
           postSnapshot: nextSnapshot,
           ledgerEntries,
           domainEvents: result.eventLedger.all,
+          tradeProtectionRules: tradeProtection,
+          randomDecisions: result.randomLedger.all,
         });
         const existing = yield* reports.load(record.saveDir);
         const appended = yield* reports.append(existing, entry);
