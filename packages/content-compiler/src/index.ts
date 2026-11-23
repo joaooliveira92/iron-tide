@@ -144,6 +144,7 @@ export { tradeProtectionFromRulesets } from "./tradeProtectionRules.js";
 export { unrestFromRulesets } from "./unrestRules.js";
 export { baseGrowthFromRulesets } from "./baseGrowthRules.js";
 export { researchReturnsFromRulesets } from "./researchReturnsRules.js";
+export { colonyIncomeFromRulesets } from "./colonyIncomeRules.js";
 export { tensionDriftFromRulesets } from "./tensionDriftRules.js";
 export { peaceBehaviourFromRulesets } from "./peaceBehaviourRules.js";
 export { warDeclarationFromRulesets } from "./warDeclarationRules.js";
