@@ -86,8 +86,8 @@ export function fixtureProjection(
     turnNumber: 0,
     lowSpending: false,
     minimumResearchSpend: 40,
-    researchSpend: 40,
-    researchEffective: 40,
+    researchSpend: 60,
+    researchEffective: 60,
     researchEffectiveRateBp: 10_000,
     technologies: FIXTURE_TECHNOLOGIES,
     fields: [

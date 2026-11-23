@@ -7,6 +7,7 @@ import { FLEET_MOVE_MESSAGES } from "../lib/fleet-move-messages.js";
 import { FLEET_STATION_MESSAGES } from "../lib/fleet-station-messages.js";
 import { FLEET_TRADE_MESSAGES } from "../lib/fleet-trade-messages.js";
 import { PRESENCE_WARNING_MESSAGES } from "../lib/presence-warning-messages.js";
+import { RESEARCH_RETURNS_MESSAGES } from "../lib/research-returns-messages.js";
 import { REVOLUTION_REPORT_MESSAGES } from "../lib/revolution-report-messages.js";
 import { TRADE_REPORT_MESSAGES } from "../lib/trade-report-messages.js";
 
@@ -21,6 +22,7 @@ const AUTHORED_MESSAGES: Readonly<Record<string, string | undefined>> = {
   ...REVOLUTION_REPORT_MESSAGES,
   ...DIPLOMACY_PEACE_MESSAGES,
   ...ECONOMY_MODIFIER_MESSAGES,
+  ...RESEARCH_RETURNS_MESSAGES,
 };
 
 export const CATALOGUE_FALLBACK_LOCALE = "en-US" as const;
