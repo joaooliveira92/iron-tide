@@ -1,4 +1,10 @@
-import type { CampaignSnapshot, NationState } from "@bluewave/campaign";
+import {
+  tradeDutyDesigns,
+  type CampaignSnapshot,
+  type NationState,
+  type TradeProtectionRules,
+} from "@bluewave/campaign";
+import type { RandomDecision } from "@bluewave/random";
 import {
   buildPrioritiesProjection,
   explainReportTreasury,
@@ -22,6 +28,7 @@ import type {
   MonthlyReportUnrestConsequence,
 } from "../../../shared/reports-contract.js";
 import { foreignRevolutionsFromEvents } from "./revolutionReport.js";
+import { submarineTradeExplanation } from "./submarineTradeReport.js";
 import { tradeProtectionFromEvents } from "./tradeProtectionReport.js";
 import { sumByCategory } from "./responseMappers.js";
 
@@ -228,6 +235,8 @@ export interface MonthlyReportEntryInput {
   readonly postSnapshot: CampaignSnapshot;
   readonly ledgerEntries: readonly LedgerTransaction[];
   readonly domainEvents: readonly DomainEventEnvelope[];
+  readonly tradeProtectionRules?: TradeProtectionRules | undefined;
+  readonly randomDecisions: readonly RandomDecision[];
 }
 
 export function buildMonthlyReportEntry(input: MonthlyReportEntryInput): MonthlyReportEntry {
@@ -248,11 +257,28 @@ export function buildMonthlyReportEntry(input: MonthlyReportEntryInput): Monthly
 
   const presence = presenceFromEvents(input.domainEvents, playerNationId);
   const fleetExercise = fleetExerciseFromEvents(input.domainEvents, playerNationId);
-  const tradeProtection = tradeProtectionFromEvents(
+  const tradeFromEvents = tradeProtectionFromEvents(
     input.domainEvents,
     playerNationId,
     shipNameLookup(playerNationBefore, playerNationAfter),
   );
+  const submarineExplanation =
+    tradeFromEvents === undefined
+      ? undefined
+      : submarineTradeExplanation({
+          rules: input.tradeProtectionRules,
+          playerNationId,
+          shortfallBp: tradeFromEvents.shortfallBp,
+          nations: postSnapshot.nations,
+          wars: postSnapshot.wars.wars,
+          blockades: postSnapshot.wars.blockadeState,
+          designs: tradeDutyDesigns(postSnapshot.designs),
+          randomDecisions: input.randomDecisions,
+        });
+  const tradeProtection =
+    tradeFromEvents === undefined || submarineExplanation === undefined
+      ? tradeFromEvents
+      : { ...tradeFromEvents, submarineExplanation };
   const unrest = unrestFromEvents(input.domainEvents, playerNationId);
   const foreignRevolutions = foreignRevolutionsFromEvents(input.domainEvents, playerNationId);
 

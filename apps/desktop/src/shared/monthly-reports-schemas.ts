@@ -153,6 +153,7 @@ const MonthlyReportTradeProtectionSchema = Schema.Struct({
   assigned: nonNegativeInt,
   shortfall: nonNegativeInt,
   shortfallBp: nonNegativeInt,
+  submarineExplanation: Schema.optional(ExplanationTreeSchema),
   loss: Schema.optional(
     Schema.Struct({
       raiderHits: nonNegativeInt,

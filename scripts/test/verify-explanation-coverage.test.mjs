@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { describe, it } from "node:test";
 
 import {
@@ -6,6 +8,8 @@ import {
   scanContracts,
   validateManifest,
 } from "../verify-explanation-coverage.mjs";
+
+const ROOT = resolve(import.meta.dirname, "../..");
 
 const source = `
 export interface SampleView {
@@ -114,6 +118,55 @@ void describe("evaluateCoverage", () => {
     const missing = manifest({ type: "MissingView" });
     const result = evaluateCoverage(missing, () => source);
     assert.ok(result.problems.some((problem) => problem.includes('contract type "MissingView"')));
+  });
+});
+
+void describe("submarine trade report contract (#1143)", () => {
+  const committed = JSON.parse(
+    readFileSync(resolve(ROOT, "scripts/data/explanation-coverage.json"), "utf8"),
+  );
+  const contractFile = "apps/desktop/src/shared/reports-contract.ts";
+  const entry = committed.contracts.find(
+    (contract) =>
+      contract.file === contractFile && contract.type === "MonthlyReportTradeProtection",
+  );
+  const read = (path) => readFileSync(resolve(ROOT, path), "utf8");
+
+  void it("registers the report trade contract with the submarine tree covered", () => {
+    assert.ok(entry, "MonthlyReportTradeProtection must be listed in the coverage manifest");
+    assert.equal(entry.covered.submarineExplanation, "submarine_trade");
+  });
+
+  void it("passes against the real contract source", () => {
+    assert.deepEqual(evaluateCoverage(committed, read).problems, []);
+  });
+
+  void it("fails when the contract no longer declares the submarine tree", () => {
+    const stripped = (path) =>
+      read(path)
+        .split("\n")
+        .filter((line) => !line.includes("submarineExplanation"))
+        .join("\n");
+    const result = evaluateCoverage(committed, stripped);
+    assert.ok(
+      result.problems.some((problem) =>
+        problem.includes('stale covered field "submarineExplanation"'),
+      ),
+    );
+  });
+
+  void it("fails when the tree is declared without a covered formula", () => {
+    const uncovered = structuredClone(committed);
+    const target = uncovered.contracts.find(
+      (contract) => contract.type === "MonthlyReportTradeProtection",
+    );
+    delete target.covered.submarineExplanation;
+    const result = evaluateCoverage(uncovered, read);
+    assert.ok(
+      result.problems.some((problem) =>
+        problem.includes("explanation field submarineExplanation has no covered formula"),
+      ),
+    );
   });
 });
 

@@ -100,6 +100,7 @@ export interface MonthlyReportTradeProtection {
   readonly assigned: number;
   readonly shortfall: number;
   readonly shortfallBp: number;
+  readonly submarineExplanation?: ExplanationTree;
   readonly loss?: {
     readonly raiderHits: number;
     readonly submarineHits?: number;
