@@ -302,7 +302,7 @@ export const REPLAY_SCENARIOS: readonly CorpusScenario[] = [
     setup: "raider-interception",
     battleOffers: true,
     purpose:
-      "Player raider interception as a tactical offer: Austria-Hungary's raider meets an Italian patrol hull, the recorded delegate answer resolves the battle, and the replay carries the answer.",
+      "Player raider interception as a tactical offer: an Austro-Hungarian raider meets an Italian patrol and the recorded delegate answer resolves the battle.",
     commands: [
       {
         month: 1,
