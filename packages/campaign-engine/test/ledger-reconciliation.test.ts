@@ -46,6 +46,22 @@ describe("reconcileMonthLedger", () => {
     expect(r.other).toBe(0);
   });
 
+  it("books COLONY_INCOME as its own inflow and closes without touching other", () => {
+    const r = reconcileMonthLedger(
+      [row("NAVAL_APPROPRIATION", 100), row("COLONY_INCOME", 12), row("OBLIGATION", 30)],
+      500,
+      582,
+    );
+    expect(r.colonyIncome).toBe(12);
+    expect(r.other).toBe(0);
+    expect(r.opening + r.revenue + (r.colonyIncome ?? 0) - r.obligation).toBe(r.closing);
+  });
+
+  it("leaves the field absent when no colony income was booked", () => {
+    const r = reconcileMonthLedger([row("NAVAL_APPROPRIATION", 100)], 500, 600);
+    expect("colonyIncome" in r).toBe(false);
+  });
+
   it("books every other treasury movement as one signed line so the identity still closes", () => {
     const r = reconcileMonthLedger(
       [row("NAVAL_APPROPRIATION", 50), row("FOREIGN_PAYMENT", 7)],

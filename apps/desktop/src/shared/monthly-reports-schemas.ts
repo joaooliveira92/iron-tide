@@ -47,6 +47,7 @@ const MonthlyReportReconciliationSchema = Schema.Struct({
   maintenance: int,
   obligation: int,
   research: int,
+  colonyIncome: Schema.optional(int),
   other: int,
   closing: int,
 });

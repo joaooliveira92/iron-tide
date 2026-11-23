@@ -158,6 +158,18 @@ describe("S-5 02 persisted possession schema", () => {
     expect(decodes(good)).toBe(true);
   });
 
+  it("accepts the optional colony value and rejects a non-numeric one", () => {
+    expect(decodes({ ...good, colonyValueBp: 40 })).toBe(true);
+    expect(decodes({ ...good, colonyValueBp: "40" })).toBe(false);
+  });
+
+  it("rejects a colony value that the engine could not apply", () => {
+    for (const colonyValueBp of [0, -3, 0.5, 1_001]) {
+      expect(decodes({ ...good, colonyValueBp })).toBe(false);
+    }
+    expect(decodes({ ...good, colonyValueBp: 1_000 })).toBe(true);
+  });
+
   it("rejects a malformed possession entry", () => {
     for (const bad of [
       { ...good, id: "" },

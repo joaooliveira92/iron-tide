@@ -23,7 +23,11 @@ function reconciliationText(
     .filter(([, value]) => value !== 0)
     .map(([label, value]) => ` − ${label} ${n(value)}`);
   const other = r.other === 0 ? "" : ` ± other ${signed(r.other, format)}`;
-  return `Reconciliation: opening ${n(r.opening)} + revenue ${n(r.revenue)}${spent.join("")}${other} = closing ${n(r.closing)}`;
+  const colony =
+    r.colonyIncome === undefined || r.colonyIncome === 0
+      ? ""
+      : ` + colony income ${n(r.colonyIncome)}`;
+  return `Reconciliation: opening ${n(r.opening)} + revenue ${n(r.revenue)}${colony}${spent.join("")}${other} = closing ${n(r.closing)}`;
 }
 
 export function MonthReportTreasurySection({

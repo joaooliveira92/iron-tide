@@ -12,6 +12,7 @@ export interface LedgerReconciliation {
   readonly maintenance: number;
   readonly obligation: number;
   readonly research: number;
+  readonly colonyIncome?: number;
   readonly other: number;
   readonly closing: number;
 }
@@ -29,15 +30,18 @@ export function reconcileMonthLedger(
   let maintenance = 0;
   let obligation = 0;
   let research = 0;
+  let colonyIncome = 0;
   for (const entry of entries) {
     if (entry.categoryId === "NAVAL_APPROPRIATION") revenue += entry.credit;
+    else if (entry.categoryId === "COLONY_INCOME") colonyIncome += entry.credit;
     else if (CONSTRUCTION_CATEGORIES.has(entry.categoryId)) construction += entry.debit;
     else if (entry.categoryId === "CONSTRUCTION_PRESERVATION") preservation += entry.debit;
     else if (entry.categoryId === "MAINTENANCE_EXPENDITURE") maintenance += entry.debit;
     else if (entry.categoryId === "OBLIGATION") obligation += entry.debit;
     else if (entry.categoryId === "RESEARCH_EXPENDITURE") research += entry.debit;
   }
-  const named = revenue - construction - preservation - maintenance - obligation - research;
+  const named =
+    revenue + colonyIncome - construction - preservation - maintenance - obligation - research;
   return {
     opening,
     revenue,
@@ -46,6 +50,7 @@ export function reconcileMonthLedger(
     maintenance,
     obligation,
     research,
+    ...(colonyIncome === 0 ? {} : { colonyIncome }),
     other: closing - opening - named,
     closing,
   };

@@ -35,6 +35,7 @@ import {
   resolveAccelerationCapacityPressure,
 } from "./constructionAcceleration.js";
 import { growNationBase } from "./baseGrowthMonth.js";
+import { creditColonyIncome } from "./colonyIncomeMonth.js";
 import { fundDesignStudies } from "./designStudies.js";
 import { resolvePrivateDockExpansion } from "./dockExpansion.js";
 import { runForeignContractPhase } from "./foreignContractPhase.js";
@@ -87,6 +88,7 @@ export function runMonthlyRevenuePhase(ctx: PhaseContext): PhaseRunOutcome {
         grownNations.set(nationId, grown);
         ctx.snapshot.write("nations", grownNations);
       }
+      creditColonyIncome(ctx, nationId);
       continue;
     }
 
@@ -126,6 +128,7 @@ export function runMonthlyRevenuePhase(ctx: PhaseContext): PhaseRunOutcome {
         campaignMonth,
       ),
     );
+    creditColonyIncome(ctx, nationId);
   }
   return { status: "continue" };
 }
@@ -540,7 +543,7 @@ export function runObligationPhase(ctx: PhaseContext): PhaseRunOutcome {
 export const monthlyRevenuePhase: MonthPhase = {
   id: "monthly_revenue",
   name: "Monthly Revenue",
-  permissions: { reads: ["nations"], writes: ["nations"], rng: false },
+  permissions: { reads: ["nations", "world"], writes: ["nations"], rng: false },
   run: runMonthlyRevenuePhase,
 };
 

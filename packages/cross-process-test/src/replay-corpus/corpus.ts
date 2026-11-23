@@ -32,7 +32,11 @@ import {
 import { LEDGER_ORDER, ledgerEntryText, monthCheckpoint } from "./checkpoint.js";
 import { commandLedgerDigest, replayVerificationHash } from "./engine-digests.js";
 import { executeAnswering, offerSessionFor, recordedInputOf, type OfferSession } from "./offers.js";
-import { productionBaseGrowth, productionResearchReturns } from "./optional-sections.js";
+import {
+  productionBaseGrowth,
+  productionColonyIncome,
+  productionResearchReturns,
+} from "./optional-sections.js";
 import { SETUPS } from "./setups.js";
 import {
   REPLAY_FORMAT_VERSION,
@@ -295,10 +299,12 @@ export function fleetManagementOptions(playerNationId?: string, setup?: ReplaySe
   const unrest = productionUnrest();
   const baseGrowth = productionBaseGrowth(production().bundle.rulesets);
   const researchReturns = productionResearchReturns(production().bundle.rulesets);
+  const colonyIncome = productionColonyIncome(production().bundle.rulesets);
   return {
     ...(terrain === undefined ? {} : { terrain }),
     ...(baseGrowth === undefined ? {} : { baseGrowth }),
     ...(researchReturns === undefined ? {} : { researchReturns }),
+    ...(colonyIncome === undefined ? {} : { colonyIncome }),
     ...(unrest === undefined ? {} : { unrest }),
     ...(fleetManagement === undefined ? {} : { fleetManagement }),
     ...(tensionDrift === undefined ? {} : { tensionDrift }),

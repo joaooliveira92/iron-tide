@@ -197,6 +197,23 @@ describe("economyOutlook", () => {
     expect(withBudget(12, { ...curve, aboveMarginalBp: 10_000 }).researchEffective).toBe(12);
   });
 
+  it("counts only the research the treasury actually pays when the treasury is short", () => {
+    const o = economyOutlook(
+      snapshot(
+        nation({
+          treasury: SafeInt(0),
+          expenses: SafeInt(80),
+          research: { researchBudget: SafeInt(12), standingResearchBudget: SafeInt(12) },
+        }),
+      ),
+      "n",
+      { researchReturns: { fullReturnShareBp: 1000, aboveMarginalBp: 5000 } },
+    )!;
+    expect(o.plannedResearch).toBe(12);
+    expect(o.settlement.researchPaid).toBe(4);
+    expect(o.researchEffective).toBe(4);
+  });
+
   it("plans only what the phase funds: paced projects, not held, foreign or unpaced new orders", () => {
     const o = economyOutlook(
       snapshot(

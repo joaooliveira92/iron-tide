@@ -10,10 +10,17 @@ export function applySubmarinePolicyCommand(ctx: PhaseContext, body: CommandBody
       stage: "command-collection",
       entityId: command["nationId"],
     });
-  if (ctx.engineOptions?.tradeProtection?.submarineThreat?.unrestricted === undefined) {
+  const threat = ctx.engineOptions?.tradeProtection?.submarineThreat;
+  const available =
+    command["policy"] === "UNRESTRICTED"
+      ? threat?.unrestricted !== undefined
+      : command["policy"] === "FLEET_SUPPORT"
+        ? threat?.fleetSupport !== undefined
+        : threat?.unrestricted !== undefined || threat?.fleetSupport !== undefined;
+  if (!available) {
     refuse(
       SUBMARINE_POLICY_DORMANT,
-      "Submarine policy is not available: unrestricted warfare is not authored",
+      `Submarine policy ${command["policy"]} is not available: its warfare block is not authored`,
     );
     return true;
   }
@@ -24,7 +31,7 @@ export function applySubmarinePolicyCommand(ctx: PhaseContext, body: CommandBody
   }
   const { submarinePolicy: _previous, ...rest } = nation;
   const next: NationState =
-    command["policy"] === "UNRESTRICTED" ? { ...rest, submarinePolicy: "UNRESTRICTED" } : rest;
+    command["policy"] === "PRIZE_RULES" ? rest : { ...rest, submarinePolicy: command["policy"] };
   const nations = new Map(ctx.snapshot.current["nations"]);
   nations.set(command["nationId"], next);
   ctx.snapshot.current = { ...ctx.snapshot.current, nations };

@@ -544,6 +544,7 @@ export interface PossessionData {
   id: string;
   nationId: string;
   areaId: string;
+  colonyValueBp?: SafeInt;
 }
 
 export interface TechnologyDefinitionData {

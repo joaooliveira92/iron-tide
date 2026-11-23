@@ -28,6 +28,7 @@ export type {
   RaiderEngaged,
   RaiderInterned,
   RaiderReleased,
+  NeutralWarEntered,
   NationBudgetChanged,
   PossessionTransferred,
   PresenceShortfall,

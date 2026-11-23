@@ -29,6 +29,7 @@ export function explainReportTreasury(reconciliation: LedgerReconciliation): Exp
     .addChild(lineChild("report_treasury.opening", reconciliation.opening));
   const inflows: readonly (readonly [string, number])[] = [
     ["report_treasury.revenue", reconciliation.revenue],
+    ["report_treasury.colonyIncome", reconciliation.colonyIncome ?? 0],
   ];
   const outflows: readonly (readonly [string, number])[] = [
     ["report_treasury.construction", -reconciliation.construction],

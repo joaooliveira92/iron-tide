@@ -45,6 +45,7 @@ const EVENT_SUBSYSTEM: Readonly<Record<string, string>> = {
   RaiderEngaged: "resolve_diplomacy",
   RaiderInterned: "resolve_diplomacy",
   RaiderReleased: "resolve_diplomacy",
+  NeutralWarEntered: "resolve_diplomacy",
   BattleOfferAnswered: "battle_resolution",
   RevoltPressureRequested: "battle_resolution",
   ShipDetachedToFleet: "battle_resolution",

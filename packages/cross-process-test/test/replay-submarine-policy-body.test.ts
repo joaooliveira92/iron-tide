@@ -26,7 +26,7 @@ const validBody = {
 };
 
 describe("replay format: SetSubmarinePolicy command body", () => {
-  it.each(["PRIZE_RULES", "UNRESTRICTED"])("accepts the %s policy", (policy) => {
+  it.each(["FLEET_SUPPORT", "PRIZE_RULES", "UNRESTRICTED"])("accepts the %s policy", (policy) => {
     const decoded = decodeReplayFile(withBody({ ...validBody, policy }));
     if (Result.isFailure(decoded)) throw new Error(decoded.failure.message);
     expect(decoded.success.months[0]!.commands[0]!.body).toEqual({ ...validBody, policy });
@@ -41,9 +41,9 @@ describe("replay format: SetSubmarinePolicy command body", () => {
   });
 
   it("rejects an unknown policy, a missing policy and excess properties", () => {
-    expect(
-      Result.isFailure(decodeReplayFile(withBody({ ...validBody, policy: "FLEET_SUPPORT" }))),
-    ).toBe(true);
+    expect(Result.isFailure(decodeReplayFile(withBody({ ...validBody, policy: "BLOCKADE" })))).toBe(
+      true,
+    );
     const { policy: _policy, ...missing } = validBody;
     expect(Result.isFailure(decodeReplayFile(withBody(missing)))).toBe(true);
     expect(Result.isFailure(decodeReplayFile(withBody({ ...validBody, extra: 1 })))).toBe(true);

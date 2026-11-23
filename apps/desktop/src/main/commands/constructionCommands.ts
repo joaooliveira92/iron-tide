@@ -56,6 +56,7 @@ export const inspectConstructionScreenProgram: CommandHandler<"inspectConstructi
     const record = yield* sessions.get(sessionId);
     const workspace = yield* sessions.getConstructionWorkspace(record);
     const content = yield* contentArtifact.loadShipBuildingContent();
+    const researchReturns = yield* contentArtifact.loadResearchReturnsRules();
 
     const projection: ConstructionScreenProjection = {
       revision: Number(record.state.snapshot.turnNumber),
@@ -89,6 +90,7 @@ export const inspectConstructionScreenProgram: CommandHandler<"inspectConstructi
             record.playerSlotId,
             content,
             campaignMonthKey(record),
+            researchReturns,
           ),
         ),
       ),

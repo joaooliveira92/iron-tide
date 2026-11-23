@@ -16,6 +16,7 @@ export const inspectCampaignProgram: CommandHandler<"inspectCampaign"> = (sessio
 
     const contentArtifact = yield* ContentArtifact;
     const shipBuilding = yield* contentArtifact.loadShipBuildingContent();
+    const researchReturns = yield* contentArtifact.loadResearchReturnsRules();
     const queue = yield* CommandQueue;
     const queued = yield* queue.entries(sessionId);
     const forecast = snapshotWithQueuedConstruction(
@@ -28,7 +29,13 @@ export const inspectCampaignProgram: CommandHandler<"inspectCampaign"> = (sessio
       record.playerSlotId,
       record.month,
       shipBuilding.presence,
-      economyOutlookOptions(forecast, record.playerSlotId, shipBuilding, campaignMonthKey(record)),
+      economyOutlookOptions(
+        forecast,
+        record.playerSlotId,
+        shipBuilding,
+        campaignMonthKey(record),
+        researchReturns,
+      ),
     );
     if (!projection) {
       return yield* new CommandFailed({

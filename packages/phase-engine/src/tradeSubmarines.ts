@@ -36,6 +36,20 @@ export function opposingSubmarines(
   );
 }
 
+export function fleetSupportSubmarines(
+  threat: SubmarineThreatRules,
+  attackers: readonly TradeAttacker[],
+  designs: ReadonlyMap<string, TradeDutyDesign>,
+): number {
+  return attackers.reduce(
+    (total, attacker) =>
+      attacker.policy === "FLEET_SUPPORT"
+        ? total + countEnemySubmarines(threat, attacker.ships, designs)
+        : total,
+    0,
+  );
+}
+
 export interface SubmarineAttackInput {
   readonly ctx: PhaseContext;
   readonly engine: RandomEngine;
