@@ -10,6 +10,23 @@ const ENTRY_CONTEXT = "bluewave/replay-corpus/ledger-entry/v1";
 
 export const LEDGER_ORDER: readonly LedgerName[] = ["command", "event", "financial", "random"];
 
+export function firstLedgerDifference(
+  expected: readonly string[],
+  actual: readonly string[],
+): { entryIndex: number; expected: string; actual: string } | undefined {
+  const length = Math.max(expected.length, actual.length);
+  for (let entryIndex = 0; entryIndex < length; entryIndex++) {
+    if (expected[entryIndex] !== actual[entryIndex]) {
+      return {
+        entryIndex,
+        expected: expected[entryIndex] ?? "(missing)",
+        actual: actual[entryIndex] ?? "(missing)",
+      };
+    }
+  }
+  return undefined;
+}
+
 function plain(value: unknown): unknown {
   if (value instanceof Map) {
     const entries = [...value].map(([key, item]) => [plain(key), plain(item)] as const);

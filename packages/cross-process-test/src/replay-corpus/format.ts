@@ -278,6 +278,19 @@ export function decodeReplayFile(text: string): Result.Result<ReplayFile, Replay
       }),
     );
   }
+  if (
+    offersEnabled &&
+    decoded.success.months.some(
+      (m) => m.commandLedgerDigest !== undefined || m.replayVerificationHash !== undefined,
+    )
+  ) {
+    return Result.fail(
+      new ReplayFileError({
+        message:
+          "Replay file failed validation: months.commandLedgerDigest: engine digests cannot be pinned with engineOptions.battleOffers: the verifier replays a month without an interruption channel",
+      }),
+    );
+  }
   return Result.succeed(decoded.success);
 }
 
