@@ -65,7 +65,12 @@ describe("#1101: unrestricted submarine warfare costs its owner no prestige", ()
       (d) => d.reasonCode === "SUBMARINE_INCIDENT" || d.streamId.startsWith("trade"),
     );
     expect(drew.length).toBeGreaterThan(0);
-    if (!atWar) {
+    if (atWar) {
+      const submarineHits = unrestricted.eventLedger.all.flatMap((e) =>
+        e.body.kind === "MerchantLossSuffered" ? [e.body.submarineHits] : [],
+      );
+      expect(submarineHits.some((hits) => hits > 0)).toBe(true);
+    } else {
       expect(unrestricted.finalSnapshot.politics.relations[0]!.tension).toBe(4);
     }
 
