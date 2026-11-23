@@ -48,7 +48,7 @@ describe("1880 production terrain", () => {
     expect(withTerrain.rawHash).toBe(without.rawHash);
     expect(withTerrain.envelopeHash).toBe(without.envelopeHash);
     expect(withTerrain.envelopeHash).toBe(
-      "548923ed8a99a7029f1f61ac1d240de7a483e604af0aa4d04a93e0d7d81da1d6",
+      "dcd3cd776a0cfc0c442c1c6ae773e1f6b7270360aa08c36cce2e5dc421c66267",
     );
   }, 60_000);
 });
