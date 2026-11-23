@@ -41,9 +41,20 @@ describe("replay corpus battle offers (#1111)", () => {
       const intercepted = month.offerAnswers.some((a) =>
         a.battleId.includes("_raider_interception_"),
       );
-      const engaged = month.result.eventLedger.all.filter((e) => e.eventType === "RaiderEngaged");
-      if (intercepted) expect(engaged).toEqual([]);
+      const abstractDraws = month.result.randomLedger.all.filter(
+        (d) => d.streamId === "trade/engagement",
+      );
+      if (intercepted) expect(abstractDraws).toEqual([]);
     }
+  });
+
+  it("scuttles the pre-damaged raider after its tactical interception battle", () => {
+    const outcomes = months.flatMap((month) =>
+      month.result.eventLedger.all.flatMap((e) =>
+        e.body.kind === "RaiderEngaged" ? [`${e.body.shipId}:${e.body.outcome}`] : [],
+      ),
+    );
+    expect(outcomes).toEqual(["aut_custoza:SCUTTLED"]);
   });
 
   it("records the answers on the months that suspended and the opt-in on the engine options", () => {
