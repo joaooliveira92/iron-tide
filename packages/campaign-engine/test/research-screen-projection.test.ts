@@ -239,6 +239,30 @@ describe("research explanations", () => {
     expect(projection.minimumResearchSpend).toBe(8);
   });
 
+  it("shows the effective research and its rate, explained from the returns curve", () => {
+    const nation = fixtureNation({
+      id: "uk",
+      baseResources: baseFor(100),
+      research: researchFixture({ discoveredTechs: [] }),
+    });
+    const snapshot = fixtureSnapshot([nation], [], {
+      world: { areas: [], routes: [], ports: [], technologies: fixtureCatalogue },
+    });
+    const curved = buildResearchScreenProjection(fixtureState(snapshot), "uk", month, new Map(), {
+      researchReturns: { fullReturnShareBp: 1000, aboveMarginalBp: 5000 },
+    });
+    expect(curved?.researchSpend).toBe(12);
+    expect(curved?.researchEffective).toBe(11);
+    expect(curved?.researchEffectiveRateBp).toBe(9_166);
+    expect(Number(curved?.returnsExplanation?.result)).toBe(11);
+    expect(curved?.returnsExplanation?.formulaId).toBe("research_returns");
+
+    const linear = buildResearchScreenProjection(fixtureState(snapshot), "uk", month);
+    expect(linear?.researchEffective).toBe(12);
+    expect(linear?.researchEffectiveRateBp).toBe(10_000);
+    expect(Number(linear?.returnsExplanation?.result)).toBe(12);
+  });
+
   it("books the requested budget as unfunded when no field can take it", () => {
     const nation = fixtureNation({
       id: "uk",

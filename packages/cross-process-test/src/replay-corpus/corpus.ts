@@ -13,7 +13,6 @@ import {
   tensionDriftFromRulesets,
   tradeProtectionFromRulesets,
   unrestFromRulesets,
-  baseGrowthFromRulesets,
   warDeclarationFromRulesets,
 } from "@bluewave/content-compiler";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
@@ -33,6 +32,7 @@ import {
 import { LEDGER_ORDER, ledgerEntryText, monthCheckpoint } from "./checkpoint.js";
 import { commandLedgerDigest, replayVerificationHash } from "./engine-digests.js";
 import { executeAnswering, offerSessionFor, recordedInputOf, type OfferSession } from "./offers.js";
+import { productionBaseGrowth, productionResearchReturns } from "./optional-sections.js";
 import { SETUPS } from "./setups.js";
 import {
   REPLAY_FORMAT_VERSION,
@@ -261,16 +261,6 @@ function productionUnrest() {
   return decoded.value;
 }
 
-function productionBaseGrowth() {
-  const decoded = baseGrowthFromRulesets(production().bundle.rulesets);
-  if (decoded === undefined) return undefined;
-  if (!decoded.ok)
-    throw new ReplayFileError({
-      message: `production baseGrowth section is invalid at '${decoded.field}'`,
-    });
-  return decoded.value;
-}
-
 let answerPrestigeCodes: ReadonlySet<string> | undefined;
 export function eventAnswerPrestigeReasonCodes(): ReadonlySet<string> {
   if (answerPrestigeCodes !== undefined) return answerPrestigeCodes;
@@ -303,10 +293,12 @@ export function fleetManagementOptions(playerNationId?: string, setup?: ReplaySe
   const constructionEvents = productionConstructionEvents(setup);
   const terrain = productionBattleTerrain();
   const unrest = productionUnrest();
-  const baseGrowth = productionBaseGrowth();
+  const baseGrowth = productionBaseGrowth(production().bundle.rulesets);
+  const researchReturns = productionResearchReturns(production().bundle.rulesets);
   return {
     ...(terrain === undefined ? {} : { terrain }),
     ...(baseGrowth === undefined ? {} : { baseGrowth }),
+    ...(researchReturns === undefined ? {} : { researchReturns }),
     ...(unrest === undefined ? {} : { unrest }),
     ...(fleetManagement === undefined ? {} : { fleetManagement }),
     ...(tensionDrift === undefined ? {} : { tensionDrift }),

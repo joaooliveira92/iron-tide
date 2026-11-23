@@ -160,7 +160,9 @@ describe("ResearchScreen", () => {
   });
 
   it("says plainly that an empty budget spends nothing", () => {
-    hookMocks.stateFn.mockReturnValue(makeLoaded({ researchBudget: 0 }));
+    hookMocks.stateFn.mockReturnValue(
+      makeLoaded({ researchBudget: 0, researchSpend: 0, researchEffective: 0 }),
+    );
     render(<ResearchScreen sessionId="ses-1" />);
 
     expect(screen.getByText("The research budget is empty, so nothing is spent.")).not.toBeNull();

@@ -68,6 +68,35 @@ describe("buildResearchViewModel fields", () => {
     expect(vm.totals.fundedFields).toBe(2);
   });
 
+  it("projects the effective research, not the requested budget, over the fields", () => {
+    const vm = buildResearchViewModel(
+      loaded({ researchBudget: 60, researchSpend: 60, researchEffective: 30 }),
+    );
+    expect(field(vm, "HULL_CONSTRUCTION").projectedPoints).toBe(20);
+    expect(field(vm, "MACHINERY").projectedPoints).toBe(10);
+    expect(vm.totals.projectedPoints).toBe(30);
+  });
+
+  it("exposes the effective research, the return rate and its explanation", () => {
+    const tree = {
+      formulaId: "research_returns",
+      formulaVersion: "research_v1",
+      inputs: {},
+      intermediate: {},
+      result: 55,
+      unit: "nc",
+    };
+    const vm = buildResearchViewModel(
+      loaded({
+        researchEffective: 55,
+        researchEffectiveRateBp: 9_166,
+        returnsExplanation: tree,
+      }),
+    );
+    expect(vm.budget).toMatchObject({ effective: 55, effectiveRateBp: 9_166 });
+    expect(vm.budget.returnsExplanation).toEqual(tree);
+  });
+
   it("re-projects live as the draft changes", () => {
     const state = loaded();
     const draft = setDraftWeight(state.draft, "MACHINERY", RESEARCH_FIELD_PRIORITY_WEIGHTS.HIGH);

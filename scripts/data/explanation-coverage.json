@@ -548,9 +548,12 @@
       "covered": {
         "budgetExplanation": "research_budget",
         "capExplanation": "research_cap",
-        "floorExplanation": "research_floor"
+        "floorExplanation": "research_floor",
+        "returnsExplanation": "research_returns"
       },
       "exempt": {
+        "researchEffective": "Explained by returnsExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
+        "researchEffectiveRateBp": "Explained by returnsExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
         "turnNumber": "Not yet explained; #303 covers this area and re-exempts any field it does not explain.",
         "minimumResearchSpend": "Not yet explained; #303 covers this area and re-exempts any field it does not explain.",
         "researchBudget": "Not yet explained; #303 covers this area and re-exempts any field it does not explain.",

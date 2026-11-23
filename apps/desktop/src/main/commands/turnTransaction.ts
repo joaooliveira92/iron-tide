@@ -152,6 +152,7 @@ export const runTurnTransaction = (
     const tradeProtection = yield* contentArtifact.loadTradeProtectionRules();
     const unrest = yield* contentArtifact.loadUnrestRules();
     const baseGrowth = yield* contentArtifact.loadBaseGrowthRules();
+    const researchReturns = yield* contentArtifact.loadResearchReturnsRules();
     const peaceBehaviour = yield* contentArtifact.loadPeaceBehaviourRules();
     const warDeclaration = yield* contentArtifact.loadWarDeclarationRules();
     const events = yield* contentArtifact.loadEventContent();
@@ -200,6 +201,7 @@ export const runTurnTransaction = (
           : {}),
         ...(unrest !== undefined ? { unrest, playerNationId: record.playerSlotId } : {}),
         ...(baseGrowth !== undefined ? { baseGrowth } : {}),
+        ...(researchReturns !== undefined ? { researchReturns } : {}),
         ...(peaceBehaviour !== undefined
           ? { peaceBehaviour, playerNationId: record.playerSlotId }
           : {}),

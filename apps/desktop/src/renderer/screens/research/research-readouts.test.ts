@@ -22,10 +22,42 @@ function readouts(overrides = {}) {
 describe("researchReadouts", () => {
   it("reports the paid budget with requested and cap in the breakdown", () => {
     const budget = readouts().find((r) => r.id === "budget");
-    expect(budget?.value).toBe("40");
+    expect(budget?.value).toBe("60");
     expect(budget?.breakdown?.rows).toContainEqual({ label: "Requested each month", value: "60" });
-    expect(budget?.breakdown?.rows).toContainEqual({ label: "Paid each month", value: "40" });
+    expect(budget?.breakdown?.rows).toContainEqual({ label: "Paid each month", value: "60" });
     expect(budget?.breakdown?.footer).toEqual([{ label: "Headroom under the cap", value: "60" }]);
+  });
+
+  it("shows the effective research and its return rate when returns diminish", () => {
+    const tree = {
+      formulaId: "research_returns",
+      formulaVersion: "research_v1",
+      inputs: {},
+      intermediate: {},
+      result: 55,
+      unit: "nc",
+    };
+    const list = readouts({
+      researchSpend: 60,
+      researchEffective: 55,
+      researchEffectiveRateBp: 9_166,
+      returnsExplanation: tree,
+    });
+    const budget = list.find((r) => r.id === "budget");
+    expect(budget?.breakdown?.rows).toContainEqual({
+      label: "Effective research each month",
+      value: "55",
+    });
+    expect(budget?.breakdown?.rows).toContainEqual({ label: "Return rate", value: "91.66%" });
+    expect(budget?.explanations?.map((e) => e.summaryKey)).toContain(
+      "research.research_returns.summary",
+    );
+    expect(list.find((r) => r.id === "output")?.value).toBe("55 pts/month");
+  });
+
+  it("omits the return rate rows when spend is fully effective", () => {
+    const budget = readouts().find((r) => r.id === "budget");
+    expect(budget?.breakdown?.rows.some((row) => row.label === "Return rate")).toBe(false);
   });
 
   it("attaches the domain explanation trees to the budget readout", () => {
@@ -38,7 +70,7 @@ describe("researchReadouts", () => {
       unit: "nc",
     };
     const budget = readouts({
-      researchSpend: 40,
+      researchSpend: 60,
       budgetExplanation: tree,
       capExplanation: tree,
       floorExplanation: tree,
