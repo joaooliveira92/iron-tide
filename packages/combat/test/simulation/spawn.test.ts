@@ -41,6 +41,22 @@ describe("computeInitialMovementStates short-range start", () => {
     expect(out.d1!.heading).toBe(180);
   });
 
+  it("keeps every pair within range when both lines are full", () => {
+    const startRangeUm = 1_200_000_000;
+    const attackers = ["a1", "a2", "a3", "a4"].map((id) => unit(id, "ATTACKER"));
+    const defenders = ["d1", "d2", "d3", "d4"].map((id) => unit(id, "DEFENDER"));
+    const out = computeInitialMovementStates(BBOX, [...attackers, ...defenders], {
+      startRangeUm,
+    });
+    for (const a of attackers) {
+      for (const d of defenders) {
+        expect(distanceUm(out[a.assetId]!.position, out[d.assetId]!.position)).toBeLessThanOrEqual(
+          startRangeUm,
+        );
+      }
+    }
+  });
+
   it("centres the engagement in the area", () => {
     const out = computeInitialMovementStates(BBOX, units, { startRangeUm: 4_000_000_000 });
     expect((out.r!.position[0] + out.d1!.position[0]) / 2).toBe(10_000_000_000);

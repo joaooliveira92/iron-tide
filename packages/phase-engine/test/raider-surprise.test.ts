@@ -118,6 +118,16 @@ describe("#1110: AMC deception and surprise start", () => {
     expect("shortRangeStartUm" in manifestsOf(result)[0]!).toBe(false);
   });
 
+  it("records a failed deception and keeps the normal start when the draw misses", () => {
+    const result = delegated(
+      interceptedByPatrols("d-amc"),
+      withRules({ amcSurprise: { ...SURPRISE, chanceBp: 0 } }),
+    );
+    expect(surpriseDraws(result)).toHaveLength(1);
+    expect(surpriseDraws(result)[0]?.outcome).toBe("NOT_SURPRISED");
+    expect("shortRangeStartUm" in manifestsOf(result)[0]!).toBe(false);
+  });
+
   it("draws nothing without an authored surprise block", () => {
     const result = delegated(interceptedByPatrols("d-amc"), withRules({}));
     expect(surpriseDraws(result)).toEqual([]);
