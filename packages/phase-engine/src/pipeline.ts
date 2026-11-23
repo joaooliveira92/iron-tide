@@ -1,5 +1,6 @@
 import type {
   CampaignSnapshot,
+  ColonyIncomeRules,
   PresenceMeasurementRules,
   ResearchReturnsRules,
 } from "@bluewave/campaign";
@@ -88,6 +89,7 @@ export interface MonthExecutorEngineOptions {
   readonly unrest?: UnrestRules;
   readonly baseGrowth?: BaseGrowthRules;
   readonly researchReturns?: ResearchReturnsRules;
+  readonly colonyIncome?: ColonyIncomeRules;
   readonly peaceBehaviour?: PeaceBehaviourRules;
   readonly warDeclaration?: WarDeclarationRules;
   readonly events?: EventEngineContent;
