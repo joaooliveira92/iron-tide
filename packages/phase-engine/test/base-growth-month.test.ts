@@ -1,5 +1,6 @@
 import type { CampaignSnapshot } from "@bluewave/campaign";
 import { MAX_ECONOMIC_BASE } from "@bluewave/campaign";
+import { SafeInt } from "@bluewave/contracts";
 import { decodeBaseGrowthRules } from "@bluewave/content-schema";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
@@ -45,12 +46,23 @@ function run(from: CampaignSnapshot, options: MonthExecutorEngineOptions) {
   return Object.assign(result, { collector });
 }
 
+function atTurn(from: CampaignSnapshot, turn: number): CampaignSnapshot {
+  return { ...from, turnNumber: SafeInt(turn) };
+}
+
 const digest = (value: unknown) => sha256Hex(canonicalSerialize(value));
 
 function recurrence(base: number, bp: number, months: number): number {
   let b = base;
-  for (let i = 0; i < months; i++)
-    b = Math.min(MAX_ECONOMIC_BASE, b + Math.floor((b * bp) / 120_000));
+  for (let i = 0; i < months; i++) {
+    const scaled = b * bp;
+    const whole = Math.floor(scaled / 120_000);
+    const remainder = scaled - whole * 120_000;
+    const phase = (i + 1) % 12;
+    const carried =
+      Math.floor((remainder * (phase + 1)) / 120_000) - Math.floor((remainder * phase) / 120_000);
+    b = Math.min(MAX_ECONOMIC_BASE, b + whole + carried);
+  }
   return b;
 }
 
@@ -59,9 +71,19 @@ describe("monthly base growth (S-3 D7)", () => {
     const rules = fixtureRules();
     let snapshot = start(60_000);
     for (let month = 0; month < 120; month++)
-      snapshot = run(snapshot, { baseGrowth: rules }).finalSnapshot;
+      snapshot = run(atTurn(snapshot, month + 1), { baseGrowth: rules }).finalSnapshot;
     expect(snapshot.nations.get("GBR")!.baseResources).toBe(recurrence(60_000, 400, 120));
     expect(snapshot.nations.get("FRA")!.baseResources).toBe(60_000);
+  });
+
+  it("grows a small base through the month pipeline instead of flooring it to zero", () => {
+    const rules = fixtureRules();
+    let snapshot = start(180);
+    for (let month = 0; month < 12; month++)
+      snapshot = run(atTurn(snapshot, month + 1), { baseGrowth: rules }).finalSnapshot;
+    const grown = snapshot.nations.get("GBR")!.baseResources as number;
+    expect(grown).toBe(recurrence(180, 400, 12));
+    expect(grown).toBeGreaterThan(180);
   });
 
   it("grows the base before the month's revenue is computed", () => {
@@ -86,8 +108,8 @@ describe("monthly base growth (S-3 D7)", () => {
     expect(digest(dormant.financialLedger.all)).toBe(digest(baseline.financialLedger.all));
   });
 
-  it("changes no ledger or event sequence when growth rounds to zero", () => {
-    const from = start(100);
+  it("changes no ledger or event sequence when the base is zero", () => {
+    const from = start(0);
     const grown = run(from, { baseGrowth: fixtureRules() });
     const flat = run(from, {});
     expect(digest(grown.finalSnapshot)).toBe(digest(flat.finalSnapshot));
