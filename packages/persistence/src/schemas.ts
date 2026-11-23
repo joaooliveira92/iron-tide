@@ -131,6 +131,7 @@ export const StorablePossessionSchema = Schema.Struct({
   id: Schema.NonEmptyString,
   nationId: Schema.NonEmptyString,
   areaId: Schema.NonEmptyString,
+  colonyValueBp: Schema.optional(Schema.Finite),
 });
 
 export const StorableTechnologySchema = Schema.Struct({
