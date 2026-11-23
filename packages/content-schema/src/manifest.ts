@@ -29,6 +29,7 @@ export const RulesetManifestSchema = Schema.Struct({
   unrest: Schema.optional(Schema.Unknown),
   baseGrowth: Schema.optional(Schema.Unknown),
   researchReturns: Schema.optional(Schema.Unknown),
+  colonyIncome: Schema.optional(Schema.Unknown),
   peaceBehaviour: Schema.optional(Schema.Unknown),
   warDeclaration: Schema.optional(Schema.Unknown),
   eventResolution: Schema.optional(Schema.Unknown),
