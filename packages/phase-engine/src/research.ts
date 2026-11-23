@@ -146,7 +146,7 @@ export function resolveResearchNations(
     const actualPaidExpenditure = settlement.paid;
     const effectiveResources = computeResearchResources(actualPaidExpenditure, revenue, returns);
 
-    if ((effectiveResources as number) <= 0) {
+    if ((actualPaidExpenditure as number) <= 0) {
       if ((settlement.shortfall as number) > 0)
         financialLedger.append(
           makeLedgerEntry(

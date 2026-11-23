@@ -18,7 +18,7 @@ const HULL_ONLY_CATALOGUE = [
 
 const RULES: ResearchReturnsRules = { fullReturnShareBp: 1_000, aboveMarginalBp: 5_000 };
 
-function gbr(standing: number): NationState {
+function gbr(standing: number, baseResources = 120_000): NationState {
   return {
     prestige: SafeInt(50),
     id: "GBR",
@@ -28,7 +28,7 @@ function gbr(standing: number): NationState {
     treasury: SafeInt(1_000_000),
     income: SafeInt(100),
     expenses: SafeInt(0),
-    baseResources: SafeInt(120_000),
+    baseResources: SafeInt(baseResources),
     navalAppropriationRateBp: SafeInt(2_000),
     maintenanceCost: SafeInt(0),
     fleets: [],
@@ -76,9 +76,13 @@ function snapshot(nation: NationState): CampaignSnapshot {
   };
 }
 
-function runMonth(standing: number, rules: ResearchReturnsRules | undefined) {
+function runMonth(
+  standing: number,
+  rules: ResearchReturnsRules | undefined,
+  baseResources?: number,
+) {
   const result = new MonthExecutor().execute(
-    snapshot(gbr(standing)),
+    snapshot(gbr(standing, baseResources)),
     [],
     "research-returns-seed",
     new DiagnosticCollector(),
@@ -115,6 +119,15 @@ describe("diminishing research returns above 10% of revenue (manual p.16)", () =
     expect(flat.points).toBe(240);
     expect(curved.paid).toEqual(flat.paid);
     expect(curved.treasury).toBe(flat.treasury);
+  });
+
+  it("still charges spend whose effective research rounds to zero (revenue 9, budget 1)", () => {
+    const flat = runMonth(1, undefined, 540);
+    const curved = runMonth(1, RULES, 540);
+    expect(flat.paid).toEqual([1]);
+    expect(curved.paid).toEqual([1]);
+    expect(curved.treasury).toBe(flat.treasury);
+    expect(curved.points).toBe(0);
   });
 
   it("reproduces the linear behaviour when the marginal rate is full", () => {
