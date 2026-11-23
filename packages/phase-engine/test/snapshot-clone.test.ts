@@ -397,7 +397,7 @@ function makeRichSnapshot(): CampaignSnapshot {
       aiPolicyVersion: "a1",
       rngVersion: "rng_v1",
       contentVersion: "fixture_v1",
-      manifestHash: "manifest-hash",
+      ...{ manifestHash: "manifest-hash", shortRangeStartUm: 1_200_000_000 },
     },
   ];
 
