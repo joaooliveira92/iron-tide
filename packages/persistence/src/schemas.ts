@@ -131,7 +131,9 @@ export const StorablePossessionSchema = Schema.Struct({
   id: Schema.NonEmptyString,
   nationId: Schema.NonEmptyString,
   areaId: Schema.NonEmptyString,
-  colonyValueBp: Schema.optional(Schema.Finite),
+  colonyValueBp: Schema.optional(
+    Schema.Finite.check(Schema.isInt(), Schema.isBetween({ minimum: 1, maximum: 1_000 })),
+  ),
 });
 
 export const StorableTechnologySchema = Schema.Struct({
