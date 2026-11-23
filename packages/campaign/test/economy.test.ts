@@ -3,6 +3,7 @@ import { describe, expect, it } from "vite-plus/test";
 import {
   ECONOMY_RATE_DENOMINATOR,
   GROWTH_BAND_MAX_BP,
+  GROWTH_BAND_MIN_BP,
   MAX_APPROPRIATION_RATE_BP,
   MAX_ECONOMIC_BASE,
   RESEARCH_SHARE_CAP_BP,
@@ -186,42 +187,76 @@ describe("economy calculators", () => {
 });
 
 describe("growth contract (G7)", () => {
-  it("is floor(base x rate / 120000) inside the 300-500 bp band and rejects anything else", () => {
-    expect(monthlyBaseGrowth(SafeInt(60_000), 500)).toBe(250);
-    expect(monthlyBaseGrowth(SafeInt(60_000), 300)).toBe(150);
-    for (const bad of [299, 501, 400.5, Number.NaN])
-      expect(() => monthlyBaseGrowth(SafeInt(60_000), bad)).toThrow(RangeError);
-  });
-
-  it("never grows a base below 240, even at the maximum rate", () => {
-    for (let base = 0; base < 240; base++)
-      expect(monthlyBaseGrowth(SafeInt(base), GROWTH_BAND_MAX_BP)).toBe(0);
-    expect(monthlyBaseGrowth(SafeInt(240), GROWTH_BAND_MAX_BP)).toBe(1);
-  });
-
-  it("is monotone in the base and the rate", () => {
-    for (let base = 0; base <= 5_000; base += 97) {
-      expect(
-        monthlyBaseGrowth(SafeInt(base + 97), 400) >= monthlyBaseGrowth(SafeInt(base), 400),
-      ).toBe(true);
-      expect(monthlyBaseGrowth(SafeInt(base), 500) >= monthlyBaseGrowth(SafeInt(base), 300)).toBe(
-        true,
-      );
+  it("is base x rate / 120000 inside the 300-500 bp band and rejects anything else", () => {
+    for (let month = 0; month < 12; month++) {
+      expect(monthlyBaseGrowth(SafeInt(60_000), 500, month)).toBe(250);
+      expect(monthlyBaseGrowth(SafeInt(60_000), 300, month)).toBe(150);
     }
+    for (const bad of [299, 501, 400.5, Number.NaN])
+      expect(() => monthlyBaseGrowth(SafeInt(60_000), bad, 0)).toThrow(RangeError);
+  });
+
+  it("spreads a fractional monthly growth so twelve months sum to floor(base x rate / 10000)", () => {
+    for (const bp of [300, 400, 500])
+      for (const base of [180, 300, 420, 720, 1_001, 60_017]) {
+        let total = 0;
+        for (let month = 0; month < 12; month++)
+          total += monthlyBaseGrowth(SafeInt(base), bp, month);
+        expect(total).toBe(Math.floor((base * bp) / 10_000));
+      }
+  });
+
+  it("grows Portugal's base of 180 at every in-band rate over a year", () => {
+    for (let bp = GROWTH_BAND_MIN_BP; bp <= GROWTH_BAND_MAX_BP; bp += 50) {
+      let base = SafeInt(180);
+      for (let month = 0; month < 12; month++) base = grownBase(base, bp, month);
+      expect(base > 180).toBe(true);
+    }
+    let base = SafeInt(180);
+    for (let month = 0; month < 12; month++) base = grownBase(base, 500, month);
+    expect(base).toBe(189);
+  });
+
+  it("reaches the nominal 400 bp a year for every 1880 starting base within one unit", () => {
+    for (const start of [180, 300, 420, 720]) {
+      let base = SafeInt(start);
+      for (let month = 0; month < 12; month++) base = grownBase(base, 400, month);
+      expect(Math.abs(base - start * 1.04) < 1.5).toBe(true);
+    }
+  });
+
+  it("stays within one unit of the exact fractional monthly growth", () => {
+    for (let month = 0; month < 12; month++)
+      for (const bp of [300, 400, 500])
+        for (let base = 0; base <= 5_000; base += 97) {
+          const exact = (base * bp) / ECONOMY_RATE_DENOMINATOR;
+          const growth = monthlyBaseGrowth(SafeInt(base), bp, month);
+          expect(growth >= Math.floor(exact) && growth <= Math.ceil(exact)).toBe(true);
+        }
+  });
+
+  it("wraps a month index onto its month of year", () => {
+    for (let month = 0; month < 36; month++)
+      expect(monthlyBaseGrowth(SafeInt(180), 500, month)).toBe(
+        monthlyBaseGrowth(SafeInt(180), 500, month % 12),
+      );
+    expect(monthlyBaseGrowth(SafeInt(180), 500, -1)).toBe(monthlyBaseGrowth(SafeInt(180), 500, 11));
   });
 
   it("holds the base at the overflow ceiling instead of overflowing", () => {
     const ceiling = SafeInt(MAX_ECONOMIC_BASE);
-    expect(grownBase(ceiling, 500)).toBe(ceiling);
-    expect(grownBase(SafeInt(MAX_ECONOMIC_BASE - 1), 500)).toBe(ceiling);
+    for (let month = 0; month < 12; month++) {
+      expect(grownBase(ceiling, 500, month)).toBe(ceiling);
+      expect(grownBase(SafeInt(MAX_ECONOMIC_BASE - 1), 500, month)).toBe(ceiling);
+    }
     expect(
-      Number.isSafeInteger(monthlyRevenue(grownBase(ceiling, 500), SafeInt(5000)) as number),
+      Number.isSafeInteger(monthlyRevenue(grownBase(ceiling, 500, 0), SafeInt(5000)) as number),
     ).toBe(true);
   });
 
   it("does not compound without limit: twenty years at the top rate stays under 2.75x", () => {
     let base = SafeInt(60_000);
-    for (let month = 0; month < 240; month++) base = grownBase(base, 500);
+    for (let month = 0; month < 240; month++) base = grownBase(base, 500, month % 12);
     expect(base < 60_000 * 2.75).toBe(true);
     expect(base > 60_000).toBe(true);
   });
