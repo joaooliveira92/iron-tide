@@ -82,6 +82,7 @@ export function tradeProtectionQuota(
   fleetShips: number,
   baseResources: number,
   enemySubmarines: number = 0,
+  fleetSupportSubmarines: number = 0,
 ): number {
   const fleetTerm = scaleBp(fleetShips, rules.fleetShareBp, "ceil");
   const economyTerm = SafeInt.div(
@@ -92,7 +93,7 @@ export function tradeProtectionQuota(
   const submarineTerm =
     rules.submarineThreat === undefined
       ? 0
-      : submarineQuotaTerm(rules.submarineThreat, enemySubmarines);
+      : submarineQuotaTerm(rules.submarineThreat, enemySubmarines, fleetSupportSubmarines);
   return SafeInt.add(SafeInt.add(SafeInt(fleetTerm), economyTerm), SafeInt(submarineTerm));
 }
 

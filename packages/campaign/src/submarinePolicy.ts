@@ -1,4 +1,4 @@
-export const SUBMARINE_POLICIES = ["PRIZE_RULES", "UNRESTRICTED"] as const;
+export const SUBMARINE_POLICIES = ["FLEET_SUPPORT", "PRIZE_RULES", "UNRESTRICTED"] as const;
 export type SubmarinePolicy = (typeof SUBMARINE_POLICIES)[number];
 
 export const SUBMARINE_POLICY_DORMANT = "SUBMARINE_POLICY_DORMANT" as const;

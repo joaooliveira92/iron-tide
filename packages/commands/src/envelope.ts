@@ -269,7 +269,7 @@ export interface SetTradeDutyCommand {
 export interface SetSubmarinePolicyCommand {
   type: "SetSubmarinePolicy";
   nationId: string;
-  policy: "PRIZE_RULES" | "UNRESTRICTED";
+  policy: "FLEET_SUPPORT" | "PRIZE_RULES" | "UNRESTRICTED";
 }
 export interface HoldFleetExerciseCommand {
   type: "HoldFleetExercise";

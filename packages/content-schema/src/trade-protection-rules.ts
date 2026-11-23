@@ -41,6 +41,16 @@ export const UnrestrictedWarfareRulesSchema = Schema.Struct({
   neutralEntryBp: Schema.optional(bp),
 });
 
+const shareBp = Schema.Finite.check(
+  Schema.isInt(),
+  Schema.isBetween({ minimum: 0, maximum: 10_000 }),
+);
+
+export const FleetSupportRulesSchema = Schema.Struct({
+  chanceMultiplierBp: shareBp,
+  quotaMultiplierBp: Schema.optional(shareBp),
+});
+
 export const SubmarineThreatRulesSchema = Schema.Struct({
   hullType,
   quotaPerBoatBp: bp,
@@ -50,6 +60,7 @@ export const SubmarineThreatRulesSchema = Schema.Struct({
   aswEscortReductionBp: Schema.optional(bp),
   qShipReductionBp: Schema.optional(bp),
   unrestricted: Schema.optional(UnrestrictedWarfareRulesSchema),
+  fleetSupport: Schema.optional(FleetSupportRulesSchema),
 });
 
 export const ShortfallPrestigeRulesSchema = Schema.Struct({

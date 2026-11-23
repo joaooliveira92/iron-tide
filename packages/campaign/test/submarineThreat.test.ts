@@ -83,6 +83,32 @@ describe("submarine term of the requirement", () => {
     expect(submarineQuotaTerm(submarineThreat, 5)).toBe(2);
   });
 
+  it("weights boats on fleet support by the authored quota multiplier and rounds up once", () => {
+    const fleet = {
+      ...submarineThreat,
+      fleetSupport: { chanceMultiplierBp: 4000, quotaMultiplierBp: 4000 },
+    };
+    expect(submarineQuotaTerm(fleet, 10)).toBe(3);
+    expect(submarineQuotaTerm(fleet, 10, 0)).toBe(3);
+    expect(submarineQuotaTerm(fleet, 10, 6)).toBe(2);
+    expect(submarineQuotaTerm(fleet, 10, 10)).toBe(1);
+    expect(submarineQuotaTerm(submarineThreat, 10, 10)).toBe(3);
+    expect(submarineQuotaTerm(fleet, 0, 0)).toBe(0);
+  });
+
+  it("passes the fleet support boats into the quota", () => {
+    const fleet: TradeProtectionRules = {
+      ...rules,
+      submarineThreat: {
+        ...submarineThreat,
+        fleetSupport: { chanceMultiplierBp: 4000, quotaMultiplierBp: 4000 },
+      },
+    };
+    expect(tradeProtectionQuota(fleet, 10, 0, 10)).toBe(6);
+    expect(tradeProtectionQuota(fleet, 10, 0, 10, 10)).toBe(4);
+    expect(tradeProtectionQuota(rules, 10, 0, 10, 10)).toBe(6);
+  });
+
   it("raises the quota when enemy submarines exist and not otherwise", () => {
     expect(tradeProtectionQuota(rules, 10, 0)).toBe(3);
     expect(tradeProtectionQuota(rules, 10, 0, 6)).toBe(5);
