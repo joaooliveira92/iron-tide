@@ -81,19 +81,28 @@ export function isGrowthRateInBand(annualGrowthBp: number): boolean {
   );
 }
 
-export function monthlyBaseGrowth(base: SafeInt, annualGrowthBp: number): SafeInt {
+const MONTHS_PER_YEAR = 12;
+
+export function monthlyBaseGrowth(
+  base: SafeInt,
+  annualGrowthBp: number,
+  monthOfYear: number,
+): SafeInt {
   if (!isGrowthRateInBand(annualGrowthBp))
     throw new RangeError(
       `annualGrowthBp must be an integer in ${String(GROWTH_BAND_MIN_BP)}..${String(GROWTH_BAND_MAX_BP)}, got ${String(annualGrowthBp)}`,
     );
-  return SafeInt.div(
-    SafeInt.mul(base, SafeInt(annualGrowthBp)),
-    SafeInt(ECONOMY_RATE_DENOMINATOR),
-    "floor",
-  );
+  const phase = ((Math.trunc(monthOfYear) % MONTHS_PER_YEAR) + MONTHS_PER_YEAR) % MONTHS_PER_YEAR;
+  const scaled = SafeInt.mul(base, SafeInt(annualGrowthBp));
+  const whole = SafeInt.div(scaled, SafeInt(ECONOMY_RATE_DENOMINATOR), "floor");
+  const remainder = (scaled as number) - (whole as number) * ECONOMY_RATE_DENOMINATOR;
+  const carried =
+    Math.floor((remainder * (phase + 1)) / ECONOMY_RATE_DENOMINATOR) -
+    Math.floor((remainder * phase) / ECONOMY_RATE_DENOMINATOR);
+  return SafeInt.add(whole, SafeInt(carried));
 }
 
-export function grownBase(base: SafeInt, annualGrowthBp: number): SafeInt {
-  const next = SafeInt.add(base, monthlyBaseGrowth(base, annualGrowthBp));
+export function grownBase(base: SafeInt, annualGrowthBp: number, monthOfYear: number): SafeInt {
+  const next = SafeInt.add(base, monthlyBaseGrowth(base, annualGrowthBp, monthOfYear));
   return (next as number) > MAX_ECONOMIC_BASE ? SafeInt(MAX_ECONOMIC_BASE) : next;
 }

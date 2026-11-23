@@ -13,6 +13,7 @@ export function growNationBase(
     ctx.engineOptions?.baseGrowth,
     nationId,
     nation["baseResources"] ?? SafeInt(0),
+    ctx.campaignMonth,
   );
   if (step === undefined) return nation;
   if (step.ceilingReached)
