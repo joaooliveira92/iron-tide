@@ -189,7 +189,9 @@ export {
 export { UiCatalogueSchema, type UiCatalogue } from "./ui-catalogue.js";
 export { isInternationalizationPath, parseUiCatalogue, type UiCatalogueParse } from "./i18n.js";
 export type { Possession } from "./possession.js";
-export { PossessionSchema } from "./possession.js";
+export { COLONY_VALUE_BP_MAX, PossessionSchema } from "./possession.js";
+export type { ColonyIncomeRules, ColonyIncomeRulesDecoded } from "./colony-income-rules.js";
+export { ColonyIncomeRulesSchema, decodeColonyIncomeRules } from "./colony-income-rules.js";
 export type { ResearchFieldId } from "./research-fields.js";
 export {
   CANONICAL_RESEARCH_FIELD_IDS,

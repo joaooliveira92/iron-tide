@@ -76,7 +76,12 @@ export function buildWorldState(
     .sort((a, b) => compareCodePoints(a.id, b.id));
 
   const possessions: PossessionData[] = (pack.possessions ?? [])
-    .map((p) => ({ id: p.id, nationId: p.nationId, areaId: p.areaId }))
+    .map((p) => ({
+      id: p.id,
+      nationId: p.nationId,
+      areaId: p.areaId,
+      ...(p.colonyValueBp === undefined ? {} : { colonyValueBp: SafeInt(p.colonyValueBp) }),
+    }))
     .sort((a, b) => (a.id < b.id ? -1 : a.id > b.id ? 1 : 0));
 
   return {

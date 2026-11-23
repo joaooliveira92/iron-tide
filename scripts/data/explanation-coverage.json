@@ -79,6 +79,7 @@
         "maintenance": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
         "obligation": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
         "research": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "colonyIncome": "Explained by the report_treasury.colonyIncome child of treasuryExplanation; the numeric field is not itself an ExplanationTree, so the gate counts the tree.",
         "other": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
         "closing": "Not yet explained; #300 covers this area and re-exempts any field it does not explain."
       }

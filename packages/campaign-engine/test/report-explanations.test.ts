@@ -34,6 +34,26 @@ describe("report treasury explanation", () => {
     ]);
   });
 
+  it("names the colony income line and still closes on the displayed balance", () => {
+    const reconciliation = reconcileMonthLedger(
+      [
+        { categoryId: "NAVAL_APPROPRIATION", debit: 0, credit: 100 },
+        { categoryId: "COLONY_INCOME", debit: 0, credit: 8 },
+      ],
+      0,
+      108,
+    );
+    const tree = explainReportTreasury(reconciliation);
+    expect(Number(tree.result)).toBe(108);
+    const children = tree.children ?? [];
+    expect(children.map((child) => child.formulaId)).toEqual([
+      "report_treasury.opening",
+      "report_treasury.revenue",
+      "report_treasury.colonyIncome",
+    ]);
+    expect(children.reduce((sum, child) => sum + Number(child.result), 0)).toBe(108);
+  });
+
   it("omits zero lines but still closes on the displayed balance", () => {
     const reconciliation = reconcileMonthLedger(
       [{ categoryId: "NAVAL_APPROPRIATION", debit: 0, credit: 100 }],

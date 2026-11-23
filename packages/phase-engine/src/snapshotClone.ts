@@ -333,7 +333,7 @@ const F = {
   AreaData: fields<AreaData>()("id", "name", "type", "controller", "cessionCost"),
   RouteData: fields<RouteData>()("id", "from", "to", "type", "distance"),
   PortData: fields<PortData>()("id", "name", "areaId", "nationId", "level"),
-  PossessionData: fields<PossessionData>()("id", "nationId", "areaId"),
+  PossessionData: fields<PossessionData>()("id", "nationId", "areaId", "colonyValueBp"),
   WorldState: fields<WorldState>()("areas", "routes", "ports", "technologies", "possessions"),
   TechnologyDefinitionData: fields<TechnologyDefinitionData>()(
     "techId",

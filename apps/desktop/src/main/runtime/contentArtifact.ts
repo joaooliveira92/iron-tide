@@ -11,6 +11,7 @@ import type {
   UnrestRules,
   BaseGrowthRules,
   ResearchReturnsRules,
+  ColonyIncomeRules,
 } from "@bluewave/content-schema";
 import type { LegacyFleetInput } from "@bluewave/campaign";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
@@ -44,6 +45,7 @@ import {
   loadUnrestRules,
   loadBaseGrowthRules,
   loadResearchReturnsRules,
+  loadColonyIncomeRules,
   loadPeaceBehaviourRules,
   loadTensionDriftRules,
   loadTradeProtectionRules,
@@ -102,6 +104,10 @@ export class ContentArtifact extends Context.Service<
     readonly loadBaseGrowthRules: () => Effect.Effect<BaseGrowthRules | undefined, CommandFailed>;
     readonly loadResearchReturnsRules: () => Effect.Effect<
       ResearchReturnsRules | undefined,
+      CommandFailed
+    >;
+    readonly loadColonyIncomeRules: () => Effect.Effect<
+      ColonyIncomeRules | undefined,
       CommandFailed
     >;
     readonly loadTensionDriftRules: () => Effect.Effect<
@@ -185,6 +191,8 @@ export function contentArtifactLayer(
       Effect.try({ try: () => loadBaseGrowthRules(), catch: contentUnavailable }),
     loadResearchReturnsRules: () =>
       Effect.try({ try: () => loadResearchReturnsRules(), catch: contentUnavailable }),
+    loadColonyIncomeRules: () =>
+      Effect.try({ try: () => loadColonyIncomeRules(), catch: contentUnavailable }),
     loadTensionDriftRules: () =>
       Effect.try({ try: () => loadTensionDriftRules(), catch: contentUnavailable }),
     loadPeaceBehaviourRules: () =>

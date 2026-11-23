@@ -1,6 +1,7 @@
 import { DOCK_EXPANSION_MESSAGES } from "./dock-expansion-messages.js";
 import { STATUS_STRIP_MESSAGES } from "./strip-messages.js";
 import { TACTICAL_TOOLBAR_MESSAGES } from "./tactical-toolbar-messages.js";
+import { TREASURY_REPORT_MESSAGES } from "./treasury-report-messages.js";
 
 export const EN_US_MESSAGES = {
   "settings.title": "Options",
@@ -590,15 +591,7 @@ export const EN_US_MESSAGES = {
   "fleet.training.notice.queued":
     "Special training queued. It takes effect when you advance the month.",
   "reports.explanation.none": "No lines apply.",
-  "reports.report_treasury.summary": "Treasury closed at {value}",
-  "reports.report_treasury.opening": "Opening treasury",
-  "reports.report_treasury.revenue": "Naval appropriation",
-  "reports.report_treasury.construction": "Construction",
-  "reports.report_treasury.preservation": "Preservation",
-  "reports.report_treasury.maintenance": "Fleet maintenance",
-  "reports.report_treasury.obligation": "Obligations",
-  "reports.report_treasury.research": "Research",
-  "reports.report_treasury.other": "Other movements",
+  ...TREASURY_REPORT_MESSAGES,
   "strategic.explanation.none": "No lines apply.",
   "strategic.prestige_change.summary": "Prestige change: {value}",
   "strategic.prestige_change.before": "Prestige before",

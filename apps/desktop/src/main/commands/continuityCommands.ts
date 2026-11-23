@@ -363,6 +363,8 @@ export const replayCampaignProgram: CommandHandler<"replayCampaign"> = withPacka
           input === null ? undefined : yield* contentArtifact.loadBaseGrowthRules();
         const researchReturns =
           input === null ? undefined : yield* contentArtifact.loadResearchReturnsRules();
+        const colonyIncome =
+          input === null ? undefined : yield* contentArtifact.loadColonyIncomeRules();
         const peaceBehaviour =
           input === null ? undefined : yield* contentArtifact.loadPeaceBehaviourRules();
         const warDeclaration =
@@ -393,6 +395,7 @@ export const replayCampaignProgram: CommandHandler<"replayCampaign"> = withPacka
                 ...(unrest !== undefined ? { unrest, playerNationId: metadata.playerSlotId } : {}),
                 ...(baseGrowth !== undefined ? { baseGrowth } : {}),
                 ...(researchReturns !== undefined ? { researchReturns } : {}),
+                ...(colonyIncome !== undefined ? { colonyIncome } : {}),
                 ...(peaceBehaviour !== undefined
                   ? { peaceBehaviour, playerNationId: metadata.playerSlotId }
                   : {}),

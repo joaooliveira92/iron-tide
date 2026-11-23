@@ -157,6 +157,14 @@ describe("MonthReportCard", () => {
                     unit: "nc",
                   },
                   {
+                    formulaId: "report_treasury.colonyIncome",
+                    formulaVersion: "report_v1",
+                    inputs: { amount: 7 },
+                    intermediate: {},
+                    result: 7,
+                    unit: "nc",
+                  },
+                  {
                     formulaId: "report_treasury.maintenance",
                     formulaVersion: "report_v1",
                     inputs: { amount: -16 },
@@ -174,6 +182,7 @@ describe("MonthReportCard", () => {
     expect(screen.getByText("Treasury closed at 944")).toBeTruthy();
     expect(screen.getByText("Opening treasury")).toBeTruthy();
     expect(screen.getByText("Naval appropriation")).toBeTruthy();
+    expect(screen.getByText("Colony and possession income")).toBeTruthy();
     expect(screen.getByText("Fleet maintenance")).toBeTruthy();
   });
 
