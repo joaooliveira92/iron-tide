@@ -178,6 +178,25 @@ describe("#1071: unrestricted warfare in the submarine attack draw", () => {
     expect(fleet.outcome).toBe("MISS");
   });
 
+  it("#1149: records a miss on the prize rules draw when fleet support zeroes the chance", () => {
+    const from = snapshot();
+    const zeroed: TradeProtectionRules = {
+      ...WITH_FLEET,
+      submarineThreat: {
+        ...WITH_FLEET.submarineThreat!,
+        attackBp: 10_000,
+        fleetSupport: { chanceMultiplierBp: 0 },
+      },
+    };
+    const prize = subDraws(runTrade(from, [], zeroed));
+    const fleet = subDraws(runTrade(withPolicy(from, "FRA", "FLEET_SUPPORT"), [], zeroed));
+    expect(prize.length).toBe(1);
+    expect(prize[0]!.outcome).toBe("HIT");
+    expect(fleet.length).toBe(1);
+    expect(fleet[0]!.draw).toBe(prize[0]!.draw);
+    expect(fleet[0]!.outcome).toBe("MISS");
+  });
+
   it("leaves the ledger and the final snapshot byte-identical while fleet support is absent", () => {
     const from = snapshot();
     const plain = runTrade(from, [], WITH_FLEET);
