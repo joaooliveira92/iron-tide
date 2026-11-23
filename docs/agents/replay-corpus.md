@@ -19,12 +19,12 @@ Never hand-resolve `golden/`: run `pnpm replay:rebase` ([guide](replay-rebase.md
 
 ## File format
 
-Replay files are format version 3: one top-level key per line and one month per line. A v3 file records no content hash: a content edit that moves no checkpoint touches no replay, and one that does fails at the first moved month. Content integrity is `pnpm content:verify`. Versions 1 and 2 still decode.
+Replay files are format version 3: one top-level key per line and one month per line. A v3 file records no content hash: a content edit fails at the first month it moves. Content integrity is `pnpm content:verify`. Versions 1 and 2 still decode. `battleOffers: true` on a player scenario records each month's delegated offers as optional `offerAnswers`; not with `engineDigests`.
 
 ## Verifying and extending
 
 `pnpm check:replay-corpus` (in `pnpm check`; three OSes in `determinism.yml`) verifies replays twice and via save/load.
 
-New scenarios go in `scenarios.ts` with a one-line `purpose`; a new replay file needs no approval. `pnpm replay:coverage` lists the subsystems each replay exercises, and those none do.
+New scenarios go in `scenarios.ts` with a one-line `purpose`; a new replay needs no approval. `pnpm replay:coverage` lists uncovered subsystems.
 
 Fuzz cases (`FUZZ_CASES`, pinned in `golden/replay-fuzz.json`) run on three OSes; reproduce a failure with `pnpm replay:fuzz run <seed> <months>`. Only `pnpm replay:fuzz record` (local, refused under CI) rewrites the pin; approvals do not cover it. Generated plans: ADR-0280.
