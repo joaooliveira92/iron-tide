@@ -1,4 +1,8 @@
-import { baseGrowthFromRulesets, researchReturnsFromRulesets } from "@bluewave/content-compiler";
+import {
+  baseGrowthFromRulesets,
+  colonyIncomeFromRulesets,
+  researchReturnsFromRulesets,
+} from "@bluewave/content-compiler";
 import { ReplayFileError } from "./format.js";
 
 type Rulesets = Parameters<typeof baseGrowthFromRulesets>[0];
@@ -19,6 +23,16 @@ export function productionResearchReturns(rulesets: Rulesets) {
   if (!decoded.ok)
     throw new ReplayFileError({
       message: `production researchReturns section is invalid at '${decoded.field}'`,
+    });
+  return decoded.value;
+}
+
+export function productionColonyIncome(rulesets: Rulesets) {
+  const decoded = colonyIncomeFromRulesets(rulesets);
+  if (decoded === undefined) return undefined;
+  if (!decoded.ok)
+    throw new ReplayFileError({
+      message: `production colonyIncome section is invalid at '${decoded.field}'`,
     });
   return decoded.value;
 }

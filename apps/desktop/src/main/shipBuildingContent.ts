@@ -3,6 +3,7 @@ import type { EventEngineContent, MonthExecutorEngineOptions } from "@bluewave/p
 import {
   baseGrowthFromRulesets,
   researchReturnsFromRulesets,
+  colonyIncomeFromRulesets,
   battleOffersFromRulesets,
   eventResolutionFromRulesets,
   fleetManagementFromRulesets,
@@ -243,6 +244,26 @@ export function loadResearchReturnsRules(): ResearchReturnsRules | undefined {
     );
   researchReturns = { rules: decoded?.value };
   return researchReturns.rules;
+}
+
+type ColonyIncomeRules = Extract<
+  NonNullable<ReturnType<typeof colonyIncomeFromRulesets>>,
+  { readonly ok: true }
+>["value"];
+
+let colonyIncome: { readonly rules: ColonyIncomeRules | undefined } | null = null;
+
+export function loadColonyIncomeRules(): ColonyIncomeRules | undefined {
+  if (colonyIncome !== null) return colonyIncome.rules;
+  const { bundle } = readContentArtifact(resolveGeneratedContentDir());
+  const decoded = colonyIncomeFromRulesets(bundle.rulesets);
+  if (decoded !== undefined && !decoded.ok)
+    throw new ContentArtifactError(
+      "CONTENT_ARTIFACT_INVALID",
+      `ruleset colonyIncome section is invalid at '${decoded.field}': ${decoded.message}`,
+    );
+  colonyIncome = { rules: decoded?.value };
+  return colonyIncome.rules;
 }
 
 type PeaceBehaviourRules = Extract<
