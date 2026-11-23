@@ -1,4 +1,5 @@
 import { canonicalSerialize, compareCodePoints } from "@bluewave/deterministic";
+import { OFFER_RESPONSES } from "@bluewave/messages";
 import { Data, Result, Schema, SchemaIssue } from "effect";
 
 export const REPLAY_FORMAT_VERSION = 3;
@@ -8,6 +9,7 @@ export const REPLAY_SETUP_IDS = [
   "armed-adriatic-war",
   "armed-malta-war",
   "certain-construction-events",
+  "raider-interception",
   "unrest-phase",
 ] as const;
 export type ReplaySetupId = (typeof REPLAY_SETUP_IDS)[number];
@@ -161,9 +163,19 @@ export const ReplayCommandEnvelopeSchema = Schema.Struct({
 
 export type ReplayCommandEnvelope = typeof ReplayCommandEnvelopeSchema.Type;
 
+export const ReplayOfferAnswerSchema = Schema.Struct({
+  ordinal: Count,
+  interruptionId: Id,
+  battleId: Id,
+  response: Schema.Literals(OFFER_RESPONSES),
+});
+
+export type ReplayOfferAnswer = typeof ReplayOfferAnswerSchema.Type;
+
 const MonthCheckpoint = Schema.Struct({
   turnNumber: Count,
   commands: Schema.Array(ReplayCommandEnvelopeSchema),
+  offerAnswers: Schema.optionalKey(Schema.Array(ReplayOfferAnswerSchema)),
   snapshotHash: Hash,
   commandLedgerDigest: Schema.optionalKey(Hash),
   replayVerificationHash: Schema.optionalKey(Hash),
@@ -190,7 +202,11 @@ export const ReplayFileSchema = Schema.Struct({
   }),
   engineOptions: Schema.Union([
     Schema.Struct({ kind: Schema.Literal("default") }),
-    Schema.Struct({ kind: Schema.Literal("player"), playerNationId: Schema.String }),
+    Schema.Struct({
+      kind: Schema.Literal("player"),
+      playerNationId: Schema.String,
+      battleOffers: Schema.optionalKey(Schema.Literal(true)),
+    }),
   ]),
   months: Schema.Array(MonthCheckpoint),
 });
@@ -249,6 +265,16 @@ export function decodeReplayFile(text: string): Result.Result<ReplayFile, Replay
       new ReplayFileError({
         message:
           "Replay file failed validation: contentHash: format version 3 records no content hash",
+      }),
+    );
+  }
+  const { engineOptions } = decoded.success;
+  const offersEnabled = engineOptions.kind === "player" && engineOptions.battleOffers === true;
+  if (!offersEnabled && decoded.success.months.some((m) => m.offerAnswers !== undefined)) {
+    return Result.fail(
+      new ReplayFileError({
+        message:
+          "Replay file failed validation: months.offerAnswers: recorded without engineOptions.battleOffers",
       }),
     );
   }
