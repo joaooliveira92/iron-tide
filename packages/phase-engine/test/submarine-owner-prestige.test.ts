@@ -49,10 +49,9 @@ const snapshot = (policy: "UNRESTRICTED" | undefined, atWar: boolean): CampaignS
 };
 
 const prestigeEvents = (result: ReturnType<typeof runTrade>, nationId: string) =>
-  result.eventLedger.all
-    .filter((e) => e.body.kind === "PrestigeChanged")
-    .map((e) => e.body as never as { nationId: string; reasonCode: string })
-    .filter((body) => body.nationId === nationId);
+  result.eventLedger.all.flatMap((e) =>
+    e.body.kind === "PrestigeChanged" && e.body.nationId === nationId ? [e.body] : [],
+  );
 
 describe("#1101: unrestricted submarine warfare costs its owner no prestige", () => {
   it.each([
