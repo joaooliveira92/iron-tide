@@ -4,7 +4,14 @@ import type { BlockadeState } from "./state.js";
 
 const BP_DENOMINATOR = SafeInt(10_000);
 
+export interface AmcSurpriseRules {
+  readonly chanceBp: number;
+  readonly startRangeM: number;
+}
+
 export interface RaiderInterceptionRules {
+  readonly amcSurprise?: AmcSurpriseRules;
+  readonly maxInterceptors?: number;
   readonly interceptBaseBp: number;
   readonly interceptPatrolBp: number;
   readonly breakoutInterceptBp: number;

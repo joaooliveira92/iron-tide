@@ -16,18 +16,33 @@ export interface SpawnUnit {
   turningRateMdegS: number;
 }
 
+export interface SpawnSetup {
+  startRangeUm?: number | undefined;
+}
+
 export function computeInitialMovementStates(
   bbox: AreaBBox,
   units: SpawnUnit[],
+  setup?: SpawnSetup,
 ): Record<string, MovementState> {
   const out: Record<string, MovementState> = {};
   const attackers = units.filter((u) => u.sideId === "ATTACKER");
   const defenders = units.filter((u) => u.sideId === "DEFENDER");
+  const width = bbox.maxX - bbox.minX;
   const height = bbox.maxY - bbox.minY;
+  const startRangeUm =
+    setup?.startRangeUm === undefined ? undefined : Math.min(setup.startRangeUm, width);
+  const midX = bbox.minX + Math.floor(width / 2);
+  const midY = bbox.minY + Math.floor(height / 2);
+  const lineAbreastUm = startRangeUm === undefined ? 0 : Math.floor(startRangeUm / 4);
+  const xGapUm = startRangeUm === undefined ? 0 : Math.floor((startRangeUm * 9) / 10);
   const place = (us: SpawnUnit[], heading: number, xBase: number) => {
     const span = Math.max(1, us.length - 1);
     us.forEach((u, i) => {
-      const y = bbox.minY + Math.round((height * i) / span);
+      const y =
+        startRangeUm === undefined
+          ? bbox.minY + Math.round((height * i) / span)
+          : midY + Math.round((lineAbreastUm * (2 * i - (us.length - 1))) / (2 * span));
       out[u.assetId] = {
         position: [Math.round(xBase), y],
         heading,
@@ -43,7 +58,7 @@ export function computeInitialMovementStates(
       };
     });
   };
-  place(attackers, 0, bbox.minX);
-  place(defenders, 180, bbox.maxX);
+  place(attackers, 0, startRangeUm === undefined ? bbox.minX : midX - Math.floor(xGapUm / 2));
+  place(defenders, 180, startRangeUm === undefined ? bbox.maxX : midX + Math.ceil(xGapUm / 2));
   return out;
 }

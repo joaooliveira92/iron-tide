@@ -83,6 +83,39 @@ describe("decodeTradeProtectionRules", () => {
     ).toMatchObject({ ok: false, field: "raiderInterception.scuttleShareBp" });
   });
 
+  it("accepts the optional AMC surprise block and the interceptor cap, and keeps them absent otherwise", () => {
+    const withBoth = {
+      ...interception,
+      amcSurprise: { chanceBp: 1500, startRangeM: 1200 },
+      maxInterceptors: 4,
+    };
+    expect(decodeTradeProtectionRules(rules({ raiderInterception: withBoth }))).toEqual({
+      ok: true,
+      value: rules({ raiderInterception: withBoth }),
+    });
+    expect(decodeTradeProtectionRules(rules({ raiderInterception: interception }))).toMatchObject({
+      ok: true,
+    });
+  });
+
+  it.each([
+    ["chanceBp", { chanceBp: 10_001, startRangeM: 1200 }],
+    ["startRangeM", { chanceBp: 1500, startRangeM: 50 }],
+    ["startRangeM", { chanceBp: 1500, startRangeM: 20_001 }],
+  ])("rejects an out-of-range AMC surprise %s", (key, amcSurprise) => {
+    expect(
+      decodeTradeProtectionRules(rules({ raiderInterception: { ...interception, amcSurprise } })),
+    ).toMatchObject({ ok: false, field: `raiderInterception.amcSurprise.${key}` });
+  });
+
+  it("rejects an AMC surprise block missing a key", () => {
+    expect(
+      decodeTradeProtectionRules(
+        rules({ raiderInterception: { ...interception, amcSurprise: { chanceBp: 1500 } } }),
+      ),
+    ).toMatchObject({ ok: false, field: "raiderInterception.amcSurprise.startRangeM" });
+  });
+
   it.each([
     "fleetShareBp",
     "resourcesPerRequiredShip",

@@ -305,4 +305,34 @@ describe("AC-4: tactical projection (manifest + committed ships -> TacticalBattl
     expect(radarShip.accuracyFactors.radar).toBe(11000);
     expect(radarShip.blindFireAllowed).toBeUndefined();
   });
+
+  it("starts every opposing pair within a manifest's short-range start", () => {
+    const nations = makeNations();
+    const project = (shortRangeStartUm?: number) =>
+      projectBattle({
+        manifest: {
+          ...makeProjectionManifest(["a1", "a2", "d1", "d2"]),
+          ...(shortRangeStartUm === undefined ? {} : { shortRangeStartUm }),
+        },
+        areaId: AREA_ID,
+        campaignMonth: CAMPAIGN_MONTH,
+        attacker: nations.attacker,
+        defender: nations.defender,
+        rulesetVersion: RULESET,
+      }).state;
+    const maxPairDistanceUm = (state: ReturnType<typeof project>) =>
+      Math.max(
+        ...state.forces["ATTACKER"]!.flatMap((a) =>
+          state.forces["DEFENDER"]!.map((d) => {
+            const [ax, ay] = state.movementStates![a]!.position;
+            const [dx, dy] = state.movementStates![d]!.position;
+            return Math.hypot(ax - dx, ay - dy);
+          }),
+        ),
+      );
+    const startRangeUm = 1_200_000_000;
+
+    expect(maxPairDistanceUm(project(startRangeUm))).toBeLessThanOrEqual(startRangeUm);
+    expect(maxPairDistanceUm(project())).toBeGreaterThan(startRangeUm);
+  });
 });

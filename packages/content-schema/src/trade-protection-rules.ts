@@ -8,7 +8,19 @@ const positiveInt = Schema.Finite.check(Schema.isInt(), Schema.isGreaterThan(0))
 const hullType = Schema.String.check(Schema.isMinLength(1));
 const hullTypes = Schema.Array(hullType).check(Schema.isMinLength(1), Schema.isUnique());
 
+export const AmcSurpriseRulesSchema = Schema.Struct({
+  chanceBp: bp,
+  startRangeM: Schema.Finite.check(
+    Schema.isInt(),
+    Schema.isBetween({ minimum: 100, maximum: 20_000 }),
+  ),
+});
+
 export const RaiderInterceptionRulesSchema = Schema.Struct({
+  amcSurprise: Schema.optional(AmcSurpriseRulesSchema),
+  maxInterceptors: Schema.optional(
+    Schema.Finite.check(Schema.isInt(), Schema.isBetween({ minimum: 1, maximum: 12 })),
+  ),
   interceptBaseBp: bp,
   interceptPatrolBp: bp,
   breakoutInterceptBp: bp,
