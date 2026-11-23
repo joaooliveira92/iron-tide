@@ -139,6 +139,20 @@ describe("#1052: encounter missions", () => {
   });
 });
 
+describe("#1110: surprise start on an encounter", () => {
+  it("leaves the manifest without the field when no start range is set", () => {
+    const manifest = run([interception]).manifests[0]!;
+    expect("shortRangeStartUm" in manifest).toBe(false);
+  });
+
+  it("carries the start range into the manifest and moves only that manifest hash", () => {
+    const plain = run([interception]).manifests[0]!;
+    const surprise = run([{ ...interception, shortRangeStartUm: 4_000_000_000 }]).manifests[0]!;
+    expect(surprise.shortRangeStartUm).toBe(4_000_000_000);
+    expect(surprise.manifestHash).not.toBe(plain.manifestHash);
+  });
+});
+
 describe("#1112: queued encounters keep their ships against ordinary battles", () => {
   function collidingRun(encounter: RaiderEncounter) {
     const snap = buildGenerationSnapshot(
