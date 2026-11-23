@@ -199,4 +199,44 @@ describe("#1100: neutral entry at the tension cap", () => {
     expect(relationOf(a)).toEqual(relationOf(b));
     expect(warsOf(a)).toEqual(warsOf(b));
   });
+
+  it("emits a player-visible event naming the cause when a neutral enters the war", () => {
+    const result = runTrade(snapshot(), [], rulesWith(0, 10_000));
+    const events = result.eventLedger.all.filter((e) => e.body.kind === "NeutralWarEntered");
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({
+      eventType: "NeutralWarEntered",
+      aggregateType: "nation",
+      aggregateId: "GBR",
+      body: {
+        kind: "NeutralWarEntered",
+        nationId: "GBR",
+        targetNationId: "FRA",
+        warId: "war_GBR_FRA_1880-06",
+        month: "1880-06",
+        cause: "UNRESTRICTED_SUBMARINE_INCIDENTS",
+        tension: 10,
+      },
+    });
+  });
+
+  it("forces the human-controlled neutral into the war and tells the player", () => {
+    const result = runTrade(snapshot(), [], rulesWith(0, 10_000));
+    expect(warsOf(result)[0]).toMatchObject({ attackerId: "GBR", defenderId: "FRA" });
+    expect(
+      result.eventLedger.all.some(
+        (e) => e.body.kind === "NeutralWarEntered" && e.body.nationId === "GBR",
+      ),
+    ).toBe(true);
+  });
+
+  it("emits nothing on a miss, below the cap or when the pair is skipped", () => {
+    const counts = [
+      runTrade(snapshot(), [], rulesWith(0, 0)),
+      runTrade(snapshot({ relation: { tension: 8 } }), [], rulesWith(0, 10_000)),
+      runTrade(snapshot({ relation: { nap: true } }), [], rulesWith(0, 10_000)),
+      runTrade(snapshot({ gbrAtWarWith: "GER" }), [], rulesWith(0, 10_000)),
+    ].map((r) => r.eventLedger.all.filter((e) => e.body.kind === "NeutralWarEntered").length);
+    expect(counts).toEqual([0, 0, 0, 0]);
+  });
 });

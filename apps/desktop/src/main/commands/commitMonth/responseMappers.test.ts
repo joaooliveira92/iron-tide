@@ -90,6 +90,25 @@ describe("toDomainEvents", () => {
     });
   });
 
+  it("describes a neutral war entry with its target, month and tension", () => {
+    const [event] = toDomainEvents([
+      envelope("NeutralWarEntered", {
+        kind: "NeutralWarEntered",
+        nationId: "GBR",
+        targetNationId: "FRA",
+        warId: "war_GBR_FRA_1880-06",
+        month: "1880-06",
+        cause: "UNRESTRICTED_SUBMARINE_INCIDENTS",
+        tension: SafeInt(10),
+      }),
+    ]);
+    expect(event).toMatchObject({
+      kind: "NeutralWarEntered",
+      message:
+        "GBR: declared war on FRA in 1880-06 (tension 10 after unrestricted submarine incidents)",
+    });
+  });
+
   it("keeps the order of the events", () => {
     const events = toDomainEvents([
       envelope("BattleResolved", {
