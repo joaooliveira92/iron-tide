@@ -6,14 +6,13 @@ import type { CampaignSnapshot } from "@bluewave/campaign";
 import { unifiedSnapshotHash } from "@bluewave/campaign";
 import type { ConstructionEvent } from "@bluewave/content-schema";
 import {
+  battleOffersFromRulesets,
   eventResolutionFromRulesets,
   fleetManagementFromRulesets,
   peaceBehaviourFromRulesets,
   tensionDriftFromRulesets,
   tradeProtectionFromRulesets,
   unrestFromRulesets,
-  baseGrowthFromRulesets,
-  researchReturnsFromRulesets,
   warDeclarationFromRulesets,
 } from "@bluewave/content-compiler";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
@@ -32,6 +31,9 @@ import {
 } from "../production-pack.js";
 import { LEDGER_ORDER, ledgerEntryText, monthCheckpoint } from "./checkpoint.js";
 import { commandLedgerDigest, replayVerificationHash } from "./engine-digests.js";
+import { executeAnswering, offerSessionFor, recordedInputOf, type OfferSession } from "./offers.js";
+import { productionBaseGrowth, productionResearchReturns } from "./optional-sections.js";
+import { SETUPS } from "./setups.js";
 import {
   REPLAY_FORMAT_VERSION,
   ReplayFileError,
@@ -40,6 +42,7 @@ import {
   type LedgerName,
   type ReplayCommandEnvelope,
   type ReplayFile,
+  type ReplayOfferAnswer,
   type ReplaySetupId,
 } from "./format.js";
 
@@ -56,6 +59,7 @@ export interface ReplayScenario {
   readonly playerNationId?: string;
   readonly setup?: ReplaySetupId;
   readonly engineDigests?: boolean;
+  readonly battleOffers?: boolean;
 }
 
 export interface ReplayDivergence {
@@ -124,38 +128,6 @@ function productionFleetManagement() {
 export function productionStartSnapshot(): CampaignSnapshot {
   return production().state.snapshot;
 }
-
-const ARMED_FIREPOWER = SafeInt(400);
-const COMMISSIONED_SHIP = "aut_tegetthoff";
-const ADRIATIC_NATIONS: readonly string[] = ["austria_hungary", "italy"];
-const MALTA_NATIONS: readonly string[] = ["austria_hungary", "uk"];
-
-function armedWar(armedNations: readonly string[], snapshot: CampaignSnapshot): CampaignSnapshot {
-  const nations = new Map(snapshot.nations);
-  for (const nationId of armedNations) {
-    const nation = nations.get(nationId);
-    if (nation === undefined) continue;
-    nations.set(nationId, {
-      ...nation,
-      fleets: nation.fleets.map((fleet) => ({
-        ...fleet,
-        ships: fleet.ships.map((ship) => ({
-          ...ship,
-          firepower: ARMED_FIREPOWER,
-          isUnderConstruction: ship.id === COMMISSIONED_SHIP ? false : ship.isUnderConstruction,
-        })),
-      })),
-    });
-  }
-  return { ...snapshot, nations };
-}
-
-const SETUPS: Readonly<Record<ReplaySetupId, (snapshot: CampaignSnapshot) => CampaignSnapshot>> = {
-  "armed-adriatic-war": (snapshot) => armedWar(ADRIATIC_NATIONS, snapshot),
-  "armed-malta-war": (snapshot) => armedWar(MALTA_NATIONS, snapshot),
-  "certain-construction-events": (snapshot) => snapshot,
-  "unrest-phase": (snapshot) => snapshot,
-};
 
 const CERTAIN_PROBABILITY_BP = 10_000;
 const CERTAIN_OVERRUN_MIN_BP = 3_000;
@@ -289,26 +261,6 @@ function productionUnrest() {
   return decoded.value;
 }
 
-function productionBaseGrowth() {
-  const decoded = baseGrowthFromRulesets(production().bundle.rulesets);
-  if (decoded === undefined) return undefined;
-  if (!decoded.ok)
-    throw new ReplayFileError({
-      message: `production baseGrowth section is invalid at '${decoded.field}'`,
-    });
-  return decoded.value;
-}
-
-function productionResearchReturns() {
-  const decoded = researchReturnsFromRulesets(production().bundle.rulesets);
-  if (decoded === undefined) return undefined;
-  if (!decoded.ok)
-    throw new ReplayFileError({
-      message: `production researchReturns section is invalid at '${decoded.field}'`,
-    });
-  return decoded.value;
-}
-
 let answerPrestigeCodes: ReadonlySet<string> | undefined;
 export function eventAnswerPrestigeReasonCodes(): ReadonlySet<string> {
   if (answerPrestigeCodes !== undefined) return answerPrestigeCodes;
@@ -341,8 +293,8 @@ export function fleetManagementOptions(playerNationId?: string, setup?: ReplaySe
   const constructionEvents = productionConstructionEvents(setup);
   const terrain = productionBattleTerrain();
   const unrest = productionUnrest();
-  const baseGrowth = productionBaseGrowth();
-  const researchReturns = productionResearchReturns();
+  const baseGrowth = productionBaseGrowth(production().bundle.rulesets);
+  const researchReturns = productionResearchReturns(production().bundle.rulesets);
   return {
     ...(terrain === undefined ? {} : { terrain }),
     ...(baseGrowth === undefined ? {} : { baseGrowth }),
@@ -363,33 +315,60 @@ export function playerNationOf(engineOptions: ReplayFile["engineOptions"]): stri
   return engineOptions.kind === "player" ? engineOptions.playerNationId : undefined;
 }
 
+function productionBattleOffers() {
+  const rules = battleOffersFromRulesets(production().bundle.rulesets);
+  if (rules === undefined)
+    throw new ReplayFileError({ message: "production rulesets have no battleOffers section" });
+  return rules;
+}
+
 export function advance(
   snapshot: CampaignSnapshot,
   seed: string,
   perturb?: Omit<ExecutorPerturbation, "month">,
   playerNationId?: string,
   setup?: ReplaySetupId,
+  offers?: OfferSession,
 ) {
-  const executed = new MonthExecutor().execute(
-    perturb?.snapshot?.(snapshot) ?? snapshot,
-    perturb?.commands?.(snapshot) ?? [],
-    perturb?.seed?.(monthSeed(seed, snapshot)) ?? monthSeed(seed, snapshot),
-    new DiagnosticCollector(),
-    undefined,
-    fleetManagementOptions(playerNationId, setup),
-  );
+  const start = perturb?.snapshot?.(snapshot) ?? snapshot;
+  const commands = perturb?.commands?.(snapshot) ?? [];
+  const monthSeedValue = perturb?.seed?.(monthSeed(seed, snapshot)) ?? monthSeed(seed, snapshot);
+  const baseOptions = fleetManagementOptions(playerNationId, setup);
+  const execute = (answers: readonly ReplayOfferAnswer[]) =>
+    new MonthExecutor().execute(
+      start,
+      commands,
+      monthSeedValue,
+      new DiagnosticCollector(),
+      undefined,
+      offers === undefined
+        ? baseOptions
+        : {
+            ...baseOptions,
+            battleOffers: productionBattleOffers(),
+            interruptions: {
+              turnId: monthSeed(seed, snapshot),
+              recordedInputs: answers.map(recordedInputOf),
+            },
+          },
+    );
+  const { executed, answers } = executeAnswering(execute, offers, Number(snapshot.turnNumber));
   perturb?.afterExecute?.(executed);
   const result =
     perturb?.closing === undefined
       ? executed
       : { ...executed, finalSnapshot: perturb.closing(executed.finalSnapshot) };
   if (result.outcome === "suspended") {
-    throw new Error(
-      `Month ${String(snapshot.turnNumber)} suspended for an interruption; replay format v${String(REPLAY_FORMAT_VERSION)} cannot record it`,
-    );
+    throw new ReplayFileError({
+      message:
+        offers === undefined
+          ? `Month ${String(snapshot.turnNumber)} suspended for an interruption; replay format v${String(REPLAY_FORMAT_VERSION)} cannot record it`
+          : `Month ${String(snapshot.turnNumber)} suspended for an interruption that its recorded offer answers do not cover`,
+    });
   }
   return {
     result,
+    offerAnswers: answers,
     next: {
       ...result.finalSnapshot,
       turnNumber: SafeInt.add(result.finalSnapshot.turnNumber, SafeInt.ONE),
@@ -401,6 +380,7 @@ export interface ExecutedMonth {
   readonly turnNumber: number;
   readonly result: MonthResult;
   readonly commands: readonly ReplayCommandEnvelope[];
+  readonly offerAnswers: readonly ReplayOfferAnswer[];
   readonly startSnapshot: CampaignSnapshot;
 }
 
@@ -435,11 +415,13 @@ export function* executeScenario(scenario: ReplayScenario): Generator<ExecutedMo
       { commands: () => commands as CommandEnvelope<CommandBody>[] },
       scenario.playerNationId,
       scenario.setup,
+      offerSessionFor(scenario),
     );
     yield {
       turnNumber: Number(snapshot.turnNumber),
       result: step.result,
       commands,
+      offerAnswers: step.offerAnswers,
       startSnapshot: snapshot,
     };
     snapshot = step.next;
@@ -450,7 +432,9 @@ export function recordReplay(scenario: ReplayScenario): string {
   const { state } = production();
   const months: ReplayFile["months"][number][] = [];
   for (const executed of executeScenario(scenario)) {
-    const checkpoint = monthCheckpoint(executed.turnNumber, executed.result, executed.commands);
+    const base = monthCheckpoint(executed.turnNumber, executed.result, executed.commands);
+    const checkpoint =
+      executed.offerAnswers.length === 0 ? base : { ...base, offerAnswers: executed.offerAnswers };
     const isLast = months.length === scenario.months - 1;
     months.push(
       scenario.engineDigests === true
@@ -487,7 +471,11 @@ export function recordReplay(scenario: ReplayScenario): string {
     engineOptions:
       scenario.playerNationId === undefined
         ? { kind: "default" }
-        : { kind: "player", playerNationId: scenario.playerNationId },
+        : {
+            kind: "player",
+            playerNationId: scenario.playerNationId,
+            ...(scenario.battleOffers === true ? { battleOffers: true as const } : {}),
+          },
     months,
   };
   return serializeReplayFile(file);
@@ -557,6 +545,9 @@ export function verifyReplay(
       },
       playerNationOf(file.engineOptions),
       file.initial.setup,
+      file.engineOptions.kind === "player" && file.engineOptions.battleOffers === true
+        ? { answers: recorded.offerAnswers ?? [], record: false }
+        : undefined,
     );
     const actual = monthCheckpoint(Number(snapshot.turnNumber), step.result, recorded.commands);
     for (const ledger of LEDGER_ORDER) {

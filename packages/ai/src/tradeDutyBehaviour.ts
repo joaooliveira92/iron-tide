@@ -99,15 +99,27 @@ function surplusDutyFleets(
   onDuty: number,
   rules: TradeProtectionRules,
   designs: ReadonlyMap<string, TradeDutyDesign>,
+  submarines: number,
 ): string[] {
   const release: string[] = [];
   let remaining = onDuty;
+  let keptAswTier = Number.POSITIVE_INFINITY;
   const wholeDuty = [...fleets]
     .filter((fleet) => fleet.ships.length > 0 && fleet.ships.every(onTradeProtection))
-    .sort((a, b) => compareCodePoints(a.id, b.id));
+    .sort(
+      (a, b) =>
+        (submarines > 0 ? aswShips(a, designs) - aswShips(b, designs) : 0) ||
+        compareCodePoints(a.id, b.id),
+    );
   for (const fleet of wholeDuty) {
+    const tier = submarines > 0 ? aswShips(fleet, designs) : 0;
+    if (tier > keptAswTier) continue;
     const contribution = countTradeProtectionShips(rules, fleet.ships, designs);
-    if (contribution === 0 || remaining - contribution < quota) continue;
+    if (contribution === 0) continue;
+    if (remaining - contribution < quota) {
+      keptAswTier = Math.min(keptAswTier, tier);
+      continue;
+    }
     remaining -= contribution;
     release.push(...fleet.ships.map((ship) => ship.id).sort(compareCodePoints));
   }
@@ -150,7 +162,7 @@ export function decideTradeDuty(
     submarines,
   );
   const onDuty = countTradeProtectionShips(rules, ships, designs);
-  const surplus = surplusDutyFleets(nation.fleets, quota, onDuty, rules, designs);
+  const surplus = surplusDutyFleets(nation.fleets, quota, onDuty, rules, designs, submarines);
   if (surplus.length > 0) return { assign: [], release: surplus };
   let remaining = tradeProtectionShortfall(quota, onDuty).shortfall;
 
