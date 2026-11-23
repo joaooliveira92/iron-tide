@@ -13,6 +13,7 @@ import {
   tradeProtectionFromRulesets,
   unrestFromRulesets,
   baseGrowthFromRulesets,
+  researchReturnsFromRulesets,
   warDeclarationFromRulesets,
 } from "@bluewave/content-compiler";
 import type { CommandBody, CommandEnvelope } from "@bluewave/commands";
@@ -298,6 +299,16 @@ function productionBaseGrowth() {
   return decoded.value;
 }
 
+function productionResearchReturns() {
+  const decoded = researchReturnsFromRulesets(production().bundle.rulesets);
+  if (decoded === undefined) return undefined;
+  if (!decoded.ok)
+    throw new ReplayFileError({
+      message: `production researchReturns section is invalid at '${decoded.field}'`,
+    });
+  return decoded.value;
+}
+
 let answerPrestigeCodes: ReadonlySet<string> | undefined;
 export function eventAnswerPrestigeReasonCodes(): ReadonlySet<string> {
   if (answerPrestigeCodes !== undefined) return answerPrestigeCodes;
@@ -331,9 +342,11 @@ export function fleetManagementOptions(playerNationId?: string, setup?: ReplaySe
   const terrain = productionBattleTerrain();
   const unrest = productionUnrest();
   const baseGrowth = productionBaseGrowth();
+  const researchReturns = productionResearchReturns();
   return {
     ...(terrain === undefined ? {} : { terrain }),
     ...(baseGrowth === undefined ? {} : { baseGrowth }),
+    ...(researchReturns === undefined ? {} : { researchReturns }),
     ...(unrest === undefined ? {} : { unrest }),
     ...(fleetManagement === undefined ? {} : { fleetManagement }),
     ...(tensionDrift === undefined ? {} : { tensionDrift }),

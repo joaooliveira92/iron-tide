@@ -87,6 +87,8 @@ export function fixtureProjection(
     lowSpending: false,
     minimumResearchSpend: 40,
     researchSpend: 40,
+    researchEffective: 40,
+    researchEffectiveRateBp: 10_000,
     technologies: FIXTURE_TECHNOLOGIES,
     fields: [
       {

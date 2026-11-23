@@ -15,6 +15,7 @@ import type {
 } from "../../shared/research-contract.js";
 import type { CampaignSessionRecord } from "../campaignSessions.js";
 import { CampaignSessionStore } from "../runtime/campaignSessionStore.js";
+import { ContentArtifact } from "../runtime/contentArtifact.js";
 import { CommandFailed, CommandRejected } from "../runtime/commandError.js";
 import type { CommandHandler } from "../runtime/commandProgram.js";
 import { CommandQueue, type PendingCommandEntry } from "../runtime/commandQueue.js";
@@ -26,12 +27,15 @@ export const inspectResearchScreenProgram: CommandHandler<"inspectResearchScreen
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(sessionId);
+    const contentArtifact = yield* ContentArtifact;
+    const researchReturns = yield* contentArtifact.loadResearchReturnsRules();
 
     const projection = buildResearchScreenProjection(
       record.state,
       record.playerSlotId,
       record.month,
       technologyNames(),
+      researchReturns === undefined ? {} : { researchReturns },
     );
     if (!projection) {
       return yield* new CommandFailed({
