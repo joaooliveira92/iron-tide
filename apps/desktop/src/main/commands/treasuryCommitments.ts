@@ -30,7 +30,7 @@ import type {
   UnpaidCostsPrestige,
 } from "../../shared/budget-contract.js";
 import { economyOutlookOptions } from "./economyOutlookOptions.js";
-import { loadShipBuildingContent } from "../shipBuildingContent.js";
+import { loadResearchReturnsRules, loadShipBuildingContent } from "../shipBuildingContent.js";
 
 function unpaidCostsPrestige(
   snapshot: CampaignSnapshot,
@@ -99,7 +99,7 @@ export function buildTreasuryCommitments(
   const outlook = economyOutlook(
     snapshot,
     nation.id,
-    economyOutlookOptions(snapshot, nation.id, content, month),
+    economyOutlookOptions(snapshot, nation.id, content, month, loadResearchReturnsRules()),
   );
   const upkeep = fleetMaintenanceBreakdown(
     nation.fleets,

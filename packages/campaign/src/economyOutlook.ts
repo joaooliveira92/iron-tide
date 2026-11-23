@@ -188,7 +188,7 @@ export function economyOutlook(
     researchRequested: requested as number,
     plannedResearch: research as number,
     researchEffective: effectiveResearchResources(
-      research,
+      paid.research,
       revenue,
       options.researchReturns,
     ) as number,
