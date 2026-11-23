@@ -276,6 +276,36 @@ export default list(RulesetManifestSchema, [
         note: "BALANCE_TARGET under ADR-0240 decision 0010. The scale is 0 to 10 as stored; every threshold, magnitude and the revolution chance are tunable balance values, not sourced. A single month can raise unrest by at most a few points, so strikes need sustained pressure. The government table (#1018) is PROVISIONAL: the manual (p.60) says only that the government type can change, mostly through revolutions, and names no successor, so each AI revolution moves the nation to the listed type; omitting the table keeps the government.",
       },
     },
+    researchReturns: {
+      sectionVersion: 1,
+      fullReturnShareBp: 1_000,
+      aboveMarginalBp: 5_000,
+      provenance: {
+        sourceStatus: "BALANCE_TARGET",
+        confidence: "LOW",
+        kind: "balance_adjustment",
+        sources: [
+          {
+            title: "Rule the Waves 3 manual",
+            author: "Naval War Simulations / Matrix Games",
+            year: 2023,
+            page: "16",
+            section:
+              "Research funding is limited by a share of revenue and the manual implies returns taper as the budget grows",
+          },
+          {
+            title: "Bluewave design decision S-3 D7",
+            section: "Diminishing research returns above a share of revenue (#1105)",
+          },
+          {
+            title: "Bluewave research Discussion 1119",
+            archiveOrUrl: "https://github.com/joaooliveira92/iron-tide/discussions/1119",
+            section: "No published source fixes the size of the curve; the midpoint is chosen",
+          },
+        ],
+        note: "BALANCE_TARGET, LOW confidence. Paid research spend up to 10 percent of revenue returns in full; each unit above it returns 50 percent. The 50 percent marginal rate is the midpoint of a plausible range and is not sourced; the alternative considered was 2500 (25 percent). The 12 percent funding cap stays a code constant. To reverse, remove this section: research is then linear again.",
+      },
+    },
     // The peace-behaviour section (#777, decisions 0054 and 0055). Every value is a PROVISIONAL Bluewave balance target:
     // the manual (p.66) describes peace but gives no acceptance rule or frequency. The margin is the 0055 placeholder
     // carried over from #554; the per-area cession costs are authored in areas.ts (#816). Removing this section returns AI

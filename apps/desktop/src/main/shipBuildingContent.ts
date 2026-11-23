@@ -2,6 +2,7 @@ import { hashWithContext } from "@bluewave/deterministic";
 import type { EventEngineContent, MonthExecutorEngineOptions } from "@bluewave/phase-engine";
 import {
   baseGrowthFromRulesets,
+  researchReturnsFromRulesets,
   battleOffersFromRulesets,
   eventResolutionFromRulesets,
   fleetManagementFromRulesets,
@@ -222,6 +223,26 @@ export function loadBaseGrowthRules(): BaseGrowthRules | undefined {
     );
   baseGrowth = { rules: decoded?.value };
   return baseGrowth.rules;
+}
+
+type ResearchReturnsRules = Extract<
+  NonNullable<ReturnType<typeof researchReturnsFromRulesets>>,
+  { readonly ok: true }
+>["value"];
+
+let researchReturns: { readonly rules: ResearchReturnsRules | undefined } | null = null;
+
+export function loadResearchReturnsRules(): ResearchReturnsRules | undefined {
+  if (researchReturns !== null) return researchReturns.rules;
+  const { bundle } = readContentArtifact(resolveGeneratedContentDir());
+  const decoded = researchReturnsFromRulesets(bundle.rulesets);
+  if (decoded !== undefined && !decoded.ok)
+    throw new ContentArtifactError(
+      "CONTENT_ARTIFACT_INVALID",
+      `ruleset researchReturns section is invalid at '${decoded.field}': ${decoded.message}`,
+    );
+  researchReturns = { rules: decoded?.value };
+  return researchReturns.rules;
 }
 
 type PeaceBehaviourRules = Extract<

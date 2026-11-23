@@ -80,6 +80,9 @@ export interface ResearchBudgetView {
   readonly budgetExplanation?: ExplanationTree;
   readonly capExplanation?: ExplanationTree;
   readonly floorExplanation?: ExplanationTree;
+  readonly effective: number;
+  readonly effectiveRateBp: number;
+  readonly returnsExplanation?: ExplanationTree;
 }
 
 export interface ResearchTotals {
@@ -142,7 +145,11 @@ function stateNoteFor(
 export function buildResearchViewModel(state: ResearchScreenActiveData): ResearchViewModel {
   const { projection, draft } = state;
   const eligible = new Set(projection.fields.filter((f) => f.eligible).map((f) => f.fieldId));
-  const projected = deriveProjectedResearchAllocations(projection.researchBudget, draft, eligible);
+  const projected = deriveProjectedResearchAllocations(
+    projection.researchEffective,
+    draft,
+    eligible,
+  );
   const highCount = draftHighCount(draft);
 
   const byId = new Map(projection.technologies.map((t) => [t.techId, t] as const));
@@ -291,6 +298,11 @@ export function buildResearchViewModel(state: ResearchScreenActiveData): Researc
       ...(projection.floorExplanation === undefined
         ? {}
         : { floorExplanation: projection.floorExplanation }),
+      effective: projection.researchEffective,
+      effectiveRateBp: projection.researchEffectiveRateBp,
+      ...(projection.returnsExplanation === undefined
+        ? {}
+        : { returnsExplanation: projection.returnsExplanation }),
     },
     totals: {
       catalogue: projection.technologies.length,

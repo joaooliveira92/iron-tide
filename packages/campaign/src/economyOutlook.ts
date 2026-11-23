@@ -13,6 +13,7 @@ import {
 import { effectiveAppropriationRateBp } from "./eventEffects.js";
 import { nationIsAtWar, nationMaintenanceAdders, nationMonthlyMaintenance } from "./maintenance.js";
 import { eligibleResearchFields, technologyCatalogueOf } from "./researchEligibility.js";
+import { effectiveResearchResources, type ResearchReturnsRules } from "./researchReturns.js";
 import type { CampaignSnapshot, NationState } from "./state.js";
 import { campaignMonthId } from "./timeline.js";
 
@@ -42,6 +43,7 @@ export interface EconomyOutlook {
   readonly maintenance: number;
   readonly researchRequested: number;
   readonly plannedResearch: number;
+  readonly researchEffective: number;
   readonly researchCap: number;
   readonly researchUnfundedReason?: ResearchUnfundedReason;
   readonly plannedConstruction: number;
@@ -91,6 +93,7 @@ export function constructionDrawByProject(
 export interface EconomyOutlookOptions {
   readonly carryingCostPerHaltedProject?: number;
   readonly acceleration?: AccelerationTerms;
+  readonly researchReturns?: ResearchReturnsRules;
 }
 
 export function economyOutlook(
@@ -184,6 +187,11 @@ export function economyOutlook(
     maintenance: maintenance as number,
     researchRequested: requested as number,
     plannedResearch: research as number,
+    researchEffective: effectiveResearchResources(
+      research,
+      revenue,
+      options.researchReturns,
+    ) as number,
     researchCap: cap as number,
     ...(unfundedReason === undefined ? {} : { researchUnfundedReason: unfundedReason }),
     plannedConstruction: construction as number,

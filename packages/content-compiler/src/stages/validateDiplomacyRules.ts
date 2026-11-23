@@ -8,6 +8,7 @@ import {
 } from "@bluewave/content-schema";
 import type { DiagnosticCollector } from "@bluewave/diagnostics";
 import { validateBaseGrowthRules } from "./validateBaseGrowthRules.js";
+import { validateResearchReturnsRules } from "./validateResearchReturnsRules.js";
 
 function validateTensionDriftRules(
   rulesets: readonly unknown[],
@@ -181,6 +182,7 @@ export function validateDiplomacyRules(
   collector: DiagnosticCollector,
 ): void {
   validateBaseGrowthRules(rulesets, nations, collector);
+  validateResearchReturnsRules(rulesets, collector);
   validateTensionDriftRules(rulesets, collector);
   validatePeaceBehaviourRules(rulesets, collector);
   validateWarDeclarationRules(rulesets, collector);

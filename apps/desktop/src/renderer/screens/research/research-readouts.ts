@@ -20,6 +20,15 @@ export function researchReadouts(
         rows: [
           { label: "Requested each month", value: format.count(budget.monthly) },
           { label: "Paid each month", value: format.count(budget.paid) },
+          ...(budget.effective < budget.paid
+            ? [
+                {
+                  label: "Effective research each month",
+                  value: format.count(budget.effective),
+                },
+                { label: "Return rate", value: format.percent(budget.effectiveRateBp, 2) },
+              ]
+            : []),
           ...(budget.annualAllocation === null
             ? []
             : [
@@ -60,6 +69,15 @@ export function researchReadouts(
                 tree: budget.floorExplanation,
                 area: "research",
                 summaryKey: "research.research_floor.summary",
+              },
+            ]),
+        ...(budget.returnsExplanation === undefined || budget.effective >= budget.paid
+          ? []
+          : [
+              {
+                tree: budget.returnsExplanation,
+                area: "research",
+                summaryKey: "research.research_returns.summary",
               },
             ]),
       ],
