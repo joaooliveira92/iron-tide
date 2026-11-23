@@ -25,7 +25,12 @@ import type { DomainEventEnvelope } from "@bluewave/events";
 import { Result } from "effect";
 import type { PhaseContext } from "./pipeline.js";
 import { applyPrestigeChange } from "./prestigeApplication.js";
-import { drawSubmarineAttacks, opposingSubmarines, type TradeAttacker } from "./tradeSubmarines.js";
+import {
+  drawSubmarineAttacks,
+  fleetSupportSubmarines,
+  opposingSubmarines,
+  type TradeAttacker,
+} from "./tradeSubmarines.js";
 import { applyRaiderInterceptionForMonth } from "./raiderInterceptionMonth.js";
 import { activeWars, byId, designMap, opponentsOf, shipsOf } from "./tradeWarContext.js";
 import { applyUnrestContributions } from "./unrestApplication.js";
@@ -107,6 +112,7 @@ function assess(
   isPlayer: boolean,
   campaignMonth: string,
   enemySubmarines: number,
+  fleetSupportBoats: number,
 ): TradeProtectionState {
   const ships = shipsOf(nation);
   const pool = previous?.merchantPoolBp ?? MERCHANT_POOL_FULL_BP;
@@ -126,6 +132,7 @@ function assess(
     operational,
     Number(nation.baseResources ?? 0),
     enemySubmarines,
+    fleetSupportBoats,
   );
   const assigned = countTradeProtectionShips(rules, ships, designs);
   return {
@@ -190,6 +197,8 @@ export function applyTradeProtectionForMonth(ctx: PhaseContext): void {
     const threat = rules.submarineThreat;
     const enemySubmarines =
       isPlayer && threat !== undefined ? opposingSubmarines(threat, attackers, designs) : 0;
+    const fleetSupportBoats =
+      isPlayer && threat !== undefined ? fleetSupportSubmarines(threat, attackers, designs) : 0;
     const state = assess(
       rules,
       nation,
@@ -198,6 +207,7 @@ export function applyTradeProtectionForMonth(ctx: PhaseContext): void {
       isPlayer,
       month,
       enemySubmarines,
+      fleetSupportBoats,
     );
 
     let hits = 0;

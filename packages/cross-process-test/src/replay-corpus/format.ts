@@ -75,7 +75,7 @@ const SetTradeDutyBody = Schema.Struct({
 const SetSubmarinePolicyBody = Schema.Struct({
   type: Schema.Literal("SetSubmarinePolicy"),
   nationId: Id,
-  policy: Schema.Literals(["PRIZE_RULES", "UNRESTRICTED"]),
+  policy: Schema.Literals(["FLEET_SUPPORT", "PRIZE_RULES", "UNRESTRICTED"]),
 });
 
 const HoldFleetExerciseBody = Schema.Struct({

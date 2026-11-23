@@ -21,7 +21,7 @@ export function validateSubmarinePolicy(
       envelope,
       snapshot,
       "INVALID_COMMAND_PAYLOAD",
-      "policy must be PRIZE_RULES or UNRESTRICTED",
+      "policy must be FLEET_SUPPORT, PRIZE_RULES or UNRESTRICTED",
     );
   return { ok: true };
 }

@@ -227,6 +227,49 @@ describe("decodeTradeProtectionRules", () => {
     }
   });
 
+  it("accepts an optional fleet support block and keeps it through decoding", () => {
+    for (const block of [
+      { chanceMultiplierBp: 4000, quotaMultiplierBp: 4000 },
+      { chanceMultiplierBp: 0, quotaMultiplierBp: 10_000 },
+    ]) {
+      const withBlock = { submarineThreat: { ...submarine, fleetSupport: block } };
+      expect(decodeTradeProtectionRules(rules(withBlock))).toEqual({
+        ok: true,
+        value: rules(withBlock),
+      });
+    }
+  });
+
+  it.each([
+    ["chanceMultiplierBp", -1],
+    ["chanceMultiplierBp", 10_001],
+    ["chanceMultiplierBp", 4000.5],
+    ["quotaMultiplierBp", -1],
+    ["quotaMultiplierBp", 10_001],
+  ])("rejects a fleet support %s of %s", (key, value) => {
+    const block = { chanceMultiplierBp: 4000, quotaMultiplierBp: 4000, [key]: value };
+    expect(
+      decodeTradeProtectionRules(rules({ submarineThreat: { ...submarine, fleetSupport: block } })),
+    ).toMatchObject({ ok: false, field: `submarineThreat.fleetSupport.${key}` });
+  });
+
+  it("keeps the quota multiplier optional and requires the chance multiplier", () => {
+    const chanceOnly = {
+      submarineThreat: { ...submarine, fleetSupport: { chanceMultiplierBp: 2500 } },
+    };
+    expect(decodeTradeProtectionRules(rules(chanceOnly))).toEqual({
+      ok: true,
+      value: rules(chanceOnly),
+    });
+    expect(
+      decodeTradeProtectionRules(
+        rules({
+          submarineThreat: { ...submarine, fleetSupport: { quotaMultiplierBp: 4000 } },
+        }),
+      ),
+    ).toMatchObject({ ok: false, field: "submarineThreat.fleetSupport.chanceMultiplierBp" });
+  });
+
   it("rejects an unrestricted block missing a key", () => {
     expect(
       decodeTradeProtectionRules(
