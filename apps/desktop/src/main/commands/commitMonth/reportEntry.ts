@@ -21,6 +21,7 @@ import type {
   MonthlyReportUnrestChange,
   MonthlyReportUnrestConsequence,
 } from "../../../shared/reports-contract.js";
+import { neutralWarsFromEvents } from "./neutralWarReport.js";
 import { foreignRevolutionsFromEvents } from "./revolutionReport.js";
 import { tradeProtectionFromEvents } from "./tradeProtectionReport.js";
 import { sumByCategory } from "./responseMappers.js";
@@ -255,6 +256,7 @@ export function buildMonthlyReportEntry(input: MonthlyReportEntryInput): Monthly
   );
   const unrest = unrestFromEvents(input.domainEvents, playerNationId);
   const foreignRevolutions = foreignRevolutionsFromEvents(input.domainEvents, playerNationId);
+  const neutralWars = neutralWarsFromEvents(input.domainEvents, playerNationId);
 
   return {
     reportId: input.reportId,
@@ -315,5 +317,6 @@ export function buildMonthlyReportEntry(input: MonthlyReportEntryInput): Monthly
     ...(tradeProtection === undefined ? {} : { tradeProtection }),
     ...(unrest === undefined ? {} : { unrest }),
     ...(foreignRevolutions.length === 0 ? {} : { foreignRevolutions }),
+    ...(neutralWars.length === 0 ? {} : { neutralWars }),
   };
 }

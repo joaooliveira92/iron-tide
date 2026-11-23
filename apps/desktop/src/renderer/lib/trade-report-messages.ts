@@ -1,12 +1,16 @@
-import type { MonthlyReportRaiderEntry } from "../../shared/reports-contract.js";
+import type {
+  MonthlyReportNeutralWar,
+  MonthlyReportRaiderEntry,
+} from "../../shared/reports-contract.js";
 
 type Slot<K extends keyof MonthlyReportRaiderEntry> =
   | NonNullable<MonthlyReportRaiderEntry[K]>
   | "NONE";
 
-type RaiderSentenceKey =
+type SentenceKey =
   | `reports.trade.raider.engaged.${Slot<"encounter">}.${Slot<"outcome">}`
-  | `reports.trade.raider.interned.${Slot<"cause">}`;
+  | `reports.trade.raider.interned.${Slot<"cause">}`
+  | `reports.trade.neutralWar.${MonthlyReportNeutralWar["role"]}`;
 
 export const TRADE_REPORT_MESSAGES = {
   "reports.trade.title": "Trade protection",
@@ -49,4 +53,8 @@ export const TRADE_REPORT_MESSAGES = {
   "reports.trade.raider.interned.DAMAGE": "{ship} was interned after taking damage.",
   "reports.trade.raider.interned.NONE": "{ship} was interned.",
   "reports.trade.raider.released": "{ship} was released from internment.",
-} as const satisfies Readonly<Record<string, string>> & Record<RaiderSentenceKey, string>;
+  "reports.trade.neutralWar.DECLARER":
+    "Unrestricted submarine incidents with {nation} reached tension {tension}, and your nation was forced into war against {nation}.",
+  "reports.trade.neutralWar.TARGET":
+    "{nation} declared war on your nation after unrestricted submarine incidents reached tension {tension}.",
+} as const satisfies Readonly<Record<string, string>> & Record<SentenceKey, string>;

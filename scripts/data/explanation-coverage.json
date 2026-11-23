@@ -220,6 +220,16 @@
     },
     {
       "file": "apps/desktop/src/shared/reports-contract.ts",
+      "type": "MonthlyReportNeutralWar",
+      "area": "reports",
+      "issue": "#1144",
+      "covered": {},
+      "exempt": {
+        "tension": "Event fact recorded by NeutralWarEntered; the entry rule is a certain declaration once pair tension reaches 10 (#413), so the report line states the tension and the cause rather than a derived formula."
+      }
+    },
+    {
+      "file": "apps/desktop/src/shared/reports-contract.ts",
       "type": "MonthlyReportFleetExercise",
       "area": "fleet",
       "issue": "#586",

@@ -25,8 +25,11 @@ export function MonthlyReportView({
       {report.fleetExercise === undefined ? null : (
         <MonthReportExerciseSection exercise={report.fleetExercise} />
       )}
-      {report.tradeProtection === undefined ? null : (
-        <MonthReportTradeSection trade={report.tradeProtection} />
+      {report.tradeProtection === undefined && report.neutralWars === undefined ? null : (
+        <MonthReportTradeSection
+          {...(report.tradeProtection === undefined ? {} : { trade: report.tradeProtection })}
+          {...(report.neutralWars === undefined ? {} : { neutralWars: report.neutralWars })}
+        />
       )}
       {report.foreignRevolutions === undefined || report.foreignRevolutions.length === 0 ? null : (
         <MonthReportRevolutionSection revolutions={report.foreignRevolutions} />
