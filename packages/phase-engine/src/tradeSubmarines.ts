@@ -1,11 +1,8 @@
 import {
-  aswEscortAttackChanceBp,
-  countAswEscorts,
   countEnemySubmarines,
-  countQShips,
   isRaiderBlockedByBlockade,
-  qShipAttackChanceBp,
-  submarineAttackChanceBp,
+  submarineEscortCounts,
+  submarineTradeChanceStages,
   type BlockadeState,
   type Ship,
   type SubmarinePolicy,
@@ -71,31 +68,23 @@ export interface SubmarineAttackInput {
 
 export function drawSubmarineAttacks(input: SubmarineAttackInput): number {
   let hits = 0;
-  const qShipsAuthored = input.threat.qShipReductionBp !== undefined;
-  const aswEscorts = countAswEscorts(
+  const counts = submarineEscortCounts(
     {
       contributingHullTypes: input.contributingHullTypes,
-      qShipHullType: qShipsAuthored ? input.amcHullType : undefined,
+      amcHullType: input.amcHullType,
+      submarineThreat: input.threat,
     },
     input.victimShips,
     input.designs,
   );
-  const qShips = countQShips({ amcHullType: input.amcHullType }, input.victimShips, input.designs);
   for (const attacker of input.attackers) {
-    const chanceBp = qShipAttackChanceBp(
-      input.threat,
-      aswEscortAttackChanceBp(
-        input.threat,
-        submarineAttackChanceBp(
-          { shortfallAmplifyBp: input.shortfallAmplifyBp, submarineThreat: input.threat },
-          input.victimShortfallBp,
-          isRaiderBlockedByBlockade(input.blockades, attacker.nationId, input.victimId),
-          attacker.policy,
-        ),
-        aswEscorts,
-      ),
-      qShips,
-    );
+    const chanceBp = submarineTradeChanceStages(
+      { shortfallAmplifyBp: input.shortfallAmplifyBp, submarineThreat: input.threat },
+      input.victimShortfallBp,
+      isRaiderBlockedByBlockade(input.blockades, attacker.nationId, input.victimId),
+      attacker.policy,
+      counts,
+    ).finalBp;
     for (const ship of attacker.ships) {
       if (countEnemySubmarines(input.threat, [ship], input.designs) === 0) continue;
       const entityKey = `sub/${attacker.warId}/${ship.id}/${input.victimId}/${input.month}`;
