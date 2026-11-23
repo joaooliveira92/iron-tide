@@ -7,6 +7,7 @@ import { MonthExecutor } from "../src/index.js";
 import { CLONE_COVERAGE, cloneSnapshot } from "../src/snapshotClone.js";
 import { EVENT_STATE_FIXTURE } from "./fixtures/event-state.js";
 import { declaredFields } from "./fixtures/campaign-type-source.js";
+import { makeBattleManifestsFixture } from "./fixtures/battle-manifests.js";
 import {
   ATTACKER_NATION,
   DEFENDER_NATION,
@@ -363,43 +364,7 @@ function makeRichSnapshot(): CampaignSnapshot {
       reasonCode: "PROPOSER_TRAILS_BY_MARGIN",
     },
   ];
-  snapshot.wars.battleManifests = [
-    {
-      battleId: "battle-1",
-      opportunityId: "opp-001",
-      warId: "war_1",
-      areaId: "a-1",
-      missionType: "open_fleet_engagement",
-      attackerId: ATTACKER_NATION,
-      defenderId: DEFENDER_NATION,
-      acceptanceClass: "accepted",
-      missionObjectives: ["destroy_defenders"],
-      sides: [
-        { sideId: "ATTACKER", participantIds: [ATTACKER_NATION] },
-        { sideId: "DEFENDER", participantIds: [DEFENDER_NATION] },
-      ],
-      persistentAssets: [],
-      temporaryAssets: [],
-      permanentDivisionIds: [],
-      tacticalDivisions: [],
-      commanders: [],
-      weather: "clear",
-      seaState: "calm",
-      visibility: "good",
-      environment: "open_sea",
-      sourceStateHashes: { state: "abc" },
-      reservations: [],
-      autoResolutionProof: "auto-resolvable",
-      provenanceRecords: [],
-      battleSeed: "seed",
-      rulesetVersion: "0.1.0",
-      formulaVersion: "f1",
-      aiPolicyVersion: "a1",
-      rngVersion: "rng_v1",
-      contentVersion: "fixture_v1",
-      manifestHash: "manifest-hash",
-    },
-  ];
+  snapshot.wars.battleManifests = makeBattleManifestsFixture();
 
   snapshot.politics.relations = [
     {

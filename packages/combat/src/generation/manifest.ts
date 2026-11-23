@@ -43,6 +43,7 @@ export interface BattleManifest {
   rngVersion: string;
   contentVersion: string;
   manifestHash: string;
+  shortRangeStartUm?: number;
   smokeSources?: SmokeSourceDeclaration[];
   airGroups?: AirGroupDeclaration[];
   airDefenseInstallations?: AirDefenseInstallationDeclaration[];

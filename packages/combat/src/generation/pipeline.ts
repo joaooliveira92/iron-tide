@@ -492,6 +492,9 @@ export function generateBattles(inputs: BattleGenerationInputs): BattleGeneratio
       aiPolicyVersion: "1",
       rngVersion: inputs.rngVersion,
       contentVersion: inputs.contentVersion,
+      ...(opp.encounter?.shortRangeStartUm === undefined
+        ? {}
+        : { shortRangeStartUm: opp.encounter.shortRangeStartUm }),
     });
     stageRecords.push(
       stageRecord(

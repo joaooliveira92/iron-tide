@@ -17,6 +17,7 @@ export interface RaiderEncounter {
   readonly raiderShipId: string;
   readonly interceptorNationId: string;
   readonly interceptorShipIds: readonly string[];
+  readonly shortRangeStartUm?: number;
 }
 
 export function isEncounterOpportunity(opportunity: { missionType: BattleMissionType }): boolean {

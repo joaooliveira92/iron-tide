@@ -27,7 +27,9 @@ const STREAM_INTERCEPTION = "trade/interception";
 const STREAM_ENGAGEMENT = "trade/engagement";
 const STREAM_DISPOSITION = "trade/disposition";
 const STREAM_INTERNMENT = "trade/internment";
+const STREAM_SURPRISE = "trade/surprise";
 const DRAW_RANGE_BP = 10_000;
+const UM_PER_METRE = 1_000_000;
 const EVENT_VERSION = "0.1.0" as const;
 
 export const RAIDER_INTERCEPTION_REASON = "RAIDER_INTERCEPTION";
@@ -35,6 +37,7 @@ export const RAIDER_BREAKOUT_REASON = "RAIDER_BREAKOUT";
 export const RAIDER_ENGAGEMENT_REASON = "RAIDER_ENGAGEMENT";
 export const RAIDER_DISPOSITION_REASON = "RAIDER_DISPOSITION";
 export const RAIDER_INTERNMENT_REASON = "RAIDER_INTERNMENT";
+export const RAIDER_SURPRISE_REASON = "RAIDER_AMC_SURPRISE";
 
 type Rules = NonNullable<TradeProtectionRules["raiderInterception"]>;
 type Encounter = "INTERCEPTION" | "BREAKOUT";
@@ -111,6 +114,7 @@ export function applyRaiderInterceptionForMonth(
 ): void {
   const rules: Rules | undefined = tradeRules.raiderInterception;
   if (rules === undefined) return;
+  const amcSurprise = rules.amcSurprise;
   const wars = activeWars(ctx);
   const nations = ctx.snapshot.read("nations");
   const designs = designMap(ctx);
@@ -241,6 +245,21 @@ export function applyRaiderInterceptionForMonth(
           raiderNationId: nationId,
           raiderShip: ship,
           interceptorNation: nations.get(blockader ?? target.victimId),
+          ...(amcSurprise === undefined || design.hullType !== tradeRules.amcHullType
+            ? {}
+            : {
+                drawShortRangeStartUm: () =>
+                  draw(
+                    STREAM_SURPRISE,
+                    entityKey,
+                    amcSurprise.chanceBp,
+                    RAIDER_SURPRISE_REASON,
+                    (value) => (value < amcSurprise.chanceBp ? "SURPRISED" : "NOT_SURPRISED"),
+                    { startRangeM: amcSurprise.startRangeM },
+                  ) < amcSurprise.chanceBp
+                    ? amcSurprise.startRangeM * UM_PER_METRE
+                    : undefined,
+              }),
         });
         if (queued) {
           ships.push(ship);

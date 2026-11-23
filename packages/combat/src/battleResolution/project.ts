@@ -172,6 +172,9 @@ export function projectBattle(input: ProjectBattleInput): ProjectBattleOutput {
       designedSpeedBpKnots: designedSpeedBpKnots(u.designedSpeedUms as number),
       turningRateMdegS: 1_000,
     })),
+    manifest.shortRangeStartUm === undefined
+      ? undefined
+      : { startRangeUm: manifest.shortRangeStartUm },
   );
 
   const divisions: TacticalDivision[] = [];
