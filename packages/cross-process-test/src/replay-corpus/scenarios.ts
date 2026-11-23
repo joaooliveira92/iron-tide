@@ -295,6 +295,22 @@ export const REPLAY_SCENARIOS: readonly CorpusScenario[] = [
       "Japan as the player: an event drawn in month 7 stays pending, then resolves by its default answer in month 10 with budget and tension effects.",
   },
   {
+    id: "production-1880-6m-raider-interception-offers",
+    seed: "replay-corpus-raider-offers-6",
+    months: 6,
+    playerNationId: "austria_hungary",
+    setup: "raider-interception",
+    battleOffers: true,
+    purpose:
+      "Player raider interception as a tactical offer: Austria-Hungary's raider meets an Italian patrol hull, the recorded delegate answer resolves the battle, and the replay carries the answer.",
+    commands: [
+      {
+        month: 1,
+        body: { type: "DeclareWar", nationId: "austria_hungary", targetNationId: "italy" },
+      },
+    ],
+  },
+  {
     id: "production-1880-5m-unrest-strike",
     seed: "replay-corpus-unrest-strike",
     months: 5,
