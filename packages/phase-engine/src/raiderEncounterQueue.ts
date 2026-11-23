@@ -18,6 +18,7 @@ export interface RaiderEncounterRequest {
   readonly raiderNationId: string;
   readonly raiderShip: Ship;
   readonly interceptorNation: NationState | undefined;
+  readonly drawShortRangeStartUm?: () => number | undefined;
 }
 
 export function playerTakesPartInEncounter(
@@ -78,7 +79,7 @@ export function selectInterceptors(
         Number(b.stationAssignment === "TRADE_PROTECTION") -
           Number(a.stationAssignment === "TRADE_PROTECTION") || byId(a.id, b.id),
     )
-    .slice(0, PROVISIONAL_MAX_INTERCEPTORS)
+    .slice(0, rules.raiderInterception?.maxInterceptors ?? PROVISIONAL_MAX_INTERCEPTORS)
     .map((ship) => ship.id);
 }
 
@@ -101,7 +102,9 @@ export function queueRaiderEncounter(
     request.areaId,
   );
   if (interceptorShipIds.length === 0) return false;
+  const shortRangeStartUm = request.drawShortRangeStartUm?.();
   queue.push({
+    ...(shortRangeStartUm === undefined ? {} : { shortRangeStartUm }),
     missionType: request.breakout ? "BLOCKADE_BREAKOUT" : "RAIDER_INTERCEPTION",
     warId: request.warId,
     areaId: request.areaId,

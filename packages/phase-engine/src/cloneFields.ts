@@ -1,4 +1,9 @@
-import type { CompiledDesignVersion, FleetState, NationState } from "@bluewave/campaign";
+import type {
+  BattleManifest,
+  CompiledDesignVersion,
+  FleetState,
+  NationState,
+} from "@bluewave/campaign";
 
 export function fields<T>() {
   return <U extends readonly (keyof T)[]>(
@@ -88,4 +93,38 @@ export const COMPILED_DESIGN_VERSION_FIELDS = fields<CompiledDesignVersion>()(
   "shortRange",
   "constructionCostUnits",
   "constructionPlan",
+);
+
+export const BATTLE_MANIFEST_FIELDS = fields<BattleManifest>()(
+  "battleId",
+  "opportunityId",
+  "warId",
+  "areaId",
+  "missionType",
+  "attackerId",
+  "defenderId",
+  "acceptanceClass",
+  "missionObjectives",
+  "sides",
+  "persistentAssets",
+  "temporaryAssets",
+  "permanentDivisionIds",
+  "tacticalDivisions",
+  "commanders",
+  "weather",
+  "seaState",
+  "visibility",
+  "environment",
+  "sourceStateHashes",
+  "reservations",
+  "autoResolutionProof",
+  "provenanceRecords",
+  "battleSeed",
+  "rulesetVersion",
+  "formulaVersion",
+  "aiPolicyVersion",
+  "rngVersion",
+  "contentVersion",
+  "manifestHash",
+  "shortRangeStartUm",
 );
