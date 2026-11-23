@@ -1,8 +1,10 @@
 import { describe, expect, it } from "vite-plus/test";
 import {
   breakoutRequired,
+  damageShareBp,
   engagementOutcome,
   heavilyDamagedDisposition,
+  isHeavilyDamaged,
   internmentCause,
   interceptionChanceBp,
   patrolCoverageBp,
@@ -86,6 +88,27 @@ describe("engagement outcome", () => {
       hitPointsAfter: 30,
       heavilyDamaged: true,
     });
+  });
+});
+
+describe("post-battle damage state", () => {
+  it("is heavily damaged at or under the scuttle threshold of hull strength", () => {
+    expect(isHeavilyDamaged(rules, 30, 100)).toBe(true);
+    expect(isHeavilyDamaged(rules, 31, 100)).toBe(false);
+    expect(isHeavilyDamaged(rules, 0, 0)).toBe(true);
+  });
+
+  it("agrees with the abstract engagement flag", () => {
+    const outcome = engagementOutcome(rules, 2000, 100, 100);
+    if (outcome.kind !== "SURVIVED") throw new Error("expected a survivor");
+    expect(isHeavilyDamaged(rules, outcome.hitPointsAfter, 100)).toBe(outcome.heavilyDamaged);
+  });
+
+  it("measures battle damage as a share of the hull, capped at the whole hull", () => {
+    expect(damageShareBp(30, 100)).toBe(3000);
+    expect(damageShareBp(250, 100)).toBe(10_000);
+    expect(damageShareBp(0, 100)).toBe(0);
+    expect(damageShareBp(5, 0)).toBe(0);
   });
 });
 
