@@ -110,6 +110,8 @@ function describeDomainEventBody(body: DomainEventBody): string {
       return `${body.nationId}: raider ${body.shipId} ${body.encounter === "BREAKOUT" ? "broke out against" : "intercepted raiding"} ${body.victimNationId} in ${body.month}: ${body.outcome} (${String(body.damageBp)} bp damage)`;
     case "RaiderInterned":
       return `${body.nationId}: raider ${body.shipId} interned until the war ends (${body.cause})`;
+    case "NeutralWarEntered":
+      return `${body.nationId}: declared war on ${body.targetNationId} in ${body.month} (tension ${String(body.tension)} after unrestricted submarine incidents)`;
     case "RaiderReleased":
       return `${body.nationId}: raider ${body.shipId} released from internment`;
     case "PresenceShortfall":

@@ -1,6 +1,8 @@
 import { TENSION_MAX, type CampaignSnapshot } from "@bluewave/campaign";
 import type { DeclareWarCommand } from "@bluewave/commands";
+import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, compareCodePoints, sha256Hex } from "@bluewave/deterministic";
+import type { DomainEventEnvelope } from "@bluewave/events";
 import type { PhaseContext } from "./pipeline.js";
 import { pairKey, unrestrictedRaiderCheck } from "./submarineIncidents.js";
 
@@ -22,6 +24,35 @@ function inLiveWar(snapshot: EntryState, nationId: string): boolean {
       (war.status === "ACTIVE" || war.status === "DECLARED_NOT_ACTIVE") &&
       (war.attackerSideMembers.includes(nationId) || war.defenderSideMembers.includes(nationId)),
   );
+}
+
+const NEUTRAL_ENTRY_EVENT_VERSION = "0.1.0" as const;
+
+export function neutralWarEnteredEvent(
+  declarer: string,
+  target: string,
+  tension: number,
+  seq: SafeInt,
+  campaignMonth: string,
+): DomainEventEnvelope {
+  return {
+    eventId: `NeutralWarEntered-${declarer}-${target}-${String(seq)}`,
+    version: NEUTRAL_ENTRY_EVENT_VERSION,
+    aggregateType: "nation",
+    aggregateId: declarer,
+    eventType: "NeutralWarEntered",
+    timestamp: `${campaignMonth}-01T00:00:00.000Z`,
+    body: {
+      kind: "NeutralWarEntered",
+      nationId: declarer,
+      targetNationId: target,
+      warId: `war_${declarer}_${target}_${campaignMonth}`,
+      month: campaignMonth,
+      cause: "UNRESTRICTED_SUBMARINE_INCIDENTS",
+      tension: SafeInt(tension),
+    },
+    sequenceNumber: seq,
+  };
 }
 
 export function applySubmarineNeutralEntryForMonth(
@@ -87,6 +118,9 @@ export function applySubmarineNeutralEntryForMonth(
       snapshot,
       { type: "DeclareWar", nationId: declarer, targetNationId: target },
       ctx.campaignMonth,
+    );
+    ctx.eventLedger.append(
+      neutralWarEnteredEvent(declarer, target, relation.tension, ctx.nextSeq(), ctx.campaignMonth),
     );
   }
 

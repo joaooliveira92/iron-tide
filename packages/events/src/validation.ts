@@ -332,6 +332,16 @@ export const RaiderReleasedSchema = Schema.Struct({
   month: discoveryMonth,
 });
 
+export const NeutralWarEnteredSchema = Schema.Struct({
+  kind: Schema.Literal("NeutralWarEntered"),
+  nationId: nonEmptyString,
+  targetNationId: nonEmptyString,
+  warId: nonEmptyString,
+  month: discoveryMonth,
+  cause: Schema.Literal("UNRESTRICTED_SUBMARINE_INCIDENTS"),
+  tension: positiveSafeInt,
+});
+
 export const PrestigeLossRequestedSchema = Schema.Struct({
   kind: Schema.Literal("PrestigeLossRequested"),
   nationId: nonEmptyString,
@@ -429,6 +439,7 @@ export const DomainEventBodySchema = Schema.Union([
   RaiderEngagedSchema,
   RaiderInternedSchema,
   RaiderReleasedSchema,
+  NeutralWarEnteredSchema,
 ]);
 
 const eventKindList = [
@@ -469,6 +480,7 @@ const eventKindList = [
   "RaiderEngaged",
   "RaiderInterned",
   "RaiderReleased",
+  "NeutralWarEntered",
 ] as const;
 
 export const DomainEventEnvelopeSchema = Schema.Struct({
@@ -522,6 +534,7 @@ export type MerchantLossSuffered = Schema.Schema.Type<typeof MerchantLossSuffere
 export type RaiderEngaged = Schema.Schema.Type<typeof RaiderEngagedSchema>;
 export type RaiderInterned = Schema.Schema.Type<typeof RaiderInternedSchema>;
 export type RaiderReleased = Schema.Schema.Type<typeof RaiderReleasedSchema>;
+export type NeutralWarEntered = Schema.Schema.Type<typeof NeutralWarEnteredSchema>;
 export type PrestigeLossRequested = Schema.Schema.Type<typeof PrestigeLossRequestedSchema>;
 export type RevoltPressureRequested = Schema.Schema.Type<typeof RevoltPressureRequestedSchema>;
 export type ShipDetachedToFleet = Schema.Schema.Type<typeof ShipDetachedToFleetSchema>;
