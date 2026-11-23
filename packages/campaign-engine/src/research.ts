@@ -4,6 +4,7 @@ import {
   historicalTimingModifierBp,
   technologyCatalogueOf,
   type CampaignState,
+  type EconomyOutlookOptions,
 } from "@bluewave/campaign";
 import {
   CANONICAL_RESEARCH_FIELD_IDS,
@@ -18,6 +19,7 @@ import {
   explainResearchBudget,
   explainResearchCap,
   explainResearchFloor,
+  explainResearchReturns,
 } from "./research-explanations.js";
 import type { PlayerProjectionMonth } from "./projection.js";
 import { compareCodePoints } from "@bluewave/deterministic";
@@ -69,6 +71,8 @@ export interface ResearchScreenProjection {
   readonly annualAllocation: number | null;
   readonly researchCap: number;
   readonly researchSpend: number;
+  readonly researchEffective: number;
+  readonly researchEffectiveRateBp: number;
   readonly unfundedReason: ResearchUnfundedReason | null;
   readonly fieldPriorities: Readonly<Record<string, number>>;
   readonly discoveredTechIds: readonly string[];
@@ -77,6 +81,7 @@ export interface ResearchScreenProjection {
   readonly budgetExplanation?: ExplanationTree;
   readonly capExplanation?: ExplanationTree;
   readonly floorExplanation?: ExplanationTree;
+  readonly returnsExplanation?: ExplanationTree;
 }
 
 export function buildResearchScreenProjection(
@@ -84,8 +89,9 @@ export function buildResearchScreenProjection(
   playerSlotId: string,
   _month: PlayerProjectionMonth,
   technologyNames: ReadonlyMap<string, string> = new Map(),
+  economy?: EconomyOutlookOptions,
 ): ResearchScreenProjection | undefined {
-  const facts = derivePlayerFacts(state.snapshot, playerSlotId);
+  const facts = derivePlayerFacts(state.snapshot, playerSlotId, economy);
   if (facts === undefined) return undefined;
 
   const { outlook } = facts;
@@ -113,6 +119,11 @@ export function buildResearchScreenProjection(
         : Number(research.annualResearchAllocation),
     researchCap: outlook.researchCap,
     researchSpend: outlook.plannedResearch,
+    researchEffective: outlook.researchEffective,
+    researchEffectiveRateBp:
+      outlook.plannedResearch > 0
+        ? Math.floor((outlook.researchEffective * 10_000) / outlook.plannedResearch)
+        : 10_000,
     unfundedReason: outlook.researchUnfundedReason ?? null,
     fieldPriorities,
     discoveredTechIds: [...research.discoveredTechs].sort((a, b) => compareCodePoints(a, b)),
@@ -124,6 +135,12 @@ export function buildResearchScreenProjection(
     ),
     capExplanation: explainResearchCap(outlook.revenue, outlook.researchCap),
     floorExplanation: explainResearchFloor(outlook.revenue, minimumResearchSpend),
+    returnsExplanation: explainResearchReturns(
+      outlook.plannedResearch,
+      outlook.revenue,
+      outlook.researchEffective,
+      economy?.researchReturns,
+    ),
     inProgressTechnologies: research.technologies.map((tech) => ({
       techId: tech.techId,
       investedPoints: Number(tech.investedPoints),

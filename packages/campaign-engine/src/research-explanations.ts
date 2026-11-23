@@ -1,4 +1,4 @@
-import { RESEARCH_SHARE_CAP_BP } from "@bluewave/campaign";
+import { RESEARCH_SHARE_CAP_BP, type ResearchReturnsRules } from "@bluewave/campaign";
 import { ExplanationBuilder, type ExplanationTree } from "@bluewave/events";
 import { MIN_RESEARCH_SHARE_BP } from "./priorityConstants.js";
 
@@ -49,6 +49,31 @@ export function explainResearchFloor(revenue: number, floor: number): Explanatio
     .addChild(moneyChild("research_floor.appropriation", revenue))
     .addChild(shareChild("research_floor.guidanceShare", MIN_RESEARCH_SHARE_BP))
     .build();
+}
+
+export function explainResearchReturns(
+  paid: number,
+  revenue: number,
+  effective: number,
+  rules: ResearchReturnsRules | undefined,
+): ExplanationTree {
+  const fullReturnShareBp = rules?.fullReturnShareBp ?? RESEARCH_SHARE_CAP_BP;
+  const aboveMarginalBp = rules?.aboveMarginalBp ?? 10_000;
+  const fullReturnSpend = Math.floor((revenue * fullReturnShareBp) / 10_000);
+  const builder = new ExplanationBuilder("research_returns", RESEARCH_FORMULA_VERSION)
+    .withInput("paid", paid)
+    .withInput("appropriation", revenue)
+    .withIntermediate("fullReturnShareBp", fullReturnShareBp)
+    .withIntermediate("aboveMarginalBp", aboveMarginalBp)
+    .withIntermediate("fullReturnSpend", fullReturnSpend)
+    .withResult(effective)
+    .withUnit(UNIT_MONEY)
+    .withOperation("clamp")
+    .withSource(SOURCE)
+    .addChild(moneyChild("research_returns.paid", paid));
+  if (effective < paid)
+    builder.addChild(moneyChild("research_returns.diminished", effective - paid));
+  return builder.build();
 }
 
 export function explainResearchBudget(

@@ -172,6 +172,31 @@ describe("economyOutlook", () => {
     expect(o.researchUnfundedReason).toBe("ABOVE_CAP");
   });
 
+  it("counts research at full value up to 10% of revenue and applies the curve above it", () => {
+    const withBudget = (
+      budget: number,
+      returns?: { fullReturnShareBp: number; aboveMarginalBp: number },
+    ) =>
+      economyOutlook(
+        snapshot(
+          nation({
+            research: {
+              researchBudget: SafeInt(budget),
+              standingResearchBudget: SafeInt(budget),
+            },
+          }),
+        ),
+        "n",
+        returns === undefined ? {} : { researchReturns: returns },
+      )!;
+    const curve = { fullReturnShareBp: 1000, aboveMarginalBp: 5000 };
+    expect(withBudget(12).researchEffective).toBe(12);
+    expect(withBudget(10, curve).researchEffective).toBe(10);
+    expect(withBudget(12, curve).researchEffective).toBe(11);
+    expect(withBudget(12, curve).plannedResearch).toBe(12);
+    expect(withBudget(12, { ...curve, aboveMarginalBp: 10_000 }).researchEffective).toBe(12);
+  });
+
   it("plans only what the phase funds: paced projects, not held, foreign or unpaced new orders", () => {
     const o = economyOutlook(
       snapshot(
