@@ -3,6 +3,7 @@ import {
   submarinePolicyOf,
   TENSION_MAX,
   type NationState,
+  type SubmarineThreatRules,
   type TradeDutyDesign,
 } from "@bluewave/campaign";
 import { canonicalSerialize, compareCodePoints, sha256Hex } from "@bluewave/deterministic";
@@ -13,8 +14,19 @@ export const SUBMARINE_INCIDENT_STREAM_FAMILY = "diplomacy/submarine_incident";
 export const SUBMARINE_INCIDENT_REASON = "SUBMARINE_INCIDENT";
 const INCIDENT_DRAW_RANGE_BP = 10_000;
 
-function pairKey(a: string, b: string): string {
+export function pairKey(a: string, b: string): string {
   return [a, b].sort().join("\u0000");
+}
+
+export function unrestrictedRaiderCheck(
+  ctx: PhaseContext,
+  threat: Pick<SubmarineThreatRules, "hullType">,
+): (nation: NationState | undefined) => boolean {
+  const designs: ReadonlyMap<string, TradeDutyDesign> = designMap(ctx);
+  return (nation) =>
+    nation !== undefined &&
+    submarinePolicyOf(nation) === "UNRESTRICTED" &&
+    countEnemySubmarines(threat, shipsOf(nation), designs) > 0;
 }
 
 export function applySubmarineIncidentsForMonth(ctx: PhaseContext): void {
@@ -23,11 +35,7 @@ export function applySubmarineIncidentsForMonth(ctx: PhaseContext): void {
   if (threat === undefined || unrestricted === undefined) return;
   const nations = ctx.snapshot.read("nations");
   const politics = ctx.snapshot.read("politics");
-  const designs: ReadonlyMap<string, TradeDutyDesign> = designMap(ctx);
-  const raiding = (nation: NationState | undefined): boolean =>
-    nation !== undefined &&
-    submarinePolicyOf(nation) === "UNRESTRICTED" &&
-    countEnemySubmarines(threat, shipsOf(nation), designs) > 0;
+  const raiding = unrestrictedRaiderCheck(ctx, threat);
   const relations = [...politics.relations];
   const engine = ctx.rng.engine();
   const rulesetVersion = ctx.snapshot.read("rulesetVersion");

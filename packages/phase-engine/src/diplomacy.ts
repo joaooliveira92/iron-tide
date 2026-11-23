@@ -31,6 +31,7 @@ import { Result } from "effect";
 
 import { exerciseTensionRaisedEvent } from "./fleetExercise.js";
 import { applySubmarineIncidentsForMonth } from "./submarineIncidents.js";
+import { applySubmarineNeutralEntryForMonth } from "./submarineNeutralEntry.js";
 import { applyTradeProtectionForMonth } from "./tradeProtectionMonth.js";
 import { possessionTransferredEvent } from "./events.js";
 import { applyEventsForMonth } from "./eventDraw.js";
@@ -41,7 +42,13 @@ function pairKey(a: string, b: string): string {
   return [a, b].sort().join("\u0000");
 }
 
-export function getPairRelation(snapshot: CampaignSnapshot, a: string, b: string) {
+export type DeclareWarState = Pick<CampaignSnapshot, "nations" | "politics" | "wars">;
+
+export function getPairRelation(
+  snapshot: Pick<CampaignSnapshot, "politics">,
+  a: string,
+  b: string,
+) {
   const key = pairKey(a, b);
   return (
     snapshot["politics"]["relations"].find((r) => pairKey(r["nationA"], r["nationB"]) === key) ??
@@ -49,8 +56,8 @@ export function getPairRelation(snapshot: CampaignSnapshot, a: string, b: string
   );
 }
 
-export function updateRelation(
-  snapshot: CampaignSnapshot,
+export function updateRelation<S extends Pick<CampaignSnapshot, "politics">>(
+  snapshot: S,
   a: string,
   b: string,
   patch: Partial<{
@@ -58,7 +65,7 @@ export function updateRelation(
     tension: number;
     nap: boolean;
   }>,
-): CampaignSnapshot {
+): S {
   const key = pairKey(a, b);
   const relations = snapshot["politics"]["relations"].map((r) =>
     pairKey(r["nationA"], r["nationB"]) === key
@@ -75,11 +82,11 @@ export function updateRelation(
   };
 }
 
-export function applyDeclareWar(
-  snapshot: CampaignSnapshot,
+export function applyDeclareWar<S extends DeclareWarState>(
+  snapshot: S,
   body: DeclareWarCommand,
   campaignMonth: string,
-): CampaignSnapshot {
+): S {
   const declarer = body["nationId"];
   const target = body["targetNationId"];
   const warId = `war_${declarer}_${target}_${campaignMonth}`;
@@ -488,6 +495,7 @@ export function runDiplomacyPhase(ctx: PhaseContext): PhaseRunOutcome {
   applyTensionDriftForMonth(ctx);
   applyTradeProtectionForMonth(ctx);
   applySubmarineIncidentsForMonth(ctx);
+  applySubmarineNeutralEntryForMonth(ctx, applyDeclareWar);
   runPeaceProposals(ctx);
   applyEventsForMonth(ctx);
   return { status: "continue" };

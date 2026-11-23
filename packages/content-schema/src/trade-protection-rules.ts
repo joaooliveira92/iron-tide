@@ -38,6 +38,7 @@ export const UnrestrictedWarfareRulesSchema = Schema.Struct({
     Schema.isBetween({ minimum: 10_000, maximum: 100_000 }),
   ),
   incidentBp: bp,
+  neutralEntryBp: Schema.optional(bp),
 });
 
 export const SubmarineThreatRulesSchema = Schema.Struct({

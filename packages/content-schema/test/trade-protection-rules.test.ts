@@ -209,6 +209,24 @@ describe("decodeTradeProtectionRules", () => {
     ).toMatchObject({ ok: false, field: `submarineThreat.unrestricted.${key}` });
   });
 
+  it("accepts an unrestricted block with an optional neutralEntryBp and rejects out-of-range values", () => {
+    const block = { chanceMultiplierBp: 20_000, incidentBp: 2000, neutralEntryBp: 2500 };
+    const withEntry = { submarineThreat: { ...submarine, unrestricted: block } };
+    expect(decodeTradeProtectionRules(rules(withEntry))).toEqual({
+      ok: true,
+      value: rules(withEntry),
+    });
+    for (const neutralEntryBp of [0, 10_001, 2500.5]) {
+      expect(
+        decodeTradeProtectionRules(
+          rules({
+            submarineThreat: { ...submarine, unrestricted: { ...block, neutralEntryBp } },
+          }),
+        ),
+      ).toMatchObject({ ok: false, field: "submarineThreat.unrestricted.neutralEntryBp" });
+    }
+  });
+
   it("rejects an unrestricted block missing a key", () => {
     expect(
       decodeTradeProtectionRules(

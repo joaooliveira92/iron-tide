@@ -18,6 +18,7 @@ export interface SubmarineThreatRules {
 export interface UnrestrictedWarfareRules {
   readonly chanceMultiplierBp: number;
   readonly incidentBp: number;
+  readonly neutralEntryBp?: number | undefined;
 }
 
 export interface ShortfallPrestigeRules {
