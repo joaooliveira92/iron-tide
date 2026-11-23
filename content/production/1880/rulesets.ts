@@ -1,5 +1,27 @@
 import { RulesetManifestSchema, list } from "@bluewave/content-authoring";
 
+const manualGrowthBandProvenance = {
+  sourceStatus: "BALANCE_TARGET",
+  confidence: "LOW",
+  kind: "balance_adjustment",
+  sources: [
+    {
+      title: "Rule the Waves 3 manual",
+      author: "Naval War Simulations / Matrix Games",
+      year: 2023,
+      page: "12",
+      section: "The Budget: base resources increase steadily at about 3-5% a year",
+    },
+  ],
+  derivation: {
+    sourceValue: "about 3-5%",
+    sourceUnit: "percent a year",
+    conversion: "midpoint of the manual's band, applied uniformly",
+    gameValue: "400 bp",
+  },
+  note: "PROVISIONAL (#1115). The manual states one band for every nation and no per-nation 1880 rate exists in any source this project holds; the midpoint is a Bluewave balance choice inside that band, not a nation-specific measurement.",
+} as const;
+
 export default list(RulesetManifestSchema, [
   // The 1880 core ruleset. The prestige value set (S-2, ADR-0239) is authored here, not defaulted in
   // code. Grounded rules (a sacking threshold of 16 or below, proportional loss, final prestige as the
@@ -43,6 +65,25 @@ export default list(RulesetManifestSchema, [
         },
       ],
       note: "ADR-0239. The threshold of 16 and the proportional-loss shape are documented RTW3; the bounds, the loss and gain rates and the monthly sacking probability are Bluewave balance targets.",
+    },
+    baseGrowth: {
+      sectionVersion: 1,
+      nations: {
+        uk: { annualGrowthBp: 400, provenance: manualGrowthBandProvenance },
+        germany: { annualGrowthBp: 400, provenance: manualGrowthBandProvenance },
+        usa: { annualGrowthBp: 400, provenance: manualGrowthBandProvenance },
+        japan: { annualGrowthBp: 400, provenance: manualGrowthBandProvenance },
+        france: { annualGrowthBp: 400, provenance: manualGrowthBandProvenance },
+        italy: { annualGrowthBp: 400, provenance: manualGrowthBandProvenance },
+        russia: { annualGrowthBp: 400, provenance: manualGrowthBandProvenance },
+        austria_hungary: { annualGrowthBp: 400, provenance: manualGrowthBandProvenance },
+        spain: { annualGrowthBp: 400, provenance: manualGrowthBandProvenance },
+        qing: { annualGrowthBp: 400, provenance: manualGrowthBandProvenance },
+        ottoman_empire: { annualGrowthBp: 400, provenance: manualGrowthBandProvenance },
+        netherlands: { annualGrowthBp: 400, provenance: manualGrowthBandProvenance },
+        portugal: { annualGrowthBp: 400, provenance: manualGrowthBandProvenance },
+        brazil: { annualGrowthBp: 400, provenance: manualGrowthBandProvenance },
+      },
     },
     // The tension-drift section (S-4 slice 2, decision #425). Every value is a PROVISIONAL Bluewave balance target: the
     // manual (pp.60-61) says tension rises slowly over years but gives no number. Removing this section returns tension to
