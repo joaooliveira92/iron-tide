@@ -19,7 +19,7 @@ const manualGrowthBandProvenance = {
     conversion: "midpoint of the manual's band, applied uniformly",
     gameValue: "400 bp",
   },
-  note: "PROVISIONAL (#1115). The manual states one band for every nation and no per-nation 1880 rate exists in any source this project holds; the midpoint is a Bluewave balance choice inside that band, not a nation-specific measurement.",
+  note: "PROVISIONAL (#1115, Discussion 1118). The manual states one band for every nation. Maddison Project 2023 real GDP 1880-1913 falls inside 3-5% robustly only for the USA (3.5%, every window); Germany is borderline (3.1% in 1880-1913, 2.5% in 1880-1914) and the other twelve measure 0.9-2.3%, so reaching the band would need a rescale or a per-nation window choice that would be invented. The midpoint is a uniform Bluewave balance choice inside the manual band, not a nation-specific measurement.",
 } as const;
 
 export default list(RulesetManifestSchema, [
