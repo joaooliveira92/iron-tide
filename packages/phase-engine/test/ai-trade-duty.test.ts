@@ -29,11 +29,11 @@ function scenario(fraShips: Ship[], extra: { atWar?: boolean; gbrShips?: Ship[] 
   });
 }
 
-function run(from: CampaignSnapshot, seed = "ai-trade-duty") {
+function run(from: CampaignSnapshot, seed = "ai-trade-duty", rules = TRADE_RULES) {
   const collector = new DiagnosticCollector();
   const result = new MonthExecutor().execute(from, [], seed, collector, undefined, {
     playerNationId: "GBR",
-    tradeProtection: TRADE_RULES,
+    tradeProtection: rules,
     warDeclaration: WAR_RULES,
   });
   return Object.assign(result, { collector });
@@ -119,5 +119,64 @@ describe("#1069: AI assigns trade protection duty", () => {
     const result = run(from);
     expect(dutyOf(result.finalSnapshot)).toEqual({ f1: undefined });
     expect(result.collector.errors).toEqual([]);
+  });
+});
+
+const SUBMARINE_RULES: typeof TRADE_RULES = {
+  ...TRADE_RULES,
+  submarineThreat: {
+    hullType: "submarine",
+    quotaPerBoatBp: 10_000,
+    attackBp: 0,
+    lossPerHitBp: 500,
+    blockadeReductionBp: 5000,
+  },
+};
+
+const ASW_DESIGNS = [
+  tradeDesign("d-dd", "destroyer"),
+  tradeDesign("d-dd-asw", "destroyer", { capabilities: [{ kind: "asw_attack", level: 2 }] }),
+  tradeDesign("d-cp", "protected_cruiser"),
+  tradeDesign("d-ss", "submarine"),
+];
+
+describe("#1094: surplus release keeps anti-submarine escorts", () => {
+  const aswScenario = tradeSnapshot({
+    gbrShips: [tradeShip("gbr-sub", "d-ss")],
+    designs: ASW_DESIGNS,
+    fra: {
+      fleets: [
+        {
+          id: "fleet-z",
+          nationId: "FRA",
+          name: "z",
+          locationAreaId: "a-2",
+          ships: [tradeShip("z1", "d-dd-asw", { locationAreaId: "a-2" }, "FRA")],
+        },
+        {
+          id: "fleet-a",
+          nationId: "FRA",
+          name: "a",
+          locationAreaId: "a-2",
+          ships: ["a1", "a2", "a3"].map((id) =>
+            tradeShip(id, "d-dd", { locationAreaId: "a-2" }, "FRA"),
+          ),
+        },
+      ],
+    },
+  });
+
+  it("keeps the anti-submarine escort on duty across two months under a submarine quota of 2", () => {
+    const first = run(aswScenario, "ai-trade-duty-m1", SUBMARINE_RULES);
+    expect(dutyOf(first.finalSnapshot)).toEqual({
+      z1: "TRADE_PROTECTION",
+      a1: "TRADE_PROTECTION",
+      a2: "TRADE_PROTECTION",
+      a3: "TRADE_PROTECTION",
+    });
+    const second = run(first.finalSnapshot, "ai-trade-duty-m2", SUBMARINE_RULES);
+    expect(dutyOf(second.finalSnapshot)).toMatchObject({ z1: "TRADE_PROTECTION" });
+    expect(first.collector.errors).toEqual([]);
+    expect(second.collector.errors).toEqual([]);
   });
 });
