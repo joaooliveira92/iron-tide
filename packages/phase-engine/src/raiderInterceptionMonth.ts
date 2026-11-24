@@ -2,14 +2,12 @@ import {
   breakoutRequired,
   countTradeProtectionShips,
   engagementOutcome,
-  heavilyDamagedDisposition,
   interceptionChanceBp,
   internmentCause,
   isRaiderBlockedByBlockade,
   isRaiderEligible,
   patrolCoverageBp,
   tradeProtectionQuota,
-  type InternmentCause,
   type NationState,
   type Ship,
   type TradeDutyDesign,
@@ -17,77 +15,33 @@ import {
   type WarDeclaration,
 } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
-import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
-import type { DomainEventEnvelope } from "@bluewave/events";
 import type { PhaseContext } from "./pipeline.js";
 import { queueRaiderEncounter } from "./raiderEncounterQueue.js";
+import {
+  createRaiderDraw,
+  drawHeavyDamageDisposition,
+  internedShip,
+  raiderEnvelope,
+  raiderInternedEvent,
+} from "./raiderDisposition.js";
 import { activeWars, byId, designMap, opponentsOf, shipsOf } from "./tradeWarContext.js";
 
 const STREAM_INTERCEPTION = "trade/interception";
 const STREAM_ENGAGEMENT = "trade/engagement";
-const STREAM_DISPOSITION = "trade/disposition";
 const STREAM_INTERNMENT = "trade/internment";
 const STREAM_SURPRISE = "trade/surprise";
-const DRAW_RANGE_BP = 10_000;
 const UM_PER_METRE = 1_000_000;
-const EVENT_VERSION = "0.1.0" as const;
 
+export { RAIDER_DISPOSITION_REASON } from "./raiderDisposition.js";
 export const RAIDER_INTERCEPTION_REASON = "RAIDER_INTERCEPTION";
 export const RAIDER_BREAKOUT_REASON = "RAIDER_BREAKOUT";
 export const RAIDER_ENGAGEMENT_REASON = "RAIDER_ENGAGEMENT";
-export const RAIDER_DISPOSITION_REASON = "RAIDER_DISPOSITION";
 export const RAIDER_INTERNMENT_REASON = "RAIDER_INTERNMENT";
 export const RAIDER_SURPRISE_REASON = "RAIDER_AMC_SURPRISE";
 
 type Rules = NonNullable<TradeProtectionRules["raiderInterception"]>;
 type Encounter = "INTERCEPTION" | "BREAKOUT";
 type Outcome = "SURVIVED" | "SUNK" | "SCUTTLED" | "INTERNED";
-
-type EventBody = DomainEventEnvelope["body"];
-
-function envelope(
-  eventType: "RaiderEngaged" | "RaiderInterned" | "RaiderReleased",
-  nationId: string,
-  shipId: string,
-  month: string,
-  seq: SafeInt,
-  body: EventBody,
-): DomainEventEnvelope {
-  return {
-    eventId: `${eventType}-${shipId}-${String(seq)}`,
-    version: EVENT_VERSION,
-    aggregateType: "nation",
-    aggregateId: nationId,
-    eventType,
-    timestamp: `${month}-01T00:00:00.000Z`,
-    body,
-    sequenceNumber: seq,
-  };
-}
-
-const internedEvent = (
-  nationId: string,
-  shipId: string,
-  month: string,
-  seq: SafeInt,
-  cause: InternmentCause,
-): DomainEventEnvelope =>
-  envelope("RaiderInterned", nationId, shipId, month, seq, {
-    kind: "RaiderInterned",
-    nationId,
-    shipId,
-    month,
-    cause,
-  });
-
-function interned(ship: Ship, month: string, cause: InternmentCause): Ship {
-  const { stationAssignment: _assignment, ...rest } = ship;
-  return {
-    ...rest,
-    readiness: "MOTHBALLED",
-    internment: { sinceMonth: month, cause, readinessBefore: ship.readiness },
-  };
-}
 
 function released(ship: Ship): Ship {
   const { internment, ...rest } = ship;
@@ -119,31 +73,8 @@ export function applyRaiderInterceptionForMonth(
   const nations = ctx.snapshot.read("nations");
   const designs = designMap(ctx);
   const blockades = ctx.snapshot.read("wars").blockadeState;
-  const engine = ctx.rng.engine();
-  const rulesetVersion = ctx.snapshot.read("rulesetVersion");
+  const draw = createRaiderDraw(ctx, "resolve_diplomacy");
   const month = ctx.campaignMonth;
-
-  const draw = (
-    stream: string,
-    entityKey: string,
-    chanceBp: number,
-    reasonCode: string,
-    outcome: (value: number) => string,
-    inputs: Readonly<Record<string, unknown>>,
-  ): number => {
-    const value = Math.floor(engine.stream(`${stream}/${entityKey}`).next() * DRAW_RANGE_BP);
-    ctx.randomLedger.record({
-      streamId: stream,
-      entityKey,
-      phase: "resolve_diplomacy",
-      rulesetVersion,
-      inputHash: sha256Hex(canonicalSerialize({ entityKey, chanceBp, ...inputs })),
-      draw: value,
-      outcome: outcome(value),
-      reasonCode,
-    });
-    return value;
-  };
 
   const warsOf = (nationId: string): readonly WarDeclaration[] =>
     wars.filter(
@@ -162,7 +93,7 @@ export function applyRaiderInterceptionForMonth(
           if (nationWars.length === 0) {
             ships.push(released(ship));
             ctx.eventLedger.append(
-              envelope("RaiderReleased", nationId, ship.id, month, ctx.nextSeq(), {
+              raiderEnvelope("RaiderReleased", nationId, ship.id, month, ctx.nextSeq(), {
                 kind: "RaiderReleased",
                 nationId,
                 shipId: ship.id,
@@ -229,8 +160,10 @@ export function applyRaiderInterceptionForMonth(
             ships.push(ship);
             continue;
           }
-          ships.push(interned(ship, month, cause));
-          ctx.eventLedger.append(internedEvent(nationId, ship.id, month, ctx.nextSeq(), cause));
+          ships.push(internedShip(ship, month, cause));
+          ctx.eventLedger.append(
+            raiderInternedEvent(nationId, ship.id, month, ctx.nextSeq(), cause),
+          );
           changed = true;
           continue;
         }
@@ -286,23 +219,19 @@ export function applyRaiderInterceptionForMonth(
           damageBp = result.damageBp;
           survivor = { ...ship, hitPoints: SafeInt(result.hitPointsAfter) };
           if (result.heavilyDamaged) {
-            const disposition = heavilyDamagedDisposition(
+            const disposition = drawHeavyDamageDisposition(
+              draw,
               rules,
-              draw(
-                STREAM_DISPOSITION,
-                entityKey,
-                rules.scuttleShareBp,
-                RAIDER_DISPOSITION_REASON,
-                (value) => heavilyDamagedDisposition(rules, value),
-                { hitPointsAfter: result.hitPointsAfter },
-              ),
+              entityKey,
+              result.hitPointsAfter,
             );
             outcome = disposition;
-            survivor = disposition === "SCUTTLED" ? undefined : interned(survivor, month, "DAMAGE");
+            survivor =
+              disposition === "SCUTTLED" ? undefined : internedShip(survivor, month, "DAMAGE");
           }
         }
         ctx.eventLedger.append(
-          envelope("RaiderEngaged", nationId, ship.id, month, ctx.nextSeq(), {
+          raiderEnvelope("RaiderEngaged", nationId, ship.id, month, ctx.nextSeq(), {
             kind: "RaiderEngaged",
             nationId,
             shipId: ship.id,
@@ -315,7 +244,9 @@ export function applyRaiderInterceptionForMonth(
           }),
         );
         if (outcome === "INTERNED")
-          ctx.eventLedger.append(internedEvent(nationId, ship.id, month, ctx.nextSeq(), "DAMAGE"));
+          ctx.eventLedger.append(
+            raiderInternedEvent(nationId, ship.id, month, ctx.nextSeq(), "DAMAGE"),
+          );
         if (survivor !== undefined) ships.push(survivor);
       }
       return { ...fleet, ships };

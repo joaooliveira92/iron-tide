@@ -87,20 +87,40 @@ export function engagementOutcome(
     "floor",
   );
   const hitPointsAfter = Math.max(0, hitPoints - scaleBp(maxHitPoints, damageBp));
-  const strengthBp =
-    maxHitPoints <= 0
-      ? 0
-      : SafeInt.div(
-          SafeInt.mul(SafeInt(hitPointsAfter), BP_DENOMINATOR),
-          SafeInt(maxHitPoints),
-          "floor",
-        );
   return {
     kind: "SURVIVED",
     damageBp,
     hitPointsAfter,
-    heavilyDamaged: strengthBp <= rules.scuttleThresholdBp,
+    heavilyDamaged: isHeavilyDamaged(rules, hitPointsAfter, maxHitPoints),
   };
+}
+
+export function isHeavilyDamaged(
+  rules: RaiderInterceptionRules,
+  hitPoints: number,
+  maxHitPoints: number,
+): boolean {
+  const strengthBp =
+    maxHitPoints <= 0
+      ? 0
+      : SafeInt.div(
+          SafeInt.mul(SafeInt(hitPoints), BP_DENOMINATOR),
+          SafeInt(maxHitPoints),
+          "floor",
+        );
+  return strengthBp <= rules.scuttleThresholdBp;
+}
+
+export function damageShareBp(lossHitPoints: number, maxHitPoints: number): number {
+  if (maxHitPoints <= 0 || lossHitPoints <= 0) return 0;
+  return Math.min(
+    10_000,
+    SafeInt.div(
+      SafeInt.mul(SafeInt(lossHitPoints), BP_DENOMINATOR),
+      SafeInt(maxHitPoints),
+      "floor",
+    ),
+  );
 }
 
 export function heavilyDamagedDisposition(

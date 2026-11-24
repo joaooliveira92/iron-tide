@@ -32,6 +32,7 @@ import {
 import { battleOfferAnsweredEvent } from "./events.js";
 import { applyRecordedBattleResult, consumeBattleResult } from "./interruption.js";
 import type { MonthPhase, PhaseContext, PhaseRunOutcome } from "./pipeline.js";
+import { applyRaiderBattleDispositions } from "./raiderBattleDisposition.js";
 import { applyPrestigeChange } from "./prestigeApplication.js";
 import { applyUnrestContributions } from "./unrestApplication.js";
 
@@ -155,6 +156,10 @@ export function runBattleResolutionPhase(ctx: PhaseContext): PhaseRunOutcome {
     resolveBattle(ctx, battle, resolver, randomEngine);
     if (ctx.interruption?.suspended !== undefined) return { status: "finish", success: true };
   }
+  applyRaiderBattleDispositions(
+    ctx,
+    battles.map((b) => b["id"]),
+  );
   scoreResolvedBattles(
     ctx,
     battles.map((b) => b["id"]),

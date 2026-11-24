@@ -460,7 +460,8 @@
       "engine_symbols": [
         "applyTradeDutyCommand",
         "applyTradeProtectionForMonth",
-        "applyRaiderInterceptionForMonth"
+        "applyRaiderInterceptionForMonth",
+        "applyRaiderBattleDispositions"
       ],
       "main_commands": ["submitTradeDuty"],
       "renderer_screen": "screens/fleet/trade/FleetTradeSection.tsx",
