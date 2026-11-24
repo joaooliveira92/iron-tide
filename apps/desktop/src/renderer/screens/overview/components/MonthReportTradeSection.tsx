@@ -1,4 +1,5 @@
 import type {
+  MonthlyReportNeutralWar,
   MonthlyReportRaiderEntry,
   MonthlyReportTradeProtection,
 } from "../../../../shared/reports-contract.js";
@@ -70,12 +71,21 @@ function raiderLine(entry: MonthlyReportRaiderEntry): string {
   );
 }
 
+function neutralWarLine(war: MonthlyReportNeutralWar): string {
+  return translate(`reports.trade.neutralWar.${war.role}`, {
+    nation: campaignNationLabel(war.otherNationId),
+    tension: war.tension,
+  });
+}
+
 export function MonthReportTradeSection({
   trade,
+  neutralWars = [],
 }: {
-  readonly trade: MonthlyReportTradeProtection;
+  readonly trade?: MonthlyReportTradeProtection;
+  readonly neutralWars?: readonly MonthlyReportNeutralWar[];
 }) {
-  const raiders = trade.raiders ?? [];
+  const raiders = trade?.raiders ?? [];
   return (
     <SummarySection
       variant="report"
@@ -84,8 +94,10 @@ export function MonthReportTradeSection({
       title={translate("reports.trade.title")}
     >
       <SummaryList variant="report" ariaLabel={translate("reports.trade.title")}>
-        <SummaryRow variant="report">{standingLine(trade)}</SummaryRow>
-        {trade.loss === undefined ? null : (
+        {trade === undefined ? null : (
+          <SummaryRow variant="report">{standingLine(trade)}</SummaryRow>
+        )}
+        {trade?.loss === undefined ? null : (
           <li className="text-destructive" data-testid="month-report-trade-loss">
             {lossLine(trade.loss)}
           </li>
@@ -93,6 +105,11 @@ export function MonthReportTradeSection({
         {raiders.map((entry, index) => (
           <li key={`${entry.shipId}-${entry.event}-${index}`} data-testid="month-report-raider">
             {raiderLine(entry)}
+          </li>
+        ))}
+        {neutralWars.map((war) => (
+          <li key={war.warId} className="text-destructive" data-testid="month-report-neutral-war">
+            {neutralWarLine(war)}
           </li>
         ))}
       </SummaryList>

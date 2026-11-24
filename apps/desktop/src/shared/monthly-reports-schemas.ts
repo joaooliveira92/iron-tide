@@ -228,6 +228,17 @@ const MonthlyReportEntrySchema = Schema.Struct({
       }),
     ),
   ),
+  neutralWars: Schema.optional(
+    Schema.Array(
+      Schema.Struct({
+        role: Schema.Literals(["DECLARER", "TARGET"]),
+        otherNationId: nonEmptyString,
+        warId: nonEmptyString,
+        cause: Schema.Literal("UNRESTRICTED_SUBMARINE_INCIDENTS"),
+        tension: nonNegativeInt,
+      }),
+    ),
+  ),
 });
 
 export const MonthlyReportsSchema = Schema.Struct({

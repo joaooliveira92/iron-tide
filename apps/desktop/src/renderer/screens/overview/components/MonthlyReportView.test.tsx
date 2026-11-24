@@ -278,6 +278,41 @@ describe("MonthlyReportView", () => {
     expect(screen.getAllByTestId("month-report-revolution")).toHaveLength(1);
   });
 
+  it("shows the neutral war line for either side even when the month has no trade block", () => {
+    const { rerender } = render(
+      <MonthlyReportView report={report(1)} previous={undefined} areaName={areaName} />,
+    );
+    expect(screen.queryByTestId("month-report-neutral-war")).toBeNull();
+
+    const war = {
+      otherNationId: "germany",
+      warId: "war_uk_germany_1880-03",
+      cause: "UNRESTRICTED_SUBMARINE_INCIDENTS",
+      tension: 10,
+    } as const;
+    rerender(
+      <MonthlyReportView
+        report={report(1, { neutralWars: [{ ...war, role: "DECLARER" }] })}
+        previous={undefined}
+        areaName={areaName}
+      />,
+    );
+    expect(screen.getByTestId("month-report-neutral-war").textContent).toContain(
+      "forced into war against Germany",
+    );
+
+    rerender(
+      <MonthlyReportView
+        report={report(1, { neutralWars: [{ ...war, role: "TARGET" }] })}
+        previous={undefined}
+        areaName={areaName}
+      />,
+    );
+    expect(screen.getByTestId("month-report-neutral-war").textContent).toContain(
+      "declared war on your nation",
+    );
+  });
+
   it("offers the previous month as a disclosure when one exists", () => {
     render(<MonthlyReportView report={report(2)} previous={report(1)} areaName={areaName} />);
 

@@ -1,4 +1,5 @@
 import type {
+  MonthlyReportNeutralWar,
   MonthlyReportRaiderEntry,
   MonthlyReportTradeProtection,
 } from "../../../../shared/reports-contract.js";
@@ -104,6 +105,50 @@ describe("MonthReportTradeSection", () => {
       ),
       ...causes.map((cause) => `reports.trade.raider.interned.${cause}`),
     ].filter((key) => !hasAuthoredMessage(key));
+    expect(missing).toEqual([]);
+  });
+
+  const war = (over: Partial<MonthlyReportNeutralWar>): MonthlyReportNeutralWar => ({
+    role: "DECLARER",
+    otherNationId: "germany",
+    warId: "war_uk_germany_1880-03",
+    cause: "UNRESTRICTED_SUBMARINE_INCIDENTS",
+    tension: 10,
+    ...over,
+  });
+
+  const warRows = () =>
+    screen.queryAllByTestId("month-report-neutral-war").map((row) => row.textContent);
+
+  it("tells the declaring nation it was forced into war against the raider", () => {
+    render(<MonthReportTradeSection neutralWars={[war({})]} />);
+    expect(warRows()).toEqual([
+      "Unrestricted submarine incidents with Germany reached tension 10, and your nation was forced into war against Germany.",
+    ]);
+  });
+
+  it("tells the targeted raider nation that war was declared on it", () => {
+    render(
+      <MonthReportTradeSection neutralWars={[war({ role: "TARGET", otherNationId: "france" })]} />,
+    );
+    expect(warRows()).toEqual([
+      "France declared war on your nation after unrestricted submarine incidents reached tension 10.",
+    ]);
+  });
+
+  it("renders the neutral war line without a trade block and keeps the block when present", () => {
+    const { rerender } = render(<MonthReportTradeSection neutralWars={[war({})]} />);
+    expect(screen.queryByText("No trade protection quota was in force.")).toBeNull();
+    expect(warRows()).toHaveLength(1);
+    rerender(<MonthReportTradeSection trade={trade({})} neutralWars={[war({})]} />);
+    expect(screen.getByText("No trade protection quota was in force.")).toBeTruthy();
+    expect(warRows()).toHaveLength(1);
+  });
+
+  it("has an authored sentence for every neutral war role", () => {
+    const missing = ["DECLARER", "TARGET"]
+      .map((role) => `reports.trade.neutralWar.${role}`)
+      .filter((key) => !hasAuthoredMessage(key));
     expect(missing).toEqual([]);
   });
 });

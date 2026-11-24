@@ -122,6 +122,14 @@ export interface MonthlyReportRaiderEntry {
   readonly cause?: "FUEL_EXHAUSTION" | "BREAKDOWN" | "DAMAGE";
 }
 
+export interface MonthlyReportNeutralWar {
+  readonly role: "DECLARER" | "TARGET";
+  readonly otherNationId: string;
+  readonly warId: string;
+  readonly cause: "UNRESTRICTED_SUBMARINE_INCIDENTS";
+  readonly tension: number;
+}
+
 export interface MonthlyReportRevolution {
   readonly nationId: string;
   readonly governmentBefore: string;
@@ -167,6 +175,7 @@ export interface MonthlyReportEntry {
   readonly tradeProtection?: MonthlyReportTradeProtection;
   readonly unrest?: MonthlyReportUnrest;
   readonly foreignRevolutions?: readonly MonthlyReportRevolution[];
+  readonly neutralWars?: readonly MonthlyReportNeutralWar[];
 }
 
 export interface MonthlyReports {
