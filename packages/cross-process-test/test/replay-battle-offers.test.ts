@@ -71,14 +71,34 @@ describe("replay corpus battle offers (#1111)", () => {
     const stripped = tamper(recorded, (f) => {
       delete f.months[0].offerAnswers;
     });
-    expect(() => verifyReplay(stripped)).toThrow(/do not cover/);
+    const outcome = verifyReplay(stripped);
+    expect(Result.isFailure(outcome) && outcome.failure.message).toMatch(/do not cover/);
   });
 
   it("treats a recorded answer that no longer matches its offer as unanswered", () => {
     const wrong = tamper(recorded, (f) => {
       f.months[0].offerAnswers[0].battleId = "not-the-offered-battle";
     });
-    expect(() => verifyReplay(wrong)).toThrow(/do not cover/);
+    const outcome = verifyReplay(wrong);
+    expect(Result.isFailure(outcome) && outcome.failure.message).toMatch(/do not cover/);
+  });
+
+  it("fails a month that leaves a recorded answer past its last offer unconsumed", () => {
+    const first = months.findIndex((m) => m.offerAnswers.length > 0);
+    const extra = tamper(recorded, (f) => {
+      const answers = f.months[first].offerAnswers;
+      answers.push({ ...answers[0], ordinal: answers.length });
+    });
+    const outcome = verifyReplay(extra);
+    expect(Result.isFailure(outcome) && outcome.failure.message).toMatch(/not consumed/);
+  });
+
+  it("rejects a file that pins engine digests together with offers", () => {
+    const pinned = tamper(recorded, (f) => {
+      f.months[0].commandLedgerDigest = "0".repeat(64);
+    });
+    const decoded = decodeReplayFile(pinned);
+    expect(Result.isFailure(decoded) && decoded.failure.message).toContain("engine digests");
   });
 
   it("diverges when a recorded answer is changed to a different valid response", () => {

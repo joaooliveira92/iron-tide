@@ -23,9 +23,9 @@ import { canonicalSerialize, hashWithContext, sha256Hex } from "@bluewave/determ
 import { RandomEngine, splitSeed, type RandomStream } from "@bluewave/random";
 import { Data, Result, Schema } from "effect";
 
+import { firstLedgerDifference } from "./checkpoint.js";
 import {
   advance,
-  firstLedgerDifference,
   formatDivergence,
   productionStartSnapshot,
   saveAndLoad,

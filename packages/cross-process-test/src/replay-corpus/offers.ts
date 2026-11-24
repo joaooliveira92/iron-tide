@@ -1,7 +1,7 @@
-import { makeRecordedInput, type RecordedInput } from "@bluewave/messages";
+import { makeRecordedInput, type RecordedInput, type SuspendedTurn } from "@bluewave/messages";
 import type { MonthResult } from "@bluewave/phase-engine";
 
-import { ReplayFileError, type ReplayOfferAnswer } from "./format.js";
+import { REPLAY_FORMAT_VERSION, ReplayFileError, type ReplayOfferAnswer } from "./format.js";
 
 export interface OfferSession {
   readonly answers: readonly ReplayOfferAnswer[];
@@ -9,6 +9,34 @@ export interface OfferSession {
 }
 
 const MAX_OFFERS_PER_MONTH = 16;
+
+export function suspensionError(
+  suspended: SuspendedTurn,
+  offers: OfferSession | undefined,
+  turnNumber: number,
+): ReplayFileError {
+  const month = String(turnNumber);
+  if (offers === undefined)
+    return new ReplayFileError({
+      message: `Month ${month} suspended for an interruption; replay format v${String(REPLAY_FORMAT_VERSION)} cannot record it`,
+    });
+  if (suspended.request === null) {
+    const unconsumed = offers.answers
+      .map((answer) => answer.ordinal)
+      .filter((ordinal) => ordinal >= suspended.nextInterruptionOrdinal);
+    return new ReplayFileError({
+      message: `Month ${month} leaves recorded offer answers at ordinal ${unconsumed.join(", ")} not consumed by any offer`,
+    });
+  }
+  const refusal = suspended.refusalTag === undefined ? "" : ` (refused: ${suspended.refusalTag})`;
+  if (suspended.request.kind === "offer")
+    return new ReplayFileError({
+      message: `Month ${month} suspended for the offer at ordinal ${String(suspended.request.ordinal)} that its recorded offer answers do not cover${refusal}`,
+    });
+  return new ReplayFileError({
+    message: `Month ${month} suspended for an interruption that its recorded offer answers do not cover${refusal}`,
+  });
+}
 
 export function recordedInputOf(answer: ReplayOfferAnswer): RecordedInput {
   return makeRecordedInput({

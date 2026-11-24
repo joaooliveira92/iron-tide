@@ -29,9 +29,20 @@ import {
   compileProductionCampaign,
   type ContentInputPerturbation,
 } from "../production-pack.js";
-import { LEDGER_ORDER, ledgerEntryText, monthCheckpoint } from "./checkpoint.js";
+import {
+  LEDGER_ORDER,
+  firstLedgerDifference,
+  ledgerEntryText,
+  monthCheckpoint,
+} from "./checkpoint.js";
 import { commandLedgerDigest, replayVerificationHash } from "./engine-digests.js";
-import { executeAnswering, offerSessionFor, recordedInputOf, type OfferSession } from "./offers.js";
+import {
+  executeAnswering,
+  offerSessionFor,
+  recordedInputOf,
+  suspensionError,
+  type OfferSession,
+} from "./offers.js";
 import {
   productionBaseGrowth,
   productionColonyIncome,
@@ -328,14 +339,20 @@ function productionBattleOffers() {
   return rules;
 }
 
-export function advance(
+export interface AdvancedMonth {
+  readonly result: MonthResult;
+  readonly offerAnswers: readonly ReplayOfferAnswer[];
+  readonly next: CampaignSnapshot;
+}
+
+export function advanceResult(
   snapshot: CampaignSnapshot,
   seed: string,
   perturb?: Omit<ExecutorPerturbation, "month">,
   playerNationId?: string,
   setup?: ReplaySetupId,
   offers?: OfferSession,
-) {
+): Result.Result<AdvancedMonth, ReplayFileError> {
   const start = perturb?.snapshot?.(snapshot) ?? snapshot;
   const commands = perturb?.commands?.(snapshot) ?? [];
   const monthSeedValue = perturb?.seed?.(monthSeed(seed, snapshot)) ?? monthSeed(seed, snapshot);
@@ -364,22 +381,22 @@ export function advance(
     perturb?.closing === undefined
       ? executed
       : { ...executed, finalSnapshot: perturb.closing(executed.finalSnapshot) };
-  if (result.outcome === "suspended") {
-    throw new ReplayFileError({
-      message:
-        offers === undefined
-          ? `Month ${String(snapshot.turnNumber)} suspended for an interruption; replay format v${String(REPLAY_FORMAT_VERSION)} cannot record it`
-          : `Month ${String(snapshot.turnNumber)} suspended for an interruption that its recorded offer answers do not cover`,
-    });
-  }
-  return {
+  if (result.outcome === "suspended" && result.suspended !== undefined)
+    return Result.fail(suspensionError(result.suspended, offers, Number(snapshot.turnNumber)));
+  return Result.succeed({
     result,
     offerAnswers: answers,
     next: {
       ...result.finalSnapshot,
       turnNumber: SafeInt.add(result.finalSnapshot.turnNumber, SafeInt.ONE),
     },
-  };
+  });
+}
+
+export function advance(...args: Parameters<typeof advanceResult>): AdvancedMonth {
+  const stepped = advanceResult(...args);
+  if (Result.isFailure(stepped)) throw stepped.failure;
+  return stepped.success;
 }
 
 export interface ExecutedMonth {
@@ -487,23 +504,6 @@ export function recordReplay(scenario: ReplayScenario): string {
   return serializeReplayFile(file);
 }
 
-export function firstLedgerDifference(
-  expected: readonly string[],
-  actual: readonly string[],
-): { entryIndex: number; expected: string; actual: string } | undefined {
-  const length = Math.max(expected.length, actual.length);
-  for (let entryIndex = 0; entryIndex < length; entryIndex++) {
-    if (expected[entryIndex] !== actual[entryIndex]) {
-      return {
-        entryIndex,
-        expected: expected[entryIndex] ?? "(missing)",
-        actual: actual[entryIndex] ?? "(missing)",
-      };
-    }
-  }
-  return undefined;
-}
-
 export function verifyReplay(
   text: string,
   options: VerifyOptions = {},
@@ -542,7 +542,7 @@ export function verifyReplay(
   for (const [index, recorded] of file.months.entries()) {
     const month = index + 1;
     const perturb = options.perturb?.month === month ? options.perturb : undefined;
-    const step = advance(
+    const stepped = advanceResult(
       snapshot,
       file.seed,
       {
@@ -555,6 +555,8 @@ export function verifyReplay(
         ? { answers: recorded.offerAnswers ?? [], record: false }
         : undefined,
     );
+    if (Result.isFailure(stepped)) return Result.fail(stepped.failure);
+    const step = stepped.success;
     const actual = monthCheckpoint(Number(snapshot.turnNumber), step.result, recorded.commands);
     for (const ledger of LEDGER_ORDER) {
       const difference = firstLedgerDifference(
