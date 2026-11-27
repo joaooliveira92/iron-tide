@@ -1,6 +1,7 @@
 import type {
   MonthlyReportNeutralWar,
   MonthlyReportRaiderEntry,
+  MonthlyReportWarshipAttackEntry,
 } from "../../shared/reports-contract.js";
 
 type Slot<K extends keyof MonthlyReportRaiderEntry> =
@@ -10,7 +11,8 @@ type Slot<K extends keyof MonthlyReportRaiderEntry> =
 type SentenceKey =
   | `reports.trade.raider.engaged.${Slot<"encounter">}.${Slot<"outcome">}`
   | `reports.trade.raider.interned.${Slot<"cause">}`
-  | `reports.trade.neutralWar.${MonthlyReportNeutralWar["role"]}`;
+  | `reports.trade.neutralWar.${MonthlyReportNeutralWar["role"]}`
+  | `reports.trade.warshipAttack.${MonthlyReportWarshipAttackEntry["outcome"]}`;
 
 export const TRADE_REPORT_MESSAGES = {
   "reports.trade.title": "Trade protection",
@@ -53,6 +55,9 @@ export const TRADE_REPORT_MESSAGES = {
   "reports.trade.raider.interned.DAMAGE": "{ship} was interned after taking damage.",
   "reports.trade.raider.interned.NONE": "{ship} was interned.",
   "reports.trade.raider.released": "{ship} was released from internment.",
+  "reports.trade.warshipAttack.DAMAGED":
+    "A submarine of {nation} attacked {ship} and damaged it ({percent}%).",
+  "reports.trade.warshipAttack.SUNK": "A submarine of {nation} attacked {ship} and sank it.",
   "reports.trade.neutralWar.DECLARER":
     "Unrestricted submarine incidents with {nation} reached tension {tension}, and your nation was forced into war against {nation}.",
   "reports.trade.neutralWar.TARGET":
