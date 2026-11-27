@@ -1,11 +1,20 @@
 import assert from "node:assert/strict";
 import { execFileSync } from "node:child_process";
-import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import {
+  copyFileSync,
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readdirSync,
+  readFileSync,
+  rmSync,
+  writeFileSync,
+} from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { after, describe, test } from "node:test";
 
-import { checkHandoff, checkRepo, run } from "../verify-agent-context.mjs";
+import { checkHandoff, checkRepo, measureAlwaysOnBytes, run } from "../verify-agent-context.mjs";
 
 const ROOT = resolve(import.meta.dirname, "..", "..");
 const POLICY = JSON.parse(
@@ -46,7 +55,10 @@ function copyTree() {
   const dir = mkdtempSync(join(tmpdir(), "bw-agent-context-"));
   created.push(dir);
   execFileSync("git", ["init", "-q", "-b", "main"], { cwd: dir });
-  for (const file of FILES) {
+  const skillFiles = readdirSync(join(ROOT, ".agents/skills"))
+    .map((skill) => `.agents/skills/${skill}/SKILL.md`)
+    .filter((file) => existsSync(join(ROOT, file)));
+  for (const file of [...FILES, ...skillFiles]) {
     mkdirSync(dirname(join(dir, file)), { recursive: true });
     copyFileSync(join(ROOT, file), join(dir, file));
   }
@@ -65,6 +77,23 @@ void describe("checkRepo", () => {
   void test("passes on the real repository", () => assert.deepEqual(checkRepo(ROOT), []));
   void test("passes on an exact copy of the governed files", () =>
     assert.deepEqual(checkRepo(copyTree()), []));
+  void test("measures a positive always-on context total on the real repository", () =>
+    assert.ok(measureAlwaysOnBytes(ROOT) > 0));
+  void test("fails when always-on context grows past the ratchet", () => {
+    const dir = copyTree();
+    mutate(dir, "AGENTS.md", (t) => `${t}${"x".repeat(POLICY.alwaysOnMaxBytes)}`);
+    assert.match(checkRepo(dir).join("\n"), /always-on context is \d+ bytes/u);
+  });
+  void test("does not count a user-only skill's frontmatter as always-on", () => {
+    const dir = copyTree();
+    mutate(dir, ".agents/skills/wait-what/SKILL.md", (t) =>
+      t.replace(
+        "disable-model-invocation: true",
+        `disable-model-invocation: true\nx-note: ${"y".repeat(POLICY.alwaysOnMaxBytes)}`,
+      ),
+    );
+    assert.deepEqual(checkRepo(dir), []);
+  });
   void test("fails when a hook script is not wired in settings", () => {
     const dir = copyTree();
     mutate(dir, ".claude/settings.json", (t) => t.replace("pre-tool-use-bash.mjs", "other.mjs"));

@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 import { execFileSync } from "node:child_process";
-import { existsSync, readFileSync } from "node:fs";
-import { resolve } from "node:path";
+import { existsSync, readdirSync, readFileSync } from "node:fs";
+import { join, resolve } from "node:path";
 
 import { isEntryPoint } from "./lib/paths.mjs";
 
@@ -25,7 +25,11 @@ const NUMERIC_POLICY_KEYS = [
   "resumeContextMaxChars",
   "resumeHandoffMaxAgeMinutes",
   "quietFailTailLines",
+  "alwaysOnMaxBytes",
 ];
+const ALWAYS_ON_INSTRUCTION_FILES = ["CLAUDE.md", "AGENTS.md"];
+const SKILLS_ROOT = ".agents/skills";
+const AGENTS_ROOT = ".claude/agents";
 const HOOK_SOURCES = [
   "scripts/hooks/pre-tool-use-bash.mjs",
   "scripts/hooks/pre-tool-use-edit.mjs",
@@ -105,6 +109,42 @@ function requireHeadings(failures, label, text, headings) {
   const present = new Set(headingsOf(text));
   for (const heading of headings) {
     if (!present.has(heading)) failures.push(`${label} is missing "## ${heading}"`);
+  }
+}
+
+const frontmatterOf = (text) => /^---\n([\s\S]*?)\n---/u.exec(text)?.[1] ?? "";
+const isUserOnlySkill = (frontmatter) => /^disable-model-invocation: true$/mu.test(frontmatter);
+
+function sortedEntries(root, dir, suffix) {
+  if (!existsSync(join(root, dir))) return [];
+  return readdirSync(join(root, dir))
+    .filter((name) => name.endsWith(suffix))
+    .sort();
+}
+
+export function measureAlwaysOnBytes(root) {
+  let total = 0;
+  for (const file of ALWAYS_ON_INSTRUCTION_FILES) {
+    total += Buffer.byteLength(readText(root, file) ?? "");
+  }
+  for (const skill of sortedEntries(root, SKILLS_ROOT, "")) {
+    const text = readText(root, `${SKILLS_ROOT}/${skill}/SKILL.md`);
+    if (text === null) continue;
+    const frontmatter = frontmatterOf(text);
+    if (!isUserOnlySkill(frontmatter)) total += Buffer.byteLength(frontmatter);
+  }
+  for (const agent of sortedEntries(root, AGENTS_ROOT, ".md")) {
+    total += Buffer.byteLength(frontmatterOf(readText(root, `${AGENTS_ROOT}/${agent}`) ?? ""));
+  }
+  return total;
+}
+
+function checkAlwaysOnBudget(root, policy, failures) {
+  const measured = measureAlwaysOnBytes(root);
+  if (measured > policy.alwaysOnMaxBytes) {
+    failures.push(
+      `always-on context is ${measured} bytes, above the ${policy.alwaysOnMaxBytes}-byte alwaysOnMaxBytes ratchet in ${POLICY_PATH}`,
+    );
   }
 }
 
@@ -342,6 +382,7 @@ export function checkRepo(root = ROOT) {
     checkTemplates(root, policy, failures);
     checkNoDuplicatedThresholds(root, policy, failures);
     checkDocsMatchPolicy(root, policy, failures);
+    checkAlwaysOnBudget(root, policy, failures);
   }
   return failures;
 }
