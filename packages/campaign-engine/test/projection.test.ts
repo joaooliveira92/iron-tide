@@ -453,3 +453,31 @@ describe("buildPlayerProjection — S-1 readiness in the fleet projection (ticke
     expect(projection?.economy.maintenanceCost).toBe(Number(uk.maintenanceCost));
   });
 });
+
+describe("buildPlayerProjection colony income", () => {
+  const rules = { baselineYear: 1880, startFactorBp: 10_000, slopeBpPerYear: 120, floorBp: 2_500 };
+  const withColonies = () =>
+    fixtureState(
+      fixtureSnapshot([fixtureNation({ id: "uk", baseResources: baseFor(1_000) })], [], {
+        world: {
+          areas: [],
+          routes: [],
+          ports: [],
+          possessions: [{ id: "p1", nationId: "uk", areaId: "a1", colonyValueBp: SafeInt(500) }],
+        },
+      }),
+    );
+
+  it("carries the colony income the outlook credits when the ruleset is given", () => {
+    const month = { month: 1, year: 1880 };
+    const plain = buildPlayerProjection(withColonies(), "uk", month)!;
+    const projection = buildPlayerProjection(withColonies(), "uk", month, undefined, {
+      colonyIncome: rules,
+    })!;
+    expect(plain.economy.colonyIncome).toBeUndefined();
+    expect(projection.economy.colonyIncome).toBeGreaterThan(0);
+    expect(projection.economy.monthEndTreasury).toBe(
+      plain.economy.monthEndTreasury + projection.economy.colonyIncome!,
+    );
+  });
+});

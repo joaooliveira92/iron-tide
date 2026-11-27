@@ -57,6 +57,7 @@ const KILOGRAMS_PER_TON = 1_000;
 export interface PlayerProjectionEconomy {
   readonly treasury: number;
   readonly monthlyAppropriation: number;
+  readonly colonyIncome?: number;
   readonly shipyardCapacity: number;
   readonly constructionSpend: number;
   readonly researchSpend: number;
@@ -329,6 +330,7 @@ export function buildPlayerProjection(
     economy: {
       treasury: Number(nation.treasury),
       monthlyAppropriation: outlook.revenue,
+      ...(outlook.colonyIncome === undefined ? {} : { colonyIncome: outlook.colonyIncome }),
       shipyardCapacity,
       constructionSpend: constructionCommitted,
       researchSpend: outlook.plannedResearch,

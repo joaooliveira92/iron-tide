@@ -98,6 +98,7 @@
       "exempt": {
         "treasury": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
         "monthlyAppropriation": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
+        "colonyIncome": "Not yet explained; #300 covers this area and re-exempts any field it does not explain. Dormant until colony values are authored (#1165).",
         "shipyardCapacity": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
         "constructionSpend": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
         "researchSpend": "Not yet explained; #300 covers this area and re-exempts any field it does not explain.",
@@ -364,6 +365,7 @@
         "month.year": "Campaign month metadata, not a derived value.",
         "economy.treasury": "Re-export of the economy treasury; the economy trees are the provenance (ADR-0304).",
         "economy.monthlyAppropriation": "Re-export of the economy appropriation; economy_appropriation is the provenance.",
+        "economy.colonyIncome": "Re-export of the outlook colony income; the economy net tree is the provenance. Dormant until colony values are authored (#1165).",
         "economy.shipyardCapacity": "Sum of the nation's port capacities; the ports are the components, with no separate view tree.",
         "economy.dockMaxBuildDisplacementKg": "Dock possession state; it has no derived formula.",
         "economy.maxConcurrentConstructionMassKg": "National-capacity rule (dock size × national multiple); the main process computes it without a view tree yet.",
