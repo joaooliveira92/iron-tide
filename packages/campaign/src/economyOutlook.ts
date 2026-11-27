@@ -1,5 +1,6 @@
 import { SafeInt } from "@bluewave/contracts";
 import type { AccelerationTerms } from "@bluewave/ship-design";
+import { stepBaseGrowth, type BaseGrowthRules } from "./baseGrowth.js";
 import { colonyIncomeForNation, type ColonyIncomeRules } from "./colonyIncome.js";
 import { monthlyAbsorbable } from "./constructionDraw.js";
 import { allocateConstructionFunds } from "./constructionFunding.js";
@@ -17,6 +18,7 @@ import { eligibleResearchFields, technologyCatalogueOf } from "./researchEligibi
 import { effectiveResearchResources, type ResearchReturnsRules } from "./researchReturns.js";
 import type { CampaignSnapshot, NationState } from "./state.js";
 import { campaignMonthId } from "./timeline.js";
+import { tradeScaledRevenue, type TradeProtectionRules } from "./tradeProtection.js";
 
 export type EconomyStatus = "healthy" | "narrow" | "deficit" | "critical";
 
@@ -97,6 +99,8 @@ export interface EconomyOutlookOptions {
   readonly acceleration?: AccelerationTerms;
   readonly researchReturns?: ResearchReturnsRules;
   readonly colonyIncome?: ColonyIncomeRules;
+  readonly baseGrowth?: BaseGrowthRules;
+  readonly tradeProtection?: TradeProtectionRules;
 }
 
 export function economyOutlook(
@@ -112,9 +116,13 @@ export function economyOutlook(
     snapshot["startMonth"],
     snapshot["turnNumber"] as number,
   );
-  const revenue = monthlyRevenue(
-    nation["baseResources"],
-    effectiveAppropriationRateBp(nation, month),
+  const baseResources =
+    stepBaseGrowth(options.baseGrowth, nationId, nation["baseResources"], month)?.base ??
+    nation["baseResources"];
+  const revenue = tradeScaledRevenue(
+    monthlyRevenue(baseResources, effectiveAppropriationRateBp(nation, month)),
+    options.tradeProtection,
+    nation["tradeProtection"],
   );
   const maintenance = nationMonthlyMaintenance(
     nation["fleets"],
@@ -140,7 +148,7 @@ export function economyOutlook(
     options.colonyIncome,
     snapshot["world"]["possessions"] ?? [],
     nationId,
-    nation["baseResources"],
+    baseResources,
     month,
   );
   const colonyAmount = colony?.amount ?? SafeInt.ZERO;
