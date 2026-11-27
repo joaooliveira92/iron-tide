@@ -109,6 +109,27 @@ describe("toDomainEvents", () => {
     });
   });
 
+  it("describes a submarine attack on a warship with its outcome", () => {
+    const [event] = toDomainEvents([
+      envelope("SubmarineWarshipAttacked", {
+        kind: "SubmarineWarshipAttacked",
+        nationId: "GER",
+        boatId: "u-1",
+        victimNationId: "GBR",
+        victimShipId: "hms-dn",
+        month: "1880-06",
+        chanceBp: SafeInt(250),
+        outcome: "DAMAGED",
+        damageBp: SafeInt(1200),
+      }),
+    ]);
+    expect(event).toMatchObject({
+      kind: "SubmarineWarshipAttacked",
+      message:
+        "GER: submarine u-1 attacked GBR warship hms-dn in 1880-06: DAMAGED (1200 bp damage)",
+    });
+  });
+
   it("keeps the order of the events", () => {
     const events = toDomainEvents([
       envelope("BattleResolved", {

@@ -477,6 +477,7 @@
       "engine_symbols": [
         "applySubmarinePolicyCommand",
         "applySubmarineIncidentsForMonth",
+        "applySubmarineWarshipAttacksForMonth",
         "applySubmarineNeutralEntryForMonth"
       ],
       "main_commands": [],

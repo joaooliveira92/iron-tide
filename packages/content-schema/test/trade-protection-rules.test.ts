@@ -331,3 +331,67 @@ describe("decodeTradeProtectionRules", () => {
     expect(decodeTradeProtectionRules(rules(override)).ok).toBe(false);
   });
 });
+
+const warshipAttack = {
+  attackBp: 250,
+  policyMultiplierBp: { FLEET_SUPPORT: 16_000, PRIZE_RULES: 10_000, UNRESTRICTED: 5000 },
+  screenReductionBp: 7000,
+  sunkBp: 1000,
+  maxDamageBp: 4000,
+  heavyHullTypes: ["dreadnought", "pre_dreadnought"],
+  screenHullTypes: ["destroyer"],
+};
+
+const withWarship = (block: unknown) =>
+  rules({ submarineThreat: { ...submarine, warshipAttack: block } });
+
+describe("submarine warship attack block (#1158)", () => {
+  it("keeps the block absent without it and decodes a complete block unchanged", () => {
+    expect(decodeTradeProtectionRules(rules({ submarineThreat: submarine }))).toEqual({
+      ok: true,
+      value: rules({ submarineThreat: submarine }),
+    });
+    expect(decodeTradeProtectionRules(withWarship(warshipAttack))).toEqual({
+      ok: true,
+      value: withWarship(warshipAttack),
+    });
+  });
+
+  it.each([
+    ["extra", 1, "extra"],
+    ["attackBp", -1, "attackBp"],
+    ["attackBp", 10_001, "attackBp"],
+    ["sunkBp", 2500.5, "sunkBp"],
+    ["maxDamageBp", 10_001, "maxDamageBp"],
+    ["screenReductionBp", -5, "screenReductionBp"],
+    ["heavyHullTypes", [], "heavyHullTypes"],
+    ["screenHullTypes", [], "screenHullTypes"],
+    ["heavyHullTypes", ["dreadnought", "dreadnought"], "heavyHullTypes"],
+  ])("rejects %s of %j", (key, value, field) => {
+    const result = decodeTradeProtectionRules(withWarship({ ...warshipAttack, [key]: value }));
+    expect(result.ok).toBe(false);
+    expect(result.ok ? "" : result.field).toContain(field);
+  });
+
+  it("rejects a missing policy multiplier and an unknown policy", () => {
+    expect(
+      decodeTradeProtectionRules(
+        withWarship({
+          ...warshipAttack,
+          policyMultiplierBp: { FLEET_SUPPORT: 1, PRIZE_RULES: 1 },
+        }),
+      ),
+    ).toMatchObject({
+      ok: false,
+      field: "submarineThreat.warshipAttack.policyMultiplierBp.UNRESTRICTED",
+    });
+    expect(
+      decodeTradeProtectionRules(
+        withWarship({
+          ...warshipAttack,
+          policyMultiplierBp: { ...warshipAttack.policyMultiplierBp, BLOCKADE: 1 },
+        }),
+      ).ok,
+    ).toBe(false);
+  });
+});

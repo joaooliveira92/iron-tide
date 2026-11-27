@@ -8,7 +8,6 @@ import {
   MERCHANT_POOL_FULL_BP,
   recoverMerchantPool,
   shortfallPrestigeLossBp,
-  submarinePolicyOf,
   tradeProtectionQuota,
   tradeProtectionShortfall,
   tradeProtectionUnrestStep,
@@ -29,10 +28,9 @@ import {
   drawSubmarineAttacks,
   fleetSupportSubmarines,
   opposingSubmarines,
-  type TradeAttacker,
 } from "./tradeSubmarines.js";
 import { applyRaiderInterceptionForMonth } from "./raiderInterceptionMonth.js";
-import { activeWars, byId, designMap, opponentsOf, shipsOf } from "./tradeWarContext.js";
+import { activeWars, byId, designMap, shipsOf, tradeAttackersOf } from "./tradeWarContext.js";
 import { applyUnrestContributions } from "./unrestApplication.js";
 
 const TRADE_EVENT_VERSION = "0.1.0" as const;
@@ -178,22 +176,7 @@ export function applyTradeProtectionForMonth(ctx: PhaseContext): void {
     if (nation === undefined) continue;
     const atWar = warsOfVictim.get(victimId) ?? [];
     const isPlayer = victimId === playerNationId && atWar.length > 0;
-    const attackers: TradeAttacker[] = [];
-    const raidedBy = new Set<string>();
-    for (const war of atWar) {
-      for (const opponentId of opponentsOf(war, victimId)) {
-        if (raidedBy.has(opponentId)) continue;
-        raidedBy.add(opponentId);
-        const opponent = nations.get(opponentId);
-        if (opponent === undefined) continue;
-        attackers.push({
-          warId: war.id,
-          nationId: opponentId,
-          ships: shipsOf(opponent),
-          policy: submarinePolicyOf(opponent),
-        });
-      }
-    }
+    const attackers = tradeAttackersOf(nations, atWar, victimId);
     const threat = rules.submarineThreat;
     const enemySubmarines =
       isPlayer && threat !== undefined ? opposingSubmarines(threat, attackers, designs) : 0;

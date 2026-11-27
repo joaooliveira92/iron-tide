@@ -72,26 +72,44 @@ export function breakoutRequired(
   return blockades.some((blockade) => blockade.blockadedNationId === raiderNationId);
 }
 
+export type DamageOutcome =
+  | { readonly kind: "SUNK" }
+  | { readonly kind: "DAMAGED"; readonly damageBp: number; readonly hitPointsAfter: number };
+
+export function damageOutcome(
+  sunkBp: number,
+  maxDamageBp: number,
+  draw: number,
+  hitPoints: number,
+  maxHitPoints: number,
+): DamageOutcome {
+  if (draw < sunkBp) return { kind: "SUNK" };
+  const survivorRange = SafeInt.sub(BP_DENOMINATOR, SafeInt(sunkBp));
+  const position = SafeInt.sub(SafeInt(draw), SafeInt(sunkBp));
+  const damageBp = SafeInt.div(SafeInt.mul(position, SafeInt(maxDamageBp)), survivorRange, "floor");
+  const hitPointsAfter = Math.max(0, hitPoints - scaleBp(maxHitPoints, damageBp));
+  return { kind: "DAMAGED", damageBp, hitPointsAfter };
+}
+
 export function engagementOutcome(
   rules: RaiderInterceptionRules,
   draw: number,
   hitPoints: number,
   maxHitPoints: number,
 ): EngagementOutcome {
-  if (draw < rules.raiderSunkBp) return { kind: "SUNK" };
-  const survivorRange = SafeInt.sub(BP_DENOMINATOR, SafeInt(rules.raiderSunkBp));
-  const position = SafeInt.sub(SafeInt(draw), SafeInt(rules.raiderSunkBp));
-  const damageBp = SafeInt.div(
-    SafeInt.mul(position, SafeInt(rules.maxEngagementDamageBp)),
-    survivorRange,
-    "floor",
+  const outcome = damageOutcome(
+    rules.raiderSunkBp,
+    rules.maxEngagementDamageBp,
+    draw,
+    hitPoints,
+    maxHitPoints,
   );
-  const hitPointsAfter = Math.max(0, hitPoints - scaleBp(maxHitPoints, damageBp));
+  if (outcome.kind === "SUNK") return outcome;
   return {
     kind: "SURVIVED",
-    damageBp,
-    hitPointsAfter,
-    heavilyDamaged: isHeavilyDamaged(rules, hitPointsAfter, maxHitPoints),
+    damageBp: outcome.damageBp,
+    hitPointsAfter: outcome.hitPointsAfter,
+    heavilyDamaged: isHeavilyDamaged(rules, outcome.hitPointsAfter, maxHitPoints),
   };
 }
 

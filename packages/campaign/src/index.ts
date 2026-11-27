@@ -30,6 +30,7 @@ export * from "./tradeProtection.js";
 export * from "./raiderInterception.js";
 export * from "./submarineThreat.js";
 export * from "./submarineTradeChance.js";
+export * from "./submarineWarshipAttack.js";
 export * from "./submarinePolicy.js";
 export * from "./tradeDuty.js";
 export * from "./tradeDutyDesigns.js";
