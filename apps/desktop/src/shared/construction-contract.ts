@@ -36,6 +36,7 @@ export interface ConstructionScreenProjection {
   readonly economy: {
     readonly treasury: number;
     readonly monthlyAppropriation: number;
+    readonly colonyIncome?: number;
     readonly shipyardCapacity: number;
     readonly dockMaxBuildDisplacementKg: number | null;
     readonly maxConcurrentConstructionMassKg: number;

@@ -29,13 +29,17 @@ export const inspectResearchScreenProgram: CommandHandler<"inspectResearchScreen
     const record = yield* sessions.get(sessionId);
     const contentArtifact = yield* ContentArtifact;
     const researchReturns = yield* contentArtifact.loadResearchReturnsRules();
+    const colonyIncome = yield* contentArtifact.loadColonyIncomeRules();
 
     const projection = buildResearchScreenProjection(
       record.state,
       record.playerSlotId,
       record.month,
       technologyNames(),
-      researchReturns === undefined ? {} : { researchReturns },
+      {
+        ...(researchReturns === undefined ? {} : { researchReturns }),
+        ...(colonyIncome === undefined ? {} : { colonyIncome }),
+      },
     );
     if (!projection) {
       return yield* new CommandFailed({

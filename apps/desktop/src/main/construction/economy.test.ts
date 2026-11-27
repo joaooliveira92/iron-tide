@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import type { CampaignState } from "@bluewave/campaign";
+import { SafeInt } from "@bluewave/contracts";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { SaveStore } from "@bluewave/persistence";
 import {
@@ -158,6 +159,37 @@ describe("constructionEconomy dock/capacity readouts", () => {
     expect(economy.dockLimitAfterExpansionExplanation).toBeUndefined();
     expect(economy.dockExpansionPriceExplanation).toBeUndefined();
     expect(economy.dockExpansionInstalmentExplanation).toBeUndefined();
+  });
+
+  it("carries the colony income the outlook credits once values exist, and omits it before", () => {
+    registerProductionSession("s-colony", resolve(saveRoot, "save"));
+    const record = getCampaignSession("s-colony")!;
+    const rules = {
+      baselineYear: 1880,
+      startFactorBp: 10_000,
+      slopeBpPerYear: 120,
+      floorBp: 2_500,
+    };
+    expect(constructionEconomy(record, rules).colonyIncome).toBeUndefined();
+
+    const snapshot = record.state.snapshot;
+    const valued = {
+      ...record,
+      state: {
+        ...record.state,
+        snapshot: {
+          ...snapshot,
+          world: {
+            ...snapshot.world,
+            possessions: [
+              { id: "p-colony", nationId: "uk", areaId: "a-colony", colonyValueBp: SafeInt(500) },
+            ],
+          },
+        },
+      },
+    };
+    expect(constructionEconomy(valued).colonyIncome).toBeUndefined();
+    expect(constructionEconomy(valued, rules).colonyIncome).toBeGreaterThan(0);
   });
 
   it("lists the nation's ports ascending by id as the expansion targets", () => {

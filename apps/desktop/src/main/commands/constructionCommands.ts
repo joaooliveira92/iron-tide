@@ -62,7 +62,7 @@ export const inspectConstructionScreenProgram: CommandHandler<"inspectConstructi
     const projection: ConstructionScreenProjection = {
       revision: Number(record.state.snapshot.turnNumber),
       month: record.month,
-      economy: constructionEconomy(record),
+      economy: constructionEconomy(record, colonyIncome),
       designs: buildConstructionDesignCatalog(
         record.state.snapshot,
         record.playerSlotId,
