@@ -146,4 +146,71 @@ describe("tradeProtectionFromEvents", () => {
       { shipId: "uk-r2", event: "RELEASED" },
     ]);
   });
+
+  describe("warship attacks", () => {
+    const attack = (
+      nationId: string,
+      victimNationId: string,
+      victimShipId: string,
+      outcome: "DAMAGED" | "SUNK",
+    ) =>
+      envelope({
+        kind: "SubmarineWarshipAttacked",
+        nationId,
+        boatId: `${nationId}-sub1`,
+        victimNationId,
+        victimShipId,
+        month: "1880-03",
+        chanceBp: SafeInt(1_200),
+        outcome,
+        damageBp: SafeInt(outcome === "SUNK" ? 10_000 : 3_000),
+      });
+
+    it("lists attacks where the player is the victim, naming ships and falling back to ids", () => {
+      const names = new Map([["uk-bb1", "HMS Alert"]]);
+      expect(
+        tradeProtectionFromEvents(
+          [
+            assessed("uk"),
+            attack("france", "uk", "uk-bb1", "DAMAGED"),
+            attack("france", "uk", "uk-cr2", "SUNK"),
+            attack("uk", "france", "fr-bb1", "SUNK"),
+            attack("france", "germany", "de-bb1", "SUNK"),
+          ],
+          "uk",
+          (id) => names.get(id),
+        )?.warshipAttacks,
+      ).toEqual([
+        {
+          nationId: "france",
+          boatId: "france-sub1",
+          victimShipId: "uk-bb1",
+          victimShipName: "HMS Alert",
+          outcome: "DAMAGED",
+          damageBp: 3_000,
+        },
+        {
+          nationId: "france",
+          boatId: "france-sub1",
+          victimShipId: "uk-cr2",
+          outcome: "SUNK",
+          damageBp: 10_000,
+        },
+      ]);
+    });
+
+    it("omits the field without attacks on the player", () => {
+      const report = tradeProtectionFromEvents(
+        [assessed("uk"), attack("uk", "france", "fr-bb1", "SUNK")],
+        "uk",
+      );
+      expect(report).toEqual({ quota: 4, assigned: 1, shortfall: 3, shortfallBp: 7_500 });
+    });
+
+    it("is dropped with the rest of the report when the player has no assessment", () => {
+      expect(tradeProtectionFromEvents([attack("france", "uk", "uk-bb1", "SUNK")], "uk")).toBe(
+        undefined,
+      );
+    });
+  });
 });
