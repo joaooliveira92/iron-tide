@@ -1,5 +1,6 @@
 import { SafeInt } from "@bluewave/contracts";
 import type { AccelerationTerms } from "@bluewave/ship-design";
+import { colonyIncomeForNation, type ColonyIncomeRules } from "./colonyIncome.js";
 import { monthlyAbsorbable } from "./constructionDraw.js";
 import { allocateConstructionFunds } from "./constructionFunding.js";
 import {
@@ -39,6 +40,7 @@ export interface EconomySettlement {
 
 export interface EconomyOutlook {
   readonly revenue: number;
+  readonly colonyIncome?: number;
   readonly obligations: number;
   readonly maintenance: number;
   readonly researchRequested: number;
@@ -94,6 +96,7 @@ export interface EconomyOutlookOptions {
   readonly carryingCostPerHaltedProject?: number;
   readonly acceleration?: AccelerationTerms;
   readonly researchReturns?: ResearchReturnsRules;
+  readonly colonyIncome?: ColonyIncomeRules;
 }
 
 export function economyOutlook(
@@ -133,9 +136,21 @@ export function economyOutlook(
   if ((requested as number) > 0 && !hasField) unfundedReason = "NO_ELIGIBLE_RESEARCH_FIELD";
   else if ((requested as number) > (cap as number)) unfundedReason = "ABOVE_CAP";
 
-  const net = monthlyNetBeforeConstruction({ revenue, obligations, maintenance, research });
+  const colony = colonyIncomeForNation(
+    options.colonyIncome,
+    snapshot["world"]["possessions"] ?? [],
+    nationId,
+    nation["baseResources"],
+    month,
+  );
+  const colonyAmount = colony?.amount ?? SafeInt.ZERO;
 
-  let funds = SafeInt.add(nation["treasury"], revenue);
+  const net = SafeInt.add(
+    monthlyNetBeforeConstruction({ revenue, obligations, maintenance, research }),
+    colonyAmount,
+  );
+
+  let funds = SafeInt.add(SafeInt.add(nation["treasury"], revenue), colonyAmount);
   const haltedCount = nation["constructionProjects"].filter((p) => p["status"] === "HALTED").length;
   const carrying = settleOutflow(
     SafeInt((options.carryingCostPerHaltedProject ?? 0) * haltedCount),
@@ -183,6 +198,7 @@ export function economyOutlook(
   const runway = runwayMonths(nation["treasury"], net);
   return {
     revenue: revenue as number,
+    ...(colony === undefined ? {} : { colonyIncome: colony.amount as number }),
     obligations: obligations as number,
     maintenance: maintenance as number,
     researchRequested: requested as number,

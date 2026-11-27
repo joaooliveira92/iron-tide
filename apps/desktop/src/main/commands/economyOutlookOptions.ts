@@ -1,5 +1,6 @@
 import type {
   CampaignSnapshot,
+  ColonyIncomeRules,
   EconomyOutlookOptions,
   ResearchReturnsRules,
 } from "@bluewave/campaign";
@@ -12,12 +13,14 @@ export function economyOutlookOptions(
   content: ShipBuildingContent,
   month: string,
   researchReturns: ResearchReturnsRules | undefined,
+  colonyIncome: ColonyIncomeRules | undefined,
 ): EconomyOutlookOptions {
   const projects = snapshot.nations.get(nationId)?.constructionProjects ?? [];
   const terms = accelerationTermsFor(content, month);
   const base: EconomyOutlookOptions = {
     ...(terms === undefined ? {} : { acceleration: terms }),
     ...(researchReturns === undefined ? {} : { researchReturns }),
+    ...(colonyIncome === undefined ? {} : { colonyIncome }),
   };
   const halted = projects.some((project) => project.status === "HALTED");
   if (!halted) return base;

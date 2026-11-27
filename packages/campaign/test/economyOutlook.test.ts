@@ -1,5 +1,6 @@
 import { SafeInt } from "@bluewave/contracts";
 import { describe, expect, it } from "vite-plus/test";
+import { colonyIncomeForNation, type ColonyIncomeRules } from "../src/colonyIncome.js";
 import { constructionDrawByProject, economyOutlook } from "../src/economyOutlook.js";
 import type { CampaignSnapshot, ConstructionProject, NationState } from "../src/state.js";
 import { FIXTURE_PRESTIGE_RULES } from "@bluewave/test-support";
@@ -333,5 +334,65 @@ describe("economyOutlook with halted projects", () => {
     expect(o.obligationShortfall).toBe(38);
     const calm = economyOutlook(snapshot(nation({})), "n")!;
     expect(calm.obligationShortfall).toBe(0);
+  });
+});
+
+describe("economyOutlook with colony income", () => {
+  const colonyRules: ColonyIncomeRules = {
+    baselineYear: 1880,
+    startFactorBp: 10_000,
+    slopeBpPerYear: 120,
+    floorBp: 2_500,
+  };
+
+  function withPossessions(values: readonly number[], n: NationState): CampaignSnapshot {
+    const base = snapshot(n);
+    return {
+      ...base,
+      world: {
+        ...base.world,
+        possessions: values.map((value, index) => ({
+          id: `p${String(index)}`,
+          nationId: "n",
+          areaId: `a${String(index)}`,
+          colonyValueBp: SafeInt(value),
+        })),
+      },
+    };
+  }
+
+  it("adds nothing without a ruleset section or without values", () => {
+    const plain = economyOutlook(snapshot(nation({})), "n")!;
+    const noRules = economyOutlook(withPossessions([100], nation({})), "n")!;
+    const noValues = economyOutlook(snapshot(nation({})), "n", { colonyIncome: colonyRules })!;
+    expect(noRules).toEqual(plain);
+    expect(noValues).toEqual(plain);
+    expect(plain.colonyIncome).toBeUndefined();
+  });
+
+  it("projects the month-end treasury the phase will credit", () => {
+    const snap = withPossessions([100, 50], nation({}));
+    const plain = economyOutlook(snap, "n")!;
+    const step = colonyIncomeForNation(
+      colonyRules,
+      snap.world.possessions ?? [],
+      "n",
+      SafeInt(6000),
+      "1880-01",
+    )!;
+    expect(step.amount as number).toBeGreaterThan(0);
+    const o = economyOutlook(snap, "n", { colonyIncome: colonyRules })!;
+    expect(o.colonyIncome).toBe(step.amount as number);
+    expect(o.monthEndTreasury).toBe(plain.monthEndTreasury + (step.amount as number));
+    expect(o.revenue).toBe(plain.revenue);
+    expect(o.projectedNet).toBe(plain.projectedNet + (step.amount as number));
+  });
+
+  it("lets colony income cover an outflow the treasury alone could not", () => {
+    const poor = withPossessions([1000], nation({ treasury: SafeInt(0), expenses: SafeInt(1300) }));
+    const plain = economyOutlook(poor, "n")!;
+    const o = economyOutlook(poor, "n", { colonyIncome: colonyRules })!;
+    expect(plain.shortfall).toBeGreaterThan(0);
+    expect(o.shortfall).toBeLessThan(plain.shortfall);
   });
 });
