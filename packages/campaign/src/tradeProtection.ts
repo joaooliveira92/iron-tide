@@ -172,6 +172,19 @@ export function tradeProtectionRevenueBp(
   );
 }
 
+export function tradeScaledRevenue(
+  revenue: SafeInt,
+  rules: TradeProtectionRules | undefined,
+  state: { readonly merchantPoolBp: number } | undefined,
+): SafeInt {
+  if (rules === undefined || state === undefined) return revenue;
+  return SafeInt.div(
+    SafeInt.mul(revenue, SafeInt(tradeProtectionRevenueBp(rules, state.merchantPoolBp))),
+    SafeInt(10_000),
+    "floor",
+  );
+}
+
 export function tradeProtectionUnrestStep(
   rules: TradeProtectionRules,
   merchantPoolBp: number,

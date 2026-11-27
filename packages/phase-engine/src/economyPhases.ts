@@ -10,7 +10,7 @@ import {
   nationMonthlyMaintenance,
   nationMaintenanceAdders,
   settleOutflow,
-  tradeProtectionRevenueBp,
+  tradeScaledRevenue,
   transitionConstructionProject,
 } from "@bluewave/campaign";
 import { SafeInt } from "@bluewave/contracts";
@@ -69,19 +69,11 @@ export function runMonthlyRevenuePhase(ctx: PhaseContext): PhaseRunOutcome {
       },
       campaignMonth,
     );
-    const tradeRules = ctx.engineOptions?.tradeProtection;
-    const unscaled = monthlyRevenue(baseResources, rateBp);
-    const revenue =
-      tradeRules === undefined || nation.tradeProtection === undefined
-        ? unscaled
-        : SafeInt.div(
-            SafeInt.mul(
-              unscaled,
-              SafeInt(tradeProtectionRevenueBp(tradeRules, nation.tradeProtection.merchantPoolBp)),
-            ),
-            SafeInt(10_000),
-            "floor",
-          );
+    const revenue = tradeScaledRevenue(
+      monthlyRevenue(baseResources, rateBp),
+      ctx.engineOptions?.tradeProtection,
+      nation.tradeProtection,
+    );
     if ((revenue as number) <= 0) {
       if (grown !== nation) {
         const grownNations = new Map(ctx.snapshot.read("nations"));
