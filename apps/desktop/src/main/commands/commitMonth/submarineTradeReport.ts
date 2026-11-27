@@ -8,6 +8,7 @@ import type {
 import {
   explainSubmarineTrade,
   submarineTradeAttackers,
+  type SubmarineTradeAttacker,
   type SubmarineTradeShip,
 } from "@bluewave/campaign-engine";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
@@ -15,6 +16,7 @@ import type { ExplanationTree } from "@bluewave/events";
 
 const SUBMARINE_ATTACK_REASON = "SUBMARINE_ATTACK";
 const ENTITY_KEY_PARTS = 5;
+const BOAT_PART = 2;
 const VICTIM_PART = 3;
 
 export interface SubmarineTradeReportInput {
@@ -57,22 +59,33 @@ export function submarineTradeExplanation(
   );
   const victim = input.nations.get(input.playerNationId);
   if (draws.length === 0 || victim === undefined) return undefined;
+  const attackers = submarineTradeAttackers(input.wars, input.nations, input.playerNationId);
   const explained = explainSubmarineTrade({
     rules: input.rules,
     victimId: input.playerNationId,
     victimShortfallBp: input.shortfallBp,
     victimShips: victim.fleets.flatMap((fleet) => fleet.ships),
-    attackers: submarineTradeAttackers(input.wars, input.nations, input.playerNationId),
+    attackers,
     blockades: input.blockades,
     designs: input.designs,
   });
   if (explained === undefined || explained.tree.result !== draws.length) return undefined;
-  const chances = [...explained.chancesBp.values()];
-  const reproduced = draws.every((draw) =>
-    chances.some(
-      (chanceBp) =>
-        draw.inputHash === sha256Hex(canonicalSerialize({ entityKey: draw.entityKey, chanceBp })),
-    ),
-  );
+  const reproduced = draws.every((draw) => {
+    const chanceBp = ownerChanceBp(draw.entityKey, attackers, explained.chancesBp);
+    return (
+      chanceBp !== undefined &&
+      draw.inputHash === sha256Hex(canonicalSerialize({ entityKey: draw.entityKey, chanceBp }))
+    );
+  });
   return reproduced ? explained.tree : undefined;
+}
+
+function ownerChanceBp(
+  entityKey: string,
+  attackers: readonly SubmarineTradeAttacker[],
+  chancesBp: ReadonlyMap<string, number>,
+): number | undefined {
+  const boatId = entityKey.split("/")[BOAT_PART];
+  const owner = attackers.find((attacker) => attacker.ships.some((ship) => ship.id === boatId));
+  return owner === undefined ? undefined : chancesBp.get(owner.nationId);
 }
