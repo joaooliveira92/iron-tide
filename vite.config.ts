@@ -200,6 +200,10 @@ export default defineConfig({
         command: "node scripts/verify-package-dependencies.mjs",
         dependsOn: ["gate:git-state"],
       },
+      "gate:dependabot-target": {
+        command: "node scripts/verify-dependabot-target.mjs",
+        dependsOn: ["gate:git-state"],
+      },
       "gate:workspace-graph-self-test": {
         command: "node scripts/verify-workspace-graph.mjs --self-test",
         dependsOn: ["gate:git-state"],
@@ -316,6 +320,7 @@ export default defineConfig({
         command: "node -p 0",
         dependsOn: [
           "gate:single-copy",
+          "gate:dependabot-target",
           "gate:runtime-free",
           "gate:determinism",
           "gate:tagged-errors-engine",
