@@ -32,6 +32,7 @@ import { Result } from "effect";
 import { exerciseTensionRaisedEvent } from "./fleetExercise.js";
 import { applySubmarineIncidentsForMonth } from "./submarineIncidents.js";
 import { applySubmarineNeutralEntryForMonth } from "./submarineNeutralEntry.js";
+import { applySubmarineWarshipAttacksForMonth } from "./submarineWarshipAttacks.js";
 import { applyTradeProtectionForMonth } from "./tradeProtectionMonth.js";
 import { possessionTransferredEvent } from "./events.js";
 import { applyEventsForMonth } from "./eventDraw.js";
@@ -494,6 +495,7 @@ export function runDiplomacyPhase(ctx: PhaseContext): PhaseRunOutcome {
   applyExerciseTensionForMonth(ctx);
   applyTensionDriftForMonth(ctx);
   applyTradeProtectionForMonth(ctx);
+  applySubmarineWarshipAttacksForMonth(ctx);
   applySubmarineIncidentsForMonth(ctx);
   applySubmarineNeutralEntryForMonth(ctx, applyDeclareWar);
   runPeaceProposals(ctx);
