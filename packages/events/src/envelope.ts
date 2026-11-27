@@ -24,6 +24,7 @@ export type {
   RaiderInterned,
   RaiderReleased,
   NeutralWarEntered,
+  SubmarineWarshipAttacked,
   NationBudgetChanged,
   PossessionTransferred,
   PresenceShortfall,

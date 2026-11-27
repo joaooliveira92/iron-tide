@@ -1,5 +1,6 @@
 import { SafeInt } from "@bluewave/contracts";
 import type { SubmarinePolicy } from "./submarinePolicy.js";
+import type { WarshipAttackRules } from "./submarineWarshipAttack.js";
 import type { TradeDutyDesign, TradeDutyShip } from "./tradeProtection.js";
 
 const BP_DENOMINATOR = SafeInt(10_000);
@@ -14,6 +15,7 @@ export interface SubmarineThreatRules {
   readonly qShipReductionBp?: number | undefined;
   readonly unrestricted?: UnrestrictedWarfareRules | undefined;
   readonly fleetSupport?: FleetSupportRules | undefined;
+  readonly warshipAttack?: WarshipAttackRules | undefined;
 }
 
 export interface FleetSupportRules {
