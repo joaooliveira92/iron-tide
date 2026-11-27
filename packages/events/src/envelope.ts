@@ -21,6 +21,7 @@ export type {
   ForeignStationShipMoved,
   MerchantLossSuffered,
   RaiderEngaged,
+  SubmarineWarshipAttacked,
   RaiderInterned,
   RaiderReleased,
   NeutralWarEntered,

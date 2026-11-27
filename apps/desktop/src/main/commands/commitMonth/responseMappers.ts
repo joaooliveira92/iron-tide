@@ -108,6 +108,8 @@ function describeDomainEventBody(body: DomainEventBody): string {
       return `${body.nationId}: merchant shipping lost ${String(body.lossBp)} bp (pool ${String(body.poolBefore)} to ${String(body.poolAfter)}; ${String(body.raiderHits)} raider hits, ${String(body.submarineHits)} submarine hits${body.pressureHit ? ", shortfall pressure" : ""})`;
     case "RaiderEngaged":
       return `${body.nationId}: raider ${body.shipId} ${body.encounter === "BREAKOUT" ? "broke out against" : "intercepted raiding"} ${body.victimNationId} in ${body.month}: ${body.outcome} (${String(body.damageBp)} bp damage)`;
+    case "SubmarineWarshipAttacked":
+      return `${body.nationId}: ${body.shipId} in ${body.areaId} ${body.outcome === "SUNK" ? "sunk by" : "damaged by"} a ${body.attackerNationId} submarine (${body.policy}, ${String(body.damageBp)} bp damage)`;
     case "RaiderInterned":
       return `${body.nationId}: raider ${body.shipId} interned until the war ends (${body.cause})`;
     case "NeutralWarEntered":

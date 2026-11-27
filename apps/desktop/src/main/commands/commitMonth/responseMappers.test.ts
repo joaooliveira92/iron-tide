@@ -17,6 +17,30 @@ const envelope = (
   sequenceNumber: SafeInt(1),
 });
 
+describe("toDomainEvents submarine warship attack", () => {
+  it("describes a sinking and a damaging hit", () => {
+    const body = (outcome: "SUNK" | "DAMAGED", damageBp: number) =>
+      envelope("SubmarineWarshipAttacked", {
+        kind: "SubmarineWarshipAttacked",
+        nationId: "GBR",
+        attackerNationId: "FRA",
+        shipId: "h1",
+        areaId: "a-1",
+        month: "1880-02",
+        policy: "FLEET_SUPPORT",
+        chanceBp: SafeInt(400),
+        outcome,
+        damageBp: SafeInt(damageBp),
+        hitPointsAfter: SafeInt(0),
+      });
+    const events = toDomainEvents([body("SUNK", 0), body("DAMAGED", 1500)]);
+    expect(events.map((e) => e.message)).toEqual([
+      "GBR: h1 in a-1 sunk by a FRA submarine (FLEET_SUPPORT, 0 bp damage)",
+      "GBR: h1 in a-1 damaged by a FRA submarine (FLEET_SUPPORT, 1500 bp damage)",
+    ]);
+  });
+});
+
 describe("toDomainEvents", () => {
   it("describes a rebuilt ship with the ship and both design versions", () => {
     const [event] = toDomainEvents([

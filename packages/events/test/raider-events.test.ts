@@ -55,3 +55,32 @@ describe("raider events (#1013)", () => {
     ).toThrow();
   });
 });
+
+describe("submarine warship attack event (#1137)", () => {
+  const attacked = (over: Record<string, unknown> = {}) => ({
+    kind: "SubmarineWarshipAttacked",
+    nationId: "GBR",
+    attackerNationId: "FRA",
+    shipId: "h1",
+    areaId: "a-1",
+    month: "1880-06",
+    policy: "FLEET_SUPPORT",
+    chanceBp: SafeInt(400),
+    outcome: "DAMAGED",
+    damageBp: SafeInt(1500),
+    hitPointsAfter: SafeInt(85),
+    ...over,
+  });
+
+  it("parses a hit and still parses the pre-existing raider kinds", () => {
+    expect(parseDomainEventBody(attacked())).toMatchObject({ kind: "SubmarineWarshipAttacked" });
+    expect(parseDomainEventBody(engaged())).toMatchObject({ kind: "RaiderEngaged" });
+  });
+
+  it("rejects an unknown policy, outcome, extra key and out-of-range basis points", () => {
+    expect(() => parseDomainEventBody(attacked({ policy: "RAMMING" }))).toThrow();
+    expect(() => parseDomainEventBody(attacked({ outcome: "INTERNED" }))).toThrow();
+    expect(() => parseDomainEventBody(attacked({ chanceBp: SafeInt(10_001) }))).toThrow();
+    expect(() => parseDomainEventBody(attacked({ extra: 1 }))).toThrow();
+  });
+});

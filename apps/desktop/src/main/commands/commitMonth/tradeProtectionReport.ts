@@ -2,6 +2,7 @@ import type { DomainEventEnvelope } from "@bluewave/events";
 import type {
   MonthlyReportRaiderEntry,
   MonthlyReportTradeProtection,
+  MonthlyReportWarshipAttackEntry,
 } from "../../../shared/reports-contract.js";
 
 export type ShipNameLookup = (shipId: string) => string | undefined;
@@ -13,9 +14,12 @@ export function tradeProtectionFromEvents(
   nationId: string,
   shipName: ShipNameLookup = NO_NAMES,
 ): MonthlyReportTradeProtection | undefined {
-  let assessed: Omit<MonthlyReportTradeProtection, "loss" | "raiders"> | undefined;
+  let assessed:
+    | Omit<MonthlyReportTradeProtection, "loss" | "raiders" | "warshipAttacks">
+    | undefined;
   let loss: MonthlyReportTradeProtection["loss"];
   const raiders: MonthlyReportRaiderEntry[] = [];
+  const warshipAttacks: MonthlyReportWarshipAttackEntry[] = [];
   const named = (shipId: string) => {
     const name = shipName(shipId);
     return name === undefined || name.length === 0 ? { shipId } : { shipId, shipName: name };
@@ -45,6 +49,14 @@ export function tradeProtectionFromEvents(
         victimNationId: body.victimNationId,
         outcome: body.outcome,
       });
+    } else if (body.kind === "SubmarineWarshipAttacked" && body.nationId === nationId) {
+      warshipAttacks.push({
+        ...named(body.shipId),
+        attackerNationId: body.attackerNationId,
+        areaId: body.areaId,
+        outcome: body.outcome,
+        damageBp: Number(body.damageBp),
+      });
     } else if (body.kind === "RaiderInterned" && body.nationId === nationId) {
       raiders.push({ ...named(body.shipId), event: "INTERNED", cause: body.cause });
     } else if (body.kind === "RaiderReleased" && body.nationId === nationId) {
@@ -56,5 +68,6 @@ export function tradeProtectionFromEvents(
     ...assessed,
     ...(loss === undefined ? {} : { loss }),
     ...(raiders.length === 0 ? {} : { raiders }),
+    ...(warshipAttacks.length === 0 ? {} : { warshipAttacks }),
   };
 }

@@ -110,6 +110,16 @@ export interface MonthlyReportTradeProtection {
     readonly poolAfter: number;
   };
   readonly raiders?: readonly MonthlyReportRaiderEntry[];
+  readonly warshipAttacks?: readonly MonthlyReportWarshipAttackEntry[];
+}
+
+export interface MonthlyReportWarshipAttackEntry {
+  readonly shipId: string;
+  readonly shipName?: string;
+  readonly attackerNationId: string;
+  readonly areaId: string;
+  readonly outcome: "SUNK" | "DAMAGED";
+  readonly damageBp: number;
 }
 
 export interface MonthlyReportRaiderEntry {

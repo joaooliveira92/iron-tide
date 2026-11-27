@@ -177,6 +177,18 @@ const MonthlyReportTradeProtectionSchema = Schema.Struct({
       }),
     ),
   ),
+  warshipAttacks: Schema.optional(
+    Schema.Array(
+      Schema.Struct({
+        shipId: nonEmptyString,
+        shipName: Schema.optional(nonEmptyString),
+        attackerNationId: nonEmptyString,
+        areaId: nonEmptyString,
+        outcome: Schema.Literals(["SUNK", "DAMAGED"]),
+        damageBp: nonNegativeInt,
+      }),
+    ),
+  ),
 });
 
 const MonthlyReportUnrestSchema = Schema.Struct({

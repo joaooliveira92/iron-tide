@@ -40,6 +40,41 @@ const lost = (nationId: string) =>
     poolAfter: SafeInt(7_500),
   });
 
+const warshipHit = (nationId: string) =>
+  envelope({
+    kind: "SubmarineWarshipAttacked",
+    nationId,
+    attackerNationId: "france",
+    shipId: "uk-h1",
+    areaId: "a-1",
+    month: "1880-03",
+    policy: "FLEET_SUPPORT",
+    chanceBp: SafeInt(400),
+    outcome: "DAMAGED",
+    damageBp: SafeInt(1_500),
+    hitPointsAfter: SafeInt(85),
+  });
+
+describe("tradeProtectionFromEvents warship attacks", () => {
+  it("lists the player's own warship attacks only", () => {
+    const report = tradeProtectionFromEvents(
+      [assessed("uk"), warshipHit("uk"), warshipHit("france")],
+      "uk",
+      (id) => (id === "uk-h1" ? "HMS Alpha" : undefined),
+    );
+    expect(report?.warshipAttacks).toEqual([
+      {
+        shipId: "uk-h1",
+        shipName: "HMS Alpha",
+        attackerNationId: "france",
+        areaId: "a-1",
+        outcome: "DAMAGED",
+        damageBp: 1_500,
+      },
+    ]);
+  });
+});
+
 describe("tradeProtectionFromEvents", () => {
   it("is absent without an assessment for the player", () => {
     expect(tradeProtectionFromEvents([assessed("france"), lost("uk")], "uk")).toBe(undefined);
