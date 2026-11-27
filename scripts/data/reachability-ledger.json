@@ -470,13 +470,14 @@
     },
     {
       "id": "submarine-policy",
-      "player_verb": "Set submarine warfare policy",
+      "player_verb": "Set submarine policy",
       "status": "dormant-by-decision",
       "engine_package": "phase-engine",
       "engine_modules": [],
       "engine_symbols": [
         "applySubmarinePolicyCommand",
         "applySubmarineIncidentsForMonth",
+        "applySubmarineWarshipAttacksForMonth",
         "applySubmarineNeutralEntryForMonth"
       ],
       "main_commands": [],
