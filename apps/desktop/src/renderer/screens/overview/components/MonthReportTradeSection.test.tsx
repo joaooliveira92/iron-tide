@@ -19,6 +19,9 @@ const trade = (over: Partial<MonthlyReportTradeProtection>): MonthlyReportTradeP
 const raiderRows = () =>
   screen.queryAllByTestId("month-report-raider").map((row) => row.textContent);
 
+const warshipRows = () =>
+  screen.queryAllByTestId("month-report-warship-attack").map((row) => row.textContent);
+
 const lossOf = (raiderHits: number, over: { readonly pressureHit?: boolean } = {}) => ({
   raiderHits,
   pressureHit: over.pressureHit ?? false,
@@ -148,6 +151,48 @@ describe("MonthReportTradeSection", () => {
   it("has an authored sentence for every neutral war role", () => {
     const missing = ["DECLARER", "TARGET"]
       .map((role) => `reports.trade.neutralWar.${role}`)
+      .filter((key) => !hasAuthoredMessage(key));
+    expect(missing).toEqual([]);
+  });
+
+  it("lists each submarine attack on the player's warships, naming the ship when known", () => {
+    render(
+      <MonthReportTradeSection
+        trade={trade({
+          warshipAttacks: [
+            {
+              nationId: "germany",
+              boatId: "germany-u1",
+              victimShipId: "uk-bb1",
+              victimShipName: "HMS Lion",
+              outcome: "DAMAGED",
+              damageBp: 2_500,
+            },
+            {
+              nationId: "france",
+              boatId: "france-u2",
+              victimShipId: "uk-cr1",
+              outcome: "SUNK",
+              damageBp: 10_000,
+            },
+          ],
+        })}
+      />,
+    );
+    expect(warshipRows()).toEqual([
+      "A submarine of Germany attacked HMS Lion and damaged it (25%).",
+      "A submarine of France attacked uk-cr1 and sank it.",
+    ]);
+  });
+
+  it("omits the warship rows when the report carries none", () => {
+    render(<MonthReportTradeSection trade={trade({ warshipAttacks: [] })} />);
+    expect(warshipRows()).toEqual([]);
+  });
+
+  it("has an authored sentence for every warship attack outcome", () => {
+    const missing = ["DAMAGED", "SUNK"]
+      .map((outcome) => `reports.trade.warshipAttack.${outcome}`)
       .filter((key) => !hasAuthoredMessage(key));
     expect(missing).toEqual([]);
   });
