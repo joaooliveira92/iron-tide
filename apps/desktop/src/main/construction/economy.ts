@@ -1,3 +1,4 @@
+import type { ColonyIncomeRules } from "@bluewave/campaign";
 import { buildPlayerProjection } from "@bluewave/campaign-engine";
 import {
   DOCK_EXPANSION_BASE_DURATION_MONTHS,
@@ -20,8 +21,15 @@ import { campaignMonthKey } from "./commandRecord.js";
 
 export function constructionEconomy(
   record: CampaignSessionRecord,
+  colonyIncome?: ColonyIncomeRules,
 ): ConstructionScreenProjection["economy"] {
-  const projection = buildPlayerProjection(record.state, record.playerSlotId, record.month);
+  const projection = buildPlayerProjection(
+    record.state,
+    record.playerSlotId,
+    record.month,
+    undefined,
+    colonyIncome === undefined ? undefined : { colonyIncome },
+  );
   const nation = record.state.snapshot.nations.get(record.playerSlotId);
   const treasury = projection ? projection.economy.treasury : nation ? Number(nation.treasury) : 0;
   const monthlyAppropriation = projection ? projection.economy.monthlyAppropriation : 0;
@@ -64,6 +72,9 @@ export function constructionEconomy(
   return {
     treasury,
     monthlyAppropriation,
+    ...(projection?.economy.colonyIncome === undefined
+      ? {}
+      : { colonyIncome: projection.economy.colonyIncome }),
     shipyardCapacity,
     dockMaxBuildDisplacementKg,
     maxConcurrentConstructionMassKg: utilization.maxConcurrentMassKg,

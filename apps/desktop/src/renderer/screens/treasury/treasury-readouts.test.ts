@@ -63,6 +63,18 @@ const NET_TREE: ExplanationTree = {
 };
 
 describe("treasuryReadouts", () => {
+  it("lists colony income in the net readout only when the projection carries it", () => {
+    const labels = (b: TreasuryBreakdown) =>
+      treasuryReadouts(b, FORMAT)
+        .find((r) => r.id === "net")
+        ?.rows.map((row) => row.label);
+    expect(labels(breakdown)).not.toContain("Colony income");
+    const withColony = treasuryReadouts({ ...breakdown, colonyIncome: 250 }, FORMAT)
+      .find((r) => r.id === "net")
+      ?.rows.find((row) => row.label === "Colony income");
+    expect(withColony?.value).toBe(FORMAT.count(250));
+  });
+
   it("attaches each explanation to the readout whose number it explains", () => {
     const readouts = treasuryReadouts(
       {

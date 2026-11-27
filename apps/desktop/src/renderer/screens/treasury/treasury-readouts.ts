@@ -60,6 +60,9 @@ export function treasuryReadouts(
       title: "Appropriation less committed expenditure",
       rows: [
         { label: "Appropriation", value: format.count(breakdown.income) },
+        ...(breakdown.colonyIncome === undefined
+          ? []
+          : [{ label: "Colony income", value: format.count(breakdown.colonyIncome) }]),
         { label: "Obligations", value: format.count(-breakdown.obligations) },
         { label: "Fleet maintenance", value: format.count(-breakdown.fleetMaintenance) },
         { label: "Research", value: format.count(-breakdown.researchSpend) },
