@@ -33,15 +33,13 @@ export function checkDependabotTarget(text) {
   if (entries.length === 0) {
     return ["dependabot.yml declares no package-ecosystem entries"];
   }
-  return entries.flatMap(({ ecosystem, target }) =>
-    target === TARGET
-      ? []
-      : [
-          `dependabot ecosystem "${ecosystem}" must set target-branch "${TARGET}" (found ${
-            target === undefined ? "none" : `"${target}"`
-          })`,
-        ],
-  );
+  return entries.flatMap(({ ecosystem, target }) => {
+    if (target === TARGET) return [];
+    const found = target === undefined ? "none" : JSON.stringify(target);
+    return [
+      `dependabot ecosystem "${ecosystem}" must set target-branch "${TARGET}" (found ${found})`,
+    ];
+  });
 }
 
 if (process.argv[1] && import.meta.filename === process.argv[1]) {
