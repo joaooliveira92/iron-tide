@@ -50,6 +50,15 @@ const projection: PlayerProjection = {
 };
 
 describe("treasury-summary", () => {
+  it("passes colony income through only when the projection carries it", () => {
+    expect(summarizeTreasury(projection).colonyIncome).toBeUndefined();
+    const withColony = {
+      ...projection,
+      economy: { ...projection.economy, colonyIncome: 250 },
+    };
+    expect(summarizeTreasury(withColony).colonyIncome).toBe(250);
+  });
+
   it("summarizes every row from the projection (income, committed expenditure, result)", () => {
     const t = summarizeTreasury(projection);
     expect(t.income).toBe(4000);

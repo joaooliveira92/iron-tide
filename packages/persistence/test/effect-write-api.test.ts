@@ -15,6 +15,8 @@ import { RecoveryManager, SaveStore } from "../src/index.js";
 import { minimalCampaignState } from "./campaign-state-fixture.js";
 import { expectFailureTag, runExit, unwrapSuccess } from "./harness.js";
 
+const modeBitsEnforced = process.platform !== "win32" && process.getuid?.() !== 0;
+
 const readJson = (path: string): Record<string, unknown> =>
   JSON.parse(readFileSync(path, "utf8")) as Record<string, unknown>;
 
@@ -59,7 +61,23 @@ describe("effect write api", () => {
     expect(store.list(dir)).toHaveLength(1);
   });
 
-  it.skipIf(process.platform === "win32")(
+  it("saveEffect fails with a typed IO error when the save path sits under a regular file", () => {
+    const blocker = join(dir, "blocker");
+    writeFileSync(blocker, "", "utf8");
+    const failure = expectFailureTag(
+      runExit(store.saveEffect(minimalCampaignState(), join(blocker, "sub"))),
+      "PERSISTENCE_IO",
+    );
+    expect(failure.stage).toBe("persistence.save");
+  });
+
+  it("listEffect fails with a typed IO error when the listed path is a regular file", () => {
+    const blocker = join(dir, "blocker");
+    writeFileSync(blocker, "", "utf8");
+    expectFailureTag(runExit(store.listEffect(blocker)), "PERSISTENCE_IO");
+  });
+
+  it.skipIf(!modeBitsEnforced)(
     "saveEffect fails with a typed IO error when the directory is unwritable",
     () => {
       chmodSync(dir, 0o555);
@@ -71,7 +89,7 @@ describe("effect write api", () => {
     },
   );
 
-  it.skipIf(process.platform === "win32")(
+  it.skipIf(!modeBitsEnforced)(
     "listEffect fails with a typed IO error when the directory is unreadable",
     () => {
       const unreadable = join(dir, "unreadable");

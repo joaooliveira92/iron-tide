@@ -1,10 +1,12 @@
-import type { CampaignSnapshot, PossessionData } from "@bluewave/campaign";
+import { economyOutlook, type CampaignSnapshot, type PossessionData } from "@bluewave/campaign";
+import { reconcileMonthLedger } from "@bluewave/campaign-engine";
 import { colonyIncomeForNation } from "@bluewave/campaign";
 import { decodeColonyIncomeRules } from "@bluewave/content-schema";
 import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { describe, expect, it } from "vite-plus/test";
+import { COLONY_INCOME_CATEGORY } from "../src/colonyIncomeMonth.js";
 import { MonthExecutor, type MonthExecutorEngineOptions } from "../src/index.js";
 import { tradeSnapshot } from "./fixtures/trade-protection.js";
 
@@ -132,6 +134,29 @@ describe("monthly colony income (manual p.13, S-3 D7)", () => {
     expect(digest(withRules.finalSnapshot)).toBe(digest(without.finalSnapshot));
     expect(digest(withRules.eventLedger.all)).toBe(digest(without.eventLedger.all));
     expect(digest(withRules.financialLedger.all)).toBe(digest(without.financialLedger.all));
+  });
+
+  it("projects the same month-end treasury the pipeline produces", () => {
+    const from = start(0, possessions);
+    const rules = fixtureRules();
+    const outlook = economyOutlook(from, "GBR", { colonyIncome: rules })!;
+    const result = run(from, { colonyIncome: rules });
+    expect(outlook.colonyIncome).toBe(colonyEntries(result, "GBR")[0]!.credit);
+    expect(outlook.monthEndTreasury).toBe(
+      result.finalSnapshot.nations.get("GBR")!.treasury as number,
+    );
+  });
+
+  it("is booked under the category the campaign-engine reconciliation reads", () => {
+    const result = run(start(0, possessions), { colonyIncome: fixtureRules() });
+    const entries = result.financialLedger.all.filter((e) => e.nationId === "GBR");
+    expect(entries.some((e) => e.categoryId === COLONY_INCOME_CATEGORY)).toBe(true);
+    const reconciliation = reconcileMonthLedger(
+      entries,
+      entries[0]!.previousBalance as number,
+      entries.at(-1)!.newBalance as number,
+    );
+    expect(reconciliation.colonyIncome).toBe(colonyEntries(result, "GBR")[0]!.credit);
   });
 
   it("is independent of the appropriation rate: a zero rate still pays colony income", () => {

@@ -102,6 +102,48 @@ describe("submarine trade report explanation", () => {
     expect(tree).toBeDefined();
   });
 
+  describe("with a second attacker whose chance differs", () => {
+    const blockadedChanceBp = 1750;
+    const twoAttackers = (randomDecisions: SubmarineTradeReportInput["randomDecisions"]) =>
+      input({
+        wars: [
+          {
+            id: "w1",
+            status: "ACTIVE",
+            attackerSideMembers: ["FRA", "ITA"],
+            defenderSideMembers: ["GBR"],
+          },
+        ],
+        nations: new Map([
+          ["GBR", { fleets: [{ ships: [ship("e1", "dd", "TRADE_PROTECTION")] }] }],
+          ["FRA", { fleets: [{ ships: [ship("s1", "ss"), ship("s2", "ss")] }] }],
+          ["ITA", { fleets: [{ ships: [ship("t1", "ss")] }] }],
+        ]),
+        blockades: [{ blockaderId: "ITA", blockadedNationId: "GBR" }],
+        randomDecisions,
+      });
+
+    it("returns nothing when a draw matches another attacker's chance but not its own", () => {
+      expect(
+        submarineTradeExplanation(
+          twoAttackers([
+            drawFor("s1", blockadedChanceBp),
+            drawFor("s2"),
+            drawFor("t1", blockadedChanceBp),
+          ]),
+        ),
+      ).toBeUndefined();
+    });
+
+    it("returns the tree when each draw matches its own attacker's chance", () => {
+      expect(
+        submarineTradeExplanation(
+          twoAttackers([drawFor("s1"), drawFor("s2"), drawFor("t1", blockadedChanceBp)]),
+        ),
+      ).toBeDefined();
+    });
+  });
+
   it("returns nothing without rules, without the submarine block or without draws", () => {
     expect(submarineTradeExplanation(input({ rules: undefined }))).toBeUndefined();
     expect(

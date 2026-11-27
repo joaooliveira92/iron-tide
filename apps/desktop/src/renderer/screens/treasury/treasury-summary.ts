@@ -7,6 +7,7 @@ import type { ExplanationTree } from "@bluewave/events";
 
 export interface TreasuryBreakdown {
   readonly income: number;
+  readonly colonyIncome?: number;
   readonly obligations: number;
   readonly fleetMaintenance: number;
   readonly researchSpend: number;
@@ -31,6 +32,7 @@ export function summarizeTreasury(projection: PlayerProjection): TreasuryBreakdo
   const economy = projection.economy;
   return {
     income: economy.monthlyAppropriation,
+    ...(economy.colonyIncome === undefined ? {} : { colonyIncome: economy.colonyIncome }),
     obligations: economy.obligations,
     fleetMaintenance: economy.maintenanceCost,
     researchSpend: economy.researchSpend,

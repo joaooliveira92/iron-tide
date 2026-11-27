@@ -57,11 +57,12 @@ export const inspectConstructionScreenProgram: CommandHandler<"inspectConstructi
     const workspace = yield* sessions.getConstructionWorkspace(record);
     const content = yield* contentArtifact.loadShipBuildingContent();
     const researchReturns = yield* contentArtifact.loadResearchReturnsRules();
+    const colonyIncome = yield* contentArtifact.loadColonyIncomeRules();
 
     const projection: ConstructionScreenProjection = {
       revision: Number(record.state.snapshot.turnNumber),
       month: record.month,
-      economy: constructionEconomy(record),
+      economy: constructionEconomy(record, colonyIncome),
       designs: buildConstructionDesignCatalog(
         record.state.snapshot,
         record.playerSlotId,
@@ -91,6 +92,7 @@ export const inspectConstructionScreenProgram: CommandHandler<"inspectConstructi
             content,
             campaignMonthKey(record),
             researchReturns,
+            colonyIncome,
           ),
         ),
       ),
