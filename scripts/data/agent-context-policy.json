@@ -29,6 +29,7 @@
   "resumeHandoffMaxAgeMinutes": 720,
   "quietFailTailLines": 40,
   "quietLogDir": "node_modules/.cache/bluewave-quiet",
+  "alwaysOnMaxBytes": 9093,
   "agentRoutingDefault": "general-purpose",
   "agentRoutingDenied": ["general-purpose"],
   "readDenyPatterns": ["(^|/)golden/replays/", "(^|/)\\.ai/reports/", "(^|/)pnpm-lock\\.yaml$"]
