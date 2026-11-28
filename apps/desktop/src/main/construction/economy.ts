@@ -1,4 +1,4 @@
-import type { ColonyIncomeRules } from "@bluewave/campaign";
+import type { EconomyOutlookOptions } from "@bluewave/campaign";
 import { buildPlayerProjection } from "@bluewave/campaign-engine";
 import {
   DOCK_EXPANSION_BASE_DURATION_MONTHS,
@@ -21,14 +21,14 @@ import { campaignMonthKey } from "./commandRecord.js";
 
 export function constructionEconomy(
   record: CampaignSessionRecord,
-  colonyIncome?: ColonyIncomeRules,
+  outlook: EconomyOutlookOptions = {},
 ): ConstructionScreenProjection["economy"] {
   const projection = buildPlayerProjection(
     record.state,
     record.playerSlotId,
     record.month,
     undefined,
-    colonyIncome === undefined ? undefined : { colonyIncome },
+    outlook,
   );
   const nation = record.state.snapshot.nations.get(record.playerSlotId);
   const treasury = projection ? projection.economy.treasury : nation ? Number(nation.treasury) : 0;

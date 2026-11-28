@@ -170,7 +170,7 @@ describe("constructionEconomy dock/capacity readouts", () => {
       slopeBpPerYear: 120,
       floorBp: 2_500,
     };
-    expect(constructionEconomy(record, rules).colonyIncome).toBeUndefined();
+    expect(constructionEconomy(record, { colonyIncome: rules }).colonyIncome).toBeUndefined();
 
     const snapshot = record.state.snapshot;
     const valued = {
@@ -189,7 +189,7 @@ describe("constructionEconomy dock/capacity readouts", () => {
       },
     };
     expect(constructionEconomy(valued).colonyIncome).toBeUndefined();
-    expect(constructionEconomy(valued, rules).colonyIncome).toBeGreaterThan(0);
+    expect(constructionEconomy(valued, { colonyIncome: rules }).colonyIncome).toBeGreaterThan(0);
   });
 
   it("lists the nation's ports ascending by id as the expansion targets", () => {

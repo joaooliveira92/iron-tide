@@ -21,13 +21,16 @@ import type { CommandHandler } from "../runtime/commandProgram.js";
 import { CommandQueue, type PendingCommandEntry } from "../runtime/commandQueue.js";
 import { ProjectStore } from "../runtime/projectStore.js";
 import { technologyNames } from "../technologyNames.js";
+import { campaignMonthKey } from "../construction/commandRecord.js";
 import { currentRevision, deterministicTimestamp, verifyEnvelope } from "./commandEnvelope.js";
+import { economyOutlookOptions } from "./economyOutlookOptions.js";
 
 export const inspectResearchScreenProgram: CommandHandler<"inspectResearchScreen"> = (sessionId) =>
   Effect.gen(function* () {
     const sessions = yield* CampaignSessionStore;
     const record = yield* sessions.get(sessionId);
     const contentArtifact = yield* ContentArtifact;
+    const content = yield* contentArtifact.loadShipBuildingContent();
     const researchReturns = yield* contentArtifact.loadResearchReturnsRules();
     const colonyIncome = yield* contentArtifact.loadColonyIncomeRules();
 
@@ -36,10 +39,14 @@ export const inspectResearchScreenProgram: CommandHandler<"inspectResearchScreen
       record.playerSlotId,
       record.month,
       technologyNames(),
-      {
-        ...(researchReturns === undefined ? {} : { researchReturns }),
-        ...(colonyIncome === undefined ? {} : { colonyIncome }),
-      },
+      economyOutlookOptions(
+        record.state.snapshot,
+        record.playerSlotId,
+        content,
+        campaignMonthKey(record),
+        researchReturns,
+        colonyIncome,
+      ),
     );
     if (!projection) {
       return yield* new CommandFailed({
