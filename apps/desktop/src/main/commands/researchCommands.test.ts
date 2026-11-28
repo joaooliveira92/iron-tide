@@ -10,6 +10,7 @@ import {
   RESEARCH_FIELD_PRIORITY_WEIGHTS,
   type CommitMonthResponse,
 } from "@bluewave/campaign-engine";
+import { SafeInt } from "@bluewave/contracts";
 import { canonicalSerialize, sha256Hex } from "@bluewave/deterministic";
 import { DiagnosticCollector } from "@bluewave/diagnostics";
 import { SaveStore } from "@bluewave/persistence";
@@ -36,6 +37,8 @@ import { programFor, queuedEnvelopes, type AnyCommandHandler } from "../commandP
 import { desktopMainLayer } from "../runtime/desktopMainLayer.js";
 import { toSaveableState } from "../saveHelpers.js";
 import { commitMonthProgram } from "./commitMonth.js";
+import { inspectCampaignProgram } from "./inspectCampaign.js";
+import type { InspectCampaignResult } from "../../shared/campaign-contract.js";
 import {
   inspectResearchScreenProgram,
   setResearchPriorityCommandProgram,
@@ -65,6 +68,8 @@ async function runProgram<A>(
 
 const inspectResearchScreen = (sessionId: string) =>
   runProgram<ResearchScreenProjection>(inspectResearchScreenProgram, sessionId);
+const inspectCampaign = (sessionId: string) =>
+  runProgram<InspectCampaignResult>(inspectCampaignProgram, sessionId);
 const setResearchPriorityCommand = (payload: SetResearchPriorityCommandPayload) =>
   runProgram<ResearchPriorityOutcome>(setResearchPriorityCommandProgram, payload);
 const submitConstructionCommand = (payload: SubmitConstructionCommandPayload) =>
@@ -177,6 +182,38 @@ describe("research commands", () => {
         })),
       );
       expect(result.value.currentProjectTechId).toBe(ukResearch.currentProjectTechId ?? null);
+    });
+
+    it("projects the same research cap as the treasury screen when base growth applies", async () => {
+      const saveDir = resolve(saveRoot, "inspect-cap-parity");
+      const state = registerProductionSession("inspect-cap-session", saveDir);
+      const uk = state.snapshot.nations.get("uk");
+      if (!uk) throw new Error("uk missing from production state");
+      registerCampaignSession({
+        sessionId: "inspect-cap-grown",
+        saveDir,
+        playerSlotId: "uk",
+        campaignSeed: "a".repeat(32),
+        month: { month: 1, year: 1880 },
+        state: {
+          ...state,
+          snapshot: {
+            ...state.snapshot,
+            nations: new Map(state.snapshot.nations).set("uk", {
+              ...uk,
+              baseResources: SafeInt(600_000),
+            }),
+          },
+        },
+      });
+
+      const research = await inspectResearchScreen("inspect-cap-grown");
+      const treasury = await inspectCampaign("inspect-cap-grown");
+      expect(research.outcome).toBe("success");
+      expect(treasury.outcome).toBe("success");
+      if (research.outcome !== "success" || treasury.outcome !== "success") return;
+
+      expect(research.value.researchCap).toBe(treasury.value.projection.economy.researchCap);
     });
 
     it("carries the full technology chart with authored names from the content artifact", async () => {

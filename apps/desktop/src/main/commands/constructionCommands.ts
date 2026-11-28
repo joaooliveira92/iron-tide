@@ -58,11 +58,19 @@ export const inspectConstructionScreenProgram: CommandHandler<"inspectConstructi
     const content = yield* contentArtifact.loadShipBuildingContent();
     const researchReturns = yield* contentArtifact.loadResearchReturnsRules();
     const colonyIncome = yield* contentArtifact.loadColonyIncomeRules();
+    const outlook = economyOutlookOptions(
+      record.state.snapshot,
+      record.playerSlotId,
+      content,
+      campaignMonthKey(record),
+      researchReturns,
+      colonyIncome,
+    );
 
     const projection: ConstructionScreenProjection = {
       revision: Number(record.state.snapshot.turnNumber),
       month: record.month,
-      economy: constructionEconomy(record, colonyIncome),
+      economy: constructionEconomy(record, outlook),
       designs: buildConstructionDesignCatalog(
         record.state.snapshot,
         record.playerSlotId,
@@ -82,19 +90,7 @@ export const inspectConstructionScreenProgram: CommandHandler<"inspectConstructi
         ),
       ),
       steering: Object.fromEntries(
-        constructionSteeringPreviews(
-          record.state.snapshot,
-          record.playerSlotId,
-          content,
-          economyOutlookOptions(
-            record.state.snapshot,
-            record.playerSlotId,
-            content,
-            campaignMonthKey(record),
-            researchReturns,
-            colonyIncome,
-          ),
-        ),
+        constructionSteeringPreviews(record.state.snapshot, record.playerSlotId, content, outlook),
       ),
       workspace: workspaceView(workspace),
     };
